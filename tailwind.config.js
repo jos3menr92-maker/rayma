@@ -59,7 +59,10 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+  			'debt-dark': 'hsl(var(--debt-dark))',
+  			'debt-accent': 'hsl(var(--debt-accent))',
+  			'debt-muted': 'hsl(var(--debt-muted))'
   		},
   		keyframes: {
   			'accordion-down': {
