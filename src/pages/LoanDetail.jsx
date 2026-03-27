@@ -280,10 +280,7 @@ export default function LoanDetail() {
         </Dialog>
 
         {/* Late Payment Log */}
-        <LatePaymentLog
-          loan={loan}
-          onBalanceChange={(newBalance) => setLoan(l => ({ ...l, current_balance: newBalance }))}
-        />
+        <LatePaymentLog loan={loan} onLoanUpdated={loadData} />
 
         {/* Payment History */}
         <div>
