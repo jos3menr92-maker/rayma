@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import ProgressRing from "../components/ProgressRing";
+import LatePaymentLog from "../components/LatePaymentLog";
 import PaymentItem from "../components/PaymentItem";
 import EditLoanForm from "../components/EditLoanForm";
 
@@ -277,6 +278,12 @@ export default function LoanDetail() {
             <EditLoanForm loan={loan} onSave={handleSaveEdit} />
           </DialogContent>
         </Dialog>
+
+        {/* Late Payment Log */}
+        <LatePaymentLog
+          loan={loan}
+          onBalanceChange={(newBalance) => setLoan(l => ({ ...l, current_balance: newBalance }))}
+        />
 
         {/* Payment History */}
         <div>
