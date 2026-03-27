@@ -1,155 +1,176 @@
-import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { Plus, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react';
-import LoanCard from '../components/LoanCard';
-import LoanForm from '../components/LoanForm';
+import { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucide-react";
+import StatsCard from "../components/StatsCard";
+import ProgressRing from "../components/ProgressRing";
+import LoanCard from "../components/LoanCard";
+import { motion } from "framer-motion";
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount || 0);
+}
 
 export default function Dashboard() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingLoan, setEditingLoan] = useState(null);
 
-  const fetchLoans = async () => {
-    const data = await base44.entities.Loan.list('-created_date');
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    const data = await base44.entities.Loan.list("-created_date", 100);
     setLoans(data);
     setLoading(false);
-  };
+  }
 
-  useEffect(() => { fetchLoans(); }, []);
+  const activeLoans = loans.filter((l) => l.status !== "paid_off");
+  const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
+  const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
+  const totalPaid = totalDebt - totalRemaining;
+  const overallProgress = totalDebt > 0 ? (totalPaid / totalDebt) * 100 : 0;
+  const monthlyTotal = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
 
-  const totalDebt = loans.reduce((s, l) => s + (l.total_amount || 0), 0);
-  const totalPaid = loans.reduce((s, l) => s + (l.amount_paid || 0), 0);
-  const totalRemaining = totalDebt - totalPaid;
-  const progressPct = totalDebt > 0 ? Math.round((totalPaid / totalDebt) * 100) : 0;
+  const today = new Date().getDate();
+  const upcomingLoans = activeLoans
+    .filter((l) => l.due_day)
+    .sort((a, b) => {
+      const aDiff = a.due_day >= today ? a.due_day - today : a.due_day + 31 - today;
+      const bDiff = b.due_day >= today ? b.due_day - today : b.due_day + 31 - today;
+      return aDiff - bDiff;
+    })
+    .slice(0, 3);
 
-  const today = new Date().toISOString().split('T')[0];
-  const upcoming = loans.filter(l => l.next_payment_date && l.next_payment_date >= today)
-    .sort((a, b) => a.next_payment_date.localeCompare(b.next_payment_date))
-    .slice(0, 1)[0];
-
-  const overdue = loans.filter(l => l.next_payment_date && l.next_payment_date < today);
-
-  const handleSave = async (data, id) => {
-    if (id) {
-      await base44.entities.Loan.update(id, data);
-    } else {
-      await base44.entities.Loan.create(data);
-    }
-    setShowForm(false);
-    setEditingLoan(null);
-    fetchLoans();
-  };
-
-  const handleDelete = async (id) => {
-    await base44.entities.Loan.delete(id);
-    fetchLoans();
-  };
-
-  const handleEdit = (loan) => {
-    setEditingLoan(loan);
-    setShowForm(true);
-  };
-
-  const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n || 0);
-
-  if (loading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" />
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="bg-debt-dark px-6 pt-14 pb-8">
-        <p className="text-debt-muted text-sm font-medium tracking-widest uppercase mb-1">My Debt Tracker</p>
-        <h1 className="text-white text-4xl font-bold">{fmt(totalRemaining)}</h1>
-        <p className="text-debt-muted text-sm mt-1">remaining to pay off</p>
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">
+          Debt Tracker
+        </h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          Stay on top of your finances
+        </p>
+      </motion.div>
 
-        {/* Progress bar */}
-        <div className="mt-5">
-          <div className="flex justify-between text-xs text-debt-muted mb-1.5">
-            <span>{progressPct}% paid off</span>
-            <span>{fmt(totalPaid)} paid</span>
-          </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-debt-accent rounded-full transition-all duration-700"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-        </div>
+      {/* Progress Ring */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center mb-6 bg-card rounded-3xl p-6 border border-border shadow-sm"
+      >
+        <ProgressRing percentage={overallProgress} size={140} strokeWidth={12} />
+        <p className="mt-3 text-sm text-muted-foreground">
+          {formatCurrency(totalPaid)} of {formatCurrency(totalDebt)} paid
+        </p>
+      </motion.div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3 mt-5">
-          <div className="bg-white/10 rounded-2xl p-4">
-            <p className="text-debt-muted text-xs mb-1">Total Debt</p>
-            <p className="text-white text-xl font-bold">{fmt(totalDebt)}</p>
-          </div>
-          <div className="bg-white/10 rounded-2xl p-4">
-            <p className="text-debt-muted text-xs mb-1">Total Paid</p>
-            <p className="text-debt-accent text-xl font-bold">{fmt(totalPaid)}</p>
-          </div>
-        </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <StatsCard
+          label="Total Debt"
+          value={formatCurrency(totalDebt)}
+          icon={Wallet}
+          color="destructive"
+          subtitle={`${activeLoans.length} active loan${activeLoans.length !== 1 ? "s" : ""}`}
+        />
+        <StatsCard
+          label="Remaining"
+          value={formatCurrency(totalRemaining)}
+          icon={TrendingDown}
+          color="accent"
+        />
+        <StatsCard
+          label="Total Paid"
+          value={formatCurrency(totalPaid)}
+          icon={TrendingUp}
+          color="primary"
+        />
+        <StatsCard
+          label="Monthly Due"
+          value={formatCurrency(monthlyTotal)}
+          icon={CreditCard}
+          color="muted"
+        />
       </div>
 
-      <div className="px-4 mt-5 space-y-4">
-        {/* Reminders */}
-        {overdue.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
-            <AlertCircle className="text-red-500 mt-0.5 shrink-0" size={18} />
-            <div>
-              <p className="text-red-700 font-semibold text-sm">Overdue Payment{overdue.length > 1 ? 's' : ''}</p>
-              <p className="text-red-500 text-xs mt-0.5">{overdue.map(l => l.name).join(', ')}</p>
-            </div>
+      {/* Upcoming Reminders */}
+      {upcomingLoans.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold font-heading text-foreground mb-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-accent" />
+            Upcoming Payments
+          </h2>
+          <div className="space-y-2">
+            {upcomingLoans.map((loan) => {
+              const daysUntil = loan.due_day >= today
+                ? loan.due_day - today
+                : loan.due_day + 31 - today;
+              return (
+                <motion.div
+                  key={loan.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`flex items-center justify-between p-3 rounded-xl border ${
+                    daysUntil <= 3
+                      ? "bg-destructive/5 border-destructive/20"
+                      : "bg-card border-border"
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{loan.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} · {formatCurrency(loan.monthly_payment)}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${
+                    daysUntil <= 3
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-primary/10 text-primary"
+                  }`}>
+                    {loan.due_day}th
+                  </span>
+                </motion.div>
+              );
+            })}
           </div>
-        )}
-
-        {upcoming && overdue.length === 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-            <AlertCircle className="text-amber-500 mt-0.5 shrink-0" size={18} />
-            <div>
-              <p className="text-amber-700 font-semibold text-sm">Next Payment: {upcoming.name}</p>
-              <p className="text-amber-500 text-xs mt-0.5">Due {new Date(upcoming.next_payment_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Loans */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-foreground font-bold text-lg">Your Loans ({loans.length})</h2>
         </div>
+      )}
 
-        {loans.length === 0 ? (
-          <div className="text-center py-16">
-            <TrendingDown className="mx-auto text-muted-foreground mb-3" size={40} />
-            <p className="text-muted-foreground text-sm">No loans added yet.<br />Tap + to add your first loan.</p>
-          </div>
-        ) : (
+      {/* Active Loans */}
+      {activeLoans.length > 0 ? (
+        <div>
+          <h2 className="text-sm font-semibold font-heading text-foreground mb-3">
+            Active Loans
+          </h2>
           <div className="space-y-3">
-            {loans.map(loan => (
-              <LoanCard key={loan.id} loan={loan} onEdit={handleEdit} onDelete={handleDelete} />
+            {activeLoans.map((loan, i) => (
+              <LoanCard key={loan.id} loan={loan} index={i} />
             ))}
           </div>
-        )}
-      </div>
-
-      {/* FAB */}
-      <button
-        onClick={() => { setEditingLoan(null); setShowForm(true); }}
-        className="fixed bottom-8 right-6 w-14 h-14 bg-debt-dark rounded-full shadow-lg flex items-center justify-center z-10 active:scale-95 transition-transform"
-      >
-        <Plus className="text-white" size={26} />
-      </button>
-
-      {/* Form Modal */}
-      {showForm && (
-        <LoanForm
-          loan={editingLoan}
-          onSave={handleSave}
-          onClose={() => { setShowForm(false); setEditingLoan(null); }}
-        />
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Wallet className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <h3 className="font-semibold font-heading text-foreground mb-1">No loans yet</h3>
+          <p className="text-sm text-muted-foreground">
+            Add your first loan to start tracking your debt
+          </p>
+        </div>
       )}
     </div>
   );

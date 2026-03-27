@@ -5,7 +5,11 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import LoansList from './pages/LoansList';
+import AddLoan from './pages/AddLoan';
+import LoanDetail from './pages/LoanDetail';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,8 +37,13 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="*" element={<PageNotFound />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/loans" element={<LoansList />} />
+        <Route path="/add-loan" element={<AddLoan />} />
+        <Route path="/loan/:id" element={<LoanDetail />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Route>
     </Routes>
   );
 };

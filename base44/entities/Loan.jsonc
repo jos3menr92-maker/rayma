@@ -3,38 +3,66 @@
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "Loan name (e.g. Car Loan, Credit Card)"
     },
     "lender": {
-      "type": "string"
-    },
-    "total_amount": {
-      "type": "number"
-    },
-    "amount_paid": {
-      "type": "number"
-    },
-    "monthly_payment": {
-      "type": "number"
-    },
-    "next_payment_date": {
       "type": "string",
-      "format": "date"
+      "description": "Lender or institution name"
+    },
+    "original_amount": {
+      "type": "number",
+      "description": "Original loan amount"
+    },
+    "current_balance": {
+      "type": "number",
+      "description": "Current remaining balance"
     },
     "interest_rate": {
-      "type": "number"
+      "type": "number",
+      "description": "Annual interest rate percentage"
+    },
+    "monthly_payment": {
+      "type": "number",
+      "description": "Expected monthly payment amount"
+    },
+    "due_day": {
+      "type": "number",
+      "description": "Day of month payment is due (1-31)"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Loan start date"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "mortgage",
+        "auto",
+        "student",
+        "personal",
+        "credit_card",
+        "medical",
+        "other"
+      ]
     },
     "notes": {
       "type": "string"
     },
-    "color": {
-      "type": "string"
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paid_off"
+      ],
+      "default": "active"
     }
   },
   "required": [
     "name",
-    "total_amount",
-    "amount_paid"
+    "original_amount",
+    "current_balance"
   ],
   "rls": {
     "create": {

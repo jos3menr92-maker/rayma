@@ -1,0 +1,42 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "loan_id": {
+      "type": "string",
+      "description": "ID of the loan this payment belongs to"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Payment amount"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of payment"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional note about the payment"
+    }
+  },
+  "required": [
+    "loan_id",
+    "amount",
+    "payment_date"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
