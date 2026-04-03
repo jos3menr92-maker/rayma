@@ -1,11 +1,12 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Plus, List, Receipt } from "lucide-react";
+import { LayoutDashboard, Plus, List, Receipt, CalendarDays } from "lucide-react";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/loans", icon: List, label: "Loans" },
   { path: "/add-loan", icon: Plus, label: "Add" },
   { path: "/bills", icon: Receipt, label: "Bills" },
+  { path: "/calendar", icon: CalendarDays, label: "Calendar" },
 ];
 
 export default function Layout() {

@@ -4,15 +4,15 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Bill name (e.g. Netflix, Electric)"
+      "description": "Bill name (e.g. Netflix, Electricity)"
     },
     "amount": {
       "type": "number",
-      "description": "Monthly amount due"
+      "description": "Monthly amount"
     },
     "due_day": {
       "type": "number",
-      "description": "Day of the month it is due (1-31)"
+      "description": "Day of month bill is due (1-31)"
     },
     "category": {
       "type": "string",
@@ -21,24 +21,24 @@
         "subscriptions",
         "insurance",
         "rent",
-        "phone",
-        "internet",
         "food",
+        "transport",
+        "health",
         "other"
-      ]
-    },
-    "autopay": {
-      "type": "boolean",
-      "description": "Is autopay enabled?"
+      ],
+      "default": "other"
     },
     "notes": {
       "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
     }
   },
   "required": [
     "name",
-    "amount",
-    "due_day"
+    "amount"
   ],
   "rls": {
     "create": {

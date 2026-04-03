@@ -1,93 +1,189 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { motion } from "framer-motion";
-import { CalendarDays, List, Plus, Zap } from "lucide-react";
-import BillCalendar from "../components/BillCalendar";
-import BillCard from "../components/BillCard";
-import AddBillDialog from "../components/AddBillDialog";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Trash2, Edit3, Receipt } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const categoryIcons = {
+  utilities: "⚡", subscriptions: "📱", insurance: "🛡️",
+  rent: "🏠", food: "🍔", transport: "🚗", health: "🏥", other: "📋",
+};
+
+const categories = [
+  { value: "utilities", label: "⚡ Utilities" },
+  { value: "subscriptions", label: "📱 Subscriptions" },
+  { value: "insurance", label: "🛡️ Insurance" },
+  { value: "rent", label: "🏠 Rent" },
+  { value: "food", label: "🍔 Food" },
+  { value: "transport", label: "🚗 Transport" },
+  { value: "health", label: "🏥 Health" },
+  { value: "other", label: "📋 Other" },
+];
+
+const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
+
+const emptyForm = { name: "", amount: "", due_day: "", category: "other", notes: "", is_active: true };
 
 export default function Bills() {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("list");
-  const [addOpen, setAddOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadBills(); }, []);
-
-  async function loadBills() {
-    const data = await base44.entities.Bill.list("due_day", 100);
+  const load = async () => {
+    const data = await base44.entities.Bill.list("-created_date", 100);
     setBills(data);
     setLoading(false);
-  }
+  };
 
-  const monthlyTotal = bills.reduce((s, b) => s + (b.amount || 0), 0);
+  useEffect(() => { load(); }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const openAdd = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
+  const openEdit = (bill) => {
+    setEditing(bill);
+    setForm({ name: bill.name, amount: bill.amount, due_day: bill.due_day || "", category: bill.category || "other", notes: bill.notes || "", is_active: bill.is_active !== false });
+    setDialogOpen(true);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    const data = { ...form, amount: parseFloat(form.amount) || 0, due_day: parseInt(form.due_day) || null };
+    if (editing) {
+      await base44.entities.Bill.update(editing.id, data);
+    } else {
+      await base44.entities.Bill.create(data);
+    }
+    setSaving(false);
+    setDialogOpen(false);
+    load();
+  };
+
+  const handleDelete = async (id) => {
+    await base44.entities.Bill.delete(id);
+    load();
+  };
+
+  const totalMonthly = bills.filter(b => b.is_active !== false).reduce((s, b) => s + (b.amount || 0), 0);
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+    </div>
+  );
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold font-heading text-foreground">Monthly Bills</h1>
-          <button
-            onClick={() => setAddOpen(true)}
-            className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm"
-          >
-            <Plus className="w-5 h-5 text-primary-foreground" />
-          </button>
+          <Button size="sm" className="rounded-xl" onClick={openAdd}>
+            <Plus className="w-4 h-4 mr-1" /> Add
+          </Button>
         </div>
-        <p className="text-sm text-muted-foreground mb-5">
-          {bills.length} bill{bills.length !== 1 ? "s" : ""} · $
-          {monthlyTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /mo
-        </p>
+
+        {/* Total */}
+        <div className="bg-card border border-border rounded-2xl p-4 mb-5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Receipt className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Monthly</p>
+            <p className="text-xl font-bold font-heading text-foreground">{fmt(totalMonthly)}</p>
+          </div>
+        </div>
+
+        {/* Bills list */}
+        <div className="space-y-3">
+          <AnimatePresence>
+            {bills.map((bill, i) => (
+              <motion.div
+                key={bill.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ delay: i * 0.04 }}
+                className={`bg-card border border-border rounded-2xl p-4 flex items-center justify-between ${bill.is_active === false ? "opacity-50" : ""}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
+                    {categoryIcons[bill.category] || "📋"}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-foreground">{bill.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {bill.due_day ? `Due ${bill.due_day}th` : "No due day"} · {bill.category}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-foreground text-sm">{fmt(bill.amount)}</p>
+                  <button onClick={() => openEdit(bill)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => handleDelete(bill.id)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {bills.length === 0 && (
+          <div className="text-center py-12">
+            <Receipt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">No bills yet. Add your first monthly bill.</p>
+          </div>
+        )}
       </motion.div>
 
-      {/* View toggle */}
-      <div className="flex gap-1.5 bg-muted p-1 rounded-xl mb-5 w-fit">
-        <button
-          onClick={() => setView("list")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            view === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-          }`}
-        >
-          <List className="w-3.5 h-3.5" /> List
-        </button>
-        <button
-          onClick={() => setView("calendar")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            view === "calendar" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-          }`}
-        >
-          <CalendarDays className="w-3.5 h-3.5" /> Calendar
-        </button>
-      </div>
-
-      {view === "calendar" ? (
-        <BillCalendar bills={bills} />
-      ) : (
-        <div className="space-y-3">
-          {bills.map((bill, i) => (
-            <BillCard key={bill.id} bill={bill} index={i} onRefresh={loadBills} />
-          ))}
-          {bills.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                <Zap className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <p className="font-semibold text-foreground text-sm mb-1">No bills yet</p>
-              <p className="text-xs text-muted-foreground">Tap + to add your first monthly bill</p>
+      {/* Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Bill" : "Add Bill"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSave} className="space-y-3 mt-2">
+            <div>
+              <Label className="text-xs text-muted-foreground">Name *</Label>
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Netflix" required className="mt-1 rounded-xl" />
             </div>
-          )}
-        </div>
-      )}
-
-      <AddBillDialog open={addOpen} onClose={() => setAddOpen(false)} onSaved={loadBills} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Amount ($) *</Label>
+                <Input type="number" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" required className="mt-1 rounded-xl" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Due Day (1-31)</Label>
+                <Input type="number" min="1" max="31" value={form.due_day} onChange={e => setForm(f => ({ ...f, due_day: e.target.value }))} placeholder="1" className="mt-1 rounded-xl" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Category</Label>
+              <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Notes</Label>
+              <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optional" className="mt-1 rounded-xl" />
+            </div>
+            <Button type="submit" disabled={saving} className="w-full rounded-xl">
+              {saving ? "Saving..." : editing ? "Save Changes" : "Add Bill"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
