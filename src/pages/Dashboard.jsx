@@ -5,6 +5,7 @@ import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
 import LoanCard from "../components/LoanCard";
 import { motion } from "framer-motion";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat("en-US", {
@@ -15,8 +16,33 @@ function formatCurrency(amount) {
   }).format(amount || 0);
 }
 
+const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))"];
+
+function PieCard({ title, data, total }) {
+  return (
+    <div className="bg-card border border-border rounded-2xl p-4">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1">{title}</p>
+      <p className="text-xl font-bold font-heading text-foreground mb-3">{formatCurrency(total)}</p>
+      {data.length === 0 ? (
+        <p className="text-xs text-muted-foreground text-center py-4">No data</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={180}>
+          <PieChart>
+            <Pie data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} dataKey="value">
+              {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+            </Pie>
+            <Tooltip formatter={(v) => formatCurrency(v)} />
+            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "10px" }} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [loans, setLoans] = useState([]);
+  const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,8 +50,12 @@ export default function Dashboard() {
   }, []);
 
   async function loadData() {
-    const data = await base44.entities.Loan.list("-created_date", 100);
-    setLoans(data);
+    const [loansData, billsData] = await Promise.all([
+      base44.entities.Loan.list("-created_date", 100),
+      base44.entities.Bill.list("-created_date", 100),
+    ]);
+    setLoans(loansData);
+    setBills(billsData.filter(b => b.is_active !== false));
     setLoading(false);
   }
 
@@ -34,7 +64,17 @@ export default function Dashboard() {
   const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
   const totalPaid = totalDebt - totalRemaining;
   const overallProgress = totalDebt > 0 ? (totalPaid / totalDebt) * 100 : 0;
-  const monthlyTotal = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
+  const monthlyTotal = monthlyLoans + monthlyBills;
+
+  // Pie chart data
+  const expensePieData = [
+    ...(monthlyLoans > 0 ? [{ name: "Loan Payments", value: monthlyLoans }] : []),
+    ...(monthlyBills > 0 ? [{ name: "Bills", value: monthlyBills }] : []),
+  ];
+  const billsPieData = bills.map(b => ({ name: b.name, value: b.amount || 0 }));
+  const loansPieData = activeLoans.map(l => ({ name: l.name, value: l.current_balance || 0 }));
 
   const today = new Date().getDate();
   const upcomingLoans = activeLoans
@@ -103,7 +143,18 @@ export default function Dashboard() {
           value={formatCurrency(monthlyTotal)}
           icon={CreditCard}
           color="muted"
+          subtitle={`Loans ${formatCurrency(monthlyLoans)} · Bills ${formatCurrency(monthlyBills)}`}
         />
+      </div>
+
+      {/* Pie Charts */}
+      <div className="mb-6 space-y-4">
+        <h2 className="text-sm font-semibold font-heading text-foreground">Expense Breakdown</h2>
+        <PieCard title="Total Monthly Expenses" data={expensePieData} total={monthlyTotal} />
+        <div className="grid grid-cols-1 gap-4">
+          <PieCard title="Monthly Bills" data={billsPieData} total={monthlyBills} />
+          <PieCard title="Active Loan Balances" data={loansPieData} total={totalRemaining} />
+        </div>
       </div>
 
       {/* Upcoming Reminders */}
