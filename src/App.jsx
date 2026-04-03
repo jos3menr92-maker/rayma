@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import LoansList from './pages/LoansList';
 import AddLoan from './pages/AddLoan';
 import LoanDetail from './pages/LoanDetail';
+import Bills from './pages/Bills';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -42,6 +43,7 @@ const AuthenticatedApp = () => {
         <Route path="/loans" element={<LoansList />} />
         <Route path="/add-loan" element={<AddLoan />} />
         <Route path="/loan/:id" element={<LoanDetail />} />
+        <Route path="/bills" element={<Bills />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
