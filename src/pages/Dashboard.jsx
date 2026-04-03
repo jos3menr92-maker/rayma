@@ -18,24 +18,25 @@ function formatCurrency(amount) {
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))"];
 
-function PieCard({ title, data, total }) {
+function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140 }) {
   return (
-    <div className="bg-card border border-border rounded-2xl p-4">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1">{title}</p>
-      <p className="text-xl font-bold font-heading text-foreground mb-3">{formatCurrency(total)}</p>
+    <div className="flex flex-col items-center">
       {data.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-4">No data</p>
+        <div style={{ height }} className="flex items-center justify-center">
+          <p className="text-xs text-muted-foreground">No data</p>
+        </div>
       ) : (
-        <ResponsiveContainer width="100%" height={180}>
+        <ResponsiveContainer width="100%" height={height}>
           <PieChart>
-            <Pie data={data} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} dataKey="value">
+            <Pie data={data} cx="50%" cy="50%" innerRadius={innerRadius} outerRadius={outerRadius} paddingAngle={2} dataKey="value">
               {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Pie>
             <Tooltip formatter={(v) => formatCurrency(v)} />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "10px" }} />
           </PieChart>
         </ResponsiveContainer>
       )}
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium text-center mt-1">{title}</p>
+      <p className="text-sm font-bold font-heading text-foreground">{formatCurrency(total)}</p>
     </div>
   );
 }
@@ -148,12 +149,13 @@ export default function Dashboard() {
       </div>
 
       {/* Pie Charts */}
-      <div className="mb-6 space-y-4">
-        <h2 className="text-sm font-semibold font-heading text-foreground">Expense Breakdown</h2>
-        <PieCard title="Total Monthly Expenses" data={expensePieData} total={monthlyTotal} />
-        <div className="grid grid-cols-1 gap-4">
-          <PieCard title="Monthly Bills" data={billsPieData} total={monthlyBills} />
-          <PieCard title="Active Loan Balances" data={loansPieData} total={totalRemaining} />
+      <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
+        <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Expense Breakdown</h2>
+        <MiniPie title="Total Monthly Expenses" data={expensePieData} total={monthlyTotal} innerRadius={50} outerRadius={80} height={200} />
+        <div className="mt-2 mb-3 border-t border-border" />
+        <div className="grid grid-cols-2 gap-2">
+          <MiniPie title="Monthly Bills" data={billsPieData} total={monthlyBills} innerRadius={28} outerRadius={48} height={130} />
+          <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={28} outerRadius={48} height={130} />
         </div>
       </div>
 
