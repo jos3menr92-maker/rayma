@@ -115,19 +115,23 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      {/* Progress Ring */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center mb-6 bg-card rounded-3xl p-6 border border-border shadow-sm"
-      >
-        <ProgressRing percentage={overallProgress} size={140} strokeWidth={12} />
-        <p className="mt-3 text-sm text-muted-foreground">
-          {formatCurrency(totalPaid)} of {formatCurrency(totalDebt)} paid
-        </p>
-      </motion.div>
+      {/* Pie Charts - TOP */}
+      <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
+        <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Expense Breakdown</h2>
+        {/* Primary row: Total Monthly + Loan Balances */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <MiniPie title="Total Monthly" data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} />
+          <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} />
+        </div>
+        <div className="border-t border-border mb-4" />
+        {/* Secondary row: Bills + Loan Payments */}
+        <div className="grid grid-cols-2 gap-4">
+          <MiniPie title="Bills" data={billsPieData} total={monthlyBills} innerRadius={24} outerRadius={40} height={120} />
+          <MiniPie title="Loan Payments" data={loanPaymentsPieData} total={monthlyLoans} innerRadius={24} outerRadius={40} height={120} />
+        </div>
+      </div>
 
-      {/* Stats Grid */}
+      {/* Progress Ring */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <StatsCard
           label="Total Debt"
@@ -155,18 +159,6 @@ export default function Dashboard() {
           color="muted"
           subtitle={`Loans ${formatCurrency(monthlyLoans)} · Bills ${formatCurrency(monthlyBills)}`}
         />
-      </div>
-
-      {/* Pie Charts */}
-      <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
-        <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Expense Breakdown</h2>
-        <MiniPie title="Total Monthly Expenses" data={expensePieData} total={monthlyTotal} innerRadius={50} outerRadius={80} height={200} />
-        <div className="mt-2 mb-3 border-t border-border" />
-        <div className="grid grid-cols-3 gap-2">
-          <MiniPie title="Bills" data={billsPieData} total={monthlyBills} innerRadius={22} outerRadius={38} height={110} />
-          <MiniPie title="Loan Payments" data={loanPaymentsPieData} total={monthlyLoans} innerRadius={22} outerRadius={38} height={110} />
-          <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={22} outerRadius={38} height={110} />
-        </div>
       </div>
 
       {/* Upcoming Reminders */}
