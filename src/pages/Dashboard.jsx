@@ -76,6 +76,7 @@ export default function Dashboard() {
   ];
   const billsPieData = bills.map(b => ({ name: b.name, value: b.amount || 0 }));
   const loansPieData = activeLoans.map(l => ({ name: l.name, value: l.current_balance || 0 }));
+  const loanPaymentsPieData = activeLoans.filter(l => l.monthly_payment).map(l => ({ name: l.name, value: l.monthly_payment || 0 }));
 
   const today = new Date().getDate();
   const upcomingLoans = activeLoans
@@ -153,9 +154,10 @@ export default function Dashboard() {
         <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Expense Breakdown</h2>
         <MiniPie title="Total Monthly Expenses" data={expensePieData} total={monthlyTotal} innerRadius={50} outerRadius={80} height={200} />
         <div className="mt-2 mb-3 border-t border-border" />
-        <div className="grid grid-cols-2 gap-2">
-          <MiniPie title="Monthly Bills" data={billsPieData} total={monthlyBills} innerRadius={28} outerRadius={48} height={130} />
-          <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={28} outerRadius={48} height={130} />
+        <div className="grid grid-cols-3 gap-2">
+          <MiniPie title="Bills" data={billsPieData} total={monthlyBills} innerRadius={22} outerRadius={38} height={110} />
+          <MiniPie title="Loan Payments" data={loanPaymentsPieData} total={monthlyLoans} innerRadius={22} outerRadius={38} height={110} />
+          <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={22} outerRadius={38} height={110} />
         </div>
       </div>
 
