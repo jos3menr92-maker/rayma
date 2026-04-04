@@ -45,18 +45,21 @@ export default function Dashboard() {
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
   async function loadData() {
-    const [loansData, billsData] = await Promise.all([
+    const [loansData, billsData, me] = await Promise.all([
       base44.entities.Loan.list("-created_date", 100),
       base44.entities.Bill.list("-created_date", 100),
+      base44.auth.me(),
     ]);
     setLoans(loansData);
     setBills(billsData.filter(b => b.is_active !== false));
+    setUserProfile(me);
     setLoading(false);
   }
 
@@ -98,13 +101,18 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">
-          Debt Tracker
-        </h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Stay on top of your finances
-        </p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold font-heading text-foreground mb-0.5">
+            Hi, {userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0] || 'there'} 👋
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {userProfile?.dashboard_greeting || 'Stay on top of your finances'}
+          </p>
+        </div>
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
+          {userProfile?.avatar_emoji || '😊'}
+        </div>
       </motion.div>
 
       {/* Progress Ring */}

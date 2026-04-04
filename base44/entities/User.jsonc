@@ -1,0 +1,41 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+    "preferred_name": {
+      "type": "string",
+      "description": "Display name shown on dashboard"
+    },
+    "avatar_emoji": {
+      "type": "string",
+      "description": "Emoji used as avatar"
+    },
+    "preferred_currency": {
+      "type": "string",
+      "enum": [
+        "USD",
+        "EUR",
+        "GBP",
+        "CAD",
+        "AUD",
+        "JPY",
+        "INR",
+        "MXN",
+        "BRL"
+      ],
+      "default": "USD"
+    },
+    "dashboard_greeting": {
+      "type": "string",
+      "description": "Custom greeting message shown on dashboard"
+    }
+  }
+}
