@@ -4,13 +4,13 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Goal name (e.g. Emergency Fund)"
+      "description": "Goal name (e.g. Emergency Fund, Vacation)"
     },
     "target_amount": {
       "type": "number",
-      "description": "Target savings amount"
+      "description": "Total amount to save"
     },
-    "current_amount": {
+    "current_saved": {
       "type": "number",
       "description": "Amount saved so far",
       "default": 0
@@ -22,14 +22,18 @@
     "target_date": {
       "type": "string",
       "format": "date",
-      "description": "Goal target date"
-    },
-    "emoji": {
-      "type": "string",
-      "description": "Goal emoji icon"
+      "description": "Target completion date"
     },
     "notes": {
       "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed"
+      ],
+      "default": "active"
     }
   },
   "required": [

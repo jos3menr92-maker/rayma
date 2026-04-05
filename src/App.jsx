@@ -14,6 +14,7 @@ import Bills from './pages/Bills';
 import BillCalendar from './pages/BillCalendar';
 import Reminders from './pages/Reminders';
 import Profile from './pages/Profile';
+import Budget from './pages/Budget';
 import Finance from './pages/Finance';
 
 const AuthenticatedApp = () => {
@@ -51,6 +52,7 @@ const AuthenticatedApp = () => {
         <Route path="/calendar" element={<BillCalendar />} />
         <Route path="/reminders" element={<Reminders />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/budget" element={<Budget />} />
         <Route path="/finance" element={<Finance />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
