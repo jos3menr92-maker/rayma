@@ -14,6 +14,7 @@ import Bills from './pages/Bills';
 import BillCalendar from './pages/BillCalendar';
 import Reminders from './pages/Reminders';
 import Profile from './pages/Profile';
+import Finance from './pages/Finance';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
         <Route path="/calendar" element={<BillCalendar />} />
         <Route path="/reminders" element={<Reminders />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/finance" element={<Finance />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

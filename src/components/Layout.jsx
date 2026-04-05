@@ -1,11 +1,11 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Plus, List, Receipt, UserCircle } from "lucide-react";
+import { LayoutDashboard, Plus, List, Receipt, UserCircle, TrendingUp } from "lucide-react";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/loans", icon: List, label: "Loans" },
   { path: "/add-loan", icon: Plus, label: "Add" },
-  { path: "/bills", icon: Receipt, label: "Bills" },
+  { path: "/finance", icon: TrendingUp, label: "Finance" },
   { path: "/profile", icon: UserCircle, label: "Profile" },
 ];
 

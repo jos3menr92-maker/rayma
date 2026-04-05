@@ -1,0 +1,53 @@
+{
+  "name": "SavingsGoal",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Goal name (e.g. Emergency Fund)"
+    },
+    "target_amount": {
+      "type": "number",
+      "description": "Target savings amount"
+    },
+    "current_amount": {
+      "type": "number",
+      "description": "Amount saved so far",
+      "default": 0
+    },
+    "weekly_contribution": {
+      "type": "number",
+      "description": "Planned weekly contribution"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Goal target date"
+    },
+    "emoji": {
+      "type": "string",
+      "description": "Goal emoji icon"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "target_amount"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
