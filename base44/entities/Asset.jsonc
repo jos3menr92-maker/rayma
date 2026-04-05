@@ -1,0 +1,46 @@
+{
+  "name": "Asset",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Asset name (e.g. Checking Account, 401k)"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Current value"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "investment",
+        "property",
+        "savings",
+        "other"
+      ],
+      "default": "cash"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "amount"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
