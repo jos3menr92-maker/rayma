@@ -1,5 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Plus, List, Receipt, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu } from "lucide-react";
+import SideDrawer from "./SideDrawer";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -11,9 +13,20 @@ const navItems = [
 
 export default function Layout() {
   const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      {/* Top bar with menu button */}
+      <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
+        <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
+          <span className="text-sm font-semibold font-heading text-foreground">Debt & Bills</span>
+          <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
       <main className="flex-1 pb-20 overflow-y-auto">
         <Outlet />
       </main>
