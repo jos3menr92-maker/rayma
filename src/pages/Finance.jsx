@@ -1,126 +1,119 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, TrendingUp, Target, Send, Loader2, CheckCircle2, Bell } from "lucide-react";
+import { motion } from "framer-motion";
+import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  CartesianGrid, Legend, BarChart, Bar,
+} from "recharts";
 
 const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
 
-function getMonday(date = new Date()) {
+function getWeekLabel(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function startOfWeek(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
+  d.setDate(d.getDate() - day);
   return d.toISOString().split("T")[0];
 }
 
-const emptyIncome = { amount: "", week_start: getMonday(), source: "", notes: "" };
-const emptyGoal = { name: "", target_amount: "", current_amount: "", weekly_contribution: "", target_date: "", emoji: "🎯", notes: "" };
-
-const GOAL_EMOJIS = ["🎯", "🏠", "🚗", "✈️", "📱", "💍", "🎓", "🏖️", "💼", "🛡️"];
-
 export default function Finance() {
-  const [income, setIncome] = useState([]);
-  const [goals, setGoals] = useState([]);
+  const [incomes, setIncomes] = useState([]);
+  const [bills, setBills] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [incomeDialog, setIncomeDialog] = useState(false);
-  const [goalDialog, setGoalDialog] = useState(false);
-  const [editingGoal, setEditingGoal] = useState(null);
-  const [incomeForm, setIncomeForm] = useState(emptyIncome);
-  const [goalForm, setGoalForm] = useState(emptyGoal);
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "" });
   const [saving, setSaving] = useState(false);
-  const [reminderSent, setReminderSent] = useState(false);
-  const [sendingReminder, setSendingReminder] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    const [incomeData, goalsData, me] = await Promise.all([
-      base44.entities.Income.list("-week_start", 52),
-      base44.entities.SavingsGoal.list("-created_date", 50),
-      base44.auth.me(),
+    const [inc, b, l] = await Promise.all([
+      base44.entities.WeeklyIncome.list("-week_start", 52),
+      base44.entities.Bill.list("-created_date", 100),
+      base44.entities.Loan.list("-created_date", 100),
     ]);
-    setIncome(incomeData);
-    setGoals(goalsData);
-    setUserEmail(me?.email || "");
+    setIncomes(inc);
+    setBills(b.filter(x => x.is_active !== false));
+    setLoans(l.filter(x => x.status !== "paid_off"));
     setLoading(false);
   }
 
-  // Check if income logged this week
-  const thisWeek = getMonday();
-  const loggedThisWeek = income.some(i => i.week_start === thisWeek);
+  // Monthly fixed expenses
+  const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
+  const monthlyLoans = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const monthlyExpenses = monthlyBills + monthlyLoans;
+  const weeklyExpenses = monthlyExpenses / 4.33;
 
-  async function handleAddIncome(e) {
+  // Weekly income stats
+  const totalIncomeLogged = incomes.reduce((s, i) => s + (i.amount || 0), 0);
+  const avgWeeklyIncome = incomes.length > 0 ? totalIncomeLogged / incomes.length : 0;
+  const monthlyIncome = avgWeeklyIncome * 4.33;
+  const monthlyCashFlow = monthlyIncome - monthlyExpenses;
+
+  // Check if current week logged
+  const thisWeek = startOfWeek();
+  const loggedThisWeek = incomes.some(i => i.week_start === thisWeek);
+
+  // Chart data — merge income weeks with expense line
+  const chartData = [...incomes]
+    .sort((a, b) => a.week_start.localeCompare(b.week_start))
+    .slice(-16)
+    .map(i => ({
+      week: getWeekLabel(i.week_start),
+      income: i.amount,
+      expenses: Math.round(weeklyExpenses),
+      cashflow: i.amount - weeklyExpenses,
+    }));
+
+  // Expense breakdown for bar chart
+  const expenseBreakdown = [
+    ...(monthlyBills > 0 ? [{ name: "Bills", amount: monthlyBills }] : []),
+    ...(monthlyLoans > 0 ? [{ name: "Loan Payments", amount: monthlyLoans }] : []),
+  ];
+
+  async function handleSaveIncome(e) {
     e.preventDefault();
     setSaving(true);
-    await base44.entities.Income.create({ ...incomeForm, amount: parseFloat(incomeForm.amount) || 0 });
-    setSaving(false);
-    setIncomeDialog(false);
-    setIncomeForm(emptyIncome);
-    loadData();
-  }
-
-  async function handleDeleteIncome(id) {
-    await base44.entities.Income.delete(id);
-    loadData();
-  }
-
-  async function handleSaveGoal(e) {
-    e.preventDefault();
-    setSaving(true);
-    const data = {
-      ...goalForm,
-      target_amount: parseFloat(goalForm.target_amount) || 0,
-      current_amount: parseFloat(goalForm.current_amount) || 0,
-      weekly_contribution: parseFloat(goalForm.weekly_contribution) || 0,
-    };
-    if (editingGoal) {
-      await base44.entities.SavingsGoal.update(editingGoal.id, data);
+    const data = { ...incomeForm, amount: parseFloat(incomeForm.amount) || 0 };
+    if (editingIncome) {
+      await base44.entities.WeeklyIncome.update(editingIncome.id, data);
     } else {
-      await base44.entities.SavingsGoal.create(data);
+      await base44.entities.WeeklyIncome.create(data);
     }
     setSaving(false);
-    setGoalDialog(false);
-    setEditingGoal(null);
-    setGoalForm(emptyGoal);
+    setIncomeDialog(false);
     loadData();
   }
 
-  async function handleDeleteGoal(id) {
-    await base44.entities.SavingsGoal.delete(id);
+  function openAdd() {
+    setEditingIncome(null);
+    setIncomeForm({ amount: "", week_start: startOfWeek(), note: "" });
+    setIncomeDialog(true);
+  }
+
+  function openEdit(inc) {
+    setEditingIncome(inc);
+    setIncomeForm({ amount: inc.amount, week_start: inc.week_start, note: inc.note || "" });
+    setIncomeDialog(true);
+  }
+
+  async function handleDelete(id) {
+    await base44.entities.WeeklyIncome.delete(id);
     loadData();
   }
-
-  function openEditGoal(goal) {
-    setEditingGoal(goal);
-    setGoalForm({
-      name: goal.name, target_amount: goal.target_amount, current_amount: goal.current_amount || 0,
-      weekly_contribution: goal.weekly_contribution || "", target_date: goal.target_date || "",
-      emoji: goal.emoji || "🎯", notes: goal.notes || "",
-    });
-    setGoalDialog(true);
-  }
-
-  async function sendWeeklyReminder() {
-    setSendingReminder(true);
-    await base44.integrations.Core.SendEmail({
-      to: userEmail,
-      subject: "💰 Weekly Income Reminder",
-      body: `Hi!\n\nThis is your weekly reminder to log your income in Debt Tracker.\n\nStaying consistent with income tracking helps you make better financial decisions and measure progress toward your savings goals.\n\nOpen the app and log this week's income now!\n\n— Debt Tracker`,
-    });
-    setSendingReminder(false);
-    setReminderSent(true);
-    setTimeout(() => setReminderSent(false), 3000);
-  }
-
-  const totalWeeklyIncome = income.slice(0, 4).reduce((s, i) => s + (i.amount || 0), 0) / Math.min(income.slice(0, 4).length, 4) || 0;
-  const recentIncome = income.slice(0, 8);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -131,244 +124,159 @@ export default function Finance() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Finance</h1>
-        <p className="text-sm text-muted-foreground mb-5">Track income & savings goals</p>
+        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Finance Overview</h1>
+        <p className="text-sm text-muted-foreground mb-5">Income, expenses & cash flow</p>
 
-        {/* Weekly reminder banner */}
-        {!loggedThisWeek && income.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-accent/10 border border-accent/30 rounded-2xl p-3 mb-5 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-accent" />
-              <p className="text-sm font-medium text-foreground">Haven't logged income this week</p>
+        {/* Cash Flow Banner */}
+        {!loggedThisWeek && (
+          <div className="bg-accent/10 border border-accent/30 rounded-2xl p-3 mb-4 flex items-center gap-3">
+            <span className="text-xl">📝</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Log this week's income</p>
+              <p className="text-xs text-muted-foreground">You haven't recorded income yet for this week</p>
             </div>
-            <Button size="sm" variant="outline" className="rounded-xl text-xs border-accent/40 text-accent"
-              onClick={() => { setIncomeForm({ ...emptyIncome, week_start: thisWeek }); setIncomeDialog(true); }}>
-              Log Now
-            </Button>
-          </motion.div>
+            <Button size="sm" className="rounded-xl text-xs shrink-0" onClick={openAdd}>Log</Button>
+          </div>
         )}
 
-        <Tabs defaultValue="income">
-          <TabsList className="w-full mb-5 rounded-xl">
-            <TabsTrigger value="income" className="flex-1 rounded-xl">
-              <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> Income
-            </TabsTrigger>
-            <TabsTrigger value="savings" className="flex-1 rounded-xl">
-              <Target className="w-3.5 h-3.5 mr-1.5" /> Savings Goals
-            </TabsTrigger>
-          </TabsList>
-
-          {/* INCOME TAB */}
-          <TabsContent value="income">
-            {/* Summary card */}
-            <div className="bg-card border border-border rounded-2xl p-4 mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Avg Weekly Income</p>
-                <p className="text-xl font-bold font-heading text-foreground">{fmt(totalWeeklyIncome)}</p>
-                <p className="text-xs text-muted-foreground">based on last {Math.min(income.slice(0,4).length, 4)} entries</p>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button size="sm" className="rounded-xl" onClick={() => { setIncomeForm(emptyIncome); setIncomeDialog(true); }}>
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Log Income
-                </Button>
-                <Button size="sm" variant="outline" className="rounded-xl text-xs" onClick={sendWeeklyReminder} disabled={sendingReminder || !userEmail}>
-                  {sendingReminder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
-                    reminderSent ? <><CheckCircle2 className="w-3.5 h-3.5 mr-1 text-primary" />Sent!</> :
-                    <><Send className="w-3.5 h-3.5 mr-1" />Email Reminder</>}
-                </Button>
-              </div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="bg-card border border-border rounded-2xl p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Monthly Income</p>
+            <p className="text-base font-bold font-heading text-primary">{fmt(monthlyIncome)}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">avg estimate</p>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Monthly Expenses</p>
+            <p className="text-base font-bold font-heading text-destructive">{fmt(monthlyExpenses)}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">fixed bills + loans</p>
+          </div>
+          <div className={`rounded-2xl p-3 border ${monthlyCashFlow >= 0 ? "bg-primary/10 border-primary/20" : "bg-destructive/10 border-destructive/20"}`}>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Cash Flow</p>
+            <p className={`text-base font-bold font-heading ${monthlyCashFlow >= 0 ? "text-primary" : "text-destructive"}`}>{fmt(monthlyCashFlow)}</p>
+            <div className="flex items-center gap-0.5 mt-0.5">
+              {monthlyCashFlow >= 0
+                ? <TrendingUp className="w-3 h-3 text-primary" />
+                : <TrendingDown className="w-3 h-3 text-destructive" />}
+              <p className="text-[10px] text-muted-foreground">per month</p>
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-3">
-              <AnimatePresence>
-                {recentIncome.map((entry, i) => (
-                  <motion.div key={entry.id}
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between"
+        {/* Income vs Expenses Chart */}
+        {chartData.length >= 2 && (
+          <div className="bg-card border border-border rounded-3xl p-4 mb-5">
+            <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Income vs Expenses (Weekly)</h2>
+            <ResponsiveContainer width="100%" height={190}>
+              <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="week" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                  tickFormatter={v => `$${Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + "k" : v}`} width={44} />
+                <Tooltip
+                  formatter={(v, name) => [fmt(v), name === "income" ? "Income" : name === "expenses" ? "Expenses" : "Cash Flow"]}
+                  contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", fontSize: 11 }}
+                />
+                <Legend formatter={v => v === "income" ? "Income" : v === "expenses" ? "Expenses" : "Cash Flow"} wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="income" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="expenses" stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 3" dot={false} />
+                <Line type="monotone" dataKey="cashflow" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Expense Breakdown Bar */}
+        {expenseBreakdown.length > 0 && (
+          <div className="bg-card border border-border rounded-3xl p-4 mb-5">
+            <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Monthly Expense Breakdown</h2>
+            <ResponsiveContainer width="100%" height={120}>
+              <BarChart data={expenseBreakdown} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} width={40} />
+                <Tooltip formatter={v => [fmt(v), "Amount"]}
+                  contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", fontSize: 11 }} />
+                <Bar dataKey="amount" fill="hsl(var(--destructive))" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Income Log */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold font-heading text-foreground">Income Log</h2>
+            <Button size="sm" className="rounded-xl" onClick={openAdd}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Log Income
+            </Button>
+          </div>
+
+          {incomes.length === 0 ? (
+            <div className="text-center py-8">
+              <DollarSign className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No income logged yet. Start tracking your weekly income.</p>
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-2xl divide-y divide-border">
+              {incomes.map((inc, i) => {
+                const weeklyNet = inc.amount - weeklyExpenses;
+                return (
+                  <motion.div key={inc.id}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
+                    className="flex items-center justify-between px-4 py-3"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{entry.source || "Income"}</p>
-                      <p className="text-xs text-muted-foreground">Week of {entry.week_start}</p>
-                      {entry.notes && <p className="text-xs text-muted-foreground mt-0.5">{entry.notes}</p>}
+                      <p className="text-sm font-semibold text-foreground">{fmt(inc.amount)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Week of {getWeekLabel(inc.week_start)}{inc.note ? ` · ${inc.note}` : ""}
+                      </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <p className="text-sm font-bold text-primary">{fmt(entry.amount)}</p>
-                      <button onClick={() => handleDeleteIncome(entry.id)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors">
+                      <div className="text-right">
+                        <div className={`flex items-center gap-0.5 justify-end text-xs font-medium ${weeklyNet >= 0 ? "text-primary" : "text-destructive"}`}>
+                          {weeklyNet >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
+                          {fmt(Math.abs(weeklyNet))}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">after expenses</p>
+                      </div>
+                      <button onClick={() => openEdit(inc)} className="p-1 text-muted-foreground hover:text-foreground">
+                        <Plus className="w-3.5 h-3.5 rotate-45" />
+                      </button>
+                      <button onClick={() => handleDelete(inc.id)} className="p-1 text-muted-foreground hover:text-destructive">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </motion.div>
-                ))}
-              </AnimatePresence>
+                );
+              })}
             </div>
-
-            {income.length === 0 && (
-              <div className="text-center py-12">
-                <TrendingUp className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">No income logged yet. Start by logging this week's income.</p>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* SAVINGS GOALS TAB */}
-          <TabsContent value="savings">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" className="rounded-xl" onClick={() => { setEditingGoal(null); setGoalForm(emptyGoal); setGoalDialog(true); }}>
-                <Plus className="w-3.5 h-3.5 mr-1" /> New Goal
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <AnimatePresence>
-                {goals.map((goal, i) => {
-                  const progress = goal.target_amount > 0 ? Math.min((goal.current_amount || 0) / goal.target_amount * 100, 100) : 0;
-                  const remaining = Math.max((goal.target_amount || 0) - (goal.current_amount || 0), 0);
-                  const weeksLeft = goal.weekly_contribution > 0 ? Math.ceil(remaining / goal.weekly_contribution) : null;
-                  return (
-                    <motion.div key={goal.id}
-                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="bg-card border border-border rounded-2xl p-4"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl">
-                            {goal.emoji || "🎯"}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{goal.name}</p>
-                            <p className="text-xs text-muted-foreground">{fmt(goal.current_amount || 0)} of {fmt(goal.target_amount)}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <button onClick={() => openEditGoal(goal)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => handleDeleteGoal(goal.id)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden mb-2">
-                        <motion.div className="h-full bg-primary rounded-full"
-                          initial={{ width: 0 }} animate={{ width: `${progress}%` }}
-                          transition={{ duration: 0.8, ease: "easeOut" }} />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-medium text-primary">{progress.toFixed(1)}% saved</span>
-                        <div className="flex gap-3 text-[11px] text-muted-foreground">
-                          {goal.weekly_contribution > 0 && <span>{fmt(goal.weekly_contribution)}/wk</span>}
-                          {weeksLeft !== null && <span>~{weeksLeft} weeks left</span>}
-                          {goal.target_date && <span>by {goal.target_date}</span>}
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-
-            {goals.length === 0 && (
-              <div className="text-center py-12">
-                <Target className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">No savings goals yet. Create your first goal!</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </motion.div>
 
-      {/* Log Income Dialog */}
       <Dialog open={incomeDialog} onOpenChange={setIncomeDialog}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Log Weekly Income</DialogTitle></DialogHeader>
-          <form onSubmit={handleAddIncome} className="space-y-3 mt-2">
+          <DialogHeader><DialogTitle>{editingIncome ? "Edit Income" : "Log Weekly Income"}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSaveIncome} className="space-y-3 mt-2">
             <div>
               <Label className="text-xs text-muted-foreground">Amount *</Label>
-              <Input type="number" step="0.01" placeholder="$0.00" value={incomeForm.amount}
+              <Input type="number" step="0.01" placeholder="$0" value={incomeForm.amount}
                 onChange={e => setIncomeForm(f => ({ ...f, amount: e.target.value }))} required className="mt-1 rounded-xl" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Week Starting *</Label>
+              <Label className="text-xs text-muted-foreground">Week Starting</Label>
               <Input type="date" value={incomeForm.week_start}
-                onChange={e => setIncomeForm(f => ({ ...f, week_start: e.target.value }))} required className="mt-1 rounded-xl" />
+                onChange={e => setIncomeForm(f => ({ ...f, week_start: e.target.value }))} className="mt-1 rounded-xl" />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Source</Label>
-              <Input placeholder="e.g. Salary, Freelance" value={incomeForm.source}
-                onChange={e => setIncomeForm(f => ({ ...f, source: e.target.value }))} className="mt-1 rounded-xl" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Notes</Label>
-              <Input placeholder="Optional" value={incomeForm.notes}
-                onChange={e => setIncomeForm(f => ({ ...f, notes: e.target.value }))} className="mt-1 rounded-xl" />
-            </div>
-            <Button type="submit" disabled={saving || !incomeForm.amount} className="w-full rounded-xl">
-              {saving ? "Saving..." : "Log Income"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Savings Goal Dialog */}
-      <Dialog open={goalDialog} onOpenChange={setGoalDialog}>
-        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editingGoal ? "Edit Goal" : "New Savings Goal"}</DialogTitle></DialogHeader>
-          <form onSubmit={handleSaveGoal} className="space-y-3 mt-2">
-            <div>
-              <Label className="text-xs text-muted-foreground">Goal Name *</Label>
-              <Input placeholder="e.g. Emergency Fund" value={goalForm.name}
-                onChange={e => setGoalForm(f => ({ ...f, name: e.target.value }))} required className="mt-1 rounded-xl" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Emoji Icon</Label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {GOAL_EMOJIS.map(emoji => (
-                  <button key={emoji} type="button"
-                    onClick={() => setGoalForm(f => ({ ...f, emoji }))}
-                    className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all ${goalForm.emoji === emoji ? "bg-primary/20 ring-2 ring-primary" : "bg-muted hover:bg-muted/80"}`}>
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">Target Amount *</Label>
-                <Input type="number" step="0.01" placeholder="$0.00" value={goalForm.target_amount}
-                  onChange={e => setGoalForm(f => ({ ...f, target_amount: e.target.value }))} required className="mt-1 rounded-xl" />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Amount Saved</Label>
-                <Input type="number" step="0.01" placeholder="$0.00" value={goalForm.current_amount}
-                  onChange={e => setGoalForm(f => ({ ...f, current_amount: e.target.value }))} className="mt-1 rounded-xl" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">Weekly Contribution</Label>
-                <Input type="number" step="0.01" placeholder="$0.00" value={goalForm.weekly_contribution}
-                  onChange={e => setGoalForm(f => ({ ...f, weekly_contribution: e.target.value }))} className="mt-1 rounded-xl" />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Target Date</Label>
-                <Input type="date" value={goalForm.target_date}
-                  onChange={e => setGoalForm(f => ({ ...f, target_date: e.target.value }))} className="mt-1 rounded-xl" />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Notes</Label>
-              <Input placeholder="Optional" value={goalForm.notes}
-                onChange={e => setGoalForm(f => ({ ...f, notes: e.target.value }))} className="mt-1 rounded-xl" />
+              <Label className="text-xs text-muted-foreground">Note</Label>
+              <Input placeholder="Optional" value={incomeForm.note}
+                onChange={e => setIncomeForm(f => ({ ...f, note: e.target.value }))} className="mt-1 rounded-xl" />
             </div>
             <Button type="submit" disabled={saving} className="w-full rounded-xl">
-              {saving ? "Saving..." : editingGoal ? "Save Changes" : "Create Goal"}
+              {saving ? "Saving..." : editingIncome ? "Save Changes" : "Log Income"}
             </Button>
           </form>
         </DialogContent>

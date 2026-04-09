@@ -1,12 +1,12 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Plus, List, PiggyBank, BarChart2 } from "lucide-react";
+import { LayoutDashboard, Plus, List, Receipt, TrendingUp } from "lucide-react";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/loans", icon: List, label: "Loans" },
   { path: "/add-loan", icon: Plus, label: "Add" },
-  { path: "/budget", icon: PiggyBank, label: "Budget" },
-  { path: "/net-worth", icon: BarChart2, label: "Net Worth" },
+  { path: "/bills", icon: Receipt, label: "Bills" },
+  { path: "/finance", icon: TrendingUp, label: "Finance" },
 ];
 
 export default function Layout() {
