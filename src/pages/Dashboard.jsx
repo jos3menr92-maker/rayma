@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import DueSoonAlert from "../components/DueSoonAlert";
+import TipCloud from "../components/TipCloud";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucide-react";
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
 import LoanCard from "../components/LoanCard";
 import { motion } from "framer-motion";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat("en-US", {
@@ -46,6 +48,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
 
@@ -54,13 +57,15 @@ export default function Dashboard() {
   }, []);
 
   async function loadData() {
-    const [loansData, billsData, me] = await Promise.all([
+    const [loansData, billsData, me, incomesData] = await Promise.all([
       base44.entities.Loan.list("-created_date", 100),
       base44.entities.Bill.list("-created_date", 100),
       base44.auth.me(),
+      base44.entities.WeeklyIncome.list("-week_start", 52),
     ]);
     setLoans(loansData);
     setBills(billsData.filter(b => b.is_active !== false));
+    setIncomes(incomesData);
     setUserProfile(me);
     setLoading(false);
   }
@@ -74,7 +79,6 @@ export default function Dashboard() {
   const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
   const monthlyTotal = monthlyLoans + monthlyBills;
 
-  // Pie chart data
   const expensePieData = [
     ...(monthlyLoans > 0 ? [{ name: "Loan Payments", value: monthlyLoans }] : []),
     ...(monthlyBills > 0 ? [{ name: "Bills", value: monthlyBills }] : []),
@@ -117,23 +121,24 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
+      {/* Due Soon Alert */}
+      <DueSoonAlert loans={activeLoans} bills={bills} />
+
       {/* Pie Charts - TOP */}
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
         <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Expense Breakdown</h2>
-        {/* Primary row: Total Monthly + Loan Balances */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <MiniPie title="Total Monthly" data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} />
           <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} />
         </div>
         <div className="border-t border-border mb-4" />
-        {/* Secondary row: Bills + Loan Payments */}
         <div className="grid grid-cols-2 gap-4">
           <MiniPie title="Bills" data={billsPieData} total={monthlyBills} innerRadius={24} outerRadius={40} height={120} />
           <MiniPie title="Loan Payments" data={loanPaymentsPieData} total={monthlyLoans} innerRadius={24} outerRadius={40} height={120} />
         </div>
       </div>
 
-      {/* Progress Ring */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div onClick={() => navigate("/trend?type=totalDebt")} className="cursor-pointer">
           <StatsCard label="Total Debt" value={formatCurrency(totalDebt)} icon={Wallet} color="destructive" subtitle={`${activeLoans.length} active loan${activeLoans.length !== 1 ? "s" : ""}`} />
@@ -215,6 +220,9 @@ export default function Dashboard() {
           </p>
         </div>
       )}
+
+      {/* Floating Tips */}
+      <TipCloud loans={loans} bills={bills} incomes={incomes} />
     </div>
   );
 }
