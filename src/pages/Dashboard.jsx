@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucide-react";
 import StatsCard from "../components/StatsCard";
@@ -42,6 +43,7 @@ function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, heigh
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -133,32 +135,18 @@ export default function Dashboard() {
 
       {/* Progress Ring */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <StatsCard
-          label="Total Debt"
-          value={formatCurrency(totalDebt)}
-          icon={Wallet}
-          color="destructive"
-          subtitle={`${activeLoans.length} active loan${activeLoans.length !== 1 ? "s" : ""}`}
-        />
-        <StatsCard
-          label="Remaining"
-          value={formatCurrency(totalRemaining)}
-          icon={TrendingDown}
-          color="accent"
-        />
-        <StatsCard
-          label="Total Paid"
-          value={formatCurrency(totalPaid)}
-          icon={TrendingUp}
-          color="primary"
-        />
-        <StatsCard
-          label="Monthly Due"
-          value={formatCurrency(monthlyTotal)}
-          icon={CreditCard}
-          color="muted"
-          subtitle={`Loans ${formatCurrency(monthlyLoans)} · Bills ${formatCurrency(monthlyBills)}`}
-        />
+        <div onClick={() => navigate("/trend?type=totalDebt")} className="cursor-pointer">
+          <StatsCard label="Total Debt" value={formatCurrency(totalDebt)} icon={Wallet} color="destructive" subtitle={`${activeLoans.length} active loan${activeLoans.length !== 1 ? "s" : ""}`} />
+        </div>
+        <div onClick={() => navigate("/trend?type=remaining")} className="cursor-pointer">
+          <StatsCard label="Remaining" value={formatCurrency(totalRemaining)} icon={TrendingDown} color="accent" />
+        </div>
+        <div onClick={() => navigate("/trend?type=totalPaid")} className="cursor-pointer">
+          <StatsCard label="Total Paid" value={formatCurrency(totalPaid)} icon={TrendingUp} color="primary" />
+        </div>
+        <div onClick={() => navigate("/trend?type=monthlyDue")} className="cursor-pointer">
+          <StatsCard label="Monthly Due" value={formatCurrency(monthlyTotal)} icon={CreditCard} color="muted" subtitle={`Loans ${formatCurrency(monthlyLoans)} · Bills ${formatCurrency(monthlyBills)}`} />
+        </div>
       </div>
 
       {/* Upcoming Reminders */}

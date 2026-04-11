@@ -17,6 +17,7 @@ import Profile from './pages/Profile';
 import Budget from './pages/Budget';
 
 import Finance from './pages/Finance';
+import MonthlyTrend from './pages/MonthlyTrend';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
         <Route path="/budget" element={<Budget />} />
 
         <Route path="/finance" element={<Finance />} />
+        <Route path="/trend" element={<MonthlyTrend />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
