@@ -40,7 +40,7 @@ export default function LoansList() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-4">
+        <h1 className="text-3xl font-bold font-heading text-primary mb-4">
           My Loans
         </h1>
       </motion.div>
@@ -53,7 +53,7 @@ export default function LoansList() {
           placeholder="Search loans..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
         />
       </div>
 
@@ -63,10 +63,10 @@ export default function LoansList() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all border ${
               filter === f
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
             }`}
           >
             {f === "all" ? "All" : f === "active" ? "Active" : "Paid Off"}
@@ -74,8 +74,8 @@ export default function LoansList() {
         ))}
       </div>
 
-      {/* List */}
-      <div className="space-y-3">
+      {/* 2-column grid */}
+      <div className="grid grid-cols-2 gap-3">
         {filtered.map((loan, i) => (
           <LoanCard key={loan.id} loan={loan} index={i} />
         ))}
