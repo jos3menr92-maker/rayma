@@ -39,7 +39,11 @@ export default function LoanCard({ loan, index = 0 }) {
     >
       <Link
         to={`/loan/${loan.id}`}
-        className="block bg-card rounded-2xl border border-border shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-200 active:scale-[0.98] overflow-hidden"
+        className={`block bg-card rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-200 active:scale-[0.98] overflow-hidden ${
+          loan.status === "paid_off"
+            ? "border-primary/40 hover:border-primary/60"
+            : "border-border hover:border-primary/40"
+        }`}
       >
         {/* Card Body */}
         <div className="p-4">
@@ -58,7 +62,14 @@ export default function LoanCard({ loan, index = 0 }) {
                 )}
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-primary" />
+            <div className="flex flex-col items-end gap-1">
+              {loan.status === "paid_off" && (
+                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
+                  ✓ Paid Off
+                </span>
+              )}
+              <ChevronRight className="w-4 h-4 text-primary" />
+            </div>
           </div>
 
           {/* Remaining balance */}
