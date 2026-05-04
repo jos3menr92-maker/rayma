@@ -19,7 +19,20 @@ function formatCurrency(amount) {
   }).format(amount || 0);
 }
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))"];
+const COLORS = [
+  "hsl(var(--primary))",      // teal
+  "hsl(var(--chart-2))",      // amber/yellow
+  "hsl(var(--chart-3))",      // blue
+  "hsl(var(--chart-4))",      // purple
+  "hsl(var(--destructive))",  // red
+  "#34d399",                  // emerald
+  "#f97316",                  // orange
+  "#a78bfa",                  // violet
+  "#38bdf8",                  // sky blue
+  "#fb7185",                  // pink
+  "#facc15",                  // yellow
+  "#4ade80",                  // green
+];
 
 function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140 }) {
   return (
