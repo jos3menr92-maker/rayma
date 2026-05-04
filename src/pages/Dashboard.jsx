@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
-import TipCloud from "../components/TipCloud";
+import RaymaChat from "../components/RaymaChat";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucide-react";
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
@@ -221,8 +221,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Floating Tips */}
-      <TipCloud loans={loans} bills={bills} incomes={incomes} />
+      {/* RAYMA AI Assistant */}
+      <RaymaChat />
     </div>
   );
 }
