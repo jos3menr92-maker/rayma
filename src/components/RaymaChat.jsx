@@ -24,7 +24,7 @@ export default function RaymaChat() {
     if (conversation) return;
     setLoading(true);
     const conv = await base44.agents.createConversation({
-      agent_name: "RAYMA",
+      agent_name: "rayma",
       metadata: { name: "RAYMA Chat" },
     });
     setConversation(conv);
