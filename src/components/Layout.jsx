@@ -36,7 +36,7 @@ export default function Layout() {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50">
-        <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-4">
+        <div className="flex items-center overflow-x-auto scrollbar-hide max-w-lg mx-auto py-2 px-2 gap-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -45,7 +45,7 @@ export default function Layout() {
                 <button
                   key={item.path}
                   onClick={() => setQuickAddOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground"
+                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground flex-shrink-0"
                 >
                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center -mt-5 shadow-lg shadow-primary/30">
                     <Plus className="w-5 h-5 text-primary-foreground" />
@@ -58,7 +58,7 @@ export default function Layout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 flex-shrink-0 ${
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
