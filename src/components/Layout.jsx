@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, Sparkles } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
@@ -8,7 +9,6 @@ import RaymaChat from "./RaymaChat";
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/loans", icon: List, label: "Loans" },
-  { path: "/add-loan", icon: Plus, label: "Add" },
   { path: "/bills", icon: Receipt, label: "Bills" },
   { path: "/finance", icon: TrendingUp, label: "Finance" },
   { path: "/simulator", icon: Sparkles, label: "Simulate" },
@@ -35,6 +35,20 @@ export default function Layout() {
       <main className="flex-1 pb-20 overflow-y-auto">
         <Outlet />
       </main>
+
+      {/* Floating Add Button */}
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.08 }}
+        onClick={() => setQuickAddOpen(true)}
+        className="fixed bottom-24 left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center"
+        title="Quick Add"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <Plus className="w-6 h-6 text-primary-foreground" />
+      </motion.button>
+
       <RaymaChat />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50">
@@ -42,20 +56,6 @@ export default function Layout() {
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
-            if (item.label === "Add") {
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => setQuickAddOpen(true)}
-                  className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground flex-shrink-0"
-                >
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center -mt-5 shadow-lg shadow-primary/30">
-                    <Plus className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <span className="text-[10px] font-medium">Add</span>
-                </button>
-              );
-            }
             return (
               <Link
                 key={item.path}
