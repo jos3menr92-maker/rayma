@@ -3,6 +3,7 @@ import { useState } from "react";
 import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, Sparkles } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
+import RaymaChat from "./RaymaChat";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -34,6 +35,7 @@ export default function Layout() {
       <main className="flex-1 pb-20 overflow-y-auto">
         <Outlet />
       </main>
+      <RaymaChat />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50">
         <div className="flex items-center overflow-x-auto scrollbar-hide max-w-lg mx-auto py-2 px-2 gap-1">
