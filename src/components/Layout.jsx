@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu } from "lucide-react";
+import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, Sparkles } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 
@@ -10,6 +10,7 @@ const navItems = [
   { path: "/add-loan", icon: Plus, label: "Add" },
   { path: "/bills", icon: Receipt, label: "Bills" },
   { path: "/finance", icon: TrendingUp, label: "Finance" },
+  { path: "/simulator", icon: Sparkles, label: "Simulate" },
 ];
 
 export default function Layout() {
