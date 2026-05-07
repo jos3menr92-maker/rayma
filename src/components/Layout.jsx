@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, Sparkles } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
@@ -18,6 +18,8 @@ export default function Layout() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const isDragging = useRef(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -36,13 +38,29 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* Floating Add Button */}
+      {/* Floating Draggable Add Button */}
       <motion.button
+        drag
+        dragMomentum={false}
+        dragElastic={0.1}
         whileTap={{ scale: 0.9 }}
         whileHover={{ scale: 1.08 }}
-        onClick={() => setQuickAddOpen(true)}
-        className="fixed bottom-24 left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center"
-        title="Quick Add"
+        whileDrag={{ scale: 1.12, boxShadow: "0 12px 40px rgba(0,0,0,0.3)" }}
+        onDragStart={(_, info) => {
+          dragStartPos.current = { x: info.point.x, y: info.point.y };
+          isDragging.current = false;
+        }}
+        onDrag={(_, info) => {
+          const dx = Math.abs(info.point.x - dragStartPos.current.x);
+          const dy = Math.abs(info.point.y - dragStartPos.current.y);
+          if (dx > 5 || dy > 5) isDragging.current = true;
+        }}
+        onClick={(e) => {
+          if (isDragging.current) { e.preventDefault(); return; }
+          setQuickAddOpen(true);
+        }}
+        className="fixed bottom-24 left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
+        title="Quick Add (drag to move)"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
       >
