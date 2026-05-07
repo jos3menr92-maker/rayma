@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
+import RAYMAInsights from "../components/RAYMAInsights";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucide-react";
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
@@ -135,6 +136,9 @@ export default function Dashboard() {
 
       {/* Due Soon Alert */}
       <DueSoonAlert loans={activeLoans} bills={bills} />
+
+      {/* RAYMA Proactive Insights */}
+      <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
 
       {/* Pie Charts - TOP */}
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
