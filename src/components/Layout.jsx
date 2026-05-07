@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, Sparkles } from "lucide-react";
+import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, Sparkles, FolderOpen } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
@@ -12,6 +12,7 @@ const navItems = [
   { path: "/bills", icon: Receipt, label: "Bills" },
   { path: "/finance", icon: TrendingUp, label: "Finance" },
   { path: "/simulator", icon: Sparkles, label: "Simulate" },
+  { path: "/documents", icon: FolderOpen, label: "Vault" },
 ];
 
 export default function Layout() {

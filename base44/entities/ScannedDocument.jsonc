@@ -1,0 +1,84 @@
+{
+  "name": "ScannedDocument",
+  "type": "object",
+  "properties": {
+    "file_url": {
+      "type": "string",
+      "description": "URL of the uploaded document/image"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original file name"
+    },
+    "folder": {
+      "type": "string",
+      "enum": [
+        "payments",
+        "loans",
+        "bills",
+        "tax",
+        "misc"
+      ],
+      "default": "misc",
+      "description": "Which folder/category this document belongs to"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_review",
+        "approved",
+        "archived",
+        "logged"
+      ],
+      "default": "pending_review",
+      "description": "Current review status"
+    },
+    "extracted_data": {
+      "type": "object",
+      "description": "Raw extracted data from RAYMA analysis"
+    },
+    "document_type": {
+      "type": "string",
+      "description": "Detected document type (receipt, invoice, tax form, loan statement, etc.)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User or RAYMA notes about this document"
+    },
+    "loggable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this document contains data that can be logged"
+    },
+    "logged_entity_type": {
+      "type": "string",
+      "description": "Which entity was logged from this doc (payment, bill, loan, income)"
+    },
+    "logged_entity_id": {
+      "type": "string",
+      "description": "ID of the entity record created from this document"
+    },
+    "scan_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the document was scanned"
+    }
+  },
+  "required": [
+    "file_url"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
