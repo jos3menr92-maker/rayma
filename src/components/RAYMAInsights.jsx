@@ -49,7 +49,9 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
     const monthlyIncome = avgWeeklyIncome * 4.33;
     const today = new Date().getDate();
 
-    const result = await base44.integrations.Core.InvokeLLM({
+    let result;
+    try {
+      result = await base44.integrations.Core.InvokeLLM({
       prompt: `You are RAYMA, a proactive personal finance AI. Based on the user's financial data below, generate exactly 4 short, personalized, actionable insights. Each should be a different type (e.g. debt tip, savings opportunity, upcoming risk, positive reinforcement). Be specific and reference real numbers from their data.
 
 FINANCIAL DATA:
@@ -81,7 +83,12 @@ Return 4 insights. Each should have:
           }
         }
       }
-    });
+      });
+    } catch (e) {
+      setLoading(false);
+      setDismissed(true);
+      return;
+    }
 
     const list = result?.insights || [];
     setInsights(list);
