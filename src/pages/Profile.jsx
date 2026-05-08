@@ -31,6 +31,8 @@ export default function Profile() {
     avatar_emoji: "😊",
     preferred_currency: "USD",
     dashboard_greeting: "",
+    pay_frequency: "",
+    pay_day: "",
   });
 
   useEffect(() => {
@@ -45,6 +47,8 @@ export default function Profile() {
       avatar_emoji: me.avatar_emoji || "😊",
       preferred_currency: me.preferred_currency || "USD",
       dashboard_greeting: me.dashboard_greeting || "",
+      pay_frequency: me.pay_frequency || "",
+      pay_day: me.pay_day || "",
     });
     setLoading(false);
   }
@@ -131,6 +135,51 @@ export default function Profile() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Pay Schedule */}
+          <div className="bg-muted/40 border border-border rounded-2xl p-4 space-y-3">
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wider">💰 Pay Schedule</p>
+            <p className="text-xs text-muted-foreground">Used to remind you to log income and improve cash flow accuracy.</p>
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground">Pay Frequency</Label>
+              <Select value={form.pay_frequency} onValueChange={v => setForm(f => ({ ...f, pay_frequency: v, pay_day: "" }))}>
+                <SelectTrigger className="mt-1 rounded-xl">
+                  <SelectValue placeholder="Select frequency…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.pay_frequency === "weekly" || form.pay_frequency === "biweekly" ? (
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">Payday (day of week)</Label>
+                <Select value={form.pay_day} onValueChange={v => setForm(f => ({ ...f, pay_day: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl">
+                    <SelectValue placeholder="Select day…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map(d => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : form.pay_frequency === "monthly" ? (
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">Payday (day of month)</Label>
+                <Input
+                  type="number" min={1} max={31}
+                  value={form.pay_day}
+                  onChange={e => setForm(f => ({ ...f, pay_day: e.target.value }))}
+                  placeholder="e.g. 15"
+                  className="mt-1 rounded-xl"
+                />
+              </div>
+            ) : null}
           </div>
 
           {/* Dashboard greeting */}

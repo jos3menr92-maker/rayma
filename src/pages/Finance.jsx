@@ -32,6 +32,7 @@ export default function Finance() {
   const [incomes, setIncomes] = useState([]);
   const [bills, setBills] = useState([]);
   const [loans, setLoans] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [incomeDialog, setIncomeDialog] = useState(false);
@@ -42,14 +43,16 @@ export default function Finance() {
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    const [inc, b, l] = await Promise.all([
+    const [inc, b, l, me] = await Promise.all([
       base44.entities.WeeklyIncome.list("-week_start", 52),
       base44.entities.Bill.list("-created_date", 100),
       base44.entities.Loan.list("-created_date", 100),
+      base44.auth.me(),
     ]);
     setIncomes(inc);
     setBills(b.filter(x => x.is_active !== false));
     setLoans(l.filter(x => x.status !== "paid_off"));
+    setUserProfile(me);
     setLoading(false);
   }
 
@@ -65,9 +68,28 @@ export default function Finance() {
   const monthlyIncome = avgWeeklyIncome * 4.33;
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
 
-  // Check if current week logged
+  // Check if current period logged
   const thisWeek = startOfWeek();
   const loggedThisWeek = incomes.some(i => i.week_start === thisWeek);
+
+  // Smart payday reminder
+  const today = new Date();
+  const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][today.getDay()];
+  const todayDate = today.getDate();
+  const payFreq = userProfile?.pay_frequency;
+  const payDay = userProfile?.pay_day;
+
+  const isPayday = payFreq && payDay && (
+    (payFreq === "weekly" && todayName === payDay) ||
+    (payFreq === "biweekly" && todayName === payDay) ||
+    (payFreq === "monthly" && String(todayDate) === String(payDay))
+  );
+
+  const showIncomeReminder = !loggedThisWeek && (isPayday || !payFreq);
+  const reminderMsg = isPayday
+    ? `Today is your payday! Log your ${payFreq} income to keep your records accurate.`
+    : `You haven't recorded income yet for this period.`;
+  const reminderSetupNeeded = !payFreq;
 
   // Chart data — merge income weeks with expense line
   const chartData = [...incomes]
@@ -130,14 +152,24 @@ export default function Finance() {
         <p className="text-sm text-muted-foreground mb-5">Income, expenses & cash flow</p>
 
         {/* Cash Flow Banner */}
-        {!loggedThisWeek && (
-          <div className="bg-accent/10 border border-accent/30 rounded-2xl p-3 mb-4 flex items-center gap-3">
-            <span className="text-xl">📝</span>
+        {showIncomeReminder && (
+          <div className={`border rounded-2xl p-3 mb-4 flex items-center gap-3 ${isPayday ? "bg-primary/10 border-primary/30" : "bg-accent/10 border-accent/30"}`}>
+            <span className="text-xl">{isPayday ? "🎉" : "📝"}</span>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">Log this week's income</p>
-              <p className="text-xs text-muted-foreground">You haven't recorded income yet for this week</p>
+              <p className="text-sm font-semibold text-foreground">{isPayday ? "Payday! Log your income" : "Log this period's income"}</p>
+              <p className="text-xs text-muted-foreground">{reminderMsg}</p>
             </div>
             <Button size="sm" className="rounded-xl text-xs shrink-0" onClick={openAdd}>Log</Button>
+          </div>
+        )}
+        {reminderSetupNeeded && (
+          <div className="bg-muted/40 border border-border rounded-2xl p-3 mb-4 flex items-center gap-3">
+            <span className="text-xl">⚙️</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Set up your pay schedule</p>
+              <p className="text-xs text-muted-foreground">Add your payday in Profile for smarter reminders</p>
+            </div>
+            <Button size="sm" variant="outline" className="rounded-xl text-xs shrink-0" onClick={() => window.location.href = "/profile"}>Set Up</Button>
           </div>
         )}
 
