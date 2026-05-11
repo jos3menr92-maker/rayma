@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAInsights from "../components/RAYMAInsights";
+import MiniCalendar from "../components/calendar/MiniCalendar";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucide-react";
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
@@ -133,6 +134,9 @@ export default function Dashboard() {
           {userProfile?.avatar_emoji || '😊'}
         </div>
       </motion.div>
+
+      {/* Mini Calendar */}
+      <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
 
       {/* Due Soon Alert */}
       <DueSoonAlert loans={activeLoans} bills={bills} />
