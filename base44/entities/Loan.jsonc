@@ -24,11 +24,34 @@
     },
     "monthly_payment": {
       "type": "number",
-      "description": "Expected monthly payment amount"
+      "description": "Payment amount per period"
+    },
+    "payment_frequency": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "weekly",
+        "biweekly"
+      ],
+      "default": "monthly",
+      "description": "How often loan payments are made"
     },
     "due_day": {
       "type": "number",
-      "description": "Day of month payment is due (1-31)"
+      "description": "Day of month payment is due (1-31), for monthly loans"
+    },
+    "due_day_of_week": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "description": "Day of week payment is due, for weekly/biweekly loans"
     },
     "start_date": {
       "type": "string",

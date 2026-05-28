@@ -8,11 +8,34 @@
     },
     "amount": {
       "type": "number",
-      "description": "Monthly amount"
+      "description": "Payment amount per period"
+    },
+    "payment_frequency": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "weekly",
+        "biweekly"
+      ],
+      "default": "monthly",
+      "description": "How often this bill is paid"
     },
     "due_day": {
       "type": "number",
-      "description": "Day of month bill is due (1-31)"
+      "description": "Day of month bill is due (1-31), for monthly bills"
+    },
+    "due_day_of_week": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "description": "Day of week payment is due, for weekly/biweekly bills"
     },
     "category": {
       "type": "string",

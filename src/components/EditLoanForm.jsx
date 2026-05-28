@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
 const categories = [
   { value: "mortgage", label: "🏠 Mortgage" },
   { value: "auto", label: "🚗 Auto Loan" },
@@ -24,7 +26,9 @@ export default function EditLoanForm({ loan, onSave }) {
     current_balance: loan.current_balance || "",
     interest_rate: loan.interest_rate || "",
     monthly_payment: loan.monthly_payment || "",
+    payment_frequency: loan.payment_frequency || "monthly",
     due_day: loan.due_day || "",
+    due_day_of_week: loan.due_day_of_week || "Friday",
     start_date: loan.start_date || "",
     category: loan.category || "personal",
     notes: loan.notes || "",
@@ -43,7 +47,8 @@ export default function EditLoanForm({ loan, onSave }) {
       current_balance: parseFloat(form.current_balance) || 0,
       interest_rate: parseFloat(form.interest_rate) || 0,
       monthly_payment: parseFloat(form.monthly_payment) || 0,
-      due_day: parseInt(form.due_day) || null,
+      due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
+      due_day_of_week: form.payment_frequency !== "monthly" ? form.due_day_of_week : null,
     });
     setSaving(false);
   }
@@ -91,14 +96,37 @@ export default function EditLoanForm({ loan, onSave }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-muted-foreground">Due Day (1-31)</Label>
-          <Input type="number" min="1" max="31" value={form.due_day} onChange={(e) => handleChange("due_day", e.target.value)} className="mt-1 rounded-xl" />
+          <Label className="text-xs text-muted-foreground">Payment Frequency</Label>
+          <Select value={form.payment_frequency} onValueChange={(v) => handleChange("payment_frequency", v)}>
+            <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="biweekly">Bi-weekly</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Start Date</Label>
           <Input type="date" value={form.start_date} onChange={(e) => handleChange("start_date", e.target.value)} className="mt-1 rounded-xl" />
         </div>
       </div>
+      {form.payment_frequency === "monthly" ? (
+        <div>
+          <Label className="text-xs text-muted-foreground">Due Day of Month (1-31)</Label>
+          <Input type="number" min="1" max="31" value={form.due_day} onChange={(e) => handleChange("due_day", e.target.value)} className="mt-1 rounded-xl" />
+        </div>
+      ) : (
+        <div>
+          <Label className="text-xs text-muted-foreground">Due Day of Week</Label>
+          <Select value={form.due_day_of_week} onValueChange={(v) => handleChange("due_day_of_week", v)}>
+            <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {DOW.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div>
         <Label className="text-xs text-muted-foreground">Notes</Label>
         <Textarea value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} className="mt-1 rounded-xl" rows={2} />

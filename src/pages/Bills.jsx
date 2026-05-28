@@ -26,7 +26,8 @@ const categories = [
 
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
 
-const emptyForm = { name: "", amount: "", due_day: "", category: "other", notes: "", is_active: true };
+const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const emptyForm = { name: "", amount: "", payment_frequency: "monthly", due_day: "", due_day_of_week: "Friday", category: "other", notes: "", is_active: true };
 
 export default function Bills() {
   const [bills, setBills] = useState([]);
@@ -47,14 +48,28 @@ export default function Bills() {
   const openAdd = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (bill) => {
     setEditing(bill);
-    setForm({ name: bill.name, amount: bill.amount, due_day: bill.due_day || "", category: bill.category || "other", notes: bill.notes || "", is_active: bill.is_active !== false });
+    setForm({
+      name: bill.name,
+      amount: bill.amount,
+      payment_frequency: bill.payment_frequency || "monthly",
+      due_day: bill.due_day || "",
+      due_day_of_week: bill.due_day_of_week || "Friday",
+      category: bill.category || "other",
+      notes: bill.notes || "",
+      is_active: bill.is_active !== false,
+    });
     setDialogOpen(true);
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const data = { ...form, amount: parseFloat(form.amount) || 0, due_day: parseInt(form.due_day) || null };
+    const data = {
+      ...form,
+      amount: parseFloat(form.amount) || 0,
+      due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
+      due_day_of_week: form.payment_frequency !== "monthly" ? form.due_day_of_week : null,
+    };
     if (editing) {
       await base44.entities.Bill.update(editing.id, data);
     } else {
@@ -70,7 +85,12 @@ export default function Bills() {
     load();
   };
 
-  const totalMonthly = bills.filter(b => b.is_active !== false).reduce((s, b) => s + (b.amount || 0), 0);
+  const totalMonthly = bills.filter(b => b.is_active !== false).reduce((s, b) => {
+    const freq = b.payment_frequency || "monthly";
+    if (freq === "weekly") return s + (b.amount || 0) * 4.33;
+    if (freq === "biweekly") return s + (b.amount || 0) * 2.17;
+    return s + (b.amount || 0);
+  }, 0);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -94,7 +114,7 @@ export default function Bills() {
             <Receipt className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Monthly</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Monthly Equivalent</p>
             <p className="text-xl font-bold font-heading text-foreground">{fmt(totalMonthly)}</p>
           </div>
         </div>
@@ -118,7 +138,12 @@ export default function Bills() {
                   <div>
                     <p className="font-semibold text-sm text-foreground">{bill.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {bill.due_day ? `Due ${bill.due_day}th` : "No due day"} · {bill.category}
+                      {(() => {
+                        const freq = bill.payment_frequency || "monthly";
+                        if (freq === "weekly") return `Weekly · ${bill.due_day_of_week || ""}`;
+                        if (freq === "biweekly") return `Bi-weekly · ${bill.due_day_of_week || ""}`;
+                        return bill.due_day ? `Monthly · ${bill.due_day}th` : "Monthly · No due day";
+                      })()} · {bill.category}
                     </p>
                   </div>
                 </div>
@@ -161,10 +186,33 @@ export default function Bills() {
                 <Input type="number" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" required className="mt-1 rounded-xl" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Due Day (1-31)</Label>
-                <Input type="number" min="1" max="31" value={form.due_day} onChange={e => setForm(f => ({ ...f, due_day: e.target.value }))} placeholder="1" className="mt-1 rounded-xl" />
+                <Label className="text-xs text-muted-foreground">Frequency</Label>
+                <Select value={form.payment_frequency} onValueChange={v => setForm(f => ({ ...f, payment_frequency: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+            {form.payment_frequency === "monthly" ? (
+              <div>
+                <Label className="text-xs text-muted-foreground">Due Day of Month (1-31)</Label>
+                <Input type="number" min="1" max="31" value={form.due_day} onChange={e => setForm(f => ({ ...f, due_day: e.target.value }))} placeholder="1" className="mt-1 rounded-xl" />
+              </div>
+            ) : (
+              <div>
+                <Label className="text-xs text-muted-foreground">Due Day of Week</Label>
+                <Select value={form.due_day_of_week} onValueChange={v => setForm(f => ({ ...f, due_day_of_week: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {DOW.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label className="text-xs text-muted-foreground">Category</Label>
               <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>

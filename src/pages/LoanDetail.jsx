@@ -206,14 +206,20 @@ export default function LoanDetail() {
           <div className="bg-card rounded-xl p-3 border border-border">
             <div className="flex items-center gap-2 mb-1">
               <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Due Day</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Due</span>
             </div>
-            <p className="text-sm font-semibold text-foreground">{loan.due_day ? `${loan.due_day}th` : "—"}</p>
+            <p className="text-sm font-semibold text-foreground">
+              {loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly"
+                ? (loan.due_day_of_week || "—")
+                : (loan.due_day ? `${loan.due_day}th` : "—")}
+            </p>
           </div>
           <div className="bg-card rounded-xl p-3 border border-border">
             <div className="flex items-center gap-2 mb-1">
               <Building className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Monthly</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {loan.payment_frequency === "weekly" ? "Weekly" : loan.payment_frequency === "biweekly" ? "Bi-weekly" : "Monthly"}
+              </span>
             </div>
             <p className="text-sm font-semibold text-foreground">{formatCurrency(loan.monthly_payment)}</p>
           </div>
