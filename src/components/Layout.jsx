@@ -1,25 +1,27 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, FolderOpen, Landmark, PieChart, TrendingDown } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import ThemeToggle from "./ThemeToggle";
-import MoreMenu from "./MoreMenu";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/loans", icon: List, label: "Loans" },
   { path: "/bills", icon: Receipt, label: "Bills" },
+  { path: "/bank-accounts", icon: Landmark, label: "Banks" },
+  { path: "/budget", icon: PieChart, label: "Budget" },
+  { path: "/debt-simulator", icon: TrendingDown, label: "Simulator" },
   { path: "/finance", icon: TrendingUp, label: "Finance" },
+  { path: "/documents", icon: FolderOpen, label: "Vault" },
 ];
 
 export default function Layout() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
 
@@ -27,7 +29,6 @@ export default function Layout() {
     <div className="min-h-screen bg-background flex flex-col">
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <QuickAddMenu open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
-      <MoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
       {/* Top bar with menu button */}
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
@@ -76,7 +77,7 @@ export default function Layout() {
       <RaymaChat />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50">
-        <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-2">
+        <div className="flex items-center overflow-x-auto scrollbar-hide max-w-lg mx-auto py-2 px-2 gap-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -84,7 +85,7 @@ export default function Layout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 flex-shrink-0 ${
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -93,14 +94,6 @@ export default function Layout() {
               </Link>
             );
           })}
-          {/* More button */}
-          <button
-            onClick={() => setMoreOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground"
-          >
-            <MoreHorizontal className="w-5 h-5" />
-            <span className="text-[10px] font-medium">More</span>
-          </button>
         </div>
       </nav>
     </div>
