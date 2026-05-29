@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Sparkles, Paperclip, Loader2 } from "lucide-react";
+import { X, Send, Sparkles, Paperclip, Loader2, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 
@@ -52,6 +52,33 @@ export default function RaymaChat() {
 
   function closeChat() {
     setOpen(false);
+  }
+
+  async function clearConversation() {
+    if (!window.confirm("Clear this conversation and start fresh?")) return;
+    setConversation(null);
+    setMessages([]);
+    setInput("");
+    setAttachedFile(null);
+    // Re-open a fresh conversation
+    setLoading(true);
+    const conv = await base44.agents.createConversation({
+      agent_name: "rayma",
+      metadata: { name: "RAYMA Chat" },
+    });
+    setConversation(conv);
+    setMessages(conv.messages || []);
+    const unsubscribe = base44.agents.subscribeToConversation(conv.id, (data) => {
+      setMessages(data.messages || []);
+    });
+    conv._unsubscribe = unsubscribe;
+    setLoading(false);
+    setSending(true);
+    await base44.agents.addMessage(conv, {
+      role: "user",
+      content: "Hi RAYMA! Please introduce yourself and give me a quick overview of my current financial situation based on my data.",
+    });
+    setSending(false);
   }
 
   async function handleFileAttach(e) {
@@ -125,9 +152,14 @@ export default function RaymaChat() {
                     <p className="text-[10px] text-muted-foreground">Your financial advisor</p>
                   </div>
                 </div>
-                <button onClick={closeChat} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button onClick={clearConversation} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors" title="Clear conversation">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={closeChat} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               {/* Messages */}
