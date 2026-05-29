@@ -8,6 +8,8 @@ import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucid
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
 import LoanCard from "../components/LoanCard";
+import DueThisWeek from "../components/DueThisWeek";
+import NetWorthChart from "../components/NetWorthChart";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -135,6 +137,9 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
+      {/* Due This Week */}
+      <DueThisWeek loans={activeLoans} bills={bills} />
+
       {/* Mini Calendar */}
       <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
 
@@ -143,6 +148,9 @@ export default function Dashboard() {
 
       {/* RAYMA Proactive Insights */}
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
+
+      {/* Net Worth Trend */}
+      <NetWorthChart />
 
       {/* Pie Charts - TOP */}
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">

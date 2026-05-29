@@ -64,6 +64,10 @@ export default function BankAccounts() {
   };
 
   const saveTx = async () => {
+    if (!txForm.bank_account_id) {
+      alert("Please select a bank account for this transaction.");
+      return;
+    }
     const data = { ...txForm, amount: parseFloat(txForm.amount) || 0 };
     await base44.entities.Transaction.create(data);
     setShowTxDialog(false);

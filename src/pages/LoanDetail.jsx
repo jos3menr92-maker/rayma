@@ -54,6 +54,7 @@ export default function LoanDetail() {
 
     await base44.entities.Payment.create({
       loan_id: id,
+      payment_type: "loan",
       amount,
       payment_date: payForm.payment_date,
       note: payForm.note,

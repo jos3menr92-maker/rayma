@@ -68,7 +68,7 @@ export default function Bills() {
       ...form,
       amount: parseFloat(form.amount) || 0,
       due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
-      due_day_of_week: form.payment_frequency !== "monthly" ? form.due_day_of_week : null,
+      due_day_of_week: (form.payment_frequency === "weekly" || form.payment_frequency === "biweekly") ? (form.due_day_of_week || "Monday") : null,
     };
     if (editing) {
       await base44.entities.Bill.update(editing.id, data);
