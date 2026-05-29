@@ -4,7 +4,20 @@
   "properties": {
     "loan_id": {
       "type": "string",
-      "description": "ID of the loan this payment belongs to"
+      "description": "ID of the loan this payment belongs to (if a loan payment)"
+    },
+    "bill_id": {
+      "type": "string",
+      "description": "ID of the bill this payment belongs to (if a bill payment)"
+    },
+    "payment_type": {
+      "type": "string",
+      "enum": [
+        "loan",
+        "bill"
+      ],
+      "default": "loan",
+      "description": "Whether this is a loan or bill payment"
     },
     "amount": {
       "type": "number",
@@ -21,7 +34,6 @@
     }
   },
   "required": [
-    "loan_id",
     "amount",
     "payment_date"
   ],
