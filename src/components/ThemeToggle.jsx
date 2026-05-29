@@ -45,10 +45,11 @@ export default function ThemeToggle() {
     <button
       ref={buttonRef}
       onClick={toggle}
-      className="p-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors text-foreground"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted hover:bg-muted/80 transition-colors text-foreground text-xs font-medium"
       aria-label="Toggle theme"
     >
       <Moon className="w-4 h-4" />
+      <span>Theme</span>
     </button>
   );
 }
