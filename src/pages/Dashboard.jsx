@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
-import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle } from "lucide-react";
+import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2 } from "lucide-react";
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
 import LoanCard from "../components/LoanCard";
@@ -148,6 +148,28 @@ export default function Dashboard() {
 
       {/* RAYMA Proactive Insights */}
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <button onClick={() => navigate("/monthly-recap")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <CalendarDays className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-foreground">Monthly Recap</p>
+            <p className="text-[10px] text-muted-foreground">Income & spending summary</p>
+          </div>
+        </button>
+        <button onClick={() => navigate("/assets")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
+          <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+            <BarChart2 className="w-4 h-4 text-accent" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-foreground">Assets</p>
+            <p className="text-[10px] text-muted-foreground">Net worth tracker</p>
+          </div>
+        </button>
+      </div>
 
       {/* Net Worth Trend */}
       <NetWorthChart />

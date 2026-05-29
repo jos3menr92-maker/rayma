@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Landmark, RefreshCw, Pencil, Trash2, TrendingUp, CreditCard, Wallet } from "lucide-react";
+import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download } from "lucide-react";
 import { format } from "date-fns";
 import BankSyncNotice from "@/components/BankSyncNotice";
 
@@ -75,6 +75,19 @@ export default function BankAccounts() {
     fetchAll();
   };
 
+  const exportCSV = () => {
+    const rows = [["Date","Description","Amount","Category","Type","Account"]];
+    transactions.forEach(tx => {
+      const acc = accounts.find(a => a.id === tx.bank_account_id);
+      rows.push([tx.date, tx.description, tx.amount, tx.category, tx.type, acc?.name || ""]);
+    });
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "transactions.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const totalBalance = accounts.filter(a => a.is_active && a.account_type !== "credit").reduce((s, a) => s + (a.balance || 0), 0);
   const totalDebt = accounts.filter(a => a.account_type === "credit").reduce((s, a) => s + (a.balance || 0), 0);
   const visibleTxs = selectedAccount ? transactions.filter(t => t.bank_account_id === selectedAccount) : transactions;
@@ -87,6 +100,7 @@ export default function BankAccounts() {
           <p className="text-sm text-muted-foreground">Track your accounts and transactions</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="w-4 h-4 mr-1" />CSV</Button>
           <Button variant="outline" size="sm" onClick={() => setShowTxDialog(true)}><Plus className="w-4 h-4 mr-1" />Transaction</Button>
           <Button size="sm" onClick={openAdd}><Plus className="w-4 h-4 mr-1" />Account</Button>
         </div>

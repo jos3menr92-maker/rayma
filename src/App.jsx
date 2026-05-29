@@ -23,6 +23,8 @@ import DocumentVault from './pages/DocumentVault';
 import BankAccounts from './pages/BankAccounts';
 import BudgetDashboard from './pages/BudgetDashboard';
 import DebtPayoffSimulator from './pages/DebtPayoffSimulator';
+import MonthlyRecap from './pages/MonthlyRecap';
+import AssetDashboard from './pages/AssetDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -68,6 +70,8 @@ const AuthenticatedApp = () => {
         <Route path="/bank-accounts" element={<BankAccounts />} />
         <Route path="/budget" element={<BudgetDashboard />} />
         <Route path="/debt-simulator" element={<DebtPayoffSimulator />} />
+        <Route path="/monthly-recap" element={<MonthlyRecap />} />
+        <Route path="/assets" element={<AssetDashboard />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, Receipt } from "lucide-react";
+import BillPriceAlert from "../components/BillPriceAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,6 +102,7 @@ export default function Bills() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <BillPriceAlert />
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold font-heading text-foreground">Monthly Bills</h1>
           <Button size="sm" className="rounded-xl" onClick={openAdd}>

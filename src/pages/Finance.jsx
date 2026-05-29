@@ -10,6 +10,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, Legend, BarChart, Bar,
 } from "recharts";
+import CashFlowForecast from "../components/CashFlowForecast";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
@@ -196,6 +197,9 @@ export default function Finance() {
             </div>
           </div>
         </div>
+
+        {/* 30-Day Cash Flow Forecast */}
+        <CashFlowForecast loans={loans} bills={bills} incomes={incomes} />
 
         {/* Income vs Expenses Chart */}
         {chartData.length >= 2 && (
