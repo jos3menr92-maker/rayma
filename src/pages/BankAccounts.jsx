@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Landmark, RefreshCw, Pencil, Trash2, TrendingUp, CreditCard, Wallet } from "lucide-react";
 import { format } from "date-fns";
+import BankSyncNotice from "@/components/BankSyncNotice";
 
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
 
@@ -167,6 +168,9 @@ export default function BankAccounts() {
           </div>
         </div>
       )}
+
+      {/* Legal & Bank Sync Notice */}
+      <BankSyncNotice />
 
       {/* Add/Edit Account Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

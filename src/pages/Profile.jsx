@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { User, Save, LogOut } from "lucide-react";
+import { User, Save, LogOut, Shield, Bell, Globe, DollarSign, Calendar, ChevronRight, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 const EMOJIS = ["😊", "🦁", "🐻", "🐼", "🦊", "🐸", "🦋", "🌟", "🔥", "💎", "🚀", "🌈", "🎯", "🏆", "💪", "🌻"];
 
@@ -21,6 +23,20 @@ const CURRENCIES = [
   { value: "BRL", label: "R$ BRL — Brazilian Real" },
 ];
 
+function SectionHeader({ icon: Icon, title, subtitle }) {
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-primary" />
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
+
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,9 +51,7 @@ export default function Profile() {
     pay_day: "",
   });
 
-  useEffect(() => {
-    loadUser();
-  }, []);
+  useEffect(() => { loadUser(); }, []);
 
   async function loadUser() {
     const me = await base44.auth.me();
@@ -75,131 +89,163 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">My Profile</h1>
-        <p className="text-sm text-muted-foreground mb-6">Personalize your account and dashboard</p>
+    <div className="max-w-xl mx-auto px-4 pt-6 pb-24">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
 
-        {/* Avatar preview */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-4xl mb-2">
-            {form.avatar_emoji}
+        {/* Hero Header */}
+        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border border-primary/20 p-6 mb-6 text-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full bg-primary/10 ring-4 ring-primary/30 flex items-center justify-center text-5xl mx-auto mb-3 shadow-lg">
+              {form.avatar_emoji}
+            </div>
+            <h2 className="text-xl font-bold font-heading text-foreground">{form.preferred_name || user?.full_name}</h2>
+            <div className="flex items-center justify-center gap-1.5 mt-1">
+              <Mail className="w-3 h-3 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+            <Badge className="mt-2 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/10">
+              {user?.role === "admin" ? "Admin" : "Member"}
+            </Badge>
           </div>
-          <p className="text-sm font-semibold text-foreground">{form.preferred_name || user?.full_name}</p>
-          <p className="text-xs text-muted-foreground">{user?.email}</p>
         </div>
 
         <form onSubmit={handleSave} className="space-y-5">
-          {/* Display name */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground">Display Name</Label>
-            <Input
-              value={form.preferred_name}
-              onChange={e => setForm(f => ({ ...f, preferred_name: e.target.value }))}
-              placeholder={user?.full_name || "Your name"}
-              className="mt-1 rounded-xl"
-            />
-          </div>
 
-          {/* Avatar emoji */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground">Avatar Emoji</Label>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {EMOJIS.map(emoji => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, avatar_emoji: emoji }))}
-                  className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                    form.avatar_emoji === emoji
-                      ? "bg-primary/20 ring-2 ring-primary scale-110"
-                      : "bg-muted hover:bg-muted/70"
-                  }`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Currency */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground">Preferred Currency</Label>
-            <Select value={form.preferred_currency} onValueChange={v => setForm(f => ({ ...f, preferred_currency: v }))}>
-              <SelectTrigger className="mt-1 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map(c => (
-                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Pay Schedule */}
-          <div className="bg-muted/40 border border-border rounded-2xl p-4 space-y-3">
-            <p className="text-xs font-semibold text-foreground uppercase tracking-wider">💰 Pay Schedule</p>
-            <p className="text-xs text-muted-foreground">Used to remind you to log income and improve cash flow accuracy.</p>
-            <div>
-              <Label className="text-xs font-medium text-muted-foreground">Pay Frequency</Label>
-              <Select value={form.pay_frequency} onValueChange={v => setForm(f => ({ ...f, pay_frequency: v, pay_day: "" }))}>
-                <SelectTrigger className="mt-1 rounded-xl">
-                  <SelectValue placeholder="Select frequency…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {form.pay_frequency === "weekly" || form.pay_frequency === "biweekly" ? (
+          {/* Identity Section */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={User} title="Identity" subtitle="How you appear in the app" />
+            <div className="space-y-4">
               <div>
-                <Label className="text-xs font-medium text-muted-foreground">Payday (day of week)</Label>
-                <Select value={form.pay_day} onValueChange={v => setForm(f => ({ ...f, pay_day: v }))}>
-                  <SelectTrigger className="mt-1 rounded-xl">
-                    <SelectValue placeholder="Select day…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map(d => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : form.pay_frequency === "monthly" ? (
-              <div>
-                <Label className="text-xs font-medium text-muted-foreground">Payday (day of month)</Label>
+                <Label className="text-xs font-medium text-muted-foreground">Display Name</Label>
                 <Input
-                  type="number" min={1} max={31}
-                  value={form.pay_day}
-                  onChange={e => setForm(f => ({ ...f, pay_day: e.target.value }))}
-                  placeholder="e.g. 15"
+                  value={form.preferred_name}
+                  onChange={e => setForm(f => ({ ...f, preferred_name: e.target.value }))}
+                  placeholder={user?.full_name || "Your name"}
                   className="mt-1 rounded-xl"
                 />
               </div>
-            ) : null}
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">Custom Greeting</Label>
+                <Input
+                  value={form.dashboard_greeting}
+                  onChange={e => setForm(f => ({ ...f, dashboard_greeting: e.target.value }))}
+                  placeholder="e.g. Let's crush that debt!"
+                  className="mt-1 rounded-xl"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Shown on your dashboard every time you log in.</p>
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">Avatar</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {EMOJIS.map(emoji => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, avatar_emoji: emoji }))}
+                      className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
+                        form.avatar_emoji === emoji
+                          ? "bg-primary/20 ring-2 ring-primary scale-110"
+                          : "bg-muted hover:bg-muted/70"
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Dashboard greeting */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground">Dashboard Greeting (optional)</Label>
-            <Input
-              value={form.dashboard_greeting}
-              onChange={e => setForm(f => ({ ...f, dashboard_greeting: e.target.value }))}
-              placeholder="e.g. Let's crush that debt!"
-              className="mt-1 rounded-xl"
-            />
+          {/* Preferences Section */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={Globe} title="Preferences" subtitle="Currency and localization" />
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground">Preferred Currency</Label>
+              <Select value={form.preferred_currency} onValueChange={v => setForm(f => ({ ...f, preferred_currency: v }))}>
+                <SelectTrigger className="mt-1 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map(c => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <Button type="submit" disabled={saving} className="w-full rounded-xl h-11">
+          {/* Pay Schedule Section */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Used for income reminders and cash flow accuracy" />
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">Pay Frequency</Label>
+                <Select value={form.pay_frequency} onValueChange={v => setForm(f => ({ ...f, pay_frequency: v, pay_day: "" }))}>
+                  <SelectTrigger className="mt-1 rounded-xl">
+                    <SelectValue placeholder="Select frequency…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(form.pay_frequency === "weekly" || form.pay_frequency === "biweekly") && (
+                <div>
+                  <Label className="text-xs font-medium text-muted-foreground">Payday (day of week)</Label>
+                  <Select value={form.pay_day} onValueChange={v => setForm(f => ({ ...f, pay_day: v }))}>
+                    <SelectTrigger className="mt-1 rounded-xl">
+                      <SelectValue placeholder="Select day…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map(d => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {form.pay_frequency === "monthly" && (
+                <div>
+                  <Label className="text-xs font-medium text-muted-foreground">Payday (day of month)</Label>
+                  <Input
+                    type="number" min={1} max={31}
+                    value={form.pay_day}
+                    onChange={e => setForm(f => ({ ...f, pay_day: e.target.value }))}
+                    placeholder="e.g. 15"
+                    className="mt-1 rounded-xl"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Privacy & Security Info */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={Shield} title="Privacy & Security" subtitle="How your data is protected" />
+            <ul className="space-y-2">
+              {[
+                { icon: Lock, text: "Your financial data is encrypted and stored securely." },
+                { icon: Shield, text: "We never share or sell your personal information." },
+                { icon: User, text: "Only you can view your data — no third-party access." },
+              ].map(({ icon: Icon, text }, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <Icon className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground">{text}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <Button type="submit" disabled={saving} className="w-full rounded-xl h-11 font-semibold">
             {saving ? "Saving..." : saved ? "✓ Saved!" : <><Save className="w-4 h-4 mr-2" />Save Changes</>}
           </Button>
         </form>
 
         {/* Logout */}
-        <div className="mt-6 pt-5 border-t border-border">
+        <div className="mt-4">
           <Button
             variant="outline"
             className="w-full rounded-xl h-11 text-destructive border-destructive/30 hover:bg-destructive/5"
@@ -208,6 +254,7 @@ export default function Profile() {
             <LogOut className="w-4 h-4 mr-2" /> Sign Out
           </Button>
         </div>
+
       </motion.div>
     </div>
   );
