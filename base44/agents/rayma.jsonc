@@ -26,7 +26,8 @@
       "allowed_operations": [
         "read",
         "create",
-        "update"
+        "update",
+        "delete"
       ]
     },
     {
