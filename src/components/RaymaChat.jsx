@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Send, Sparkles, Paperclip, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 
@@ -11,7 +11,10 @@ export default function RaymaChat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [attachedFile, setAttachedFile] = useState(null); // { name, url }
   const bottomRef = useRef(null);
+  const fileRef = useRef(null);
 
   useEffect(() => {
     if (bottomRef.current) {
@@ -51,13 +54,29 @@ export default function RaymaChat() {
     setOpen(false);
   }
 
+  async function handleFileAttach(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFile(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setAttachedFile({ name: file.name, url: file_url });
+    setUploadingFile(false);
+    e.target.value = "";
+  }
+
   async function handleSend(e) {
     e.preventDefault();
-    if (!input.trim() || sending || !conversation) return;
-    const text = input.trim();
+    if ((!input.trim() && !attachedFile) || sending || !conversation) return;
+    const text = input.trim() || (attachedFile ? "Please analyze this document for me." : "");
+    const fileUrls = attachedFile ? [attachedFile.url] : undefined;
     setInput("");
+    setAttachedFile(null);
     setSending(true);
-    await base44.agents.addMessage(conversation, { role: "user", content: text });
+    await base44.agents.addMessage(conversation, {
+      role: "user",
+      content: text,
+      ...(fileUrls && { file_urls: fileUrls }),
+    });
     setSending(false);
   }
 
@@ -154,22 +173,43 @@ export default function RaymaChat() {
               </div>
 
               {/* Input */}
-              <form onSubmit={handleSend} className="border-t border-border px-3 py-2.5 flex gap-2 shrink-0">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask RAYMA anything..."
-                  className="flex-1 text-xs bg-muted rounded-xl px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
-                  disabled={sending || loading}
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || sending || loading}
-                  className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center disabled:opacity-40 transition-opacity shrink-0"
-                >
-                  <Send className="w-3.5 h-3.5 text-primary-foreground" />
-                </button>
+              <form onSubmit={handleSend} className="border-t border-border px-3 py-2.5 flex flex-col gap-2 shrink-0">
+                {attachedFile && (
+                  <div className="flex items-center gap-2 bg-primary/10 rounded-xl px-3 py-1.5 text-xs text-primary">
+                    <Paperclip className="w-3 h-3 shrink-0" />
+                    <span className="truncate flex-1">{attachedFile.name}</span>
+                    <button type="button" onClick={() => setAttachedFile(null)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploadingFile || sending || loading}
+                    className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center disabled:opacity-40 transition-opacity shrink-0"
+                    title="Attach image or document"
+                  >
+                    {uploadingFile ? <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" /> : <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />}
+                  </button>
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ask RAYMA anything..."
+                    className="flex-1 text-xs bg-muted rounded-xl px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    disabled={sending || loading}
+                  />
+                  <button
+                    type="submit"
+                    disabled={(!input.trim() && !attachedFile) || sending || loading || uploadingFile}
+                    className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center disabled:opacity-40 transition-opacity shrink-0"
+                  >
+                    <Send className="w-3.5 h-3.5 text-primary-foreground" />
+                  </button>
+                </div>
+                <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileAttach} />
               </form>
             </motion.div>
           </>
