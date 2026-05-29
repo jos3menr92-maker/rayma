@@ -3,10 +3,12 @@
   "type": "object",
   "properties": {
     "loan_id": {
-      "type": "string"
+      "type": "string",
+      "description": "ID of the related loan"
     },
     "amount": {
-      "type": "number"
+      "type": "number",
+      "description": "Adjustment amount"
     },
     "direction": {
       "type": "string",
@@ -14,14 +16,16 @@
         "add",
         "subtract"
       ],
-      "description": "add = increases balance (late fee/missed), subtract = reduces balance (payment)"
+      "description": "add = increases total owed, subtract = reduces balance"
     },
     "reason": {
-      "type": "string"
+      "type": "string",
+      "description": "Optional note about the adjustment"
     },
     "date": {
       "type": "string",
-      "format": "date"
+      "format": "date",
+      "description": "Date of the adjustment"
     }
   },
   "required": [
