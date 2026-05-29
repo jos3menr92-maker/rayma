@@ -5,6 +5,7 @@ import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, Sparkles, Folde
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
+import ThemeToggle from "./ThemeToggle";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -32,9 +33,12 @@ export default function Layout() {
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
           <span className="text-sm font-semibold font-heading text-foreground">Debt & Bills</span>
-          <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
       <main className="flex-1 pb-20 overflow-y-auto">
