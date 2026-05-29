@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { User, Save, LogOut, Shield, Bell, Globe, DollarSign, Calendar, ChevronRight, Mail, Lock } from "lucide-react";
+import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Lock, Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,9 +42,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [form, setForm] = useState({
     preferred_name: "",
     avatar_emoji: "😊",
+    avatar_photo_url: "",
     preferred_currency: "USD",
     dashboard_greeting: "",
     pay_frequency: "",
@@ -59,6 +61,7 @@ export default function Profile() {
     setForm({
       preferred_name: me.preferred_name || me.full_name || "",
       avatar_emoji: me.avatar_emoji || "😊",
+      avatar_photo_url: me.avatar_photo_url || "",
       preferred_currency: me.preferred_currency || "USD",
       dashboard_greeting: me.dashboard_greeting || "",
       pay_frequency: me.pay_frequency || "",
@@ -74,6 +77,15 @@ export default function Profile() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  }
+
+  async function handlePhotoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setForm(f => ({ ...f, avatar_photo_url: file_url, avatar_emoji: "" }));
+    setUploadingPhoto(false);
   }
 
   function handleLogout() {
@@ -96,8 +108,10 @@ export default function Profile() {
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border border-primary/20 p-6 mb-6 text-center">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-primary/10 ring-4 ring-primary/30 flex items-center justify-center text-5xl mx-auto mb-3 shadow-lg">
-              {form.avatar_emoji}
+            <div className="w-24 h-24 rounded-full bg-primary/10 ring-4 ring-primary/30 flex items-center justify-center text-5xl mx-auto mb-3 shadow-lg overflow-hidden">
+              {form.avatar_photo_url
+                ? <img src={form.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
+                : form.avatar_emoji || "😊"}
             </div>
             <h2 className="text-xl font-bold font-heading text-foreground">{form.preferred_name || user?.full_name}</h2>
             <div className="flex items-center justify-center gap-1.5 mt-1">
@@ -137,14 +151,35 @@ export default function Profile() {
               </div>
               <div>
                 <Label className="text-xs font-medium text-muted-foreground">Avatar</Label>
-                <div className="mt-2 flex flex-wrap gap-2">
+
+                {/* Photo upload */}
+                <div className="mt-2 mb-3 flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer bg-muted hover:bg-muted/70 transition-colors rounded-xl px-4 py-2 text-sm font-medium text-foreground">
+                    <Camera className="w-4 h-4 text-primary" />
+                    {uploadingPhoto ? "Uploading..." : "Upload Photo"}
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+                  </label>
+                  {form.avatar_photo_url && (
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, avatar_photo_url: "", avatar_emoji: "😊" }))}
+                      className="flex items-center gap-1.5 text-xs text-destructive hover:underline"
+                    >
+                      <X className="w-3 h-3" /> Remove photo
+                    </button>
+                  )}
+                </div>
+
+                {/* Emoji grid */}
+                <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">Or choose an emoji</p>
+                <div className="flex flex-wrap gap-2">
                   {EMOJIS.map(emoji => (
                     <button
                       key={emoji}
                       type="button"
-                      onClick={() => setForm(f => ({ ...f, avatar_emoji: emoji }))}
+                      onClick={() => setForm(f => ({ ...f, avatar_emoji: emoji, avatar_photo_url: "" }))}
                       className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                        form.avatar_emoji === emoji
+                        !form.avatar_photo_url && form.avatar_emoji === emoji
                           ? "bg-primary/20 ring-2 ring-primary scale-110"
                           : "bg-muted hover:bg-muted/70"
                       }`}
