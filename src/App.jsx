@@ -25,6 +25,7 @@ import BudgetDashboard from './pages/BudgetDashboard';
 import DebtPayoffSimulator from './pages/DebtPayoffSimulator';
 import MonthlyRecap from './pages/MonthlyRecap';
 import AssetDashboard from './pages/AssetDashboard';
+import TaxSummary from './pages/TaxSummary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -72,6 +73,7 @@ const AuthenticatedApp = () => {
         <Route path="/debt-simulator" element={<DebtPayoffSimulator />} />
         <Route path="/monthly-recap" element={<MonthlyRecap />} />
         <Route path="/assets" element={<AssetDashboard />} />
+        <Route path="/tax-summary" element={<TaxSummary />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

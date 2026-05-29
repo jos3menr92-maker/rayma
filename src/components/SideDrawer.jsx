@@ -76,6 +76,11 @@ export default function SideDrawer({ open, onClose }) {
                 />
               </Section>
 
+              {/* Tools */}
+              <Section title="Tools">
+                <DrawerRow icon={FileText} label="Tax Summary" value="Annual report & deductible expenses" chevron onClick={() => { onClose(); window.location.href = "/tax-summary"; }} />
+              </Section>
+
               {/* App Info */}
               <Section title="About This App">
                 <DrawerRow icon={Info} label="App Name" value="Debt & Bills Tracker" />

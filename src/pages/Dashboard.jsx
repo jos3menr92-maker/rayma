@@ -4,7 +4,8 @@ import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
-import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2 } from "lucide-react";
+import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText } from "lucide-react";
+import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
 import LoanCard from "../components/LoanCard";
@@ -149,6 +150,9 @@ export default function Dashboard() {
       {/* RAYMA Proactive Insights */}
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
 
+      {/* Financial Health Score */}
+      <FinancialHealthScore />
+
       {/* Quick Links */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <button onClick={() => navigate("/monthly-recap")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
@@ -167,6 +171,15 @@ export default function Dashboard() {
           <div>
             <p className="text-xs font-semibold text-foreground">Assets</p>
             <p className="text-[10px] text-muted-foreground">Net worth tracker</p>
+          </div>
+        </button>
+        <button onClick={() => navigate("/tax-summary")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left col-span-2">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+            <FileText className="w-4 h-4 text-amber-400" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-foreground">Tax Summary</p>
+            <p className="text-[10px] text-muted-foreground">Annual report · deductible categories · CSV export</p>
           </div>
         </button>
       </div>
