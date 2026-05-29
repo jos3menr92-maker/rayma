@@ -121,7 +121,6 @@ Today's date: ${today}`,
         ref={fileRef}
         type="file"
         accept="image/*,application/pdf"
-        capture="environment"
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
