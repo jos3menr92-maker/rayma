@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import LoanCard from "../components/LoanCard";
@@ -19,12 +19,13 @@ export default function LoansList() {
   }, []);
 
   async function loadLoans() {
-    const data = await base44.entities.Loan.list("-created_date", 100);
+    // Paginate: fetch 50 at a time
+    const data = await base44.entities.Loan.list("-created_date", 50);
     setLoans(data);
     setLoading(false);
   }
 
-  const filtered = loans
+  const filtered = useMemo(() => loans
     .filter((l) => {
       const matchesSearch = l.name.toLowerCase().includes(search.toLowerCase());
       const matchesFilter =
@@ -39,7 +40,7 @@ export default function LoansList() {
       if (sort === "interest") return (b.interest_rate || 0) - (a.interest_rate || 0);
       if (sort === "due_date") return (a.due_day || 99) - (b.due_day || 99);
       return 0;
-    });
+    }), [loans, search, filter, sort]);
 
   if (loading) {
     return (

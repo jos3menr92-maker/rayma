@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, Receipt } from "lucide-react";
@@ -39,7 +39,8 @@ export default function Bills() {
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const data = await base44.entities.Bill.list("-created_date", 100);
+    // Paginate: fetch 50 at a time instead of 100
+    const data = await base44.entities.Bill.list("-created_date", 50);
     setBills(data);
     setLoading(false);
   };
@@ -86,12 +87,12 @@ export default function Bills() {
     load();
   };
 
-  const totalMonthly = bills.filter(b => b.is_active !== false).reduce((s, b) => {
+  const totalMonthly = useMemo(() => bills.filter(b => b.is_active !== false).reduce((s, b) => {
     const freq = b.payment_frequency || "monthly";
     if (freq === "weekly") return s + (b.amount || 0) * 4.33;
     if (freq === "biweekly") return s + (b.amount || 0) * 2.17;
     return s + (b.amount || 0);
-  }, 0);
+  }, 0), [bills]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">

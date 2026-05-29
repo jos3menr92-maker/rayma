@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -16,16 +17,23 @@ import Reminders from './pages/Reminders';
 import Profile from './pages/Profile';
 import Budget from './pages/Budget';
 
-import Finance from './pages/Finance';
-import MonthlyTrend from './pages/MonthlyTrend';
-import Simulator from './pages/Simulator';
-import DocumentVault from './pages/DocumentVault';
-import BankAccounts from './pages/BankAccounts';
-import BudgetDashboard from './pages/BudgetDashboard';
-import DebtPayoffSimulator from './pages/DebtPayoffSimulator';
-import MonthlyRecap from './pages/MonthlyRecap';
-import AssetDashboard from './pages/AssetDashboard';
-import TaxSummary from './pages/TaxSummary';
+// Lazy load less-visited pages
+const Finance = lazy(() => import('./pages/Finance'));
+const MonthlyTrend = lazy(() => import('./pages/MonthlyTrend'));
+const Simulator = lazy(() => import('./pages/Simulator'));
+const DocumentVault = lazy(() => import('./pages/DocumentVault'));
+const BankAccounts = lazy(() => import('./pages/BankAccounts'));
+const BudgetDashboard = lazy(() => import('./pages/BudgetDashboard'));
+const DebtPayoffSimulator = lazy(() => import('./pages/DebtPayoffSimulator'));
+const MonthlyRecap = lazy(() => import('./pages/MonthlyRecap'));
+const AssetDashboard = lazy(() => import('./pages/AssetDashboard'));
+const TaxSummary = lazy(() => import('./pages/TaxSummary'));
+
+const PageLoader = () => (
+  <div className="fixed inset-0 flex items-center justify-center">
+    <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+  </div>
+);
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -64,16 +72,16 @@ const AuthenticatedApp = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/budget" element={<Budget />} />
 
-        <Route path="/finance" element={<Finance />} />
-        <Route path="/trend" element={<MonthlyTrend />} />
-        <Route path="/simulator" element={<Simulator />} />
-        <Route path="/documents" element={<DocumentVault />} />
-        <Route path="/bank-accounts" element={<BankAccounts />} />
-        <Route path="/budget" element={<BudgetDashboard />} />
-        <Route path="/debt-simulator" element={<DebtPayoffSimulator />} />
-        <Route path="/monthly-recap" element={<MonthlyRecap />} />
-        <Route path="/assets" element={<AssetDashboard />} />
-        <Route path="/tax-summary" element={<TaxSummary />} />
+        <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
+        <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
+        <Route path="/simulator" element={<Suspense fallback={<PageLoader />}><Simulator /></Suspense>} />
+        <Route path="/documents" element={<Suspense fallback={<PageLoader />}><DocumentVault /></Suspense>} />
+        <Route path="/bank-accounts" element={<Suspense fallback={<PageLoader />}><BankAccounts /></Suspense>} />
+        <Route path="/budget" element={<Suspense fallback={<PageLoader />}><BudgetDashboard /></Suspense>} />
+        <Route path="/debt-simulator" element={<Suspense fallback={<PageLoader />}><DebtPayoffSimulator /></Suspense>} />
+        <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
+        <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
+        <Route path="/tax-summary" element={<Suspense fallback={<PageLoader />}><TaxSummary /></Suspense>} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

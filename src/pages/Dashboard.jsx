@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
@@ -75,8 +75,8 @@ export default function Dashboard() {
 
   async function loadData() {
     const [loansData, billsData, me, incomesData] = await Promise.all([
-      base44.entities.Loan.list("-created_date", 100),
-      base44.entities.Bill.list("-created_date", 100),
+      base44.entities.Loan.list("-created_date", 50),
+      base44.entities.Bill.list("-created_date", 50),
       base44.auth.me(),
       base44.entities.WeeklyIncome.list("-week_start", 52),
     ]);
@@ -87,22 +87,34 @@ export default function Dashboard() {
     setLoading(false);
   }
 
-  const activeLoans = loans.filter((l) => l.status !== "paid_off");
-  const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
-  const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
-  const totalPaid = totalDebt - totalRemaining;
-  const overallProgress = totalDebt > 0 ? (totalPaid / totalDebt) * 100 : 0;
-  const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
-  const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
-  const monthlyTotal = monthlyLoans + monthlyBills;
+  const { activeLoans, totalDebt, totalRemaining, totalPaid, overallProgress, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, billsPieData, loansPieData, loanPaymentsPieData } = useMemo(() => {
+    const activeLoans = loans.filter((l) => l.status !== "paid_off");
+    const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
+    const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
+    const totalPaid = totalDebt - totalRemaining;
+    const overallProgress = totalDebt > 0 ? (totalPaid / totalDebt) * 100 : 0;
+    const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+    const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
+    const monthlyTotal = monthlyLoans + monthlyBills;
 
-  const expensePieData = [
-    ...(monthlyLoans > 0 ? [{ name: "Loan Payments", value: monthlyLoans }] : []),
-    ...(monthlyBills > 0 ? [{ name: "Bills", value: monthlyBills }] : []),
-  ];
-  const billsPieData = bills.map(b => ({ name: b.name, value: b.amount || 0 }));
-  const loansPieData = activeLoans.map(l => ({ name: l.name, value: l.current_balance || 0 }));
-  const loanPaymentsPieData = activeLoans.filter(l => l.monthly_payment).map(l => ({ name: l.name, value: l.monthly_payment || 0 }));
+    return {
+      activeLoans,
+      totalDebt,
+      totalRemaining,
+      totalPaid,
+      overallProgress,
+      monthlyLoans,
+      monthlyBills,
+      monthlyTotal,
+      expensePieData: [
+        ...(monthlyLoans > 0 ? [{ name: "Loan Payments", value: monthlyLoans }] : []),
+        ...(monthlyBills > 0 ? [{ name: "Bills", value: monthlyBills }] : []),
+      ],
+      billsPieData: bills.map(b => ({ name: b.name, value: b.amount || 0 })),
+      loansPieData: activeLoans.map(l => ({ name: l.name, value: l.current_balance || 0 })),
+      loanPaymentsPieData: activeLoans.filter(l => l.monthly_payment).map(l => ({ name: l.name, value: l.monthly_payment || 0 })),
+    };
+  }, [loans, bills]);
 
   const today = new Date().getDate();
   const upcomingLoans = activeLoans
