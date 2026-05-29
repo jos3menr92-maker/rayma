@@ -10,21 +10,19 @@ export default function StatsCard({ label, value, icon: Icon, color = "primary",
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-2xl p-4 border border-border shadow-sm"
+      className="bg-card rounded-xl p-3 border border-border shadow-sm"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${colorMap[color]}`}>
-          <Icon className="w-4 h-4" />
+      <div className="flex items-center gap-2 mb-1.5">
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${colorMap[color]}`}>
+          <Icon className="w-3.5 h-3.5" />
         </div>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
       </div>
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
-        {label}
-      </p>
-      <p className="text-xl font-bold font-heading text-foreground">{value}</p>
+      <p className="text-lg font-bold font-heading text-foreground leading-tight">{value}</p>
       {subtitle && (
-        <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{subtitle}</p>
       )}
     </motion.div>
   );

@@ -135,8 +135,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-6">
+    <div className="max-w-lg mx-auto px-4 pt-4 pb-4">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold font-heading text-foreground mb-0.5">
             Hi, {userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0] || 'there'} 👋
@@ -166,7 +166,7 @@ export default function Dashboard() {
       <FinancialHealthScore />
 
       {/* Quick Links */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-2 mb-4">
         <button onClick={() => navigate("/monthly-recap")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <CalendarDays className="w-4 h-4 text-primary" />
@@ -214,7 +214,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-2 mb-4">
         <div onClick={() => navigate("/trend?type=totalDebt")} className="cursor-pointer">
           <StatsCard label="Total Debt" value={formatCurrency(totalDebt)} icon={Wallet} color="destructive" subtitle={`${activeLoans.length} active loan${activeLoans.length !== 1 ? "s" : ""}`} />
         </div>
@@ -231,12 +231,12 @@ export default function Dashboard() {
 
       {/* Upcoming Reminders */}
       {upcomingLoans.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-4">
           <h2 className="text-sm font-semibold font-heading text-foreground mb-3 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-accent" />
             Upcoming Payments
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {upcomingLoans.map((loan) => {
               const daysUntil = loan.due_day >= today
                 ? loan.due_day - today
@@ -246,7 +246,7 @@ export default function Dashboard() {
                   key={loan.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className={`flex items-center justify-between p-3 rounded-xl border ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl border ${
                     daysUntil <= 3
                       ? "bg-destructive/5 border-destructive/20"
                       : "bg-card border-border"
@@ -254,11 +254,11 @@ export default function Dashboard() {
                 >
                   <div>
                     <p className="text-sm font-medium text-foreground">{loan.name}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[10px] text-muted-foreground">
                       Due in {daysUntil} day{daysUntil !== 1 ? "s" : ""} · {formatCurrency(loan.monthly_payment)}
                     </p>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${
                     daysUntil <= 3
                       ? "bg-destructive/10 text-destructive"
                       : "bg-primary/10 text-primary"
@@ -275,10 +275,10 @@ export default function Dashboard() {
       {/* Active Loans */}
       {activeLoans.length > 0 ? (
         <div>
-          <h2 className="text-sm font-semibold font-heading text-foreground mb-3">
+          <h2 className="text-sm font-semibold font-heading text-foreground mb-2">
             Active Loans
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {activeLoans.map((loan, i) => (
               <LoanCard key={loan.id} loan={loan} index={i} />
             ))}
