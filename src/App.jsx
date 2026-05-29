@@ -20,6 +20,9 @@ import Finance from './pages/Finance';
 import MonthlyTrend from './pages/MonthlyTrend';
 import Simulator from './pages/Simulator';
 import DocumentVault from './pages/DocumentVault';
+import BankAccounts from './pages/BankAccounts';
+import BudgetDashboard from './pages/BudgetDashboard';
+import DebtPayoffSimulator from './pages/DebtPayoffSimulator';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,6 +65,9 @@ const AuthenticatedApp = () => {
         <Route path="/trend" element={<MonthlyTrend />} />
         <Route path="/simulator" element={<Simulator />} />
         <Route path="/documents" element={<DocumentVault />} />
+        <Route path="/bank-accounts" element={<BankAccounts />} />
+        <Route path="/budget" element={<BudgetDashboard />} />
+        <Route path="/debt-simulator" element={<DebtPayoffSimulator />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

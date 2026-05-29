@@ -1,0 +1,56 @@
+{
+  "name": "UserMemory",
+  "type": "object",
+  "properties": {
+    "memory_type": {
+      "type": "string",
+      "enum": [
+        "preference",
+        "goal",
+        "habit",
+        "fact",
+        "feedback"
+      ],
+      "description": "Type of memory"
+    },
+    "content": {
+      "type": "string",
+      "description": "The memory content"
+    },
+    "context": {
+      "type": "string",
+      "description": "Context in which this was learned"
+    },
+    "importance": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "last_referenced": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "memory_type",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

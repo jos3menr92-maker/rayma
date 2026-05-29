@@ -1,0 +1,70 @@
+{
+  "name": "Transaction",
+  "type": "object",
+  "properties": {
+    "bank_account_id": {
+      "type": "string",
+      "description": "Linked bank account ID"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "description": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Positive = income, Negative = expense"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "income",
+        "food",
+        "transport",
+        "utilities",
+        "subscriptions",
+        "health",
+        "insurance",
+        "rent",
+        "loan_payment",
+        "savings",
+        "entertainment",
+        "shopping",
+        "other"
+      ],
+      "default": "other"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "debit",
+        "credit"
+      ],
+      "default": "debit"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "date",
+    "amount",
+    "description"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

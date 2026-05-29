@@ -1,0 +1,58 @@
+{
+  "name": "BudgetCategory",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Category name"
+    },
+    "category_key": {
+      "type": "string",
+      "enum": [
+        "food",
+        "transport",
+        "utilities",
+        "subscriptions",
+        "health",
+        "insurance",
+        "rent",
+        "loan_payment",
+        "savings",
+        "entertainment",
+        "shopping",
+        "other"
+      ]
+    },
+    "monthly_limit": {
+      "type": "number",
+      "description": "Spending limit per month"
+    },
+    "color": {
+      "type": "string",
+      "description": "Hex color for UI display"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Lucide icon name"
+    }
+  },
+  "required": [
+    "name",
+    "category_key",
+    "monthly_limit"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
