@@ -32,8 +32,8 @@ Deno.serve(async (req) => {
 
       if (donationType === 'donation') {
         // Extend from current expiry if still active, otherwise from today
-        const currentUser = await base44.asServiceRole.entities.User.list();
-        const userData = currentUser.find(u => u.id === userId);
+        const users = await base44.asServiceRole.entities.User.filter({ id: userId });
+        const userData = users[0];
         let baseDate = new Date();
         if (userData?.rayma_expires_at) {
           const currentExpiry = new Date(userData.rayma_expires_at + 'T00:00:00');
