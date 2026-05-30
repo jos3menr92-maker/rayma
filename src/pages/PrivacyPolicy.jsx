@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
           </div>
           <div>
             <h1 className="text-xl font-bold font-heading text-foreground">Privacy Policy</h1>
-            <p className="text-xs text-muted-foreground">Last updated: May 2025</p>
+            <p className="text-xs text-muted-foreground">Last updated: May 2026</p>
           </div>
         </div>
 
@@ -46,15 +46,27 @@ export default function PrivacyPolicy() {
               <li>To process voluntary donations via Stripe.</li>
               <li>To improve app features and fix bugs.</li>
             </ul>
+            <p className="mt-2 font-semibold text-foreground text-xs">Important: RAYMA AI provides informational insights only — it is NOT financial advice. Always consult a licensed financial professional for important financial decisions.</p>
           </Section>
 
-          <Section title="4. Data Sharing">
-            We <strong>never sell, rent, or share</strong> your personal financial data with third parties for marketing purposes.
-            Data may be shared only with:
+          <Section title="4. Data Sharing & No-Sale Commitment">
+            We <strong>never sell, rent, share, or transfer</strong> your personal financial data to third parties for marketing, advertising, or data broker purposes. We do not track you across other apps or websites.
+            <br /><br />Data is shared only as necessary with:
             <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed mt-2">
-              <li><strong>Stripe</strong> — for payment processing only (no financial account data is shared).</li>
-              <li><strong>Base44</strong> — our hosting platform, which stores encrypted data on your behalf.</li>
-              <li><strong>AI providers</strong> — anonymized prompts are sent to generate RAYMA financial insights.</li>
+              <li><strong>Stripe</strong> — for payment processing only. Payment card details are entered directly with Stripe and never pass through RAYMA servers.</li>
+              <li><strong>Base44</strong> — our hosting platform, which stores your encrypted data on your behalf under their own privacy policy.</li>
+              <li><strong>AI providers</strong> — anonymized financial prompts are sent to generate RAYMA insights. No personally identifying information is included in these prompts.</li>
+            </ul>
+          </Section>
+
+          <Section title="4a. Apple App Store — Privacy Nutrition Label">
+            In accordance with Apple App Store requirements, here is a summary of data RAYMA collects:
+            <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed mt-2">
+              <li><strong>Contact Info (Name, Email)</strong> — collected at registration, linked to your account, used for authentication only.</li>
+              <li><strong>Financial Info (Income, Debts, Assets)</strong> — manually entered by you, stored securely, used solely for app functionality.</li>
+              <li><strong>User Content (Documents)</strong> — files you optionally upload, stored securely, not shared.</li>
+              <li><strong>No tracking:</strong> RAYMA does not track you across third-party apps or websites.</li>
+              <li><strong>No data sale:</strong> Your data is never sold to data brokers or advertisers.</li>
             </ul>
           </Section>
 
@@ -68,13 +80,16 @@ export default function PrivacyPolicy() {
             any time from the app (Settings → Delete Account). Data is permanently deleted within 30 days of a deletion request.
           </Section>
 
-          <Section title="7. Your Rights">
-            You have the right to:
+          <Section title="7. Your Rights (GDPR / CCPA / Global)">
+            Depending on your location, you may have the following rights regarding your personal data:
             <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed mt-2">
-              <li>Access all data we hold about you.</li>
-              <li>Correct inaccurate data.</li>
-              <li>Request full deletion of your account and data.</li>
-              <li>Withdraw consent for AI features at any time.</li>
+              <li><strong>Right to Access:</strong> Request a copy of all data we hold about you.</li>
+              <li><strong>Right to Correction:</strong> Correct inaccurate or incomplete data.</li>
+              <li><strong>Right to Deletion:</strong> Delete your account and all associated data at any time (Profile → Delete Account). Data is permanently removed within 30 days.</li>
+              <li><strong>Right to Portability:</strong> Export your financial data (CSV export available from Tax Summary).</li>
+              <li><strong>Right to Opt-Out of AI:</strong> Withdraw consent for AI features at any time by not using the RAYMA chat feature.</li>
+              <li><strong>CCPA (California):</strong> We do not sell personal information. California residents may contact us to exercise rights under CCPA.</li>
+              <li><strong>GDPR (EU/EEA):</strong> If you are in the EU, you have additional rights under the GDPR including the right to object and right to restrict processing. Contact us at privacy@raymaapp.com.</li>
             </ul>
           </Section>
 

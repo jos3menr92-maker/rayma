@@ -17,7 +17,7 @@ export default function TermsOfService() {
           </div>
           <div>
             <h1 className="text-xl font-bold font-heading text-foreground">Terms of Service</h1>
-            <p className="text-xs text-muted-foreground">Last updated: May 2025</p>
+            <p className="text-xs text-muted-foreground">Last updated: May 2026</p>
           </div>
         </div>
 
@@ -28,14 +28,15 @@ export default function TermsOfService() {
           </Section>
 
           <Section title="2. Description of Service">
-            RAYMA is a personal finance tracking app that helps users manage loans, bills, budgets, and savings goals.
-            The RAYMA AI advisor feature provides informational insights only — it is <strong>not financial advice</strong>.
-            Always consult a licensed financial professional for important financial decisions.
+            RAYMA is a personal finance <strong>tracking</strong> app that helps users manage loans, bills, budgets, and savings goals. RAYMA does not provide loans, credit, investment products, or any regulated financial services.
+            <br /><br />
+            <strong>⚠️ NOT FINANCIAL ADVICE:</strong> The RAYMA AI advisor feature provides general informational insights only. Nothing in RAYMA constitutes financial, investment, tax, or legal advice. RAYMA is not a licensed financial advisor, broker, or credit counselor. Always consult a licensed financial professional before making important financial decisions.
           </Section>
 
-          <Section title="3. User Accounts">
+          <Section title="3. Eligibility & User Accounts">
             <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed">
-              <li>You are responsible for maintaining the security of your account.</li>
+              <li><strong>Age:</strong> You must be at least 13 years old to use RAYMA. By using the app you confirm you meet this requirement.</li>
+              <li>You are responsible for maintaining the security of your account credentials.</li>
               <li>You must provide accurate information when registering.</li>
               <li>You may not use the app for illegal purposes.</li>
               <li>One account per person. Account sharing is not permitted.</li>
@@ -73,7 +74,11 @@ export default function TermsOfService() {
             of the revised Terms.
           </Section>
 
-          <Section title="10. Contact">
+          <Section title="10. Governing Law">
+            These Terms are governed by the laws of the State of Delaware, United States, without regard to conflict of law provisions. Any disputes shall be resolved in the courts of Delaware. If you are located in the European Union, mandatory local consumer protection laws of your country may also apply.
+          </Section>
+
+          <Section title="11. Contact">
             Questions about these Terms? Contact us at:
             <p className="text-muted-foreground text-xs mt-1 font-medium">legal@raymaapp.com</p>
           </Section>
