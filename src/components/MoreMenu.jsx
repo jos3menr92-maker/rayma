@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart } from "lucide-react";
+import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck } from "lucide-react";
 
 const moreItems = [
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
@@ -14,6 +14,7 @@ const moreItems = [
   { path: "/calendar", icon: CalendarDays, label: "Bill Calendar", desc: "View upcoming due dates" },
   { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
   { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
+  { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
   { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Donate or get lifetime access", highlight: true },
 ];
 

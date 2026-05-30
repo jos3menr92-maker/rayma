@@ -17,6 +17,7 @@ import Reminders from './pages/Reminders';
 import Profile from './pages/Profile';
 import Budget from './pages/Budget';
 import Support from './pages/Support';
+import SecurityAudit from './pages/SecurityAudit';
 
 // Lazy load less-visited pages
 const Finance = lazy(() => import('./pages/Finance'));
@@ -73,6 +74,7 @@ const AuthenticatedApp = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/budget" element={<Budget />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/security" element={<SecurityAudit />} />
 
         <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
         <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />

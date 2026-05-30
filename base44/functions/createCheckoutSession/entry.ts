@@ -10,7 +10,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { priceId, customAmount, donationType, successUrl, cancelUrl } = await req.json();
+    const body = await req.json();
+    const { priceId, customAmount, donationType, successUrl, cancelUrl } = body;
+
+    // Input validation — reject unexpected/malicious values
+    const allowedTypes = ['donation', 'lifetime'];
+    if (donationType && !allowedTypes.includes(donationType)) {
+      return Response.json({ error: 'Invalid donation type' }, { status: 400 });
+    }
+
+    // Sanitize URLs — must start with http(s) to prevent open redirects
+    const isValidUrl = (url) => url && /^https?:\/\//.test(url);
+    if ((successUrl && !isValidUrl(successUrl)) || (cancelUrl && !isValidUrl(cancelUrl))) {
+      return Response.json({ error: 'Invalid redirect URL' }, { status: 400 });
+    }
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
