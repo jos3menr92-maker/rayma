@@ -7,7 +7,6 @@ import MiniCalendar from "../components/calendar/MiniCalendar";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, Sparkles, RefreshCw } from "lucide-react";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
-import ProgressRing from "../components/ProgressRing";
 import LoanCard from "../components/LoanCard";
 import DueThisWeek from "../components/DueThisWeek";
 import NetWorthChart from "../components/NetWorthChart";
@@ -112,7 +111,6 @@ export default function Dashboard() {
     const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
     const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
     const totalPaid = totalDebt - totalRemaining;
-    const overallProgress = totalDebt > 0 ? (totalPaid / totalDebt) * 100 : 0;
     const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
     const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
     const monthlyTotal = monthlyLoans + monthlyBills;
@@ -122,7 +120,6 @@ export default function Dashboard() {
       totalDebt,
       totalRemaining,
       totalPaid,
-      overallProgress,
       monthlyLoans,
       monthlyBills,
       monthlyTotal,
