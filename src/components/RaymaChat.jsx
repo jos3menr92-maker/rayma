@@ -1,11 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Sparkles, Paperclip, Loader2, Trash2 } from "lucide-react";
+import { X, Send, Sparkles, Paperclip, Loader2, Trash2, Heart } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
+import { useNavigate } from "react-router-dom";
+
+function isRaymaActive(raymaExpiresAt) {
+  if (!raymaExpiresAt) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expires = new Date(raymaExpiresAt + "T00:00:00");
+  return expires >= today;
+}
 
 export default function RaymaChat() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [raymaActive, setRaymaActive] = useState(null); // null = loading
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -17,6 +28,12 @@ export default function RaymaChat() {
   const fileRef = useRef(null);
 
   useEffect(() => {
+    base44.auth.me().then((user) => {
+      setRaymaActive(isRaymaActive(user?.rayma_expires_at));
+    });
+  }, []);
+
+  useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
@@ -24,6 +41,7 @@ export default function RaymaChat() {
 
   async function openChat() {
     setOpen(true);
+    if (!raymaActive) return; // show donation wall
     if (conversation) return;
     setLoading(true);
     const conv = await base44.agents.createConversation({
@@ -162,8 +180,32 @@ export default function RaymaChat() {
                 </div>
               </div>
 
+              {/* Donation wall when RAYMA inactive */}
+              {raymaActive === false && (
+                <div className="flex-1 flex flex-col items-center justify-center p-5 text-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground mb-1">RAYMA is not active</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      AI features require a donation to cover operating costs.
+                      A donation of any amount keeps RAYMA running for 6 months.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setOpen(false); navigate("/support"); }}
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    Donate to unlock RAYMA
+                  </button>
+                  <p className="text-[10px] text-muted-foreground">All other features remain free forever.</p>
+                </div>
+              )}
+
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              {raymaActive !== false && <div className="flex-1 overflow-y-auto p-3 space-y-3">
                 {loading && (
                   <div className="flex justify-center py-6">
                     <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -202,10 +244,10 @@ export default function RaymaChat() {
                   </div>
                 )}
                 <div ref={bottomRef} />
-              </div>
+              </div>}
 
               {/* Input */}
-              <form onSubmit={handleSend} className="border-t border-border px-3 py-2.5 flex flex-col gap-2 shrink-0">
+              {raymaActive !== false && <form onSubmit={handleSend} className="border-t border-border px-3 py-2.5 flex flex-col gap-2 shrink-0">
                 {attachedFile && (
                   <div className="flex items-center gap-2 bg-primary/10 rounded-xl px-3 py-1.5 text-xs text-primary">
                     <Paperclip className="w-3 h-3 shrink-0" />
@@ -242,7 +284,7 @@ export default function RaymaChat() {
                   </button>
                 </div>
                 <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileAttach} />
-              </form>
+              </form>}
             </motion.div>
           </>
         )}

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
+import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, Sparkles, RefreshCw } from "lucide-react";
@@ -204,6 +205,9 @@ export default function Dashboard() {
           </div>
         </div>
       </motion.div>
+
+      {/* RAYMA Expiry Banner */}
+      <RAYMAExpiryBanner raymaExpiresAt={userProfile?.rayma_expires_at} />
 
       {/* Cash Left This Month */}
       {monthlyIncome > 0 && (

@@ -36,6 +36,29 @@
     "dashboard_greeting": {
       "type": "string",
       "description": "Custom greeting message shown on dashboard"
+    },
+    "rayma_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when RAYMA access expires. Null = not yet donated."
+    },
+    "pay_frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "biweekly",
+        "monthly"
+      ],
+      "description": "How often user gets paid"
+    },
+    "pay_day": {
+      "type": "string",
+      "description": "Day of week (for weekly/biweekly) or day of month (for monthly) user gets paid"
     }
-  }
+  },
+  "required": [
+    "preferred_name",
+    "avatar_emoji",
+    "dashboard_greeting"
+  ]
 }
