@@ -1,13 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, Receipt } from "lucide-react";
+import { Plus, Trash2, Edit3, Receipt, CheckCircle2 } from "lucide-react";
 import BillPriceAlert from "../components/BillPriceAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format } from "date-fns";
 
 const categoryIcons = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️",
@@ -87,6 +88,19 @@ export default function Bills() {
     load();
   };
 
+  const [paidBillId, setPaidBillId] = useState(null);
+  const handleMarkPaid = async (bill) => {
+    setPaidBillId(bill.id);
+    await base44.entities.Payment.create({
+      bill_id: bill.id,
+      payment_type: "bill",
+      amount: bill.amount,
+      payment_date: format(new Date(), "yyyy-MM-dd"),
+      note: `Auto-logged from Bills page`,
+    });
+    setPaidBillId(null);
+  };
+
   const totalMonthly = useMemo(() => bills.filter(b => b.is_active !== false).reduce((s, b) => {
     const freq = b.payment_frequency || "monthly";
     if (freq === "weekly") return s + (b.amount || 0) * 4.33;
@@ -152,6 +166,14 @@ export default function Bills() {
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="font-bold text-foreground text-sm">{fmt(bill.amount)}</p>
+                  <button
+                    onClick={() => handleMarkPaid(bill)}
+                    disabled={paidBillId === bill.id}
+                    className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                    title="Mark as Paid"
+                  >
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${paidBillId === bill.id ? "text-primary animate-pulse" : ""}`} />
+                  </button>
                   <button onClick={() => openEdit(bill)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>

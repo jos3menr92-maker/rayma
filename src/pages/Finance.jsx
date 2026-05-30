@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { motion } from "framer-motion";
-import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import {
   CartesianGrid, Legend, BarChart, Bar,
 } from "recharts";
 import CashFlowForecast from "../components/CashFlowForecast";
+import IncomeLogGrouped from "../components/IncomeLogGrouped";
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
@@ -242,7 +243,7 @@ export default function Finance() {
           </div>
         )}
 
-        {/* Income Log */}
+        {/* Income Log — grouped by month */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold font-heading text-foreground">Income Log</h2>
@@ -257,39 +258,7 @@ export default function Finance() {
               <p className="text-sm text-muted-foreground">No income logged yet. Start tracking your weekly income.</p>
             </div>
           ) : (
-            <div className="bg-card border border-border rounded-2xl divide-y divide-border">
-              {incomes.map((inc, i) => {
-                const weeklyNet = inc.amount - weeklyExpenses;
-                return (
-                  <motion.div key={inc.id}
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                    className="flex items-center justify-between px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{fmt(inc.amount)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Week of {getWeekLabel(inc.week_start)}{inc.note ? ` · ${inc.note}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className={`flex items-center gap-0.5 justify-end text-xs font-medium ${weeklyNet >= 0 ? "text-primary" : "text-destructive"}`}>
-                          {weeklyNet >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
-                          {fmt(Math.abs(weeklyNet))}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">after expenses</p>
-                      </div>
-                      <button onClick={() => openEdit(inc)} className="p-1 text-muted-foreground hover:text-foreground">
-                        <Plus className="w-3.5 h-3.5 rotate-45" />
-                      </button>
-                      <button onClick={() => handleDelete(inc.id)} className="p-1 text-muted-foreground hover:text-destructive">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+            <IncomeLogGrouped incomes={incomes} weeklyExpenses={weeklyExpenses} onEdit={openEdit} onDelete={handleDelete} fmt={fmt} getWeekLabel={getWeekLabel} />
           )}
         </div>
       </motion.div>

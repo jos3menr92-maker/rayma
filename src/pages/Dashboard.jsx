@@ -1,17 +1,17 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
-import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText } from "lucide-react";
+import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, Sparkles, RefreshCw } from "lucide-react";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
 import ProgressRing from "../components/ProgressRing";
 import LoanCard from "../components/LoanCard";
 import DueThisWeek from "../components/DueThisWeek";
 import NetWorthChart from "../components/NetWorthChart";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 function formatCurrency(amount) {
@@ -69,11 +69,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullStartY, setPullStartY] = useState(null);
+  const [pullDistance, setPullDistance] = useState(0);
+
   useEffect(() => {
     loadData();
   }, []);
 
-  async function loadData() {
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     const [loansData, billsData, me, incomesData] = await Promise.all([
       base44.entities.Loan.list("-created_date", 50),
       base44.entities.Bill.list("-created_date", 50),
@@ -84,8 +90,22 @@ export default function Dashboard() {
     setBills(billsData.filter(b => b.is_active !== false));
     setIncomes(incomesData);
     setUserProfile(me);
-    setLoading(false);
-  }
+    if (isRefresh) setRefreshing(false);
+    else setLoading(false);
+  }, []);
+
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e) => setPullStartY(e.touches[0].clientY);
+  const handleTouchMove = (e) => {
+    if (pullStartY === null) return;
+    const dist = e.touches[0].clientY - pullStartY;
+    if (dist > 0 && window.scrollY === 0) setPullDistance(Math.min(dist, 80));
+  };
+  const handleTouchEnd = () => {
+    if (pullDistance > 50) loadData(true);
+    setPullDistance(0);
+    setPullStartY(null);
+  };
 
   const { activeLoans, totalDebt, totalRemaining, totalPaid, overallProgress, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, billsPieData, loansPieData, loanPaymentsPieData } = useMemo(() => {
     const activeLoans = loans.filter((l) => l.status !== "paid_off");
@@ -126,6 +146,14 @@ export default function Dashboard() {
     })
     .slice(0, 3);
 
+  // Cash left this month — must be before any early return
+  const monthlyIncome = useMemo(() => {
+    if (incomes.length === 0) return 0;
+    const avg = incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length;
+    return avg * 4.33;
+  }, [incomes]);
+  const cashLeft = monthlyIncome - (monthlyTotal || 0);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -135,8 +163,28 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4 pb-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
+    <div
+      className="max-w-lg mx-auto px-4 pt-4 pb-4"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      <AnimatePresence>
+        {(pullDistance > 10 || refreshing) && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 32 }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
+            {refreshing ? "Refreshing..." : pullDistance > 50 ? "Release to refresh" : "Pull to refresh"}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-2xl font-bold font-heading text-foreground mb-0.5">
             Hi, {userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0] || 'there'} 👋
@@ -145,10 +193,43 @@ export default function Dashboard() {
             {userProfile?.dashboard_greeting || 'Stay on top of your finances'}
           </p>
         </div>
-        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl flex-shrink-0">
-          {userProfile?.avatar_emoji || '😊'}
+        <div className="flex items-center gap-2">
+          {/* Ask RAYMA chip */}
+          <button
+            onClick={() => document.querySelector('[title="Chat with RAYMA"]')?.click()}
+            className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Ask RAYMA
+          </button>
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
+            {userProfile?.avatar_emoji || '😊'}
+          </div>
         </div>
       </motion.div>
+
+      {/* Cash Left This Month */}
+      {monthlyIncome > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`rounded-2xl border px-4 py-3 mb-3 flex items-center justify-between ${
+            cashLeft >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"
+          }`}
+        >
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Cash Left This Month</p>
+            <p className={`text-xl font-bold font-heading ${cashLeft >= 0 ? "text-primary" : "text-destructive"}`}>
+              {formatCurrency(Math.abs(cashLeft))}
+              {cashLeft < 0 && <span className="text-xs font-normal ml-1">overspent</span>}
+            </p>
+          </div>
+          <div className="text-right text-xs text-muted-foreground">
+            <p>{formatCurrency(monthlyIncome)} income</p>
+            <p>− {formatCurrency(monthlyTotal)} obligations</p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Due This Week */}
       <DueThisWeek loans={activeLoans} bills={bills} />
