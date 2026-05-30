@@ -98,7 +98,7 @@ export default function LoanCard({ loan, index = 0 }) {
                   {icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold font-heading text-foreground text-sm leading-tight">
+                  <h3 className="font-semibold font-heading text-foreground text-sm leading-tight truncate max-w-[80px]">
                     {loan.name}
                   </h3>
                   {loan.lender && (

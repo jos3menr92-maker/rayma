@@ -115,7 +115,7 @@ export default function Bills() {
   );
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <BillPriceAlert />
         <div className="flex items-center justify-between mb-2">
@@ -169,16 +169,16 @@ export default function Bills() {
                   <button
                     onClick={() => handleMarkPaid(bill)}
                     disabled={paidBillId === bill.id}
-                    className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                    className="p-2.5 text-muted-foreground hover:text-primary transition-colors"
                     title="Mark as Paid"
                   >
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${paidBillId === bill.id ? "text-primary animate-pulse" : ""}`} />
+                    <CheckCircle2 className={`w-4 h-4 ${paidBillId === bill.id ? "text-primary animate-pulse" : ""}`} />
                   </button>
-                  <button onClick={() => openEdit(bill)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                    <Edit3 className="w-3.5 h-3.5" />
+                  <button onClick={() => openEdit(bill)} className="p-2.5 text-muted-foreground hover:text-foreground transition-colors">
+                    <Edit3 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(bill.id)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                  <button onClick={() => handleDelete(bill.id)} className="p-2.5 text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </motion.div>

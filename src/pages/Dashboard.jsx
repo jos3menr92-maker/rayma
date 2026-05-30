@@ -162,7 +162,7 @@ export default function Dashboard() {
 
   return (
     <div
-      className="max-w-lg mx-auto px-4 pt-4 pb-4"
+      className="max-w-lg mx-auto px-4 pt-4 pb-24"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

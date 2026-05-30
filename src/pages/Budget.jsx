@@ -160,7 +160,7 @@ export default function Budget() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Budget & Savings</h1>
         <p className="text-sm text-muted-foreground mb-6">Track your income and plan your savings</p>
