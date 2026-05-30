@@ -81,8 +81,8 @@ export default function Dashboard() {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     const [loansData, billsData, me, incomesData] = await Promise.all([
-      base44.entities.Loan.list("-created_date", 50),
-      base44.entities.Bill.list("-created_date", 50),
+      base44.entities.Loan.list("-created_date", 100),
+      base44.entities.Bill.list("-created_date", 100),
       base44.auth.me(),
       base44.entities.WeeklyIncome.list("-week_start", 52),
     ]);
