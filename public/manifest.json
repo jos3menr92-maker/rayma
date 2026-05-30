@@ -4,12 +4,10 @@
   "description": "Manage loans, bills, income & your financial health all in one place.",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#f7f7f7",
   "theme_color": "#0dcfba",
-  "orientation": "portrait",
-  "scope": "/",
   "lang": "en",
-  "categories": ["finance", "utilities"],
   "icons": [
     {
       "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
@@ -28,15 +26,13 @@
   "shortcuts": [
     {
       "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View your financial dashboard",
+      "short_name": "Home",
       "url": "/",
       "icons": [{ "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png", "sizes": "192x192" }]
     },
     {
       "name": "Loans",
       "short_name": "Loans",
-      "description": "Manage your loans",
       "url": "/loans",
       "icons": [{ "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png", "sizes": "192x192" }]
     }

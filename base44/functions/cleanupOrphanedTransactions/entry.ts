@@ -23,12 +23,11 @@ Deno.serve(async (req) => {
       t => t.bank_account_id && !validAccountIds.has(t.bank_account_id)
     );
 
-    // Delete orphaned transactions
-    let deletedCount = 0;
-    for (const transaction of orphanedTransactions) {
-      await base44.asServiceRole.entities.Transaction.delete(transaction.id);
-      deletedCount++;
-    }
+    // Delete orphaned transactions in parallel
+    await Promise.all(
+      orphanedTransactions.map(t => base44.asServiceRole.entities.Transaction.delete(t.id))
+    );
+    const deletedCount = orphanedTransactions.length;
 
     return Response.json({
       success: true,
