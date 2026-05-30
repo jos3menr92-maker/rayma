@@ -15,12 +15,12 @@ Deno.serve(async (req) => {
 
     let snapshotsTaken = 0;
 
-    for (const user of users) {
+    for (const member of users) {
       try {
-        // Fetch assets and loans for this user
+        // Fetch assets and loans for this member
         const [assets, loans] = await Promise.all([
-          base44.asServiceRole.entities.Asset.filter({ created_by: user.email }),
-          base44.asServiceRole.entities.Loan.filter({ created_by: user.email }),
+          base44.asServiceRole.entities.Asset.filter({ created_by: member.email }),
+          base44.asServiceRole.entities.Loan.filter({ created_by: member.email }),
         ]);
 
         const totalAssets = assets.reduce((sum, a) => sum + (a.amount || 0), 0);
@@ -31,9 +31,9 @@ Deno.serve(async (req) => {
 
         const today = new Date().toISOString().split("T")[0];
 
-        // Check if a snapshot already exists for today for this user
+        // Check if a snapshot already exists for today for this member
         const existing = await base44.asServiceRole.entities.NetWorthSnapshot.filter({
-          created_by: user.email,
+          created_by: member.email,
           snapshot_date: today,
         });
 
@@ -43,12 +43,12 @@ Deno.serve(async (req) => {
             total_assets: totalAssets,
             total_liabilities: totalLiabilities,
             net_worth: netWorth,
-            created_by: user.email,
+            created_by: member.email,
           });
           snapshotsTaken++;
         }
       } catch (userErr) {
-        console.warn(`Skipped user ${user.email}:`, userErr.message);
+        console.warn(`Skipped user ${member.email}:`, userErr.message);
       }
     }
 
