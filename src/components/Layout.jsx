@@ -30,7 +30,7 @@ export default function Layout() {
       <QuickAddMenu open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
       <MoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
       {/* Top bar with menu button */}
-      <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
           <span className="text-sm font-semibold font-heading text-foreground">Debt & Bills</span>
           <div className="flex items-center gap-2">
@@ -41,7 +41,7 @@ export default function Layout() {
           </div>
         </div>
       </div>
-      <main className="flex-1 pb-20 overflow-y-auto">
+      <main className="flex-1 pb-safe overflow-y-auto">
         <Outlet />
       </main>
 
@@ -66,7 +66,8 @@ export default function Layout() {
           if (isDragging.current) { e.preventDefault(); return; }
           setQuickAddOpen(true);
         }}
-        className="fixed bottom-24 left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
+        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+        className="fixed left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
         title="Quick Add (drag to move)"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
@@ -77,7 +78,7 @@ export default function Layout() {
       <FeedbackButton />
       <RaymaChat />
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;

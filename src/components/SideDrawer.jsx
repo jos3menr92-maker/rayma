@@ -39,7 +39,7 @@ export default function SideDrawer({ open, onClose }) {
             className="fixed top-0 right-0 h-full w-80 bg-card border-l border-border shadow-2xl z-50 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-primary/10 border-b border-border px-5 pt-12 pb-5">
+            <div className="bg-primary/10 border-b border-border px-5 pb-5" style={{ paddingTop: "max(3rem, calc(1.25rem + env(safe-area-inset-top)))" }}>
               <div className="flex items-start justify-between mb-4">
                 <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center text-3xl">
                   {user?.avatar_emoji || "😊"}

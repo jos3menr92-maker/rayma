@@ -151,7 +151,8 @@ export default function RaymaChat() {
       <motion.button
         whileTap={{ scale: 0.92 }}
         onClick={openChat}
-        className="fixed bottom-24 right-4 z-40 w-12 h-12 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center"
+        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+        className="fixed right-4 z-40 w-12 h-12 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center"
         title="Chat with RAYMA"
       >
         <Sparkles className="w-5 h-5 text-primary-foreground" />
@@ -173,7 +174,8 @@ export default function RaymaChat() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 20 }}
               transition={{ type: "spring", damping: 24, stiffness: 300 }}
-              className="fixed bottom-24 right-4 z-50 w-80 h-[480px] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden relative"
+              style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+              className="fixed right-4 z-50 w-80 h-[480px] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden relative"
             >
               {/* Header */}
               <div className="bg-primary/10 border-b border-border px-4 py-3 flex items-center justify-between shrink-0">

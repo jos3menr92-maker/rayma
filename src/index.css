@@ -89,6 +89,16 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  /* iOS safe area support for notch / Dynamic Island / home indicator */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pb-safe {
+    padding-bottom: max(5rem, calc(4rem + env(safe-area-inset-bottom)));
+  }
 }
 
 @layer base {
