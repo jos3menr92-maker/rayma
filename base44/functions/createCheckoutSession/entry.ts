@@ -33,8 +33,9 @@ Deno.serve(async (req) => {
     if (customAmount) {
       // Custom amount — build a price on the fly
       const amountCents = Math.round(parseFloat(customAmount) * 100);
-      if (amountCents < 100) {
-        return Response.json({ error: 'Minimum donation is $1.00' }, { status: 400 });
+      const minCents = donationType === 'lifetime' ? 2000 : 100;
+      if (amountCents < minCents) {
+        return Response.json({ error: donationType === 'lifetime' ? 'Minimum for lifetime access is $20.00' : 'Minimum donation is $1.00' }, { status: 400 });
       }
       sessionConfig.line_items = [{
         price_data: {

@@ -41,9 +41,12 @@ export default function Support() {
 
     const amountStr = type === "donation" ? donationAmount : lifetimeAmount;
     const amount = parseFloat(amountStr);
+    const minAmount = type === "lifetime" ? 20 : 1;
 
-    if (!amountStr || isNaN(amount) || amount < 1) {
-      const msg = "Please enter an amount of at least $1.00";
+    if (!amountStr || isNaN(amount) || amount < minAmount) {
+      const msg = type === "lifetime"
+        ? "Lifetime access requires a minimum of $20.00"
+        : "Please enter an amount of at least $1.00";
       if (type === "donation") setDonationError(msg);
       else setLifetimeError(msg);
       return;
@@ -80,6 +83,17 @@ export default function Support() {
       setLifetimeAmount(String(val));
       setLifetimeCustom(false);
       setLifetimeError("");
+    }
+  };
+
+  // Reset custom flag when switching back to quick amount
+  const handleCustomToggle = (type) => {
+    if (type === "donation") {
+      setDonationCustom(true);
+      setDonationAmount("");
+    } else {
+      setLifetimeCustom(true);
+      setLifetimeAmount("");
     }
   };
 
@@ -173,7 +187,7 @@ export default function Support() {
               </button>
             ))}
             <button
-              onClick={() => { setDonationCustom(true); setDonationAmount(""); }}
+              onClick={() => handleCustomToggle("donation")}
               className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
                 donationCustom
                   ? "bg-amber-500 border-amber-500 text-white"
@@ -256,7 +270,7 @@ export default function Support() {
               </button>
             ))}
             <button
-              onClick={() => { setLifetimeCustom(true); setLifetimeAmount(""); }}
+              onClick={() => handleCustomToggle("lifetime")}
               className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
                 lifetimeCustom
                   ? "bg-primary border-primary text-primary-foreground"
