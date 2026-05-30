@@ -33,6 +33,7 @@ export default function RaymaChat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null); // { name, url }
   const bottomRef = useRef(null);
@@ -84,7 +85,11 @@ export default function RaymaChat() {
   }
 
   async function clearConversation() {
-    if (!window.confirm("Clear this conversation and start fresh?")) return;
+    setShowClearConfirm(true);
+  }
+
+  async function confirmClear() {
+    setShowClearConfirm(false);
     setConversation(null);
     setMessages([]);
     setInput("");
@@ -168,7 +173,7 @@ export default function RaymaChat() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 20 }}
               transition={{ type: "spring", damping: 24, stiffness: 300 }}
-              className="fixed bottom-24 right-4 z-50 w-80 h-[480px] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              className="fixed bottom-24 right-4 z-50 w-80 h-[480px] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden relative"
             >
               {/* Header */}
               <div className="bg-primary/10 border-b border-border px-4 py-3 flex items-center justify-between shrink-0">
@@ -190,6 +195,18 @@ export default function RaymaChat() {
                   </button>
                 </div>
               </div>
+
+              {/* In-app clear confirmation (replaces window.confirm for iOS WKWebView) */}
+              {showClearConfirm && (
+                <div className="absolute inset-0 bg-card/95 z-10 flex flex-col items-center justify-center p-6 text-center gap-4 rounded-3xl">
+                  <p className="text-sm font-semibold text-foreground">Clear this conversation?</p>
+                  <p className="text-xs text-muted-foreground">This will start a fresh chat with RAYMA.</p>
+                  <div className="flex gap-2 w-full">
+                    <button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2 rounded-xl border border-border text-xs font-medium text-foreground hover:bg-muted transition-colors">Cancel</button>
+                    <button onClick={confirmClear} className="flex-1 py-2 rounded-xl bg-destructive text-white text-xs font-semibold hover:bg-destructive/90 transition-colors">Clear</button>
+                  </div>
+                </div>
+              )}
 
               {/* Donation wall when RAYMA inactive */}
               {raymaActive === false && (
