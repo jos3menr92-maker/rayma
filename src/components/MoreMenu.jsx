@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User } from "lucide-react";
+import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart } from "lucide-react";
 
 const moreItems = [
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
@@ -14,6 +14,7 @@ const moreItems = [
   { path: "/calendar", icon: CalendarDays, label: "Bill Calendar", desc: "View upcoming due dates" },
   { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
   { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
+  { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Donate or get lifetime access", highlight: true },
 ];
 
 export default function MoreMenu({ open, onClose }) {
@@ -64,10 +65,10 @@ export default function MoreMenu({ open, onClose }) {
                     <button
                       key={item.path}
                       onClick={() => go(item.path)}
-                      className="flex items-start gap-3 p-3 rounded-2xl bg-background border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left"
+                      className={`flex items-start gap-3 p-3 rounded-2xl border transition-all text-left ${item.highlight ? "bg-primary/5 border-primary/30 hover:border-primary hover:bg-primary/10" : "bg-background border-border hover:border-primary/40 hover:bg-primary/5"}`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <Icon className="w-4 h-4 text-primary" />
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.highlight ? "bg-primary/20" : "bg-primary/10"}`}>
+                        <Icon className={`w-4 h-4 ${item.highlight ? "text-primary" : "text-primary"}`} />
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground leading-tight">{item.label}</p>
