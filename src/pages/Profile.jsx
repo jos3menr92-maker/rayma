@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Lock, Camera, X } from "lucide-react";
+import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Lock, Camera, X, FileText, Trash2, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -257,21 +258,26 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Privacy & Security Info */}
+          {/* Privacy & Legal */}
           <div className="bg-card border border-border rounded-2xl p-5">
-            <SectionHeader icon={Shield} title="Privacy & Security" subtitle="How your data is protected" />
-            <ul className="space-y-2">
-              {[
-                { icon: Lock, text: "Your financial data is encrypted and stored securely." },
-                { icon: Shield, text: "We never share or sell your personal information." },
-                { icon: User, text: "Only you can view your data — no third-party access." },
-              ].map(({ icon: Icon, text }, i) => (
-                <li key={i} className="flex items-start gap-2.5">
-                  <Icon className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-muted-foreground">{text}</p>
-                </li>
-              ))}
-            </ul>
+            <SectionHeader icon={Shield} title="Privacy & Legal" subtitle="Your data rights and policies" />
+            <div className="space-y-1 -mx-1">
+              <Link to="/privacy" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
+                <Shield className="w-4 h-4 text-primary shrink-0" />
+                <span className="flex-1 text-sm font-medium text-foreground">Privacy Policy</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <Link to="/terms" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <span className="flex-1 text-sm font-medium text-foreground">Terms of Service</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <Link to="/delete-account" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-destructive/5 transition-colors">
+                <Trash2 className="w-4 h-4 text-destructive shrink-0" />
+                <span className="flex-1 text-sm font-medium text-destructive">Delete My Account</span>
+                <ChevronRight className="w-4 h-4 text-destructive/60" />
+              </Link>
+            </div>
           </div>
 
           <Button type="submit" disabled={saving} className="w-full rounded-xl h-11 font-semibold">

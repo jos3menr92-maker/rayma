@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Phone, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info } from "lucide-react";
+import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export default function SideDrawer({ open, onClose }) {
   const [user, setUser] = useState(null);
@@ -82,25 +83,23 @@ export default function SideDrawer({ open, onClose }) {
               </Section>
 
               {/* App Info */}
-              <Section title="About This App">
-                <DrawerRow icon={Info} label="App Name" value="Debt & Bills Tracker" />
+              <Section title="About RAYMA">
+                <DrawerRow icon={Info} label="App Name" value="RAYMA — Debt & Bills Tracker" />
                 <DrawerRow icon={Info} label="Version" value="1.0.0" />
                 <DrawerRow icon={FileText} label="Description" value="Manage loans, bills, income & your financial health all in one place." small />
               </Section>
 
               {/* Contact & Support */}
               <Section title="Contact & Support">
-                <DrawerRow icon={Mail} label="Support Email" value="support@debttracker.app" />
-                <DrawerRow icon={Phone} label="Support Phone" value="+1 (800) 123-4567" />
-                <DrawerRow icon={Phone} label="Business Hours" value="Mon–Fri, 9am–5pm EST" />
+                <DrawerRow icon={Mail} label="Support Email" value="support@raymaapp.com" />
               </Section>
 
               {/* Privacy & Legal */}
               <Section title="Privacy & Legal">
-                <DrawerRow icon={Shield} label="Data Storage" value="Your data is private and only visible to you." small />
+                <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => { onClose(); window.location.href = "/privacy"; }} />
+                <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => { onClose(); window.location.href = "/terms"; }} />
                 <DrawerRow icon={Lock} label="Security" value="All data is encrypted at rest and in transit." small />
-                <DrawerRow icon={FileText} label="Privacy Policy" value="We never sell or share your personal data with third parties." small />
-                <DrawerRow icon={Shield} label="Data Deletion" value="You may delete your account and all associated data at any time." small />
+                <DrawerRow icon={Trash2} label="Delete Account" chevron onClick={() => { onClose(); window.location.href = "/delete-account"; }} destructive />
               </Section>
             </div>
 
@@ -115,7 +114,7 @@ export default function SideDrawer({ open, onClose }) {
                 Sign Out
               </Button>
               <p className="text-[10px] text-muted-foreground text-center mt-3">
-                Debt & Bills Tracker · All rights reserved
+                RAYMA · All rights reserved
               </p>
             </div>
           </motion.div>
@@ -136,16 +135,18 @@ function Section({ title, children }) {
   );
 }
 
-function DrawerRow({ icon: Icon, label, value, small, chevron, onClick }) {
-  const content = (
-    <div className={`flex items-start gap-3 px-4 py-3 ${onClick ? "hover:bg-muted/50 cursor-pointer transition-colors" : ""}`} onClick={onClick}>
-      <Icon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+function DrawerRow({ icon: Icon, label, value, small, chevron, onClick, destructive }) {
+  return (
+    <div
+      className={`flex items-start gap-3 px-4 py-3 ${onClick ? "hover:bg-muted/50 cursor-pointer transition-colors active:bg-muted" : ""}`}
+      onClick={onClick}
+    >
+      <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${destructive ? "text-destructive" : "text-muted-foreground"}`} />
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className={`text-xs ${destructive ? "text-destructive font-medium" : "text-muted-foreground"}`}>{label}</p>
         {value && <p className={`font-medium text-foreground ${small ? "text-xs mt-0.5 leading-relaxed" : "text-sm"} truncate`}>{value}</p>}
       </div>
-      {chevron && <ChevronRight className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />}
+      {chevron && <ChevronRight className={`w-4 h-4 mt-0.5 shrink-0 ${destructive ? "text-destructive/60" : "text-muted-foreground"}`} />}
     </div>
   );
-  return content;
 }

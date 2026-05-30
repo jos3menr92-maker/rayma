@@ -18,6 +18,9 @@ import Profile from './pages/Profile';
 import Budget from './pages/Budget';
 import Support from './pages/Support';
 import SecurityAudit from './pages/SecurityAudit';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import DeleteAccount from './pages/DeleteAccount';
 
 // Lazy load less-visited pages
 const Finance = lazy(() => import('./pages/Finance'));
@@ -75,6 +78,9 @@ const AuthenticatedApp = () => {
         <Route path="/budget" element={<Budget />} />
         <Route path="/support" element={<Support />} />
         <Route path="/security" element={<SecurityAudit />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/delete-account" element={<DeleteAccount />} />
 
         <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
         <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />

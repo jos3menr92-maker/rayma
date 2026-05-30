@@ -14,6 +14,7 @@ export default function Support() {
 
   const [loading, setLoading] = useState(null);
   const [isInIframe, setIsInIframe] = useState(false);
+  const [isAppleNative, setIsAppleNative] = useState(false);
 
   // Donation section
   const [donationAmount, setDonationAmount] = useState("");
@@ -31,6 +32,13 @@ export default function Support() {
     } catch {
       setIsInIframe(true);
     }
+    // Detect Apple native WebView (iOS App Store build)
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isWebKit = /AppleWebKit/i.test(ua);
+    const isSafari = /Safari/i.test(ua);
+    // In a WKWebView (native app), there's no "Safari" in UA but there is AppleWebKit
+    setIsAppleNative(isIOS && isWebKit && !isSafari);
   }, []);
 
   const handleCheckout = async (type) => {
@@ -152,6 +160,21 @@ export default function Support() {
           </div>
         </div>
 
+        {/* Apple native: hide Stripe payments — Apple policy compliance */}
+        {isAppleNative && (
+          <div className="bg-muted border border-border rounded-2xl p-4 mb-6 flex gap-3 items-start">
+            <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-foreground mb-1">Payments via Web</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                To support RAYMA, please visit <span className="font-semibold text-primary">raymaapp.com/support</span> in your browser.
+                In-app payments are not available on iOS.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!isAppleNative && (<>
         {/* === 6-MONTH DONATION CARD === */}
         <div className="border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-5 mb-4">
           <div className="flex items-center gap-2 mb-1">
@@ -316,6 +339,8 @@ export default function Support() {
             )}
           </Button>
         </div>
+
+        </>)}
 
         {/* Footer note */}
         <div className="text-center space-y-1">
