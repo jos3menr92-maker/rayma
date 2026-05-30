@@ -1,0 +1,20 @@
+{
+  "name": "RAYMA — Debt & Bills Tracker",
+  "short_name": "RAYMA",
+  "description": "Manage loans, bills, income & your financial health all in one place.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f7",
+  "theme_color": "#0dcfba",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://base44.com/logo_v2.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "lang": "en"
+}
