@@ -1,0 +1,32 @@
+{
+  "name": "Feedback",
+  "type": "object",
+  "properties": {
+    "rating": {
+      "type": "number",
+      "description": "Star rating 1-5"
+    },
+    "message": {
+      "type": "string",
+      "description": "User's feedback message"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "bug",
+        "feature_request",
+        "general",
+        "compliment"
+      ],
+      "default": "general",
+      "description": "Type of feedback"
+    },
+    "page": {
+      "type": "string",
+      "description": "Page the user was on when submitting feedback"
+    }
+  },
+  "required": [
+    "rating"
+  ]
+}

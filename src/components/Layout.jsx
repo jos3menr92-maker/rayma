@@ -7,6 +7,7 @@ import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import ThemeToggle from "./ThemeToggle";
 import MoreMenu from "./MoreMenu";
+import FeedbackButton from "./FeedbackButton";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -73,6 +74,7 @@ export default function Layout() {
         <Plus className="w-6 h-6 text-primary-foreground" />
       </motion.button>
 
+      <FeedbackButton />
       <RaymaChat />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50">
