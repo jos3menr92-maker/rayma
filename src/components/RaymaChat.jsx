@@ -5,12 +5,23 @@ import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 
-function isRaymaActive(raymaExpiresAt) {
-  if (!raymaExpiresAt) return false;
+// Free 6-month trial from account creation; donation extends from today (or current expiry)
+function getRaymaExpiry(user) {
+  if (user?.rayma_expires_at) return new Date(user.rayma_expires_at + "T00:00:00");
+  if (user?.created_date) {
+    const trial = new Date(user.created_date);
+    trial.setMonth(trial.getMonth() + 6);
+    return trial;
+  }
+  return null;
+}
+
+function isRaymaActive(user) {
+  const expiry = getRaymaExpiry(user);
+  if (!expiry) return true; // can't determine, allow
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const expires = new Date(raymaExpiresAt + "T00:00:00");
-  return expires >= today;
+  return expiry >= today;
 }
 
 export default function RaymaChat() {
@@ -29,7 +40,7 @@ export default function RaymaChat() {
 
   useEffect(() => {
     base44.auth.me().then((user) => {
-      setRaymaActive(isRaymaActive(user?.rayma_expires_at));
+      setRaymaActive(isRaymaActive(user));
     });
   }, []);
 

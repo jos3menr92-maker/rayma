@@ -207,7 +207,7 @@ export default function Dashboard() {
       </motion.div>
 
       {/* RAYMA Expiry Banner */}
-      <RAYMAExpiryBanner raymaExpiresAt={userProfile?.rayma_expires_at} />
+      <RAYMAExpiryBanner user={userProfile} />
 
       {/* Cash Left This Month */}
       {monthlyIncome > 0 && (

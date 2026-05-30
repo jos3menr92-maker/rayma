@@ -31,10 +31,16 @@ Deno.serve(async (req) => {
       const base44 = createClientFromRequest(req);
 
       if (donationType === 'donation') {
-        // Set RAYMA expiry to 6 months from today
-        const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 6);
-        const expiresStr = expiresAt.toISOString().split('T')[0];
+        // Extend from current expiry if still active, otherwise from today
+        const currentUser = await base44.asServiceRole.entities.User.list();
+        const userData = currentUser.find(u => u.id === userId);
+        let baseDate = new Date();
+        if (userData?.rayma_expires_at) {
+          const currentExpiry = new Date(userData.rayma_expires_at + 'T00:00:00');
+          if (currentExpiry > baseDate) baseDate = currentExpiry;
+        }
+        baseDate.setMonth(baseDate.getMonth() + 6);
+        const expiresStr = baseDate.toISOString().split('T')[0];
 
         await base44.asServiceRole.entities.User.update(userId, {
           rayma_expires_at: expiresStr,

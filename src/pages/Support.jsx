@@ -121,7 +121,7 @@ export default function Support() {
           </div>
           <h1 className="text-2xl font-bold font-heading text-foreground mb-2">Support RAYMA</h1>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-            We want to keep this app free. But RAYMA costs real money to run — every conversation uses AI credits.
+            Every user gets 6 months free. After that, a small donation keeps RAYMA active. All other features stay free forever.
           </p>
         </div>
 
@@ -129,11 +129,11 @@ export default function Support() {
         <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4 mb-6 flex gap-3 items-start">
           <Info className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs font-semibold text-foreground mb-1">RAYMA requires a donation to operate</p>
+            <p className="text-xs font-semibold text-foreground mb-1">Free for 6 months, then donation-supported</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              As much as we want RAYMA to be free, the AI costs real money. A donation of any amount (min $1) keeps
-              RAYMA active for 6 months. After that, it will stop responding until renewed.
-              All other app features remain free forever.
+              Every new user gets RAYMA free for 6 months. After that, a donation of any amount (min $1) extends
+              access for another 6 months. Or pay $20 once for lifetime access.
+              All other app features stay free forever.
             </p>
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function Support() {
             <span className="text-2xl">☕</span>
             <div>
               <p className="font-semibold font-heading text-foreground text-sm">6-Month Donation</p>
-              <p className="text-xs text-muted-foreground">Any amount ≥ $1 · keeps RAYMA active for 6 months</p>
+              <p className="text-xs text-muted-foreground">Any amount ≥ $1 · extends RAYMA for 6 months</p>
             </div>
           </div>
 
@@ -227,7 +227,7 @@ export default function Support() {
             <span className="text-2xl">⭐</span>
             <div>
               <p className="font-semibold font-heading text-foreground text-sm">Lifetime Supporter</p>
-              <p className="text-xs text-muted-foreground">Any amount ≥ $1 · RAYMA never expires for you</p>
+              <p className="text-xs text-muted-foreground">$20 one-time · RAYMA never expires for you</p>
             </div>
           </div>
 
@@ -242,7 +242,7 @@ export default function Support() {
 
           {/* Quick amounts */}
           <div className="flex gap-2 flex-wrap mb-3">
-            {[5, 10, 15, 25, 50].map((v) => (
+            {[20, 25, 50].map((v) => (
               <button
                 key={v}
                 onClick={() => selectQuickAmount("lifetime", v)}
