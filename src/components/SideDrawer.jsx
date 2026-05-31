@@ -4,6 +4,7 @@ import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Tras
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { AVATARS, AvatarSVG } from "@/components/AvatarPicker";
 
 export default function SideDrawer({ open, onClose }) {
   const [user, setUser] = useState(null);
@@ -41,8 +42,14 @@ export default function SideDrawer({ open, onClose }) {
             {/* Header */}
             <div className="bg-primary/10 border-b border-border px-5 pb-5" style={{ paddingTop: "max(3rem, calc(1.25rem + env(safe-area-inset-top)))" }}>
               <div className="flex items-start justify-between mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center text-3xl">
-                  {user?.avatar_emoji || "😊"}
+                <div className="w-14 h-14 rounded-2xl overflow-hidden bg-muted flex items-center justify-center">
+                  {user?.avatar_photo_url ? (
+                    <img src={user.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
+                  ) : user?.avatar_id ? (
+                    (() => { const av = AVATARS.find(a => a.id === user.avatar_id); return av ? <AvatarSVG {...av} size={56} /> : <span className="text-xl font-bold text-muted-foreground">{(user?.preferred_name || user?.full_name || "?")[0].toUpperCase()}</span>; })()
+                  ) : (
+                    <span className="text-xl font-bold text-muted-foreground">{(user?.preferred_name || user?.full_name || "?")[0]?.toUpperCase()}</span>
+                  )}
                 </div>
                 <button
                   onClick={onClose}

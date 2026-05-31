@@ -6,7 +6,7 @@ import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, Sparkles, RefreshCw } from "lucide-react";
-import { AVATARS, AvatarSVG } from "../components/AvatarPicker";
+import { AVATARS, AvatarSVG } from "@/components/AvatarPicker";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
 import LoanCard from "../components/LoanCard";
@@ -205,9 +205,9 @@ export default function Dashboard() {
             {userProfile?.avatar_photo_url ? (
               <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
             ) : userProfile?.avatar_id ? (
-              (() => { const av = AVATARS.find(a => a.id === userProfile.avatar_id); return av ? <AvatarSVG {...av} size={40} /> : <span className="w-full h-full flex items-center justify-center text-xl">👤</span>; })()
+              (() => { const av = AVATARS.find(a => a.id === userProfile.avatar_id); return av ? <AvatarSVG {...av} size={40} /> : <span className="w-full h-full flex items-center justify-center text-sm font-bold text-muted-foreground">{(userProfile?.preferred_name || userProfile?.full_name || "?")[0]?.toUpperCase()}</span>; })()
             ) : (
-              <span className="w-full h-full flex items-center justify-center text-xl">👤</span>
+              <span className="w-full h-full flex items-center justify-center text-sm font-bold text-muted-foreground bg-muted">{(userProfile?.preferred_name || userProfile?.full_name || "?")[0]?.toUpperCase()}</span>
             )}
           </div>
         </div>

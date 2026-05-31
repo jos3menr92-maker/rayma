@@ -142,7 +142,7 @@ export default function Profile() {
                   return av ? <AvatarSVG {...av} size={96} /> : <span className="text-4xl">👤</span>;
                 })()
               ) : (
-                <span className="text-4xl">👤</span>
+                <span className="text-2xl font-bold text-muted-foreground">{(form.preferred_name || user?.full_name || "?")[0]?.toUpperCase()}</span>
               )}
             </div>
             <h2 className="text-xl font-bold font-heading text-foreground">{form.preferred_name || user?.full_name}</h2>
