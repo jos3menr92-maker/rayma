@@ -165,10 +165,10 @@ export default function Support() {
           <div className="bg-muted border border-border rounded-2xl p-4 mb-6 flex gap-3 items-start">
             <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-foreground mb-1">Payments via Web</p>
+              <p className="text-xs font-semibold text-foreground mb-1">RAYMA AI Not Available</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                To support RAYMA, please visit <span className="font-semibold text-primary">raymaapp.com/support</span> in your browser.
-                In-app payments are not available on iOS.
+                RAYMA AI access is not available for purchase on this platform.
+                All other features — loans, bills, budget, and net worth tracking — remain free.
               </p>
             </div>
           </div>
