@@ -22,9 +22,11 @@ export default function RaymaChat() {
   useEffect(() => {
     if (!conversation?.id) return;
     const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-      setMessages(data.messages || []);
-      const last = data.messages?.[data.messages.length - 1];
-      if (last?.role === "assistant" && last?.status !== "streaming") {
+      const msgs = data.messages || [];
+      setMessages(msgs);
+      const last = msgs[msgs.length - 1];
+      // Stop loading when last message is from assistant and not actively streaming
+      if (last?.role === "assistant" && last?.status !== "streaming" && last?.status !== "pending") {
         setLoading(false);
       }
     });
@@ -46,7 +48,10 @@ export default function RaymaChat() {
     const text = input.trim();
     setInput("");
     setLoading(true);
+    // Safety timeout — clear loading after 30s regardless
+    const timeout = setTimeout(() => setLoading(false), 30000);
     await base44.agents.addMessage(conversation, { role: "user", content: text });
+    clearTimeout(timeout);
   }
 
   async function handleClear() {
