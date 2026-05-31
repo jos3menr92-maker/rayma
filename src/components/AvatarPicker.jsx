@@ -19,7 +19,7 @@ const AVATAR_SEEDS = [
 export const AVATARS = AVATAR_SEEDS;
 
 export function AvatarSVG({ id, seed, bg, size = 48 }) {
-  const url = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=${bg.replace("#","")}&backgroundType=circle&radius=50`;
+  const url = `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=${bg.replace("#","")}&backgroundType=gradientLinear`;
   return (
     <img
       src={url}

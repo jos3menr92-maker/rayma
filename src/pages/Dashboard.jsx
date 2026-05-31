@@ -6,6 +6,7 @@ import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, Sparkles, RefreshCw } from "lucide-react";
+import { AVATARS, AvatarSVG } from "../components/AvatarPicker";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
 import LoanCard from "../components/LoanCard";
@@ -200,8 +201,14 @@ export default function Dashboard() {
             <Sparkles className="w-3.5 h-3.5" />
             Ask RAYMA
           </button>
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
-            {userProfile?.avatar_emoji || '😊'}
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+            {userProfile?.avatar_photo_url ? (
+              <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
+            ) : userProfile?.avatar_id ? (
+              (() => { const av = AVATARS.find(a => a.id === userProfile.avatar_id); return av ? <AvatarSVG {...av} size={40} /> : <span className="w-full h-full flex items-center justify-center text-xl">👤</span>; })()
+            ) : (
+              <span className="w-full h-full flex items-center justify-center text-xl">👤</span>
+            )}
           </div>
         </div>
       </motion.div>
