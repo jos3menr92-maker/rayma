@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCurrency } from "@/hooks/useCurrency";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
@@ -14,15 +15,6 @@ import DueThisWeek from "../components/DueThisWeek";
 import NetWorthChart from "../components/NetWorthChart";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount || 0);
-}
 
 const COLORS = [
   "hsl(var(--primary))",      // teal
@@ -39,7 +31,8 @@ const COLORS = [
   "#4ade80",                  // green
 ];
 
-function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140 }) {
+function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency }) {
+  const fmt = formatCurrency || ((v) => `$${Math.round(v || 0).toLocaleString()}`);
   return (
     <div className="flex flex-col items-center">
       {data.length === 0 ? (
@@ -52,18 +45,19 @@ function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, heigh
             <Pie data={data} cx="50%" cy="50%" innerRadius={innerRadius} outerRadius={outerRadius} paddingAngle={2} dataKey="value">
               {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Pie>
-            <Tooltip formatter={(v) => formatCurrency(v)} />
+            <Tooltip formatter={(v) => fmt(v)} />
           </PieChart>
         </ResponsiveContainer>
       )}
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium text-center mt-1">{title}</p>
-      <p className="text-sm font-bold font-heading text-foreground">{formatCurrency(total)}</p>
+      <p className="text-sm font-bold font-heading text-foreground">{fmt(total)}</p>
     </div>
   );
 }
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
   const [incomes, setIncomes] = useState([]);
@@ -74,14 +68,15 @@ export default function Dashboard() {
   const [pullStartY, setPullStartY] = useState(null);
   const [pullDistance, setPullDistance] = useState(0);
 
+  // Redirect new users to onboarding
+  useEffect(() => {
+    if (userProfile && userProfile.onboarding_complete === false) {
+      navigate("/onboarding");
+    }
+  }, [userProfile, navigate]);
+
   useEffect(() => {
     loadData();
-    // Redirect new users to onboarding if not complete
-    base44.auth.me().then(u => {
-      if (u && u.onboarding_complete === false) {
-        window.location.href = "/onboarding";
-      }
-    });
   }, []);
 
   const loadData = useCallback(async (isRefresh = false) => {
@@ -291,13 +286,13 @@ export default function Dashboard() {
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
         <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Expense Breakdown</h2>
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <MiniPie title="Total Monthly" data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} />
-          <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} />
+          <MiniPie title="Total Monthly" data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
+          <MiniPie title="Loan Balances" data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
         </div>
         <div className="border-t border-border mb-4" />
         <div className="grid grid-cols-2 gap-4">
-          <MiniPie title="Bills" data={billsPieData} total={monthlyBills} innerRadius={24} outerRadius={40} height={120} />
-          <MiniPie title="Loan Payments" data={loanPaymentsPieData} total={monthlyLoans} innerRadius={24} outerRadius={40} height={120} />
+          <MiniPie title="Bills" data={billsPieData} total={monthlyBills} innerRadius={24} outerRadius={40} height={120} formatCurrency={formatCurrency} />
+          <MiniPie title="Loan Payments" data={loanPaymentsPieData} total={monthlyLoans} innerRadius={24} outerRadius={40} height={120} formatCurrency={formatCurrency} />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2 } from "lucide-react";
+import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2, Download, Zap } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -12,6 +12,15 @@ export default function SideDrawer({ open, onClose }) {
   useEffect(() => {
     if (open) base44.auth.me().then(setUser);
   }, [open]);
+
+  const tokenDisplay = () => {
+    if (!user) return null;
+    if (user.annual_pass_expires_at && new Date(user.annual_pass_expires_at) > new Date()) {
+      return "∞ Annual Pass";
+    }
+    const tokens = user.ai_tokens_remaining ?? 5;
+    return `${tokens} AI token${tokens !== 1 ? "s" : ""} left`;
+  };
 
   function handleLogout() {
     base44.auth.logout();
@@ -87,6 +96,19 @@ export default function SideDrawer({ open, onClose }) {
                 />
               </Section>
 
+              {/* RAYMA AI Tokens */}
+              {user && (
+                <Section title="RAYMA AI">
+                  <DrawerRow
+                    icon={Zap}
+                    label="AI Consultations"
+                    value={tokenDisplay()}
+                    chevron
+                    onClick={() => { onClose(); window.location.href = "/support"; }}
+                  />
+                </Section>
+              )}
+
               {/* Tools */}
               <Section title="Tools">
                 <DrawerRow icon={FileText} label="Tax Summary" value="Annual report & deductible expenses" chevron onClick={() => { onClose(); window.location.href = "/tax-summary"; }} />
@@ -102,6 +124,11 @@ export default function SideDrawer({ open, onClose }) {
               {/* Contact & Support */}
               <Section title="Contact & Support">
                 <DrawerRow icon={Mail} label="Support Email" value="support@raymaapp.com" />
+              </Section>
+
+              {/* Data */}
+              <Section title="Your Data">
+                <DrawerRow icon={Download} label="Export My Data" value="GDPR / CCPA compliant download" chevron onClick={() => { onClose(); window.location.href = "/data-export"; }} />
               </Section>
 
               {/* Privacy & Legal */}
