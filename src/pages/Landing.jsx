@@ -12,9 +12,9 @@ const features = [
 ];
 
 const testimonials = [
-  { name: "Maria R.", text: "I paid off $14,000 in credit card debt in 8 months using RAYMA. Seeing the balance drop every week kept me motivated.", stars: 5 },
-  { name: "James T.", text: "Finally an app that doesn't connect to my bank and still gives me the full picture. I control my data.", stars: 5 },
-  { name: "Priya S.", text: "The AI advisor told me I could save $280/month just by reorganizing my bill due dates. Game changer.", stars: 5 },
+  { name: "Maria R.", text: "I tracked $14,000 in credit card debt and paid it off in 8 months using RAYMA. Seeing the balance drop every week kept me motivated.", stars: 5 },
+  { name: "James T.", text: "Finally an app that doesn't require connecting to my bank and still gives me the full picture. I control my data.", stars: 5 },
+  { name: "Priya S.", text: "The AI advisor helped me identify $280/month in potential savings by reorganizing my bill due dates. Game changer.", stars: 5 },
 ];
 
 const faqs = [
@@ -143,7 +143,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold font-heading text-foreground mb-3">Real people, real results</h2>
-            <p className="text-muted-foreground">Join thousands of users tracking their path to financial freedom.</p>
+            <p className="text-muted-foreground">Join users around the world tracking their path to financial freedom.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {testimonials.map((t) => (
@@ -161,7 +161,7 @@ export default function Landing() {
       <section id="pricing" className="bg-muted/40 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold font-heading text-foreground mb-3">Simple, honest pricing</h2>
-          <p className="text-muted-foreground mb-10">No subscriptions. No hidden fees. Core features are free forever — pay only for the AI consultations you need.</p>
+          <p className="text-muted-foreground mb-10">No hidden fees. Core features are free forever — pay only for extra AI consultations if you need them.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
             {/* Free */}
             <div className="bg-card border border-border rounded-2xl p-5">
