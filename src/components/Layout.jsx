@@ -33,7 +33,7 @@ export default function Layout() {
       {/* Top bar with menu button */}
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
-          <span className="text-sm font-semibold font-heading text-foreground">Debt & Bills</span>
+          <span className="text-sm font-semibold font-heading text-foreground">RAYMA</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Menu className="w-5 h-5" />

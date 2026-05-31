@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2, Download, Zap } from "lucide-react";
+import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2, Download, Zap, TrendingUp, LayoutDashboard, PiggyBank, Folder, CalendarDays, BarChart2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { getInitialsColor } from "@/components/AvatarPicker";
 
 export default function SideDrawer({ open, onClose }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
+
+  function go(path) { onClose(); navigate(path); }
 
   useEffect(() => {
     if (open) base44.auth.me().then(setUser);
@@ -88,12 +91,7 @@ export default function SideDrawer({ open, onClose }) {
               <Section title="Account">
                 <DrawerRow icon={User} label="Full Name" value={user?.full_name} />
                 <DrawerRow icon={Mail} label="Email" value={user?.email} />
-                <DrawerRow
-                  icon={User}
-                  label="Profile Settings"
-                  chevron
-                  onClick={() => { onClose(); window.location.href = "/profile"; }}
-                />
+                <DrawerRow icon={User} label="Profile Settings" chevron onClick={() => go("/profile")} />
               </Section>
 
               {/* RAYMA AI Tokens */}
@@ -104,39 +102,39 @@ export default function SideDrawer({ open, onClose }) {
                     label="AI Consultations"
                     value={tokenDisplay()}
                     chevron
-                    onClick={() => { onClose(); window.location.href = "/support"; }}
+                    onClick={() => go("/support")}
                   />
                 </Section>
               )}
 
+              {/* Quick Navigation */}
+              <Section title="Navigate">
+                <DrawerRow icon={LayoutDashboard} label="Dashboard" chevron onClick={() => go("/")} />
+                <DrawerRow icon={TrendingUp} label="Finance & Trends" chevron onClick={() => go("/finance")} />
+                <DrawerRow icon={BarChart2} label="Budget Dashboard" chevron onClick={() => go("/budget-dashboard")} />
+                <DrawerRow icon={PiggyBank} label="Savings Goals" chevron onClick={() => go("/assets")} />
+                <DrawerRow icon={CalendarDays} label="Bill Calendar" chevron onClick={() => go("/calendar")} />
+                <DrawerRow icon={Folder} label="Document Vault" chevron onClick={() => go("/documents")} />
+              </Section>
+
               {/* Tools */}
               <Section title="Tools">
-                <DrawerRow icon={FileText} label="Tax Summary" value="Annual report & deductible expenses" chevron onClick={() => { onClose(); window.location.href = "/tax-summary"; }} />
+                <DrawerRow icon={FileText} label="Tax Summary" value="Annual report & deductible expenses" chevron onClick={() => go("/tax-summary")} />
+                <DrawerRow icon={Download} label="Export My Data" value="GDPR / CCPA compliant" chevron onClick={() => go("/data-export")} />
               </Section>
 
               {/* App Info */}
               <Section title="About RAYMA">
-                <DrawerRow icon={Info} label="App Name" value="RAYMA — Debt & Bills Tracker" />
                 <DrawerRow icon={Info} label="Version" value="1.0.0" />
-                <DrawerRow icon={FileText} label="Description" value="Manage loans, bills, income & your financial health all in one place." small />
-              </Section>
-
-              {/* Contact & Support */}
-              <Section title="Contact & Support">
                 <DrawerRow icon={Mail} label="Support Email" value="support@raymaapp.com" />
-              </Section>
-
-              {/* Data */}
-              <Section title="Your Data">
-                <DrawerRow icon={Download} label="Export My Data" value="GDPR / CCPA compliant download" chevron onClick={() => { onClose(); window.location.href = "/data-export"; }} />
               </Section>
 
               {/* Privacy & Legal */}
               <Section title="Privacy & Legal">
-                <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => { onClose(); window.location.href = "/privacy"; }} />
-                <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => { onClose(); window.location.href = "/terms"; }} />
-                <DrawerRow icon={Lock} label="Security" value="All data is encrypted at rest and in transit." small />
-                <DrawerRow icon={Trash2} label="Delete Account" chevron onClick={() => { onClose(); window.location.href = "/delete-account"; }} destructive />
+                <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => go("/privacy")} />
+                <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => go("/terms")} />
+                <DrawerRow icon={Lock} label="Security" value="All data encrypted at rest & in transit." small />
+                <DrawerRow icon={Trash2} label="Delete Account" chevron onClick={() => go("/delete-account")} destructive />
               </Section>
             </div>
 

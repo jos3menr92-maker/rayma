@@ -312,6 +312,28 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Debt-Free Date Estimate */}
+      {totalRemaining > 0 && monthlyLoans > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3"
+        >
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">Estimated Debt-Free Date</p>
+          <p className="text-base font-bold font-heading text-primary">
+            {(() => {
+              const months = Math.ceil(totalRemaining / monthlyLoans);
+              const d = new Date();
+              d.setMonth(d.getMonth() + months);
+              return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+            })()}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Based on {formatCurrency(monthlyLoans)}/mo in loan payments
+          </p>
+        </motion.div>
+      )}
+
       {/* Upcoming Reminders */}
       {upcomingLoans.length > 0 && (
         <div className="mb-4">
