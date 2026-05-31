@@ -81,6 +81,13 @@ export default function Landing() {
         )}
       </nav>
 
+      {/* Disclaimer Banner */}
+      <div className="bg-muted/60 border-b border-border py-2 px-4 text-center">
+        <p className="text-[11px] text-muted-foreground">
+          RAYMA is a personal finance tracking tool — not a financial advisor. All information is for tracking purposes only. <a href="/terms" className="underline hover:text-foreground">Terms</a> · <a href="/privacy" className="underline hover:text-foreground">Privacy</a>
+        </p>
+      </div>
+
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-4 pt-16 pb-20 text-center">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-6">

@@ -220,7 +220,8 @@ export default function Support() {
         {/* Footer note */}
         <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
           Payments are processed securely by Stripe. All prices in USD.
-          <br />Token packs never expire. Annual pass renews yearly.
+          <br />Token packs are one-time purchases and never expire.
+          <br />Annual Pass auto-renews yearly — cancel anytime before renewal.
         </p>
 
       </motion.div>
