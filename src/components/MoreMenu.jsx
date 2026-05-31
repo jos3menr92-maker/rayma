@@ -17,7 +17,7 @@ const moreItems = [
   { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
   { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
   { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
-  { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Donate or get lifetime access", highlight: true },
+  { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Get Annual Pass or AI token packs", highlight: true },
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
 ];
 

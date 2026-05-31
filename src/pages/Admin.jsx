@@ -189,10 +189,9 @@ export default function Admin() {
             { label: "Apple IAP (iOS billing)", status: false, note: "Required before App Store submission" },
             { label: "Google Play Billing", status: false, note: "Required before Play Store submission" },
             { label: "Privacy Nutrition Label", status: false, note: "File in App Store Connect" },
-            { label: "Push Notifications", status: false, note: "High impact for engagement" },
+            { label: "Push Notifications", status: true, note: "Permission prompt shown after 5s" },
             { label: "Onboarding Flow", status: true, note: "First-run wizard active" },
             { label: "GDPR Data Export", status: true, note: "Available at /data-export" },
-            { label: "Push Notifications", status: true, note: "Permission prompt shown after 5s" },
           ].map((item, i, arr) => (
             <div key={item.label} className={`flex items-center gap-3 px-4 py-3 ${i < arr.length - 1 ? "border-b border-border" : ""}`}>
               <span className={`text-base shrink-0 ${item.status ? "text-green-500" : "text-amber-400"}`}>
