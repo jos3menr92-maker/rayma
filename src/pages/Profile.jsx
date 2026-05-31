@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Lock, Camera, X, FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor } from "lucide-react";
+import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor } from "lucide-react";
+import AvatarPicker, { AVATARS, AvatarSVG } from "@/components/AvatarPicker";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-const EMOJIS = ["😊", "🦁", "🐻", "🐼", "🦊", "🐸", "🦋", "🌟", "🔥", "💎", "🚀", "🌈", "🎯", "🏆", "💪", "🌻"];
 
 const CURRENCIES = [
   { value: "USD", label: "$ USD — US Dollar" },
@@ -47,7 +47,8 @@ export default function Profile() {
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system");
   const [form, setForm] = useState({
     preferred_name: "",
-    avatar_emoji: "😊",
+    avatar_id: "",
+    avatar_emoji: "",
     avatar_photo_url: "",
     preferred_currency: "USD",
     dashboard_greeting: "",
@@ -64,7 +65,8 @@ export default function Profile() {
     setUser(me);
     setForm({
       preferred_name: me.preferred_name || me.full_name || "",
-      avatar_emoji: me.avatar_emoji || "😊",
+      avatar_id: me.avatar_id || "",
+    avatar_emoji: me.avatar_emoji || "",
       avatar_photo_url: me.avatar_photo_url || "",
       preferred_currency: me.preferred_currency || "USD",
       dashboard_greeting: me.dashboard_greeting || "",
@@ -131,10 +133,17 @@ export default function Profile() {
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border border-primary/20 p-6 mb-6 text-center">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-primary/10 ring-4 ring-primary/30 flex items-center justify-center text-5xl mx-auto mb-3 shadow-lg overflow-hidden">
-              {form.avatar_photo_url
-                ? <img src={form.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
-                : form.avatar_emoji || "😊"}
+            <div className="w-24 h-24 rounded-full ring-4 ring-primary/30 mx-auto mb-3 shadow-lg overflow-hidden flex items-center justify-center bg-muted">
+              {form.avatar_photo_url ? (
+                <img src={form.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
+              ) : form.avatar_id ? (
+                (() => {
+                  const av = AVATARS.find(a => a.id === form.avatar_id);
+                  return av ? <AvatarSVG {...av} size={96} /> : <span className="text-4xl">👤</span>;
+                })()
+              ) : (
+                <span className="text-4xl">👤</span>
+              )}
             </div>
             <h2 className="text-xl font-bold font-heading text-foreground">{form.preferred_name || user?.full_name}</h2>
             <div className="flex items-center justify-center gap-1.5 mt-1">
@@ -193,24 +202,10 @@ export default function Profile() {
                   )}
                 </div>
 
-                {/* Emoji grid */}
-                <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">Or choose an emoji</p>
-                <div className="flex flex-wrap gap-2">
-                  {EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setForm(f => ({ ...f, avatar_emoji: emoji, avatar_photo_url: "" }))}
-                      className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                        !form.avatar_photo_url && form.avatar_emoji === emoji
-                          ? "bg-primary/20 ring-2 ring-primary scale-110"
-                          : "bg-muted hover:bg-muted/70"
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+                <AvatarPicker
+                  value={form.avatar_id}
+                  onChange={(id) => setForm(f => ({ ...f, avatar_id: id, avatar_photo_url: "" }))}
+                />
               </div>
             </div>
           </div>
