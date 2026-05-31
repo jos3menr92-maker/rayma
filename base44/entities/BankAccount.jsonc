@@ -34,6 +34,23 @@
       "format": "date",
       "description": "Last time balance was updated"
     },
+    "plaid_account_id": {
+      "type": "string",
+      "description": "Plaid account ID for automated sync (optional)"
+    },
+    "plaid_access_token": {
+      "type": "string",
+      "description": "Encrypted Plaid access token (internal use only)"
+    },
+    "link_method": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "plaid"
+      ],
+      "default": "manual",
+      "description": "How the account was linked"
+    },
     "notes": {
       "type": "string"
     },
