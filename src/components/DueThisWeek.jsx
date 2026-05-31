@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { CalendarCheck } from "lucide-react";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
+import { useCurrency } from "@/hooks/useCurrency";
 
 const DOW_ORDER = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 export default function DueThisWeek({ loans, bills }) {
+  const { formatCurrency: fmt } = useCurrency();
   const items = useMemo(() => {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0=Sun

@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { ShieldCheck } from "lucide-react";
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
-
 function ScorePillar({ label, score, max, color }) {
   const pct = Math.round((score / max) * 100);
   return (

@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import ReactMarkdown from "react-markdown";
 
 const CACHE_KEY = "rayma_insights_cache";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -28,6 +27,7 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
   const [loading, setLoading] = useState(false);
   const [index, setIndex] = useState(0);
   const [dismissed, setDismissed] = useState(false);
+  const touchStartX = useRef(null);
 
   useEffect(() => {
     const cached = loadCache();
@@ -109,7 +109,17 @@ Return 4 insights. Each should have:
   const current = insights[index];
 
   return (
-    <div className="mb-6">
+    <div
+      className="mb-6"
+      onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+      onTouchEnd={e => {
+        if (touchStartX.current === null || insights.length < 2) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        if (dx < -40) setIndex(i => (i + 1) % insights.length);
+        else if (dx > 40) setIndex(i => (i - 1 + insights.length) % insights.length);
+        touchStartX.current = null;
+      }}
+    >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-primary" />

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useCurrency } from "@/hooks/useCurrency";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, Receipt, CheckCircle2 } from "lucide-react";
@@ -26,12 +27,13 @@ const categories = [
   { value: "other", label: "📋 Other" },
 ];
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
+// fmt defined via useCurrency hook inside component
 
 const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const emptyForm = { name: "", amount: "", payment_frequency: "monthly", due_day: "", due_day_of_week: "Friday", category: "other", notes: "", is_active: true };
 
 export default function Bills() {
+  const { formatCurrency: fmt } = useCurrency();
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CreditCard, Receipt, DollarSign, PiggyBank, TrendingDown } from "lucide-react";
+import { X, CreditCard, Receipt, DollarSign, PiggyBank, TrendingDown, ArrowLeftRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -35,6 +35,7 @@ export default function QuickAddMenu({ open, onClose }) {
   const [billForm, setBillForm] = useState({ name: "", amount: "", due_day: "", category: "other" });
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "" });
   const [savingsForm, setSavingsForm] = useState({ name: "", target_amount: "", current_saved: "", weekly_contribution: "" });
+  const [txForm, setTxForm] = useState({ description: "", amount: "", date: new Date().toISOString().split("T")[0], category: "other", type: "debit" });
 
   function close() { setActiveModal(null); onClose(); }
   function openModal(m) { setActiveModal(m); }
@@ -63,12 +64,23 @@ export default function QuickAddMenu({ open, onClose }) {
     setSaving(false); setSavingsForm({ name: "", target_amount: "", current_saved: "", weekly_contribution: "" }); close();
   }
 
+  async function saveTransaction(e) {
+    e.preventDefault(); setSaving(true);
+    const amount = parseFloat(txForm.amount) || 0;
+    await base44.entities.Transaction.create({
+      ...txForm,
+      amount: txForm.type === "debit" ? -Math.abs(amount) : Math.abs(amount),
+    });
+    setSaving(false); setTxForm({ description: "", amount: "", date: new Date().toISOString().split("T")[0], category: "other", type: "debit" }); close();
+  }
+
   const actions = [
     { key: "loan", icon: CreditCard, label: "Add Loan", color: "bg-blue-500/10 text-blue-600 border-blue-200", action: () => { onClose(); navigate("/add-loan"); } },
     { key: "bill", icon: Receipt, label: "Add Bill", color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => openModal("bill") },
     { key: "income", icon: DollarSign, label: "Log Income", color: "bg-green-500/10 text-green-600 border-green-200", action: () => openModal("income") },
     { key: "savings", icon: PiggyBank, label: "Add Savings Goal", color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => openModal("savings") },
     { key: "payment", icon: TrendingDown, label: "Record Payment", color: "bg-red-500/10 text-red-600 border-red-200", action: () => { onClose(); navigate("/loans"); } },
+    { key: "transaction", icon: ArrowLeftRight, label: "Log Transaction", color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => openModal("transaction") },
   ];
 
   return (
@@ -168,6 +180,55 @@ export default function QuickAddMenu({ open, onClose }) {
               <Input placeholder="Optional" value={incomeForm.note} onChange={e => setIncomeForm(f => ({ ...f, note: e.target.value }))} className="mt-1 rounded-xl" />
             </div>
             <Button type="submit" disabled={saving} className="w-full rounded-xl">{saving ? "Saving..." : "Log Income"}</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Modal */}
+      <Dialog open={activeModal === "transaction"} onOpenChange={v => !v && close()}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Log Transaction</DialogTitle></DialogHeader>
+          <form onSubmit={saveTransaction} className="space-y-3 mt-2">
+            <div>
+              <Label className="text-xs text-muted-foreground">Description *</Label>
+              <Input placeholder="e.g. Grocery store" value={txForm.description} onChange={e => setTxForm(f => ({ ...f, description: e.target.value }))} required className="mt-1 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Amount *</Label>
+                <Input type="number" step="0.01" placeholder="0.00" value={txForm.amount} onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))} required className="mt-1 rounded-xl" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Type</Label>
+                <Select value={txForm.type} onValueChange={v => setTxForm(f => ({ ...f, type: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="debit">💸 Expense</SelectItem>
+                    <SelectItem value="credit">💰 Income</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">Date</Label>
+                <Input type="date" value={txForm.date} onChange={e => setTxForm(f => ({ ...f, date: e.target.value }))} className="mt-1 rounded-xl" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Category</Label>
+                <Select value={txForm.category} onValueChange={v => setTxForm(f => ({ ...f, category: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BILL_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    <SelectItem value="income">💵 Income</SelectItem>
+                    <SelectItem value="entertainment">🎮 Entertainment</SelectItem>
+                    <SelectItem value="shopping">🛍️ Shopping</SelectItem>
+                    <SelectItem value="savings">🏦 Savings</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button type="submit" disabled={saving} className="w-full rounded-xl">{saving ? "Saving..." : "Log Transaction"}</Button>
           </form>
         </DialogContent>
       </Dialog>
