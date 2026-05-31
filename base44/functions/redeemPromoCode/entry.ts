@@ -15,8 +15,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid code' }, { status: 400 });
     }
 
-    // Find the promo code
-    const promoCodes = await base44.entities.PromoCode.filter({ code: code.toUpperCase().trim() });
+    // Find the promo code — must use service role since PromoCode is admin-only RLS
+    const promoCodes = await base44.asServiceRole.entities.PromoCode.filter({ code: code.toUpperCase().trim() });
     const promoCode = promoCodes[0];
 
     if (!promoCode) {

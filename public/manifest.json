@@ -9,13 +9,12 @@
   "theme_color": "#0dcfba",
   "categories": ["finance", "productivity"],
   "lang": "en",
-  "scope": "/",
   "icons": [
     {
       "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
@@ -24,36 +23,7 @@
       "purpose": "any maskable"
     }
   ],
-  "shortcuts": [
-    {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View your financial dashboard",
-      "url": "/",
-      "icons": [{ "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Loans",
-      "short_name": "Loans",
-      "description": "View your loans",
-      "url": "/loans",
-      "icons": [{ "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Bills",
-      "short_name": "Bills",
-      "description": "View your bills",
-      "url": "/bills",
-      "icons": [{ "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png", "sizes": "96x96" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "RAYMA Dashboard"
-    }
-  ]
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
 }

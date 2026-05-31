@@ -8,6 +8,9 @@ import { AlertTriangle, XCircle } from "lucide-react";
  * - Expired → show renewal banner
  */
 function getEffectiveExpiry(user) {
+  // annual_pass_expires_at is set by Stripe webhook on purchase
+  if (user?.annual_pass_expires_at) return new Date(user.annual_pass_expires_at + "T00:00:00");
+  // Legacy field support
   if (user?.rayma_expires_at) return new Date(user.rayma_expires_at + "T00:00:00");
   if (user?.created_date) {
     const trial = new Date(user.created_date);
@@ -30,7 +33,7 @@ export default function RAYMAExpiryBanner({ user }) {
   if (daysLeft > 30) return null; // plenty of time, stay quiet
 
   const isExpired = daysLeft <= 0;
-  const isDonated = !!user?.rayma_expires_at;
+  const isDonated = !!(user?.annual_pass_expires_at || user?.rayma_expires_at);
 
   if (isExpired) {
     return (
@@ -39,14 +42,14 @@ export default function RAYMAExpiryBanner({ user }) {
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground">RAYMA has stopped</p>
           <p className="text-[11px] text-muted-foreground">
-            {isDonated ? "Your donation period ended." : "Your free 6-month trial has ended."} Donate to restore AI features.
+            {isDonated ? "Your Annual Pass has expired." : "Your free 6-month trial has ended."} Get an Annual Pass to restore AI features.
           </p>
         </div>
         <button
           onClick={() => navigate("/support")}
           className="shrink-0 text-[11px] font-semibold bg-destructive hover:bg-destructive/90 text-white px-3 py-1.5 rounded-xl transition-colors"
         >
-          Donate
+          Upgrade
         </button>
       </div>
     );
@@ -60,15 +63,15 @@ export default function RAYMAExpiryBanner({ user }) {
           RAYMA {isDonated ? "expires" : "free trial ends"} in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
         </p>
         <p className="text-[11px] text-muted-foreground">
-          Donate before it expires to keep AI features running.
-        </p>
-      </div>
-      <button
-        onClick={() => navigate("/support")}
-        className="shrink-0 text-[11px] font-semibold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors"
-      >
-        Donate
-      </button>
+          Get the Annual Pass before it expires to keep AI features running.
+          </p>
+          </div>
+          <button
+          onClick={() => navigate("/support")}
+          className="shrink-0 text-[11px] font-semibold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors"
+          >
+          Upgrade
+          </button>
     </div>
   );
 }
