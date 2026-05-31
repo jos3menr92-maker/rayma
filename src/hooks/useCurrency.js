@@ -1,17 +1,24 @@
 /**
  * useCurrency hook
  * Returns a formatCurrency function that respects the user's preferred_currency setting.
+ * Reads from localStorage cache first to avoid redundant API calls.
  * Falls back to USD if not set.
  */
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 
+const CACHE_KEY = "rayma_preferred_currency";
+
 export function useCurrency() {
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem(CACHE_KEY) || "USD";
+  });
 
   useEffect(() => {
     base44.auth.me().then(u => {
-      if (u?.preferred_currency) setCurrency(u.preferred_currency);
+      const c = u?.preferred_currency || "USD";
+      setCurrency(c);
+      localStorage.setItem(CACHE_KEY, c);
     }).catch(() => {});
   }, []);
 

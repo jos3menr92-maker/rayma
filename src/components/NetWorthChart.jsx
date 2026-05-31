@@ -3,10 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function NetWorthChart() {
+  const { formatCurrency: fmt } = useCurrency();
   const [snapshots, setSnapshots] = useState([]);
 
   useEffect(() => {
