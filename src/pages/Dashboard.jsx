@@ -61,6 +61,7 @@ export default function Dashboard() {
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
   const [incomes, setIncomes] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
 
@@ -82,15 +83,17 @@ export default function Dashboard() {
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
-    const [loansData, billsData, me, incomesData] = await Promise.all([
+    const [loansData, billsData, me, incomesData, paymentsData] = await Promise.all([
       base44.entities.Loan.list("-created_date", 100),
       base44.entities.Bill.list("-created_date", 100),
       base44.auth.me(),
       base44.entities.WeeklyIncome.list("-week_start", 52),
+      base44.entities.Payment.filter({ payment_type: "loan" }, "-payment_date", 200),
     ]);
     setLoans(loansData);
     setBills(billsData.filter(b => b.is_active !== false));
     setIncomes(incomesData);
+    setPayments(paymentsData);
     setUserProfile(me);
     if (isRefresh) setRefreshing(false);
     else setLoading(false);
@@ -240,7 +243,7 @@ export default function Dashboard() {
       <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
 
       {/* Due Soon Alert */}
-      <DueSoonAlert loans={activeLoans} bills={bills} />
+      <DueSoonAlert loans={activeLoans} bills={bills} payments={payments} />
 
       {/* RAYMA Proactive Insights */}
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
