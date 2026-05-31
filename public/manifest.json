@@ -1,13 +1,12 @@
 {
   "name": "RAYMA — Debt & Bills Tracker",
   "short_name": "RAYMA",
-  "description": "Manage loans, bills, income & your financial health all in one place.",
+  "description": "Track loans, bills, budget, and net worth with an AI financial advisor. No bank login required.",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#f7f7f7",
   "theme_color": "#0dcfba",
-  "lang": "en",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
@@ -22,19 +21,7 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
-  "shortcuts": [
-    {
-      "name": "Dashboard",
-      "short_name": "Home",
-      "url": "/",
-      "icons": [{ "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Loans",
-      "short_name": "Loans",
-      "url": "/loans",
-      "icons": [{ "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png", "sizes": "192x192" }]
-    }
-  ]
+  "categories": ["finance", "productivity"],
+  "lang": "en",
+  "dir": "ltr"
 }
