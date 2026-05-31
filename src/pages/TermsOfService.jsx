@@ -161,7 +161,8 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">11. Payments & Refunds</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>Token packs and Annual Pass are non-refundable once purchased</li>
+            <li>All purchases (token packs and Annual Pass) are one-time payments — not subscriptions and not auto-renewing</li>
+            <li>All purchases are non-refundable once completed</li>
             <li>Pricing is subject to change at any time</li>
             <li>Refund requests due to buyer's remorse are not accepted</li>
             <li>If a payment was made in error, contact support@raymaapp.com within 7 days</li>

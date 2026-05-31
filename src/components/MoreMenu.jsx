@@ -26,8 +26,8 @@ export default function MoreMenu({ open, onClose }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(u => setIsAdmin(u?.role === "admin"));
-  }, []);
+    if (open) base44.auth.me().then(u => setIsAdmin(u?.role === "admin"));
+  }, [open]);
 
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
 

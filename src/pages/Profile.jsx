@@ -208,7 +208,7 @@ export default function Profile() {
                   <label className="flex items-center gap-2 cursor-pointer bg-muted hover:bg-muted/70 transition-colors rounded-xl px-4 py-2 text-sm font-medium text-foreground">
                     <Camera className="w-4 h-4 text-primary" />
                     {uploadingPhoto ? "Uploading..." : "Upload Photo"}
-                    <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
                   </label>
                   {form.avatar_photo_url && (
                     <button

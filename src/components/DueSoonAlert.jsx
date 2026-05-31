@@ -46,6 +46,8 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
 
   if ((all.length === 0 && overdueLoans.length === 0) || dismissed) return null;
 
+  const totalAlerts = all.length + overdueLoans.length;
+
   return (
     <AnimatePresence>
       <motion.div
@@ -58,7 +60,11 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-destructive" />
             <span className="text-sm font-bold text-destructive">
-              {all.length} payment{all.length > 1 ? "s" : ""} due soon!
+              {all.length > 0 && overdueLoans.length > 0
+                ? `${all.length} due soon · ${overdueLoans.length} overdue`
+                : all.length > 0
+                  ? `${all.length} payment${all.length > 1 ? "s" : ""} due soon!`
+                  : `${overdueLoans.length} loan${overdueLoans.length > 1 ? "s" : ""} with no recent payment`}
             </span>
           </div>
           <button onClick={() => setDismissed(true)} className="p-1 text-destructive/60 hover:text-destructive">

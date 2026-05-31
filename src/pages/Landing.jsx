@@ -12,9 +12,9 @@ const features = [
 ];
 
 const testimonials = [
-  { name: "Maria R.", text: "I tracked $14,000 in credit card debt and paid it off in 8 months using RAYMA. Seeing the balance drop every week kept me motivated.", stars: 5 },
+  { name: "Maria R.", text: "Having all my loans and bills in one place finally made my finances feel manageable. RAYMA keeps me focused on making progress.", stars: 5 },
   { name: "James T.", text: "Finally an app that doesn't require connecting to my bank and still gives me the full picture. I control my data.", stars: 5 },
-  { name: "Priya S.", text: "The AI advisor helped me identify $280/month in potential savings by reorganizing my bill due dates. Game changer.", stars: 5 },
+  { name: "Priya S.", text: "The AI advisor helped me see exactly where my money was going and gave me a clear plan for tackling debt. Love it.", stars: 5 },
 ];
 
 const faqs = [
@@ -142,8 +142,9 @@ export default function Landing() {
       <section id="testimonials" className="py-16">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold font-heading text-foreground mb-3">Real people, real results</h2>
-            <p className="text-muted-foreground">Join users around the world tracking their path to financial freedom.</p>
+            <h2 className="text-3xl font-bold font-heading text-foreground mb-3">What users are saying</h2>
+            <p className="text-muted-foreground">Join people around the world tracking their path to financial clarity.</p>
+            <p className="text-[11px] text-muted-foreground mt-1 italic">Testimonials are illustrative of typical user experiences.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {testimonials.map((t) => (
@@ -202,8 +203,8 @@ export default function Landing() {
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-0.5 rounded-full">BEST VALUE</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Annual Pass</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$19.99</p>
-              <p className="text-xs text-muted-foreground mb-4">Per year · Unlimited AI</p>
-              {["Unlimited AI all year","All future features","Priority experience","~$1.67/month"].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">One-time · Unlimited AI for 1 year</p>
+              {["Unlimited AI for 1 year","All future features","Priority experience","~$1.67/month"].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
