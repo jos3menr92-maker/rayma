@@ -22,6 +22,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import DeleteAccount from './pages/DeleteAccount';
 import Landing from './pages/Landing';
+import { LanguageProvider } from '@/lib/LanguageContext';
 
 // Lazy load less-visited pages
 const Finance = lazy(() => import('./pages/Finance'));
@@ -104,6 +105,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <LanguageProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <Routes>
@@ -113,6 +115,7 @@ function App() {
         </Router>
         <Toaster />
       </QueryClientProvider>
+      </LanguageProvider>
     </AuthProvider>
   )
 }

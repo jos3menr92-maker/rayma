@@ -18,10 +18,11 @@ const testimonials = [
 ];
 
 const faqs = [
-  { q: "Is RAYMA free?", a: "Yes — loans, bills, budget tracking, and all core features are free forever. RAYMA AI requires a small donation ($1+) every 6 months to cover operating costs." },
+  { q: "Is RAYMA free?", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. RAYMA AI gives you 5 free consultations every month. Buy token packs if you need more, or get the Annual Pass for unlimited AI." },
   { q: "Does RAYMA connect to my bank?", a: "No. RAYMA is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
   { q: "Is my data private?", a: "Absolutely. Every record is privately scoped to your account with row-level security. We never sell or share your data." },
   { q: "What platforms does RAYMA work on?", a: "RAYMA works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
+  { q: "What currencies and languages are supported?", a: "RAYMA supports 25+ currencies and is available in 10 languages: English, Chinese, Hindi, Spanish, French, Arabic, Bengali, Portuguese, Russian, and Japanese. Set your preference in Profile settings." },
   { q: "How do I get started?", a: "Sign up for free, add your first loan or bill in under 2 minutes, and RAYMA starts giving you insights immediately." },
 ];
 
@@ -151,44 +152,62 @@ export default function Landing() {
 
       {/* PRICING */}
       <section id="pricing" className="bg-muted/40 py-16">
-        <div className="max-w-3xl mx-auto px-4 text-center">
+        <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold font-heading text-foreground mb-3">Simple, honest pricing</h2>
-          <p className="text-muted-foreground mb-10">No subscription traps. No hidden fees. You choose what RAYMA is worth to you.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+          <p className="text-muted-foreground mb-10">No subscriptions. No hidden fees. Core features are free forever — pay only for the AI consultations you need.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
             {/* Free */}
             <div className="bg-card border border-border rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Free Forever</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$0</p>
-              <p className="text-xs text-muted-foreground mb-4">All core features, always</p>
-              {["Loans & debt tracking","Bills & calendar","Budget categories","Net worth tracking","Bank account logs","Document vault"].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">5 AI consults/month included</p>
+              {["Loans & debt tracking","Bills & calendar","Budget categories","Net worth tracking","Document vault","5 free AI queries/mo"].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
               ))}
             </div>
-            {/* 6-Month */}
-            <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">6-Month Supporter</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$1<span className="text-base font-normal text-muted-foreground">+</span></p>
-              <p className="text-xs text-muted-foreground mb-4">Any amount · renew every 6 months</p>
-              {["Everything in Free","RAYMA AI financial advisor","Personalized insights","Spending analysis","Goal coaching"].map(f => (
+            {/* Starter */}
+            <div className="bg-card border border-border rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Starter Pack</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$0.99</p>
+              <p className="text-xs text-muted-foreground mb-4">One-time · +10 AI tokens</p>
+              {["10 AI consultations","Use anytime","No expiry","Great for occasional use"].map(f => (
+                <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
+                </div>
+              ))}
+            </div>
+            {/* Popular */}
+            <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 rounded-2xl p-5 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">POPULAR</div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">Popular Pack</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$3.99</p>
+              <p className="text-xs text-muted-foreground mb-4">One-time · +50 AI tokens</p>
+              {["50 AI consultations","Use anytime","No expiry","Best per-token value"].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>
               ))}
             </div>
-            {/* Lifetime */}
+            {/* Annual */}
             <div className="bg-primary/5 border-2 border-primary rounded-2xl p-5 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-0.5 rounded-full">BEST VALUE</div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Lifetime Supporter</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$20<span className="text-base font-normal text-muted-foreground">+</span></p>
-              <p className="text-xs text-muted-foreground mb-4">One-time · RAYMA never expires</p>
-              {["Everything in Free","RAYMA AI forever","All future features","Supporter badge","You're a hero 💚"].map(f => (
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Annual Pass</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$19.99</p>
+              <p className="text-xs text-muted-foreground mb-4">Per year · Unlimited AI</p>
+              {["Unlimited AI all year","All future features","Priority experience","~$1.67/month"].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
               ))}
             </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3 justify-center text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-primary" /> Available worldwide</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-primary" /> 25+ currencies supported</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-primary" /> 10 languages available</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-primary" /> Secure card payment via Stripe</span>
           </div>
           <button onClick={handleLogin} className="mt-8 bg-primary text-primary-foreground font-semibold px-8 py-3 rounded-2xl hover:bg-primary/90 transition-colors text-base">
             Get Started Free — No Card Needed

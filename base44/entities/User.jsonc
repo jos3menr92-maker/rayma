@@ -26,6 +26,11 @@
       "type": "string",
       "default": "USD"
     },
+    "preferred_language": {
+      "type": "string",
+      "default": "en",
+      "description": "ISO language code (en, zh, hi, es, fr, ar, bn, pt, ru, ja)"
+    },
     "dashboard_greeting": {
       "type": "string"
     },

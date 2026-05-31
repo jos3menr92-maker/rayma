@@ -10,18 +10,35 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
+import { useLanguage } from "@/lib/LanguageContext";
+import { LANGUAGES, t } from "@/lib/i18n";
 
 const CURRENCIES = [
   { value: "USD", label: "$ USD — US Dollar" },
   { value: "EUR", label: "€ EUR — Euro" },
   { value: "GBP", label: "£ GBP — British Pound" },
-  { value: "CAD", label: "$ CAD — Canadian Dollar" },
-  { value: "AUD", label: "$ AUD — Australian Dollar" },
+  { value: "CAD", label: "CA$ CAD — Canadian Dollar" },
+  { value: "AUD", label: "A$ AUD — Australian Dollar" },
   { value: "JPY", label: "¥ JPY — Japanese Yen" },
   { value: "INR", label: "₹ INR — Indian Rupee" },
   { value: "MXN", label: "$ MXN — Mexican Peso" },
   { value: "BRL", label: "R$ BRL — Brazilian Real" },
+  { value: "CNY", label: "¥ CNY — Chinese Yuan" },
+  { value: "AED", label: "د.إ AED — UAE Dirham" },
+  { value: "SAR", label: "﷼ SAR — Saudi Riyal" },
+  { value: "BDT", label: "৳ BDT — Bangladeshi Taka" },
+  { value: "RUB", label: "₽ RUB — Russian Ruble" },
+  { value: "KRW", label: "₩ KRW — South Korean Won" },
+  { value: "IDR", label: "Rp IDR — Indonesian Rupiah" },
+  { value: "PKR", label: "₨ PKR — Pakistani Rupee" },
+  { value: "NGN", label: "₦ NGN — Nigerian Naira" },
+  { value: "ZAR", label: "R ZAR — South African Rand" },
+  { value: "TRY", label: "₺ TRY — Turkish Lira" },
+  { value: "CHF", label: "Fr CHF — Swiss Franc" },
+  { value: "PHP", label: "₱ PHP — Philippine Peso" },
+  { value: "COP", label: "$ COP — Colombian Peso" },
+  { value: "ARS", label: "$ ARS — Argentine Peso" },
+  { value: "EGP", label: "£ EGP — Egyptian Pound" },
 ];
 
 function SectionHeader({ icon: Icon, title, subtitle }) {
@@ -39,6 +56,8 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 }
 
 export default function Profile() {
+  const { lang, setLang } = useLanguage();
+  const T = (key) => t(lang, key);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -66,9 +85,10 @@ export default function Profile() {
     setForm({
       preferred_name: me.preferred_name || me.full_name || "",
       avatar_id: me.avatar_id || "",
-    avatar_emoji: me.avatar_emoji || "",
+      avatar_emoji: me.avatar_emoji || "",
       avatar_photo_url: me.avatar_photo_url || "",
       preferred_currency: me.preferred_currency || "USD",
+      preferred_language: me.preferred_language || "en",
       dashboard_greeting: me.dashboard_greeting || "",
       pay_frequency: me.pay_frequency || "",
       pay_day: me.pay_day || "",
@@ -99,6 +119,7 @@ export default function Profile() {
     e.preventDefault();
     setSaving(true);
     await base44.auth.updateMe(form);
+    setLang(form.preferred_language);
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -212,19 +233,35 @@ export default function Profile() {
 
           {/* Preferences Section */}
           <div className="bg-card border border-border rounded-2xl p-5">
-            <SectionHeader icon={Globe} title="Preferences" subtitle="Currency and localization" />
-            <div>
-              <Label className="text-xs font-medium text-muted-foreground">Preferred Currency</Label>
-              <Select value={form.preferred_currency} onValueChange={v => setForm(f => ({ ...f, preferred_currency: v }))}>
-                <SelectTrigger className="mt-1 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map(c => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <SectionHeader icon={Globe} title={T("preferences")} subtitle={T("preferredCurrency") + " & " + T("preferredLanguage")} />
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">{T("preferredCurrency")}</Label>
+                <Select value={form.preferred_currency} onValueChange={v => setForm(f => ({ ...f, preferred_currency: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">{T("preferredLanguage")}</Label>
+                <Select value={form.preferred_language} onValueChange={v => setForm(f => ({ ...f, preferred_language: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map(l => (
+                      <SelectItem key={l.code} value={l.code}>{l.flag} {l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">App language updates after saving.</p>
+              </div>
             </div>
           </div>
 
