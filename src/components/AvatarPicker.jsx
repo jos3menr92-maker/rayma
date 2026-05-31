@@ -1,24 +1,30 @@
-// Personas style — clean flat-design half-body portraits, clearly recognizable
+// Notionists style — clean, professional illustrated portraits (closest to flat-design headshots)
 
 const AVATAR_SEEDS = [
-  { id: "av1",  seed: "John",      bg: "b6e3f4" },
-  { id: "av2",  seed: "Sarah",     bg: "ffd5dc" },
-  { id: "av3",  seed: "Michael",   bg: "c0aede" },
-  { id: "av4",  seed: "Emily",     bg: "d1f4e0" },
-  { id: "av5",  seed: "David",     bg: "ffdfba" },
-  { id: "av6",  seed: "Jessica",   bg: "ffd5dc" },
-  { id: "av7",  seed: "James",     bg: "b6e3f4" },
-  { id: "av8",  seed: "Ashley",    bg: "d1f4e0" },
-  { id: "av9",  seed: "Robert",    bg: "c0aede" },
-  { id: "av10", seed: "Amanda",    bg: "ffdfba" },
-  { id: "av11", seed: "William",   bg: "b6e3f4" },
-  { id: "av12", seed: "Stephanie", bg: "ffd5dc" },
+  { id: "av1",  seed: "Alexander", bg: "b6e3f4" },
+  { id: "av2",  seed: "Charlotte", bg: "ffd5dc" },
+  { id: "av3",  seed: "Benjamin",  bg: "c0aede" },
+  { id: "av4",  seed: "Olivia",    bg: "d1f4e0" },
+  { id: "av5",  seed: "Harrison",  bg: "ffdfba" },
+  { id: "av6",  seed: "Sophia",    bg: "fde8f0" },
+  { id: "av7",  seed: "Marcus",    bg: "b6e3f4" },
+  { id: "av8",  seed: "Isabella",  bg: "d1f4e0" },
+  { id: "av9",  seed: "Nathan",    bg: "c0aede" },
+  { id: "av10", seed: "Victoria",  bg: "ffdfba" },
+  { id: "av11", seed: "Ethan",     bg: "e8f4fd" },
+  { id: "av12", seed: "Amelia",    bg: "ffd5dc" },
+  { id: "av13", seed: "Sebastian", bg: "d4edda" },
+  { id: "av14", seed: "Natalie",   bg: "fff3cd" },
+  { id: "av15", seed: "Theodore",  bg: "e2d9f3" },
+  { id: "av16", seed: "Penelope",  bg: "fde8f0" },
+  { id: "av17", seed: "Julian",    bg: "d1ecf1" },
+  { id: "av18", seed: "Aurora",    bg: "f8d7da" },
 ];
 
 export const AVATARS = AVATAR_SEEDS;
 
 export function AvatarSVG({ seed, bg, size = 48 }) {
-  const url = `https://api.dicebear.com/9.x/personas/svg?seed=${seed}&backgroundColor=${bg}&backgroundType=solid&size=${size}`;
+  const url = `https://api.dicebear.com/10.x/notionists/svg?seed=${seed}&backgroundColor=${bg}&backgroundType=solid`;
   return (
     <img
       src={url}
