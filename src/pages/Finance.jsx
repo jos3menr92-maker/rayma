@@ -22,10 +22,8 @@ function getWeekLabel(dateStr) {
 
 function startOfWeek(date = new Date()) {
   const d = new Date(date);
-  const day = d.getDay();
-  // Anchor to Friday (day 5): go back to the most recent Friday
-  const diff = (day + 2) % 7; // days since last Friday
-  d.setDate(d.getDate() - diff);
+  // Anchor to Sunday (day 0) — consistent with QuickAddMenu
+  d.setDate(d.getDate() - d.getDay());
   return d.toISOString().split("T")[0];
 }
 

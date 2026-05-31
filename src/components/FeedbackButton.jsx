@@ -50,7 +50,7 @@ export default function FeedbackButton() {
       <button
         onClick={handleOpen}
         title="Share feedback"
-        className="fixed bottom-24 right-4 z-40 w-11 h-11 rounded-full bg-secondary shadow-lg flex items-center justify-center text-secondary-foreground hover:bg-secondary/80 transition-colors"
+        className="fixed bottom-40 right-4 z-40 w-11 h-11 rounded-full bg-secondary shadow-lg flex items-center justify-center text-secondary-foreground hover:bg-secondary/80 transition-colors"
       >
         <MessageSquarePlus className="w-5 h-5" />
       </button>

@@ -88,9 +88,7 @@ export default function LoanDetail() {
   }
 
   async function handleDeleteLoan() {
-    for (const p of payments) {
-      await base44.entities.Payment.delete(p.id);
-    }
+    await Promise.all(payments.map(p => base44.entities.Payment.delete(p.id)));
     await base44.entities.Loan.delete(id);
     navigate("/");
   }
