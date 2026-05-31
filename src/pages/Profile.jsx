@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Lock, Camera, X, FileText, Trash2, ChevronRight } from "lucide-react";
+import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Lock, Camera, X, FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system");
   const [form, setForm] = useState({
     preferred_name: "",
     avatar_emoji: "😊",
@@ -52,6 +53,8 @@ export default function Profile() {
     dashboard_greeting: "",
     pay_frequency: "",
     pay_day: "",
+    accent_color: "",
+    compact_mode: false,
   });
 
   useEffect(() => { loadUser(); }, []);
@@ -67,8 +70,27 @@ export default function Profile() {
       dashboard_greeting: me.dashboard_greeting || "",
       pay_frequency: me.pay_frequency || "",
       pay_day: me.pay_day || "",
+      accent_color: me.accent_color || "",
+      compact_mode: me.compact_mode || false,
     });
     setLoading(false);
+  }
+
+  function applyTheme(t) {
+    const html = document.documentElement;
+    if (t === "dark") {
+      html.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else if (t === "light") {
+      html.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    } else {
+      // system
+      localStorage.removeItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      prefersDark ? html.classList.add("dark") : html.classList.remove("dark");
+    }
+    setTheme(t);
   }
 
   async function handleSave(e) {
@@ -208,6 +230,83 @@ export default function Profile() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Personalization Section */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={Palette} title="Personalization" subtitle="Theme, appearance, and layout" />
+            <div className="space-y-4">
+              {/* Theme */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-2">App Theme</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "light", label: "Light", icon: Sun },
+                    { value: "dark", label: "Dark", icon: Moon },
+                    { value: "system", label: "System", icon: Monitor },
+                  ].map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => applyTheme(value)}
+                      className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-medium transition-all ${
+                        theme === value
+                          ? "bg-primary/10 border-primary text-primary"
+                          : "bg-muted border-transparent text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Compact Mode */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Compact Mode</p>
+                  <p className="text-xs text-muted-foreground">Reduce spacing for a denser layout</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, compact_mode: !f.compact_mode }))}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${form.compact_mode ? "bg-primary" : "bg-muted"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.compact_mode ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
+              </div>
+
+              {/* Accent Color */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-2">Dashboard Accent</label>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { value: "", label: "Default", color: "bg-primary" },
+                    { value: "violet", label: "Violet", color: "bg-violet-500" },
+                    { value: "rose", label: "Rose", color: "bg-rose-500" },
+                    { value: "amber", label: "Amber", color: "bg-amber-500" },
+                    { value: "sky", label: "Sky", color: "bg-sky-500" },
+                    { value: "emerald", label: "Emerald", color: "bg-emerald-500" },
+                  ].map(({ value, label, color }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, accent_color: value }))}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                        form.accent_color === value
+                          ? "border-foreground text-foreground"
+                          : "border-transparent bg-muted text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      <span className={`w-3 h-3 rounded-full ${color}`} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5">Accent color preference is saved to your profile.</p>
+              </div>
             </div>
           </div>
 

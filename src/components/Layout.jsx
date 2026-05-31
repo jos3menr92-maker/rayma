@@ -5,7 +5,7 @@ import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal 
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
-import ThemeToggle from "./ThemeToggle";
+
 import MoreMenu from "./MoreMenu";
 import FeedbackButton from "./FeedbackButton";
 
@@ -34,7 +34,6 @@ export default function Layout() {
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
           <span className="text-sm font-semibold font-heading text-foreground">Debt & Bills</span>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Menu className="w-5 h-5" />
             </button>
