@@ -147,12 +147,18 @@ export default function RaymaChat() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Draggable Button — top-left, snaps back */}
       <motion.button
+        drag
+        dragMomentum={false}
+        dragElastic={0.1}
+        dragConstraints={{ top: 0, left: 0, right: window.innerWidth - 56, bottom: window.innerHeight - 56 }}
+        animate={{ x: 0, y: 0 }}
         whileTap={{ scale: 0.92 }}
+        whileDrag={{ scale: 1.1 }}
         onClick={openChat}
-        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
-        className="fixed right-4 z-40 w-12 h-12 rounded-full bg-secondary shadow-lg shadow-secondary/30 flex items-center justify-center"
+        style={{ top: "calc(3.5rem + env(safe-area-inset-top))", left: "1rem" }}
+        className="fixed z-40 w-12 h-12 rounded-full bg-secondary shadow-lg shadow-secondary/30 flex items-center justify-center cursor-grab active:cursor-grabbing"
         title="Chat with RAYMA"
       >
         <Sparkles className="w-5 h-5 text-primary-foreground" />
@@ -174,8 +180,8 @@ export default function RaymaChat() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 20 }}
               transition={{ type: "spring", damping: 24, stiffness: 300 }}
-              style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
-              className="fixed right-4 z-50 w-80 h-[480px] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden relative"
+              style={{ top: "calc(3.5rem + env(safe-area-inset-top))", left: "1rem" }}
+              className="fixed z-50 w-80 h-[480px] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden relative"
             >
               {/* Header */}
               <div className="bg-primary/10 border-b border-border px-4 py-3 flex items-center justify-between shrink-0">
