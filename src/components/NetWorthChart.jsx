@@ -10,12 +10,16 @@ export default function NetWorthChart() {
   const [snapshots, setSnapshots] = useState([]);
 
   useEffect(() => {
+    let cancelled = false;
     base44.entities.NetWorthSnapshot.list("snapshot_date", 24).then(data => {
-      setSnapshots(data.map(s => ({
-        ...s,
-        label: s.snapshot_date ? format(new Date(s.snapshot_date + "T00:00:00"), "MMM d") : "",
-      })));
+      if (!cancelled) {
+        setSnapshots(data.map(s => ({
+          ...s,
+          label: s.snapshot_date ? format(new Date(s.snapshot_date + "T00:00:00"), "MMM d") : "",
+        })));
+      }
     });
+    return () => { cancelled = true; };
   }, []);
 
   if (snapshots.length < 2) return null;

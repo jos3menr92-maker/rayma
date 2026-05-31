@@ -107,7 +107,7 @@ export default function Dashboard() {
     setPullStartY(null);
   };
 
-  const { activeLoans, totalDebt, totalRemaining, totalPaid, overallProgress, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, billsPieData, loansPieData, loanPaymentsPieData } = useMemo(() => {
+  const { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, billsPieData, loansPieData, loanPaymentsPieData } = useMemo(() => {
     const activeLoans = loans.filter((l) => l.status !== "paid_off");
     const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
     const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);

@@ -36,7 +36,7 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
     } else if (loans.length > 0 || bills.length > 0) {
       fetchInsights();
     }
-  }, []);
+  }, [loans.length, bills.length]);
 
   async function fetchInsights(force = false) {
     if (loading) return;

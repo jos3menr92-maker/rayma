@@ -30,6 +30,7 @@ export default function FinancialHealthScore() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     async function compute() {
       const now = new Date();
       const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -89,14 +90,17 @@ export default function FinancialHealthScore() {
 
       const total = debtScore + budgetScore + savingsScore + coverageScore;
 
-      setData({
-        total,
-        debtScore, budgetScore, savingsScore, coverageScore,
-        income, expenses, totalDebt, totalObligation,
-        savingsRate,
-      });
+      if (!cancelled) {
+        setData({
+          total,
+          debtScore, budgetScore, savingsScore, coverageScore,
+          income, expenses, totalDebt, totalObligation,
+          savingsRate,
+        });
+      }
     }
     compute();
+    return () => { cancelled = true; };
   }, []);
 
   if (!data) return null;
