@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useCurrency } from "@/hooks/useCurrency";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,9 +14,6 @@ import {
 } from "recharts";
 import CashFlowForecast from "../components/CashFlowForecast";
 import IncomeLogGrouped from "../components/IncomeLogGrouped";
-
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
 
 function getWeekLabel(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
@@ -31,6 +30,8 @@ function startOfWeek(date = new Date()) {
 }
 
 export default function Finance() {
+  const navigate = useNavigate();
+  const { formatCurrency: fmt } = useCurrency();
   const [incomes, setIncomes] = useState([]);
   const [bills, setBills] = useState([]);
   const [loans, setLoans] = useState([]);
@@ -171,7 +172,7 @@ export default function Finance() {
               <p className="text-sm font-semibold text-foreground">Set up your pay schedule</p>
               <p className="text-xs text-muted-foreground">Add your payday in Profile for smarter reminders</p>
             </div>
-            <Button size="sm" variant="outline" className="rounded-xl text-xs shrink-0" onClick={() => window.location.href = "/profile"}>Set Up</Button>
+            <Button size="sm" variant="outline" className="rounded-xl text-xs shrink-0" onClick={() => navigate("/profile")}>Set Up</Button>
           </div>
         )}
 

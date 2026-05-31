@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronRight, AlertCircle, Calendar, DollarSign } from "lucide-react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 const categoryIcons = {
   mortgage: "🏠",
@@ -13,17 +14,9 @@ const categoryIcons = {
   other: "📋",
 };
 
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount || 0);
-}
-
 export default function LoanCard({ loan, index = 0 }) {
   const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
   const paid = (loan.original_amount || 0) - (loan.current_balance || 0);
   const progress = loan.original_amount > 0 ? (paid / loan.original_amount) * 100 : 0;
   const icon = categoryIcons[loan.category] || "📋";

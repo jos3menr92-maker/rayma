@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useCurrency } from "@/hooks/useCurrency";
 import { motion } from "framer-motion";
 import { ArrowLeft, Edit3, Trash2, Plus, DollarSign, Calendar, Percent, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,13 +19,10 @@ const categoryIcons = {
   credit_card: "💳", medical: "🏥", other: "📋",
 };
 
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(amount || 0);
-}
-
 export default function LoanDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
   const [loan, setLoan] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +33,10 @@ export default function LoanDetail() {
 
   useEffect(() => {
     loadData();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("quickpay") === "1") {
+      setPaymentOpen(true);
+    }
   }, [id]);
 
   async function loadData() {
