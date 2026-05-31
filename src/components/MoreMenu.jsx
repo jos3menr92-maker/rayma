@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Calendar } from "lucide-react";
+import { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
 
 const moreItems = [
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
@@ -16,10 +18,18 @@ const moreItems = [
   { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
   { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
   { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Donate or get lifetime access", highlight: true },
+  { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
 ];
 
 export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setIsAdmin(u?.role === "admin"));
+  }, []);
+
+  const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
 
   function go(path) {
     navigate(path);
@@ -60,7 +70,7 @@ export default function MoreMenu({ open, onClose }) {
             {/* Items grid */}
             <div className="overflow-y-auto flex-1 p-4">
               <div className="grid grid-cols-2 gap-3">
-                {moreItems.map((item) => {
+                {visibleItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <button

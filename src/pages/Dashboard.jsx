@@ -6,7 +6,7 @@ import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, RefreshCw } from "lucide-react";
-import { AVATARS, AvatarSVG } from "@/components/AvatarPicker";
+import { getInitialsColor } from "@/components/AvatarPicker";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
 import LoanCard from "../components/LoanCard";
@@ -76,6 +76,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+    // Redirect new users to onboarding if not complete
+    base44.auth.me().then(u => {
+      if (u && u.onboarding_complete === false) {
+        window.location.href = "/onboarding";
+      }
+    });
   }, []);
 
   const loadData = useCallback(async (isRefresh = false) => {
@@ -193,13 +199,14 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+          <div
+            className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-sm"
+            style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}
+          >
             {userProfile?.avatar_photo_url ? (
-              <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
-            ) : userProfile?.avatar_id ? (
-              (() => { const av = AVATARS.find(a => a.id === userProfile.avatar_id); return av ? <AvatarSVG {...av} size={40} /> : <span className="w-full h-full flex items-center justify-center text-sm font-bold text-muted-foreground">{(userProfile?.preferred_name || userProfile?.full_name || "?")[0]?.toUpperCase()}</span>; })()
+              <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover rounded-full" />
             ) : (
-              <span className="w-full h-full flex items-center justify-center text-sm font-bold text-muted-foreground bg-muted">{(userProfile?.preferred_name || userProfile?.full_name || "?")[0]?.toUpperCase()}</span>
+              (userProfile?.preferred_name || userProfile?.full_name || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?"
             )}
           </div>
         </div>

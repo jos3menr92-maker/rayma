@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
+import { isStripeAllowed, getPlatform } from "@/lib/iap";
 import { Zap, Star, Sparkles, CheckCircle2, Loader2, ExternalLink, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,10 +47,7 @@ const PLANS = [
   },
 ];
 
-const isInAppBrowser = () => {
-  const ua = navigator.userAgent || "";
-  return /\bwv\b/.test(ua) || /iPhone.*Mobile.*Safari/.test(ua) === false && /iPhone/.test(ua);
-};
+// Use centralized IAP detection from lib/iap.js
 
 export default function Support() {
   const [loading, setLoading] = useState(null);
@@ -63,8 +61,9 @@ export default function Support() {
   const cancelled = urlParams.get("cancelled") === "true";
 
   async function handlePurchase(planId) {
-    if (isInAppBrowser()) {
-      alert("Purchases are available on the web version. Please open RAYMA in your browser (Safari or Chrome) to complete your purchase.");
+    if (!isStripeAllowed()) {
+      const platform = getPlatform();
+      alert(`Purchases on ${platform === "ios" ? "iOS" : "Android"} use the native app store. Please update to the latest version of RAYMA to make in-app purchases.`);
       return;
     }
 
