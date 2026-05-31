@@ -66,6 +66,11 @@
       "type": "string",
       "format": "date",
       "description": "Date when annual pass expires. If set and in future, unlimited AI."
+    },
+    "is_sponsor": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this user is a sponsor or employee (redeemed promo code)"
     }
   }
 }

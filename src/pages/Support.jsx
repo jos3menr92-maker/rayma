@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Zap, Star, Sparkles, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
+import { Zap, Star, Sparkles, CheckCircle2, Loader2, ExternalLink, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const PLANS = [
   {
@@ -53,6 +54,9 @@ const isInAppBrowser = () => {
 export default function Support() {
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoSuccess, setPromoSuccess] = useState(null);
 
   const urlParams = new URLSearchParams(window.location.search);
   const successType = urlParams.get("success") === "true" ? urlParams.get("type") : null;
@@ -80,6 +84,29 @@ export default function Support() {
     }
   }
 
+  async function handlePromoCode(e) {
+    e.preventDefault();
+    if (!promoCode.trim()) return;
+
+    setPromoLoading(true);
+    setError("");
+    setPromoSuccess(null);
+
+    const res = await base44.functions.invoke("redeemPromoCode", {
+      code: promoCode.trim(),
+    });
+
+    setPromoLoading(false);
+
+    if (res.data?.success) {
+      setPromoSuccess(res.data.message);
+      setPromoCode("");
+      setTimeout(() => setPromoSuccess(null), 5000);
+    } else {
+      setError(res.data?.error || "Invalid promo code.");
+    }
+  }
+
   return (
     <div className="max-w-xl mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
@@ -96,12 +123,12 @@ export default function Support() {
         </div>
 
         {/* Success banner */}
-        {successType && (
+        {(successType || promoSuccess) && (
           <div className="mb-6 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-green-800 dark:text-green-300">Purchase successful!</p>
-              <p className="text-xs text-green-700 dark:text-green-400">Your tokens have been added to your account.</p>
+              <p className="text-sm font-semibold text-green-800 dark:text-green-300">{promoSuccess ? "Welcome, Sponsor!" : "Purchase successful!"}</p>
+              <p className="text-xs text-green-700 dark:text-green-400">{promoSuccess || "Your tokens have been added to your account."}</p>
             </div>
           </div>
         )}
@@ -119,6 +146,31 @@ export default function Support() {
             {error}
           </div>
         )}
+
+        {/* Promo Code Section */}
+        <div className="mb-6 bg-primary/5 border border-primary/30 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Gift className="w-5 h-5 text-primary" />
+            <p className="font-semibold text-foreground text-sm">Have a Sponsor Code?</p>
+          </div>
+          <form onSubmit={handlePromoCode} className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Enter promo code…"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              disabled={promoLoading}
+              className="rounded-xl"
+            />
+            <Button
+              type="submit"
+              disabled={promoLoading || !promoCode.trim()}
+              className="rounded-xl whitespace-nowrap"
+            >
+              {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Redeem"}
+            </Button>
+          </form>
+        </div>
 
         {/* Plans */}
         <div className="space-y-3">
