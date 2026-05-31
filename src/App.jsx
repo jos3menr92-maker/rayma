@@ -88,7 +88,7 @@ const AuthenticatedApp = () => {
         <Route path="/simulator" element={<Suspense fallback={<PageLoader />}><Simulator /></Suspense>} />
         <Route path="/documents" element={<Suspense fallback={<PageLoader />}><DocumentVault /></Suspense>} />
         <Route path="/bank-accounts" element={<Suspense fallback={<PageLoader />}><BankAccounts /></Suspense>} />
-        <Route path="/budget" element={<Suspense fallback={<PageLoader />}><BudgetDashboard /></Suspense>} />
+        <Route path="/budget-dashboard" element={<Suspense fallback={<PageLoader />}><BudgetDashboard /></Suspense>} />
         <Route path="/debt-simulator" element={<Suspense fallback={<PageLoader />}><DebtPayoffSimulator /></Suspense>} />
         <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
         <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
