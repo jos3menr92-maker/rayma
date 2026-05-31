@@ -8,6 +8,7 @@ import RaymaChat from "./RaymaChat";
 
 import MoreMenu from "./MoreMenu";
 import FeedbackButton from "./FeedbackButton";
+import PushNotificationPrompt from "./PushNotificationPrompt";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -73,6 +74,7 @@ export default function Layout() {
       </motion.button>
 
       <FeedbackButton />
+      <PushNotificationPrompt />
       <RaymaChat />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>

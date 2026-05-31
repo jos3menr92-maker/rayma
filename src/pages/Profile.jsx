@@ -222,6 +222,7 @@ export default function Profile() {
                 </div>
 
                 <AvatarPicker
+                  userName={form.preferred_name || user?.full_name}
                   value={form.avatar_id}
                   onChange={(id) => setForm(f => ({ ...f, avatar_id: id, avatar_photo_url: "" }))}
                 />
@@ -412,6 +413,11 @@ export default function Profile() {
               <Link to="/terms" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
                 <FileText className="w-4 h-4 text-primary shrink-0" />
                 <span className="flex-1 text-sm font-medium text-foreground">Terms of Service</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <Link to="/data-export" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <span className="flex-1 text-sm font-medium text-foreground">Export My Data</span>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </Link>
               <Link to="/delete-account" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-destructive/5 transition-colors">

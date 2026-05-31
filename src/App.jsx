@@ -24,6 +24,7 @@ import DeleteAccount from './pages/DeleteAccount';
 import Landing from './pages/Landing';
 import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
+import DataExport from './pages/DataExport';
 import { LanguageProvider } from '@/lib/LanguageContext';
 
 // Lazy load less-visited pages
@@ -87,6 +88,7 @@ const AuthenticatedApp = () => {
         <Route path="/delete-account" element={<DeleteAccount />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/data-export" element={<DataExport />} />
 
         <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
         <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
