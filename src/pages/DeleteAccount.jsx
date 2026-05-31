@@ -55,6 +55,8 @@ export default function DeleteAccount() {
         ...loanAdjustments.map(r => base44.entities.LoanAdjustment.delete(r.id)),
       ]);
 
+      // Log deletion for GDPR/CCPA audit trail
+      console.log(`[GDPR/CCPA AUDIT] Account deletion initiated at ${new Date().toISOString()}`);
       setStep("done");
       // Sign out after a brief moment
       setTimeout(() => base44.auth.logout(), 3000);

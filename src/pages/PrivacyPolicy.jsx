@@ -1,123 +1,223 @@
-import { motion } from "framer-motion";
-import { Shield, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function PrivacyPolicy() {
+  const navigate = useNavigate();
+
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="max-w-2xl mx-auto px-4 pt-6 pb-24">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-primary mb-6 hover:opacity-80"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        Back
+      </button>
 
-        <Link to="/profile" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 w-fit">
-          <ArrowLeft className="w-4 h-4" /> Back
-        </Link>
+      <h1 className="text-3xl font-bold font-heading mb-6">Privacy Policy</h1>
+      <p className="text-sm text-muted-foreground mb-8">Last updated: May 31, 2026</p>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-primary" />
+      <div className="space-y-8 text-sm leading-relaxed">
+        <section>
+          <h2 className="text-lg font-semibold mb-3">1. Introduction</h2>
+          <p>
+            RAYMA ("we," "us," "our," or "Company") operates the RAYMA app (the "Service"). This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.
+          </p>
+          <p className="mt-3">
+            By using the Service, you agree to this Privacy Policy. If you disagree, please do not use the Service.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">2. Information We Collect</h2>
+
+          <h3 className="font-semibold mt-4">Account Information</h3>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Name, email address, password (hashed)</li>
+            <li>Profile customization (display name, avatar, preferred language, currency, timezone)</li>
+            <li>Account preferences (theme, compact mode, pay schedule)</li>
+          </ul>
+
+          <h3 className="font-semibold mt-4">Financial Data</h3>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Loans: name, lender, balance, interest rate, payment amount, due dates, category</li>
+            <li>Bills: name, amount, frequency, due dates, category, merchant names</li>
+            <li>Bank accounts: name, institution, account type, balance (NOT full account numbers — only last 4 digits if at all)</li>
+            <li>Transactions: date, description, amount, category, type (debit/credit)</li>
+            <li>Income: weekly/monthly income amounts and dates</li>
+            <li>Payments: payment history linked to loans/bills</li>
+            <li>Savings goals, assets, net worth snapshots</li>
+            <li>Scanned documents and uploaded receipts</li>
+          </ul>
+
+          <h3 className="font-semibold mt-4">Third-Party Data (Plaid)</h3>
+          <p className="mt-2">
+            If you link your bank account via Plaid, Plaid retrieves and shares with us:
+          </p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Bank account list and real-time balances</li>
+            <li>Transaction history (last 90 days by default)</li>
+            <li>Account type and institution details</li>
+          </ul>
+          <p className="mt-2 text-xs italic text-muted-foreground">
+            Note: Plaid does not share your passwords. Access is read-only via OAuth.
+          </p>
+
+          <h3 className="font-semibold mt-4">Payment Data (Stripe)</h3>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Token purchase history (amounts, dates, payment status)</li>
+            <li>Promo code redemptions</li>
+            <li>Stripe does NOT share credit card details with us</li>
+          </ul>
+
+          <h3 className="font-semibold mt-4">Usage Analytics</h3>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Pages visited, features used, time spent</li>
+            <li>Errors encountered (for debugging)</li>
+            <li>Device type, browser, operating system</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">3. How We Use Your Data</h2>
+          <ul className="list-disc list-inside space-y-2">
+            <li><strong>Service Delivery:</strong> Track loans, bills, income, and net worth</li>
+            <li><strong>RAYMA AI:</strong> Analyze your financial data to provide personalized insights and suggestions</li>
+            <li><strong>Recurring Payment Detection:</strong> Identify recurring transactions and suggest bills for your approval</li>
+            <li><strong>Account Security:</strong> Prevent fraud, enforce our Terms of Service</li>
+            <li><strong>Service Improvement:</strong> Analyze usage to fix bugs and improve features</li>
+            <li><strong>Legal Compliance:</strong> Comply with tax, financial, and data protection laws</li>
+            <li><strong>Communication:</strong> Send you service updates, password resets, support responses (no marketing without consent)</li>
+          </ul>
+          <p className="mt-4">
+            <strong>We do NOT:</strong> Sell personal data to advertisers or data brokers. Share financial data with third parties (except as required by law or for service delivery via Plaid/Stripe).
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">4. Data Retention & Deletion</h2>
+          <ul className="list-disc list-inside space-y-2">
+            <li><strong>Active Accounts:</strong> Data is retained as long as your account is active.</li>
+            <li><strong>Deleted Accounts:</strong> Upon account deletion, all personal, financial, and transactional data is permanently removed within 30 days.</li>
+            <li><strong>Backups:</strong> Deleted data may persist in encrypted backups for up to 90 days for disaster recovery, then permanently destroyed.</li>
+            <li><strong>GDPR Right to Erasure:</strong> EU residents can request data deletion at any time. Use the "Delete My Account" feature in Settings or email support.</li>
+            <li><strong>CCPA Right to Deletion:</strong> California residents can request deletion via the app. We will confirm deletion within 45 days.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">5. Your Rights</h2>
+          <h3 className="font-semibold mt-3">For all users:</h3>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Access your data: View all your financial records in the app</li>
+            <li>Update your data: Edit loans, bills, profile information anytime</li>
+            <li>Delete your account: Remove all personal data via Settings → Delete My Account</li>
+            <li>Opt-out of analytics: Adjust tracking preferences (where applicable)</li>
+          </ul>
+
+          <h3 className="font-semibold mt-4">For GDPR users (EU):</h3>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Right to Access: Request a copy of all your data</li>
+            <li>Right to Erasure ("Right to be Forgotten")</li>
+            <li>Right to Rectification: Correct inaccurate data</li>
+            <li>Right to Data Portability: Export your data in machine-readable format (CSV)</li>
+            <li>Right to Object: Opt out of certain processing</li>
+          </ul>
+
+          <h3 className="font-semibold mt-4">For CCPA users (California):</h3>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Right to Know: What personal information is collected</li>
+            <li>Right to Delete: Request deletion of collected data</li>
+            <li>Right to Opt-Out: Opt out of "sale or sharing" of personal information</li>
+            <li>Right to Correct: Correct inaccurate personal information</li>
+            <li>Right to Non-Discrimination: No penalty for exercising rights</li>
+          </ul>
+
+          <p className="mt-4">
+            To exercise these rights, email <strong>privacy@raymaapp.com</strong> with your request. We will respond within 30 days.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">6. Security</h2>
+          <ul className="list-disc list-inside space-y-2">
+            <li>All data is transmitted using HTTPS encryption</li>
+            <li>Passwords are hashed and never stored in plain text</li>
+            <li>Bank credentials are never stored—only secure Plaid access tokens</li>
+            <li>We conduct regular security audits and penetration testing</li>
+            <li>If a breach occurs, affected users will be notified within 30 days</li>
+          </ul>
+          <p className="mt-4">
+            <strong>No system is 100% secure.</strong> While we use industry-standard protections, we cannot guarantee absolute security. Use a strong password and enable two-factor authentication if available.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">7. Third-Party Services</h2>
+          <p>
+            We may share data with trusted partners to provide the Service:
+          </p>
+          <ul className="list-disc list-inside space-y-2 mt-3">
+            <li><strong>Plaid (Bank Linking):</strong> Retrieves account/transaction data. <a href="https://plaid.com/privacy" className="text-primary underline">Plaid Privacy Policy</a></li>
+            <li><strong>Stripe (Payments):</strong> Processes token purchases. <a href="https://stripe.com/en-us/privacy" className="text-primary underline">Stripe Privacy Policy</a></li>
+            <li><strong>Base44 (Backend Infrastructure):</strong> Hosts our database and authentication. Base44 complies with GDPR and uses encrypted storage.</li>
+            <li><strong>Analytics (Optional):</strong> We use aggregated, non-personal analytics to understand usage patterns.</li>
+          </ul>
+          <p className="mt-3">
+            We do not sell, trade, or rent your personal information to any third party for marketing purposes.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">8. Children's Privacy</h2>
+          <p>
+            RAYMA is not intended for users under 13 years old (COPPA) or under 16 in the EU. We do not knowingly collect data from children. If we discover we've collected data from a child, we will delete it immediately.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">9. Changes to This Policy</h2>
+          <p>
+            We may update this Privacy Policy. Material changes will be communicated via email or in-app notification. Your continued use of the Service after changes constitutes acceptance.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">10. Contact Us</h2>
+          <p>
+            For privacy questions, data requests, or complaints, contact:
+          </p>
+          <div className="mt-3 p-3 bg-muted rounded-lg text-xs">
+            <p className="font-semibold">RAYMA Privacy Team</p>
+            <p>Email: privacy@raymaapp.com</p>
+            <p>Response time: 30 days</p>
+            <p className="mt-2 text-muted-foreground">For GDPR complaints, you also have the right to lodge a complaint with your local data protection authority.</p>
           </div>
-          <div>
-            <h1 className="text-xl font-bold font-heading text-foreground">Privacy Policy</h1>
-            <p className="text-xs text-muted-foreground">Last updated: May 2026</p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-3">11. Financial Disclaimer</h2>
+          <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
+            <p className="font-semibold text-destructive mb-2">⚠️ Important Legal Notice</p>
+            <p>
+              <strong>RAYMA is NOT a financial advisor, accountant, tax professional, or legal advisor.</strong> All information provided by RAYMA is for educational and informational purposes only and should not be considered as financial advice.
+            </p>
+            <p className="mt-3">
+              <strong>Consult qualified professionals before:</strong> Making investment decisions, taking out loans, filing taxes, entering debt settlement agreements, or making major financial changes.
+            </p>
+            <p className="mt-3">
+              <strong>Use at your own risk:</strong> RAYMA makes no guarantees about calculation accuracy, interest rate calculations, or financial outcomes. We are not responsible for errors, missed payments, or financial losses.
+            </p>
           </div>
-        </div>
+        </section>
+      </div>
 
-        <div className="space-y-5 text-sm text-foreground">
-
-          <Section title="1. Introduction">
-            RAYMA ("we", "our", or "us") is a personal finance management application. This Privacy Policy explains how we
-            collect, use, and protect your information when you use our app.
-          </Section>
-
-          <Section title="2. Information We Collect">
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed">
-              <li><strong>Account information:</strong> Your name and email address provided at registration.</li>
-              <li><strong>Financial data:</strong> Loans, bills, income, budgets, and savings goals you manually enter.</li>
-              <li><strong>Profile preferences:</strong> Currency, pay schedule, avatar, and custom display name.</li>
-              <li><strong>Documents:</strong> Files you optionally upload to the Document Vault.</li>
-              <li><strong>Usage data:</strong> Anonymous app interaction data to improve performance.</li>
-            </ul>
-          </Section>
-
-          <Section title="3. How We Use Your Information">
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed">
-              <li>To provide and personalize the app experience.</li>
-              <li>To power the RAYMA AI financial advisor with your financial context.</li>
-              <li>To send optional reminders and notifications.</li>
-              <li>To process voluntary donations via Stripe.</li>
-              <li>To improve app features and fix bugs.</li>
-            </ul>
-            <p className="mt-2 font-semibold text-foreground text-xs">Important: RAYMA AI provides informational insights only — it is NOT financial advice. Always consult a licensed financial professional for important financial decisions.</p>
-          </Section>
-
-          <Section title="4. Data Sharing & No-Sale Commitment">
-            We <strong>never sell, rent, share, or transfer</strong> your personal financial data to third parties for marketing, advertising, or data broker purposes. We do not track you across other apps or websites.
-            <br /><br />Data is shared only as necessary with:
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed mt-2">
-              <li><strong>Stripe</strong> — for payment processing only. Payment card details are entered directly with Stripe and never pass through RAYMA servers.</li>
-              <li><strong>Base44</strong> — our hosting platform, which stores your encrypted data on your behalf under their own privacy policy.</li>
-              <li><strong>AI providers</strong> — anonymized financial prompts are sent to generate RAYMA insights. No personally identifying information is included in these prompts.</li>
-            </ul>
-          </Section>
-
-          <Section title="4a. Apple App Store — Privacy Nutrition Label">
-            In accordance with Apple App Store requirements, here is a summary of data RAYMA collects:
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed mt-2">
-              <li><strong>Contact Info (Name, Email)</strong> — collected at registration, linked to your account, used for authentication only.</li>
-              <li><strong>Financial Info (Income, Debts, Assets)</strong> — manually entered by you, stored securely, used solely for app functionality.</li>
-              <li><strong>User Content (Documents)</strong> — files you optionally upload, stored securely, not shared.</li>
-              <li><strong>No tracking:</strong> RAYMA does not track you across third-party apps or websites.</li>
-              <li><strong>No data sale:</strong> Your data is never sold to data brokers or advertisers.</li>
-            </ul>
-          </Section>
-
-          <Section title="5. Data Security">
-            All data is encrypted at rest and in transit using industry-standard TLS/AES encryption.
-            Row-level security (RLS) ensures only you can access your own data — not other users, not even app administrators.
-          </Section>
-
-          <Section title="6. Data Retention">
-            Your data is retained as long as your account is active. You may delete your account and all associated data at
-            any time from the app (Settings → Delete Account). Data is permanently deleted within 30 days of a deletion request.
-          </Section>
-
-          <Section title="7. Your Rights (GDPR / CCPA / Global)">
-            Depending on your location, you may have the following rights regarding your personal data:
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed mt-2">
-              <li><strong>Right to Access:</strong> Request a copy of all data we hold about you.</li>
-              <li><strong>Right to Correction:</strong> Correct inaccurate or incomplete data.</li>
-              <li><strong>Right to Deletion:</strong> Delete your account and all associated data at any time (Profile → Delete Account). Data is permanently removed within 30 days.</li>
-              <li><strong>Right to Portability:</strong> Export your financial data (CSV export available from Tax Summary).</li>
-              <li><strong>Right to Opt-Out of AI:</strong> Withdraw consent for AI features at any time by not using the RAYMA chat feature.</li>
-              <li><strong>CCPA (California):</strong> We do not sell personal information. California residents may contact us to exercise rights under CCPA.</li>
-              <li><strong>GDPR (EU/EEA):</strong> If you are in the EU, you have additional rights under the GDPR including the right to object and right to restrict processing. Contact us at privacy@raymaapp.com.</li>
-            </ul>
-          </Section>
-
-          <Section title="8. Children's Privacy">
-            RAYMA is not directed at children under 13. We do not knowingly collect personal information from children.
-          </Section>
-
-          <Section title="9. Changes to This Policy">
-            We may update this Privacy Policy from time to time. Significant changes will be communicated through the app.
-            Continued use of the app constitutes acceptance of the updated policy.
-          </Section>
-
-          <Section title="10. Contact Us">
-            For privacy-related questions or data deletion requests, contact us at:
-            <p className="text-muted-foreground text-xs mt-1 font-medium">privacy@raymaapp.com</p>
-          </Section>
-
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <div className="bg-card border border-border rounded-2xl p-4">
-      <h2 className="text-sm font-semibold text-foreground mb-2">{title}</h2>
-      <div className="text-xs text-muted-foreground leading-relaxed">{children}</div>
+      <div className="mt-8 pt-8 border-t border-border">
+        <Button onClick={() => navigate("/profile")} className="w-full">
+          Back to Profile
+        </Button>
+      </div>
     </div>
   );
 }

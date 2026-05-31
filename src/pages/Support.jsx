@@ -111,6 +111,14 @@ export default function Support() {
     <div className="max-w-xl mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
+        {/* Legal Disclaimer */}
+        <div className="mb-6 p-4 bg-destructive/5 border border-destructive/20 rounded-2xl">
+          <p className="text-xs font-semibold text-destructive mb-1">⚠️ Financial Disclaimer</p>
+          <p className="text-xs text-muted-foreground">
+            RAYMA provides tools for personal finance tracking only. Not financial advice. Consult a qualified financial professional before making financial decisions. See <a href="/privacy" className="underline text-primary">Privacy Policy</a> for full terms.
+          </p>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">

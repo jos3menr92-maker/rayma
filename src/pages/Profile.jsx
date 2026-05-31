@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor } from "lucide-react";
-import AvatarPicker, { AVATARS, AvatarSVG } from "@/components/AvatarPicker";
+import { User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor, AlertCircle } from "lucide-react";
+import AvatarPicker, { getInitialsColor } from "@/components/AvatarPicker";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,16 +154,14 @@ export default function Profile() {
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border border-primary/20 p-6 mb-6 text-center">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
           <div className="relative">
-            <div className="w-24 h-24 rounded-full ring-4 ring-primary/30 mx-auto mb-3 shadow-lg overflow-hidden flex items-center justify-center bg-muted">
+            <div className="w-24 h-24 rounded-full ring-4 ring-primary/30 mx-auto mb-3 shadow-lg overflow-hidden flex items-center justify-center font-bold text-white text-xl"
+              style={{
+                backgroundColor: form.avatar_id ? getInitialsColor(form.preferred_name || user?.full_name, form.avatar_id) : "#ccc"
+              }}>
               {form.avatar_photo_url ? (
                 <img src={form.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
-              ) : form.avatar_id ? (
-                (() => {
-                  const av = AVATARS.find(a => a.id === form.avatar_id);
-                  return av ? <AvatarSVG {...av} size={96} /> : <span className="text-4xl">👤</span>;
-                })()
               ) : (
-                <span className="text-2xl font-bold text-muted-foreground">{(form.preferred_name || user?.full_name || "?")[0]?.toUpperCase()}</span>
+                (form.preferred_name || user?.full_name || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?"
               )}
             </div>
             <h2 className="text-xl font-bold font-heading text-foreground">{form.preferred_name || user?.full_name}</h2>
@@ -386,6 +384,19 @@ export default function Profile() {
                   />
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Financial Disclaimer */}
+          <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-sm text-destructive mb-1">Financial Disclaimer</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  RAYMA is not a financial advisor. All information is for educational purposes. Consult qualified professionals before making financial decisions. See <Link to="/terms" className="text-primary underline">Terms of Service</Link> for full details.
+                </p>
+              </div>
             </div>
           </div>
 

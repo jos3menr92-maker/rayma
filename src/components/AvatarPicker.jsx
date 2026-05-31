@@ -1,62 +1,73 @@
-// "personas" style — colorful, modern, realistic-looking illustrated portraits
+// Initials-based avatars with professional color palette
 
-export const AVATARS = [
-  { id: "av1",  seed: "Alexander",  bg: "b6e3f4" },
-  { id: "av2",  seed: "Charlotte",  bg: "ffd5dc" },
-  { id: "av3",  seed: "Benjamin",   bg: "c0aede" },
-  { id: "av4",  seed: "Olivia",     bg: "d1f4e0" },
-  { id: "av5",  seed: "Harrison",   bg: "ffdfba" },
-  { id: "av6",  seed: "Sophia",     bg: "fde8f0" },
-  { id: "av7",  seed: "Marcus",     bg: "d1ecf1" },
-  { id: "av8",  seed: "Isabella",   bg: "d1f4e0" },
-  { id: "av9",  seed: "Nathan",     bg: "e2d9f3" },
-  { id: "av10", seed: "Victoria",   bg: "fff3cd" },
-  { id: "av11", seed: "Ethan",      bg: "e8f4fd" },
-  { id: "av12", seed: "Amelia",     bg: "ffd5dc" },
-  { id: "av13", seed: "Sebastian",  bg: "d4edda" },
-  { id: "av14", seed: "Natalie",    bg: "fff3cd" },
-  { id: "av15", seed: "Theodore",   bg: "e2d9f3" },
-  { id: "av16", seed: "Penelope",   bg: "fde8f0" },
-  { id: "av17", seed: "Julian",     bg: "d1ecf1" },
-  { id: "av18", seed: "Aurora",     bg: "f8d7da" },
+const COLORS = [
+  "#177cb5", // Teal
+  "#d93c5c", // Rose
+  "#f49c45", // Orange
+  "#6b5b95", // Purple
+  "#2ca042", // Green
+  "#e74c3c", // Red
+  "#3498db", // Blue
+  "#9b59b6", // Violet
+  "#1abc9c", // Turquoise
+  "#f39c12", // Amber
+  "#27ae60", // Emerald
+  "#e67e22", // Dark Orange
 ];
 
-export function AvatarSVG({ seed, bg, size = 48 }) {
-  const params = new URLSearchParams({
-    seed,
-    backgroundColor: bg,
-    backgroundType: "solid",
-  });
-  const url = `https://api.dicebear.com/10.x/personas/svg?${params}`;
+function InitialAvatar({ initials, color, size = 48 }) {
   return (
-    <img
-      src={url}
-      alt={seed}
-      width={size}
-      height={size}
-      style={{ borderRadius: "50%", display: "block", objectFit: "cover" }}
-    />
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        backgroundColor: color,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: size * 0.4,
+        fontWeight: "700",
+        color: "#fff",
+        userSelect: "none",
+      }}
+    >
+      {initials}
+    </div>
   );
 }
 
-export default function AvatarPicker({ value, onChange }) {
+export function getInitialsColor(name, avatarId) {
+  // Deterministic color based on name + id for consistency
+  const hash = (name + avatarId).split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return COLORS[hash % COLORS.length];
+}
+
+export default function AvatarPicker({ userName = "", value, onChange }) {
+  // Generate 12 avatar options using initials + different colors
+  const avatarOptions = COLORS.slice(0, 12).map((color, idx) => {
+    const initials = (userName || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?";
+    const avatarId = `av-${idx}`;
+    return { id: avatarId, initials, color };
+  });
+
   return (
     <div>
-      <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">Or choose an avatar</p>
+      <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">Choose an avatar</p>
       <div className="grid grid-cols-6 gap-2">
-        {AVATARS.map((av) => (
+        {avatarOptions.map((av) => (
           <button
             key={av.id}
             type="button"
             onClick={() => onChange(av.id)}
-            className={`rounded-full transition-all focus:outline-none overflow-hidden ${
+            className={`rounded-full transition-all focus:outline-none ${
               value === av.id
                 ? "ring-2 ring-primary ring-offset-2 scale-110"
-                : "hover:scale-105 opacity-80 hover:opacity-100"
+                : "hover:scale-105 opacity-75 hover:opacity-100"
             }`}
-            title={av.seed}
+            title={`Avatar ${av.id}`}
           >
-            <AvatarSVG {...av} size={44} />
+            <InitialAvatar initials={av.initials} color={av.color} size={44} />
           </button>
         ))}
       </div>

@@ -627,6 +627,9 @@ export const translations = {
 
   pt: {
     appName: "Dívidas e Contas",
+    disclaimer: "RAYMA não é consultor financeiro. Consulte um profissional antes de tomar decisões financeiras.",
+    privacyComplete: "Política de Privacidade",
+    termsComplete: "Termos de Serviço",
     dashboard: "Painel",
     loans: "Empréstimos",
     bills: "Contas",
@@ -712,6 +715,9 @@ export const translations = {
 
   ru: {
     appName: "Долги и Счета",
+    disclaimer: "RAYMA не является финансовым советником. Проконсультируйтесь с профессионалом перед принятием финансовых решений.",
+    privacyComplete: "Политика конфиденциальности",
+    termsComplete: "Условия обслуживания",
     dashboard: "Панель",
     loans: "Кредиты",
     bills: "Счета",
@@ -797,6 +803,9 @@ export const translations = {
 
   ja: {
     appName: "借金と請求書",
+    disclaimer: "RAYMAは金融アドバイザーではありません。金銭的決定を下す前に専門家に相談してください。",
+    privacyComplete: "プライバシーポリシー",
+    termsComplete: "利用規約",
     dashboard: "ダッシュボード",
     loans: "ローン",
     bills: "請求書",
