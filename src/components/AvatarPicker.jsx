@@ -1,32 +1,31 @@
-// Detailed flat-illustration portrait avatars using DiceBear avataaars style
-// Each avatar is a unique combination of seed + style options
+// Personas style — clean flat-design half-body portraits, clearly recognizable
 
 const AVATAR_SEEDS = [
-  { id: "av1",  seed: "Felix",     bg: "#d4e8f0" },
-  { id: "av2",  seed: "Sophia",    bg: "#fde8e8" },
-  { id: "av3",  seed: "Marcus",    bg: "#e8eaf6" },
-  { id: "av4",  seed: "Aisha",     bg: "#fff3e0" },
-  { id: "av5",  seed: "Leila",     bg: "#e8f5e9" },
-  { id: "av6",  seed: "Carlos",    bg: "#fce4ec" },
-  { id: "av7",  seed: "Yuki",      bg: "#e3f2fd" },
-  { id: "av8",  seed: "Tariq",     bg: "#f3e5f5" },
-  { id: "av9",  seed: "Elena",     bg: "#e0f7fa" },
-  { id: "av10", seed: "Jordan",    bg: "#fff8e1" },
-  { id: "av11", seed: "Priya",     bg: "#fbe9e7" },
-  { id: "av12", seed: "Samuel",    bg: "#e8f5e9" },
+  { id: "av1",  seed: "John",      bg: "b6e3f4" },
+  { id: "av2",  seed: "Sarah",     bg: "ffd5dc" },
+  { id: "av3",  seed: "Michael",   bg: "c0aede" },
+  { id: "av4",  seed: "Emily",     bg: "d1f4e0" },
+  { id: "av5",  seed: "David",     bg: "ffdfba" },
+  { id: "av6",  seed: "Jessica",   bg: "ffd5dc" },
+  { id: "av7",  seed: "James",     bg: "b6e3f4" },
+  { id: "av8",  seed: "Ashley",    bg: "d1f4e0" },
+  { id: "av9",  seed: "Robert",    bg: "c0aede" },
+  { id: "av10", seed: "Amanda",    bg: "ffdfba" },
+  { id: "av11", seed: "William",   bg: "b6e3f4" },
+  { id: "av12", seed: "Stephanie", bg: "ffd5dc" },
 ];
 
 export const AVATARS = AVATAR_SEEDS;
 
-export function AvatarSVG({ id, seed, bg, size = 48 }) {
-  const url = `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=${bg.replace("#","")}&backgroundType=gradientLinear`;
+export function AvatarSVG({ seed, bg, size = 48 }) {
+  const url = `https://api.dicebear.com/9.x/personas/svg?seed=${seed}&backgroundColor=${bg}&backgroundType=solid&size=${size}`;
   return (
     <img
       src={url}
       alt={seed}
       width={size}
       height={size}
-      style={{ borderRadius: "50%", background: bg }}
+      style={{ borderRadius: "50%", display: "block" }}
     />
   );
 }
@@ -41,12 +40,11 @@ export default function AvatarPicker({ value, onChange }) {
             key={av.id}
             type="button"
             onClick={() => onChange(av.id)}
-            className={`rounded-full transition-all focus:outline-none ${
+            className={`rounded-full transition-all focus:outline-none overflow-hidden ${
               value === av.id
                 ? "ring-2 ring-primary ring-offset-2 scale-110"
                 : "hover:scale-105 opacity-80 hover:opacity-100"
             }`}
-            style={{ background: av.bg }}
             title={av.seed}
           >
             <AvatarSVG {...av} size={44} />
