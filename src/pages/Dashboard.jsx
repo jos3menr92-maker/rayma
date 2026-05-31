@@ -5,7 +5,7 @@ import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
-import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, Sparkles, RefreshCw } from "lucide-react";
+import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, RefreshCw } from "lucide-react";
 import { AVATARS, AvatarSVG } from "@/components/AvatarPicker";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
@@ -193,14 +193,6 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Ask RAYMA chip */}
-          <button
-            onClick={() => document.querySelector('[title="Chat with RAYMA"]')?.click()}
-            className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Ask RAYMA
-          </button>
           <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted">
             {userProfile?.avatar_photo_url ? (
               <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
