@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, X, Send, Trash2, Loader2 } from "lucide-react";
+import { MessageSquare, X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 
@@ -11,7 +11,9 @@ export default function RaymaChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const messagesEndRef = useRef(null);
+  const scanFileRef = useRef(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -52,6 +54,24 @@ export default function RaymaChat() {
     const timeout = setTimeout(() => setLoading(false), 30000);
     await base44.agents.addMessage(conversation, { role: "user", content: text });
     clearTimeout(timeout);
+  }
+
+  async function handleScanFile(e) {
+    const file = e.target.files?.[0];
+    if (!file || !conversation) return;
+    setScanning(true);
+    setLoading(true);
+    const timeout = setTimeout(() => setLoading(false), 60000);
+    // Upload file then send with message to RAYMA
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.agents.addMessage(conversation, {
+      role: "user",
+      content: `I'm uploading a financial document for you to analyze: "${file.name}". Please extract all relevant financial data and help me log it.`,
+      file_urls: [file_url],
+    });
+    clearTimeout(timeout);
+    setScanning(false);
+    e.target.value = "";
   }
 
   async function handleClear() {
@@ -160,6 +180,14 @@ export default function RaymaChat() {
 
             {/* Input */}
             <div className="border-t border-border p-3 flex gap-2 shrink-0">
+              <button
+                onClick={() => scanFileRef.current?.click()}
+                disabled={loading || initializing || scanning}
+                className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
+                title="Scan & analyze a document"
+              >
+                {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+              </button>
               <input
                 type="text"
                 value={input}
@@ -176,6 +204,14 @@ export default function RaymaChat() {
               >
                 <Send className="w-4 h-4" />
               </button>
+              <input
+                ref={scanFileRef}
+                type="file"
+                accept="image/*,application/pdf"
+                capture="environment"
+                className="hidden"
+                onChange={handleScanFile}
+              />
             </div>
           </motion.div>
         )}

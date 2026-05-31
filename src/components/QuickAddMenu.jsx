@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CreditCard, Receipt, DollarSign, PiggyBank, TrendingDown, ArrowLeftRight } from "lucide-react";
+import { X, CreditCard, Receipt, DollarSign, PiggyBank, TrendingDown, ArrowLeftRight, ScanLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -75,6 +75,7 @@ export default function QuickAddMenu({ open, onClose }) {
   }
 
   const actions = [
+    { key: "scan", icon: ScanLine, label: "Scan & Log Document", color: "bg-primary/10 text-primary border-primary/20", badge: "AI", action: () => { onClose(); navigate("/documents"); } },
     { key: "loan", icon: CreditCard, label: "Add Loan", color: "bg-blue-500/10 text-blue-600 border-blue-200", action: () => { onClose(); navigate("/add-loan"); } },
     { key: "bill", icon: Receipt, label: "Add Bill", color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => openModal("bill") },
     { key: "income", icon: DollarSign, label: "Log Income", color: "bg-green-500/10 text-green-600 border-green-200", action: () => openModal("income") },
@@ -122,6 +123,9 @@ export default function QuickAddMenu({ open, onClose }) {
                         <Icon className="w-5 h-5" />
                       </div>
                       <span className="font-semibold text-sm">{a.label}</span>
+                      {a.badge && (
+                        <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground">{a.badge}</span>
+                      )}
                     </motion.button>
                   );
                 })}
