@@ -11,54 +11,56 @@
       "default": "user"
     },
     "preferred_name": {
-      "type": "string",
-      "description": "Display name shown on dashboard"
+      "type": "string"
+    },
+    "avatar_id": {
+      "type": "string"
     },
     "avatar_emoji": {
-      "type": "string",
-      "description": "Emoji used as avatar"
+      "type": "string"
+    },
+    "avatar_photo_url": {
+      "type": "string"
     },
     "preferred_currency": {
       "type": "string",
-      "enum": [
-        "USD",
-        "EUR",
-        "GBP",
-        "CAD",
-        "AUD",
-        "JPY",
-        "INR",
-        "MXN",
-        "BRL"
-      ],
       "default": "USD"
     },
     "dashboard_greeting": {
-      "type": "string",
-      "description": "Custom greeting message shown on dashboard"
+      "type": "string"
+    },
+    "pay_frequency": {
+      "type": "string"
+    },
+    "pay_day": {
+      "type": "string"
+    },
+    "accent_color": {
+      "type": "string"
+    },
+    "compact_mode": {
+      "type": "boolean",
+      "default": false
     },
     "rayma_expires_at": {
       "type": "string",
       "format": "date",
-      "description": "Date when RAYMA access expires. Null = not yet donated."
+      "description": "Legacy expiry field \u2014 kept for backward compat"
     },
-    "pay_frequency": {
-      "type": "string",
-      "enum": [
-        "weekly",
-        "biweekly",
-        "monthly"
-      ],
-      "description": "How often user gets paid"
+    "ai_tokens": {
+      "type": "number",
+      "default": 5,
+      "description": "Remaining AI consultation tokens"
     },
-    "pay_day": {
+    "ai_tokens_reset_date": {
       "type": "string",
-      "description": "Day of week (for weekly/biweekly) or day of month (for monthly) user gets paid"
+      "format": "date",
+      "description": "Date when monthly free tokens were last reset"
+    },
+    "annual_pass_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when annual pass expires. If set and in future, unlimited AI."
     }
-  },
-  "required": [
-    "preferred_name",
-    "avatar_emoji",
-    "dashboard_greeting"
-  ]
+  }
 }
