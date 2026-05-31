@@ -44,7 +44,7 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
 
   const all = [...urgentLoans, ...urgentBills].sort((a, b) => a.daysLeft - b.daysLeft);
 
-  if (all.length === 0 && overdueLoans.length === 0 || dismissed) return null;
+  if ((all.length === 0 && overdueLoans.length === 0) || dismissed) return null;
 
   return (
     <AnimatePresence>

@@ -94,7 +94,7 @@ export default function RaymaChat() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={openChat}
-            className="fixed bottom-24 right-4 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow z-40"
+            className="fixed bottom-36 right-4 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow z-40"
             title="Chat with RAYMA"
           >
             <MessageSquare className="w-6 h-6" />
@@ -108,7 +108,7 @@ export default function RaymaChat() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 right-4 w-80 bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] z-40"
+            className="fixed bottom-36 right-4 w-80 bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] z-40"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">

@@ -11,9 +11,9 @@ const categories = [
   { value: "subscriptions", label: "📱 Subscriptions" },
   { value: "insurance", label: "🛡️ Insurance" },
   { value: "rent", label: "🏠 Rent / Housing" },
-  { value: "phone", label: "📞 Phone" },
-  { value: "internet", label: "🌐 Internet" },
   { value: "food", label: "🍽️ Food" },
+  { value: "transport", label: "🚗 Transport" },
+  { value: "health", label: "🏥 Health" },
   { value: "other", label: "📋 Other" },
 ];
 
