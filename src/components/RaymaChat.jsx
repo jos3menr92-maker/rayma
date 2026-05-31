@@ -151,7 +151,7 @@ export default function RaymaChat() {
       <motion.button
         whileTap={{ scale: 0.92 }}
         onClick={openChat}
-        style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
+        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
         className="fixed right-4 z-40 w-12 h-12 rounded-full bg-secondary shadow-lg shadow-secondary/30 flex items-center justify-center"
         title="Chat with RAYMA"
       >

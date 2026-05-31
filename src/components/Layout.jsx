@@ -69,8 +69,8 @@ export default function Layout() {
         style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
         className="fixed left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
         title="Quick Add (drag to move)"
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+        animate={{}}
+        transition={{}}
       >
         <Plus className="w-6 h-6 text-primary-foreground" />
       </motion.button>
