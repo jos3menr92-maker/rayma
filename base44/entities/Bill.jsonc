@@ -57,6 +57,26 @@
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "suggested_by_rayma": {
+      "type": "boolean",
+      "default": false,
+      "description": "Flag if RAYMA auto-detected this recurring payment from bank transactions"
+    },
+    "rayma_approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "ignored"
+      ],
+      "default": "pending",
+      "description": "User approval status for RAYMA-suggested bills"
+    },
+    "detected_from_merchant": {
+      "type": "string",
+      "description": "Merchant/company name detected from transactions"
     }
   },
   "required": [
