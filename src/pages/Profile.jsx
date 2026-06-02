@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator"; 
 import { useLanguage } from "@/lib/LanguageContext"; 
 import { LANGUAGES, t } from "@/lib/i18n";
-
 const CURRENCIES = [ 
   { value: "USD", label: "$ USD — US Dollar" }, 
   { value: "EUR", label: "€ EUR — Euro" }, 
@@ -22,7 +21,6 @@ const CURRENCIES = [
   { value: "JPY", label: "¥ JPY — Japanese Yen" }, 
   { value: "INR", label: "₹ INR — Indian Rupee" }
 ];
-
 function SectionHeader({ icon: Icon, title, subtitle }) { 
   return ( 
     <div className="flex items-center gap-3 mb-4"> 
@@ -36,7 +34,6 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
     </div> 
   ); 
 } 
-
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
   const T = (key) => t(lang, key); 
@@ -49,7 +46,6 @@ export default function Profile() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
-
   const [form, setForm] = useState({ 
     preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
     preferred_currency: "USD", dashboard_greeting: "", pay_frequency: "", 
@@ -58,13 +54,11 @@ export default function Profile() {
   useEffect(() => { 
     loadUser(); 
   }, []); 
-
   useEffect(() => {
     if (!loading && searchParams.get("action") === "delete") {
       executeAccountDeletion();
     }
   }, [searchParams, loading]);
-
   async function loadUser() { 
     try {
       const me = await base44.auth.me(); 
@@ -88,7 +82,6 @@ export default function Profile() {
       setLoading(false); 
     }
   } 
-
   async function executeAccountDeletion() {
     const doubleCheck = window.confirm("FINAL WARNING: This will permanently erase your profile and account. Proceed?");
     if (!doubleCheck) { navigate("/profile"); return; }
@@ -108,7 +101,6 @@ export default function Profile() {
       setDeleting(false); 
     }
   }
-
   function applyTheme(t) { 
     const html = document.documentElement; 
     if (t === "dark") { html.classList.add("dark"); localStorage.setItem("theme", "dark"); } 
@@ -116,7 +108,6 @@ export default function Profile() {
     else { localStorage.removeItem("theme"); const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches; prefersDark ? html.classList.add("dark") : html.classList.remove("dark"); } 
     setTheme(t); 
   } 
-
   async function handleSave(e) { 
     e.preventDefault(); 
     setSaving(true); 
@@ -125,7 +116,6 @@ export default function Profile() {
     setSaving(false); setSaved(true); 
     setTimeout(() => setSaved(false), 2500); 
   } 
-
   async function handlePhotoUpload(e) { 
     const file = e.target.files?.[0]; 
     if (!file) return; 
@@ -139,9 +129,7 @@ export default function Profile() {
       setUploadingPhoto(false); 
     }
   } 
-
   function handleLogout() { base44.auth.logout(); } 
-
   if (loading || deleting) { 
     return ( 
       <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4"> 
@@ -150,7 +138,6 @@ export default function Profile() {
       </div> 
     ); 
   }
-
   return (
     <div className="max-w-xl mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
@@ -174,7 +161,6 @@ export default function Profile() {
             </Badge>
           </div>
         </div>
-
         <form onSubmit={handleSave} className="space-y-5">
           <div className="bg-card border border-border rounded-2xl p-5">
             
@@ -239,7 +225,6 @@ export default function Profile() {
               </div>
             </div>
           </div>
-
           {/* Personalization Section */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <SectionHeader icon={Palette} title="Personalization" subtitle="Theme, appearance, and layout" />
@@ -292,7 +277,6 @@ export default function Profile() {
               </div>
             </div>
           </div>
-
           {/* Pay Schedule Section */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Used for income reminders and cash flow accuracy" />
@@ -333,7 +317,6 @@ export default function Profile() {
               )}
             </div>
           </div>
-
           {/* Financial Disclaimer */}
           <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4">
             <div className="flex items-start gap-3">
@@ -346,7 +329,6 @@ export default function Profile() {
               </div>
             </div>
           </div>
-
           {/* Privacy & Legal */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <SectionHeader icon={Shield} title="Privacy & Legal" subtitle="Your data rights and policies" />
@@ -366,7 +348,6 @@ export default function Profile() {
                 <span className="flex-1 text-sm font-medium text-foreground">Export My Data</span>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </Link>
-              
               {/* COMPLIANCE FIX: Mandated direct erasure switch */}
 <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-destructive/5 transition-colors text-left">
                 <Trash2 className="w-4 h-4 text-destructive shrink-0" />
@@ -375,12 +356,10 @@ export default function Profile() {
               </button>
             </div>
           </div>
-
-          <Button type="submit" disabled={saving} className="w-full rounded-xl h-11 font-semibold">
-            {saving ? "Saving..." : saved ? "✓ Saved!" : <><Save className="w-4 h-4 mr-2" />Save Changes</>}
-          </Button>
-        </form>
-
+<Button type="submit" disabled={saving} className="w-full rounded-xl h-11 font-semibold">
+          {saving ? "Saving..." : saved ? "✓ Saved!" : <><Save className="w-4 h-4 mr-2" />Save Changes</>}
+        </Button>
+      </form>
         {/* Logout */}
         <div className="mt-4">
           <Button variant="outline" className="w-full rounded-xl h-11 text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleLogout} >
