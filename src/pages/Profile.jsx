@@ -14,10 +14,14 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { LANGUAGES, t } from "@/lib/i18n";
 
 const CURRENCIES = [ 
-  { value: "USD", label: "$ USD — US Dollar" }, { value: "EUR", label: "€ EUR — Euro" }, 
-  { value: "GBP", label: "£ GBP — British Pound" }, { value: "CAD", label: "CA$ CAD — Canadian Dollar" },
-  { value: "AUD", label: "A$ AUD — Australian Dollar" }, { value: "JPY", label: "¥ JPY — Japanese Yen" },
-  { value: "INR", label: "₹ INR — Indian Rupee" }, { value: "MXN", label: "$ MXN — Mexican Peso" }
+  { value: "USD", label: "$ USD — US Dollar" }, 
+  { value: "EUR", label: "€ EUR — Euro" }, 
+  { value: "GBP", label: "£ GBP — British Pound" }, 
+  { value: "CAD", label: "CA$ CAD — Canadian Dollar" }, 
+  { value: "AUD", label: "A$ AUD — Australian Dollar" }, 
+  { value: "JPY", label: "¥ JPY — Japanese Yen" }, 
+  { value: "INR", label: "₹ INR — Indian Rupee" }, 
+  { value: "MXN", label: "$ MXN — Mexican Peso" }
 ];
 
 function SectionHeader({ icon: Icon, title, subtitle }) { 
@@ -37,11 +41,12 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
   const T = (key) => t(lang, key); 
-  const [set] = useState(null); 
+  
+  // FIX: Restored the proper user state tracker variable names
+  const [user, setUser] = useState(null); 
   const [loading, setLoading] = useState(true); 
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
-  const [uploadingsetUploading] = useState(false); 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system"); 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -53,7 +58,9 @@ export default function Profile() {
     pay_day: "", accent_color: "", compact_mode: false, 
   }); 
 
-  useEffect(() => { loadUser(); },); 
+  useEffect(() => { 
+    loadUser(); 
+  }, []); 
 
   useEffect(() => {
     if (!loading && searchParams.get("action") === "delete") {
@@ -62,22 +69,27 @@ export default function Profile() {
   }, [searchParams, loading]);
 
   async function loadUser() { 
-    const me = await base44.auth.me(); 
-    setUser(me); 
-    setForm({ 
-      preferred_name: me.preferred_name || me.full_name || "", 
-      avatar_id: me.avatar_id || "", 
-      avatar_emoji: me.avatar_emoji || "", 
-      avatar_photo_url: me.avatar_photo_url || "", 
-      preferred_currency: me.preferred_currency || "USD", 
-      preferred_language: me.preferred_language || "en", 
-      dashboard_greeting: me.dashboard_greeting || "", 
-      pay_frequency: me.pay_frequency || "", 
-      pay_day: me.pay_day || "", 
-      accent_color: me.accent_color || "", 
-      compact_mode: me.compact_mode || false, 
-    }); 
-    setLoading(false); 
+    try {
+      const me = await base44.auth.me(); 
+      setUser(me); 
+      setForm({ 
+        preferred_name: me.preferred_name || me.full_name || "", 
+        avatar_id: me.avatar_id || "", 
+        avatar_emoji: me.avatar_emoji || "", 
+        avatar_photo_url: me.avatar_photo_url || "", 
+        preferred_currency: me.preferred_currency || "USD", 
+        preferred_language: me.preferred_language || "en", 
+        dashboard_greeting: me.dashboard_greeting || "", 
+        pay_frequency: me.pay_frequency || "", 
+        pay_day: me.pay_day || "", 
+        accent_color: me.accent_color || "", 
+        compact_mode: me.compact_mode || false, 
+      }); 
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false); 
+    }
   } 
 
   async function executeAccountDeletion() {
