@@ -32,6 +32,8 @@ const moreItems = [
   // COMPLIANCE FIX: Apple Mandate 5.1.1 - Direct account deletion shortcut visible to all users
   { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true },
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
+  { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
+  { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
 ];
 
 export default function MoreMenu({ open, onClose }) {
