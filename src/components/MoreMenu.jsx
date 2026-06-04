@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Calendar, Trash2 } from "lucide-react";
+import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Calendar, Trash2, Headset } from "lucide-react";
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import RemoteAssistanceCard from './ui/RemoteAssistanceCard';
 
 // COMPLIANCE FIX: Detect if the user is browsing on an Apple iOS device
 const isIOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
