@@ -1,12 +1,10 @@
+
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Calendar, Trash2, Headset } from "lucide-react";
+import { X, Landmark, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Calendar, Trash2, Headset, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import RemoteAssistanceCard from './ui/RemoteAssistanceCard';
-
-// COMPLIANCE FIX: Detect if the user is browsing on an Apple iOS device
-const isIOS = typeof window !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 const moreItems = [
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
@@ -21,15 +19,7 @@ const moreItems = [
   { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
   { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
   { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
-  // COMPLIANCE FIX: Dynamically mask "AI tokens" or "Passes" on iOS devices to hide external Stripe billing references from reviewers
-  { 
-    path: "/support", 
-    icon: Heart, 
-    label: "Support RAYMA", 
-    desc: isIOS ? "Contact customer support & help center" : "Get Annual Pass or AI token packs", 
-    highlight: true 
-  },
-  // COMPLIANCE FIX: Apple Mandate 5.1.1 - Direct account deletion shortcut visible to all users
+  { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Get Annual Pass or AI token packs", highlight: true },
   { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true },
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
   { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
@@ -38,26 +28,28 @@ const moreItems = [
 export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    if (open) base44.auth.me().then(u => setIsAdmin(u?.role === "admin"));
+    if (open) {
+      base44.auth.me().then(u => setIsAdmin(u?.role === "admin"));
+    }
   }, [open]);
 
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
 
   function go(path) {
-    // COMPLIANCE FIX: Standard native alert confirmation for account deletion path
     if (path === "/delete-account") {
-      const confirmDelete = window.confirm("Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.");
-      if (!confirmDelete) return;
-      
-      // If confirmed, send user to profile settings page or trigger backend removal flow
-      navigate("/profile?action=delete");
-      onClose();
+      setShowDeleteConfirm(true);
       return;
     }
-
     navigate(path);
+    onClose();
+  }
+
+  function confirmDeletion() {
+    setShowDeleteConfirm(false);
+    navigate("/profile?action=delete");
     onClose();
   }
 
@@ -87,7 +79,10 @@ export default function MoreMenu({ open, onClose }) {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-border">
               <h2 className="text-base font-bold font-heading text-foreground">All Features</h2>
-              <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <button
+                onClick={onClose}
+                className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -101,23 +96,23 @@ export default function MoreMenu({ open, onClose }) {
                     <button
                       key={item.path}
                       onClick={() => go(item.path)}
-                      className={`flex items-start gap-3 p-3 rounded-2xl border transition-all text-left ${
-                        item.isDelete
+                      className={`flex items-start gap-3 p-3 rounded-2xl border transition-all text-left
+                        ${item.isDelete
                           ? "bg-destructive/5 border-destructive/20 hover:border-destructive hover:bg-destructive/10"
                           : item.highlight
-                          ? "bg-primary/5 border-primary/30 hover:border-primary hover:bg-primary/10"
-                          : "bg-background border-border hover:border-primary/40 hover:bg-primary/5"
-                      }`}
+                            ? "bg-primary/5 border-primary/30 hover:border-primary hover:bg-primary/10"
+                            : "bg-background border-border hover:border-primary/40 hover:bg-primary/5"
+                        }`}
                     >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                        item.isDelete ? "bg-destructive/10" : item.highlight ? "bg-primary/20" : "bg-primary/10"
-                      }`}>
-                        <Icon className={`w-4 h-4 ${
-                          item.isDelete ? "text-destructive" : "text-primary"
-                        }`} />
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 
+                        ${item.isDelete ? "bg-destructive/10" : item.highlight ? "bg-primary/20" : "bg-primary/10"}`}
+                      >
+                        <Icon className={`w-4 h-4 ${item.isDelete ? "text-destructive" : "text-primary"}`} />
                       </div>
                       <div className="min-w-0">
-                        <p className={`text-sm font-semibold leading-tight ${item.isDelete ? "text-destructive" : "text-foreground"}`}>{item.label}</p>
+                        <p className={`text-sm font-semibold leading-tight ${item.isDelete ? "text-destructive" : "text-foreground"}`}>
+                          {item.label}
+                        </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{item.desc}</p>
                       </div>
                     </button>
@@ -128,6 +123,49 @@ export default function MoreMenu({ open, onClose }) {
           </motion.div>
         </>
       )}
+
+      {/* Native-feeling Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-card relative z-10 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-border"
+          >
+            <div className="flex items-center gap-3 mb-4 text-destructive">
+              <div className="p-2 bg-destructive/10 rounded-full shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold">Delete Account?</h3>
+            </div>
+            <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+              Are you absolutely sure you want to delete your account? This action is <strong className="text-foreground">permanent</strong> and cannot be undone. All your data will be erased.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeletion}
+                className="px-4 py-2.5 rounded-xl text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-sm"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   );
-}
+  }
