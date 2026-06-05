@@ -22,3 +22,7 @@ export default function RemoteSupport() {
         <div className="flex justify-center">
             <RemoteAssistanceCard />
         </div>
+</motion.div>
+    </div>
+  );
+}
