@@ -1,3 +1,4 @@
+import RemoteSupport from './pages/RemoteSupport';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -89,6 +90,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin" element={<Admin />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/data-export" element={<DataExport />} />
+        <Route path="/remote-support" element={<RemoteSupport />} />
 
         <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
         <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
