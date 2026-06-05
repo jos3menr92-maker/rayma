@@ -17,8 +17,12 @@ export default function RemoteSupport() {
             Need hands-on help? Generate a secure PIN below to grant our developer team temporary access to troubleshoot your account safely.
           </p>
         </div>
-
-        {/* Remote Assistance Card Component */}
+{/* Remote Assistance Card Component */}
         <div className="flex justify-center">
             <RemoteAssistanceCard />
         </div>
+
+      </motion.div>
+    </div>
+  );
+}
