@@ -18,24 +18,28 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-     if (!user) {
+
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // --- 🛡️ COMPLIANCE SAFETY INTERCEPTOR ---
     const userAgent = req.headers.get("user-agent") || "";
+    
     // Detects requests from an iOS wrapper that aren't using a standard mobile browser
     const isIOSNative = /iPhone|iPad|iPod/.test(userAgent) && !/Safari|Chrome/.test(userAgent);
+    // Detects requests from an Android wrapper ('wv' indicates Android WebView)
+    const isAndroidNative = /Android/.test(userAgent) && /wv/.test(userAgent);
 
-    if (isIOSNative) {
-      console.warn('Blocked Stripe checkout attempt from native iOS wrapper.');
+    if (isIOSNative || isAndroidNative) {
+      console.warn('Blocked Stripe checkout attempt from native mobile wrapper.');
       return Response.json({
-        error: 'In-app purchases are not currently supported in this version. Please use the web browser version for full features.'
+        error: 'In-app purchases must be made via the web browser to comply with App Store policies.'
       }, { status: 403 });
     }
     // ----------------------------------------
 
-    const body = await req.json(); 
+    const body = await req.json();
     const { purchaseType, successUrl, cancelUrl } = body;
 
     if (!purchaseType || !PRODUCTS[purchaseType]) {
@@ -74,6 +78,7 @@ Deno.serve(async (req) => {
 
     console.log(`Checkout session created: ${session.id} for user ${user.email}, type: ${purchaseType}`);
     return Response.json({ url: session.url });
+
   } catch (error) {
     console.error('Stripe checkout error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
