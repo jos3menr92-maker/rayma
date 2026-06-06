@@ -168,91 +168,98 @@ export default function RaymaChat() {
                   </div>
                 </div>
               ) : (
-                messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
-                  <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground"
-                    }`}>
-                     {msg.role === "assistant" ? (
-  <div className="flex flex-col gap-2">
-    <ReactMarkdown className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-      {msg.content || "…"}
-    </ReactMarkdown>
-    {/* This draws the button if our interceptor passed an actionCode */}
-    {msg.actionCode && (
-      <button 
-        onClick={() => {
-          setMessages(prev => [...prev, { 
-            role: "assistant", 
-            content: "✅ Successfully refreshed the connection. Your sync is back to normal!" 
-          }]);
-        }}
-        className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors self-start shadow-sm"
-      >
-        Yes, securely fix this
-      </button>
-    )}
-  </div>
-) : (
-                    msg.content
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {loading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted px-3 py-2 rounded-lg">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+              {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {initializing ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex justify-start">
+            <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
+              Hi! I'm RAYMA, your AI financial advisor. How can I help you today?
             </div>
-
-            {/* Input */}
-            <div className="border-t border-border p-3 flex gap-2 shrink-0">
-              <button
-                onClick={() => scanFileRef.current?.click()}
-                disabled={loading || initializing || scanning}
-                className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
-                title="Scan & analyze a document"
-              >
-                {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
-              </button>
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                placeholder="Ask RAYMA…"
-                className="flex-1 bg-muted border-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                disabled={loading || initializing}
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || loading || initializing}
-                className="p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-              <input
-                ref={scanFileRef}
-                type="file"
-                accept="image/*,application/pdf"
-                className="hidden"
-                onChange={handleScanFile}
-              />
-              <div className="border-t border-border p-3 flex items-center gap-2 shrink-0">
-          </motion.div>
+          </div>
+        ) : (
+          messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
+            <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                {msg.role === "assistant" ? (
+                  <div className="flex flex-col gap-2">
+                    <ReactMarkdown className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                      {msg.content || "…"}
+                    </ReactMarkdown>
+                    {/* This draws the button if our interceptor passed an actionCode */}
+                    {msg.actionCode && (
+                      <button
+                        onClick={() => {
+                          setMessages(prev => [...prev, { role: "assistant", content: "✅ Successfully refreshed the connection. Your sync is back to normal!" }]);
+                        }}
+                        className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors self-start shadow-sm"
+                      >
+                        Yes, securely fix this
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  msg.content
+                )}
+              </div>
+            </div>
+          ))
         )}
-      </AnimatePresence>
-    </>
-  );
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-muted px-3 py-2 rounded-lg">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-border p-3 flex items-center gap-2 shrink-0">
+        <button
+          onClick={() => scanFileRef.current?.click()}
+          disabled={loading || initializing || scanning}
+          className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
+          title="Scan & analyze a document"
+        >
+          {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+        </button>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+          placeholder="Ask RAYMA…"
+          className="flex-1 bg-muted border-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+          disabled={loading || initializing}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!input.trim() || loading || initializing}
+          className="p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+        <input
+          ref={scanFileRef}
+          type="file"
+          accept="image/*,application/pdf"
+          className="hidden"
+          onChange={handleScanFile}
+        />
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+</>
+);
 }
