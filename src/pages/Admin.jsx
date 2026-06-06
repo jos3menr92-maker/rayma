@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
-  const [newCode, setNewCode] = useState("");
 
 function StatCard({ icon: Icon, label, value, sub, color = "primary" }) {
   return (
@@ -44,7 +43,6 @@ function StatCard({ icon: Icon, label, value, sub, color = "primary" }) {
   </div>
 </div>
 
-export default function Admin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
@@ -52,6 +50,7 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [promoCodes, setPromoCodes] = useState([]);
   const [recentFeedback, setRecentFeedback] = useState([]);
+  const [newCode, setNewCode] = useState("");
 
 
   useEffect(() => {
