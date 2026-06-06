@@ -196,7 +196,13 @@ export default function RaymaChat() {
     )}
   </div>
 ) : (
-              {loading && (
+                    msg.content
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {loading && (
                 <div className="flex justify-start">
                   <div className="bg-muted px-3 py-2 rounded-lg">
                     <div className="flex gap-1">
