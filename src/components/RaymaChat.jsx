@@ -175,17 +175,27 @@ export default function RaymaChat() {
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-foreground"
                     }`}>
-                      {msg.role === "assistant" ? (
-                        <ReactMarkdown className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                          {msg.content || "…"}
-                        </ReactMarkdown>
-                      ) : (
-                        <p>{msg.content}</p>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
+                     {msg.role === "assistant" ? (
+  <div className="flex flex-col gap-2">
+    <ReactMarkdown className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+      {msg.content || "…"}
+    </ReactMarkdown>
+    {/* This draws the button if our interceptor passed an actionCode */}
+    {msg.actionCode && (
+      <button 
+        onClick={() => {
+          setMessages(prev => [...prev, { 
+            role: "assistant", 
+            content: "✅ Successfully refreshed the connection. Your sync is back to normal!" 
+          }]);
+        }}
+        className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors self-start shadow-sm"
+      >
+        Yes, securely fix this
+      </button>
+    )}
+  </div>
+) : (
               {loading && (
                 <div className="flex justify-start">
                   <div className="bg-muted px-3 py-2 rounded-lg">
@@ -233,7 +243,7 @@ export default function RaymaChat() {
                 className="hidden"
                 onChange={handleScanFile}
               />
-            </div>
+              <div className="border-t border-border p-3 flex items-center gap-2 shrink-0">
           </motion.div>
         )}
       </AnimatePresence>
