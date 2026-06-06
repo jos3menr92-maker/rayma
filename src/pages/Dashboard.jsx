@@ -79,24 +79,30 @@ export default function Dashboard() {
   useEffect(() => {
     loadData();
   }, []);
+const loadData = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
 
-  const loadData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-    const [loansData, billsData, me, incomesData, paymentsData] = await Promise.all([
-      base44.entities.Loan.list("-created_date", 100),
-      base44.entities.Bill.list("-created_date", 100),
-      base44.auth.me(),
-      base44.entities.WeeklyIncome.list("-week_start", 52),
-      base44.entities.Payment.filter({ payment_type: "loan" }, "-payment_date", 200),
-    ]);
-    setLoans(loansData);
-    setBills(billsData.filter(b => b.is_active !== false));
-    setIncomes(incomesData);
-    setPayments(paymentsData);
-    setUserProfile(me);
-    if (isRefresh) setRefreshing(false);
-    else setLoading(false);
+      const [loansData, billsData, me, incomesData, paymentsData] = await Promise.all([
+        base44.entities.Loan.list("-created_date", 100),
+        base44.entities.Bill.list("-created_date", 100),
+        base44.auth.me(),
+        base44.entities.WeeklyIncome.list("-week_start", 52),
+        base44.entities.Payment.filter({ payment_type: "loan" }, "-payment_date", 200),
+      ]);
+
+      setLoans(loansData);
+      setBills(billsData.filter((b) => b.is_active !== false));
+      setIncomes(incomesData);
+      setPayments(paymentsData);
+      setUserProfile(me);
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      if (isRefresh) setRefreshing(false);
+      else setLoading(false);
+    }
   }, []);
 
   // Pull-to-refresh handlers
