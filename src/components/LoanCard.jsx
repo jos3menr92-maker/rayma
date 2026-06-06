@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronRight, AlertCircle, Calendar, DollarSign } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import PaymentButton from "./PaymentButton";
 
 const categoryIcons = {
   mortgage: "🏠",
@@ -63,14 +64,22 @@ export default function LoanCard({ loan, index = 0 }) {
     >
       {/* Swipe reveal action */}
       <div className="absolute inset-y-0 right-0 flex items-center justify-end rounded-xl overflow-hidden">
-        <motion.button
+        <motion.div
           style={{ opacity: revealOpacity }}
-          onClick={handleQuickPay}
-          className="w-18 h-full bg-primary flex flex-col items-center justify-center gap-0.5 px-4 rounded-xl"
+          className="h-full"
+          onClick={() => {
+            // Reset swipe visually when clicked
+            animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+            setSwiped(false);
+          }}
         >
-          <DollarSign className="w-4 h-4 text-primary-foreground" />
-          <span className="text-[9px] font-bold text-primary-foreground uppercase tracking-wide">Pay</span>
-        </motion.button>
+          <PaymentButton planId={loan.id} amount={loan.monthly_payment}>
+            <div className="w-18 h-full bg-primary flex flex-col items-center justify-center gap-0.5 px-4 rounded-xl cursor-pointer hover:bg-primary/90 transition-colors">
+              <DollarSign className="w-4 h-4 text-primary-foreground" />
+              <span className="text-[9px] font-bold text-primary-foreground uppercase tracking-wide">Pay</span>
+            </div>
+          </PaymentButton>
+        </motion.div>
       </div>
 
       <motion.div style={{ x }} drag="x" dragConstraints={{ left: -72, right: 0 }} dragElastic={0.1} onDragEnd={handleDragEnd}>
