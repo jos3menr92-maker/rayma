@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
-
+import { runRemoteDiagnostic } from "../lib/runRemoteDiagnostic";
 export default function RaymaChat() {
   const [open, setOpen] = useState(false);
   const [conversation, setConversation] = useState(null);
@@ -46,6 +46,28 @@ export default function RaymaChat() {
   }
 
   async function handleSend() {
+ // --- DIAGNOSTIC PIN INTERCEPTOR ---
+    const isPin = /^\d{6}$/.test(input.trim());
+
+    if (isPin) {
+      setScanning(true); 
+      
+      setMessages(prev => [...prev, { role: "user", content: input }]);
+      setInput(""); 
+
+      const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
+      const result = await runRemoteDiagnostic(input.trim(), mockLogs);
+
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: result.userMessage,
+        actionCode: result.actionCode 
+      }]);
+
+      setScanning(false);
+      return; 
+    }
+    // ----------------------------------   
     if (!input.trim() || loading || !conversation) return;
     const text = input.trim();
     setInput("");
