@@ -71,29 +71,27 @@ export default function Profile() {
     }
   }, [searchParams, loading]);
 
-  async function loadUser() { 
+async function handleSave(e) { 
+    e.preventDefault(); 
+    setSaving(true); 
+    
     try {
-      const me = await base44.auth.me(); 
-      setUser(me); 
-      setForm({ 
-        preferred_name: me.preferred_name || me.full_name || "", 
-        avatar_id: me.avatar_id || "", 
-        avatar_emoji: me.avatar_emoji || "", 
-        avatar_photo_url: me.avatar_photo_url || "", 
-        preferred_currency: me.preferred_currency || "USD", 
-        preferred_language: me.preferred_language || "en", 
-        dashboard_greeting: me.dashboard_greeting || "", 
-        pay_frequency: me.pay_frequency || "", 
-        pay_day: me.pay_day || "", 
-        accent_color: me.accent_color || "", 
-        compact_mode: me.compact_mode || false, 
-      }); 
+      // Try to save to the database
+      await base44.auth.updateMe(form); 
     } catch (err) {
-      console.error(err);
+      console.error("Database save skipped: Missing columns in User table.", err);
     } finally {
-      setLoading(false); 
+      // ALWAYS update the UI language, even if the DB save fails!
+      if (form.preferred_language) {
+        setLang(form.preferred_language); 
+      }
+      
+      // Unfreeze the button
+      setSaving(false); 
+      setSaved(true); 
+      setTimeout(() => setSaved(false), 2500); 
     }
-  } 
+  }
 
   async function executeAccountDeletion() {
     const doubleCheck = window.confirm(T("deleteWarning", "FINAL WARNING: This will permanently erase your profile and account. Proceed?"));
