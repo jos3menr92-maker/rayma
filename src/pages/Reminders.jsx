@@ -28,16 +28,21 @@ export default function Reminders() {
     loadData();
   }, []);
 
-  async function loadData() {
-    const user = await base44.auth.me();
-    setEmail(user?.email || "");
-    const [loansData, billsData] = await Promise.all([
-      base44.entities.Loan.list("-created_date", 100),
-      base44.entities.Bill.list("-created_date", 100),
-    ]);
-    setLoans(loansData.filter(l => l.status !== "paid_off"));
-    setBills(billsData.filter(b => b.is_active !== false));
-    setLoading(false);
+async function loadData() {
+    try {
+      setLoading(true);
+      // Your existing data fetching logic here
+      const [l, me] = await Promise.all([
+        base44.entities.Loan.list("-created_date", 100),
+        base44.auth.me(),
+      ]);
+      setLoans(l);
+      setUser(me);
+    } catch (error) {
+      console.error("Failed to load reminders:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function sendReminder(item, type) {
