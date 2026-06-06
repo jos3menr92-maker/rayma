@@ -119,18 +119,20 @@ export default function Admin() {
           </Button>
         </div>
 
-        {/* Sponsor Code Management Section */}
+        {/* Sponsor Code Management Section - Mobile Optimized */}
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <h2 className="text-lg font-bold mb-4">Sponsor Code Management</h2>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3">
             <input
               type="text"
               placeholder="Enter new sponsor code..."
-              className="bg-background border border-border rounded-lg px-4 py-2 flex-grow"
+              className="bg-background border border-border rounded-xl px-4 py-3 w-full"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
             />
-            <Button onClick={handleCreateCode}>Create Code</Button>
+            <Button onClick={handleCreateCode} className="w-full rounded-xl h-12 font-semibold">
+              Create Code
+            </Button>
           </div>
         </div>
 
