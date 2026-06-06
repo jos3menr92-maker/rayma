@@ -5,6 +5,9 @@ import { Users, Zap, DollarSign, ShieldCheck, Gift, AlertTriangle, TrendingUp, A
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
+export default function Admin() {
+  const [newCode, setNewCode] = useState("");
+
 function StatCard({ icon: Icon, label, value, sub, color = "primary" }) {
   return (
     <div className="bg-card border border-border rounded-2xl p-4">
@@ -49,7 +52,7 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [promoCodes, setPromoCodes] = useState([]);
   const [recentFeedback, setRecentFeedback] = useState([]);
-  const [newCode, setNewCode] = useState("");
+
 
   useEffect(() => {
     loadData();
