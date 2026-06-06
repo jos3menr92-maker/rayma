@@ -36,18 +36,26 @@ export default function BillCalendar() {
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "" });
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    Promise.all([
-      base44.entities.Bill.list("-created_date", 100),
-      base44.entities.Loan.list("-created_date", 100),
-      base44.auth.me(),
-    ]).then(([b, l, me]) => {
-      setBills(b.filter(x => x.is_active !== false));
-      setLoans(l.filter(x => x.status !== "paid_off" && x.monthly_payment));
-      setUserProfile(me);
-      setLoading(false);
-    });
+  
+useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const [b, l, me] = await Promise.all([
+          base44.entities.Bill.list("-created_date", 100),
+          base44.entities.Loan.list("-created_date", 100),
+          base44.auth.me(),
+        ]);
+        setBills(b.filter((x) => x.is_active !== false));
+        setLoans(l.filter((x) => x.status !== "paid_off" && x.monthly_payment));
+        setUserProfile(me);
+      } catch (error) {
+        console.error("Failed to load calendar data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   const year = current.getFullYear();
