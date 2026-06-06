@@ -344,4 +344,64 @@ export default function Profile() {
               {form.pay_frequency === "monthly" && (
                 <div>
                   <Label className="text-xs font-medium text-muted-foreground">{T("paydayMonth", "Payday (day of month)")}</Label>
-                  <Input type="number" min={1} max={31} value={form.pay_day} onChange={e => setForm(f => ({ ...f
+                  <Input type="number" min={1} max={31} value={form.pay_day} onChange={e => setForm(f => ({ ...f, pay_day: e.target.value }))} placeholder="e.g. 15" className="mt-1 rounded-xl" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Financial Disclaimer */}
+          <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-sm text-destructive mb-1">{T("financialDisclaimer", "Financial Disclaimer")}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {T("disclaimerText1", "RAYMA is not a financial advisor. All information is for educational purposes. Consult qualified professionals before making financial decisions. See")} <Link to="/terms" className="text-primary underline">{T("termsLink", "Terms of Service")}</Link> {T("disclaimerText2", "for full details.")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy & Legal */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={Shield} title={T("privacyLegal", "Privacy & Legal")} subtitle={T("privacyLegalDesc", "Your data rights and policies")} />
+            <div className="space-y-1 -mx-1">
+              <Link to="/privacy" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
+                <Shield className="w-4 h-4 text-primary shrink-0" />
+                <span className="flex-1 text-sm font-medium text-foreground">{T("privacyPolicy", "Privacy Policy")}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <Link to="/terms" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <span className="flex-1 text-sm font-medium text-foreground">{T("termsOfService", "Terms of Service")}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <Link to="/data-export" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <span className="flex-1 text-sm font-medium text-foreground">{T("exportData", "Export My Data")}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </Link>
+              <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-destructive/5 transition-colors text-left">
+                <Trash2 className="w-4 h-4 text-destructive shrink-0" />
+                <span className="flex-1 text-sm font-medium text-destructive">{T("deleteAccount", "Delete My Account")}</span>
+                <ChevronRight className="w-4 h-4 text-destructive/60" />
+              </button>
+            </div>
+          </div>
+
+          <Button type="submit" disabled={saving} className="w-full rounded-xl h-11 font-semibold">
+            {saving ? T("saving", "Saving...") : saved ? T("saved", "✓ Saved!") : <><Save className="w-4 h-4 mr-2" />{T("saveChanges", "Save Changes")}</>}
+          </Button>
+        </form>
+
+        {/* Logout */}
+        <div className="mt-4">
+          <Button variant="outline" className="w-full rounded-xl h-11 text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleLogout} >
+            <LogOut className="w-4 h-4 mr-2" /> {T("signOut", "Sign Out")}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
