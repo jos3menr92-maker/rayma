@@ -49,16 +49,22 @@ export default function Budget() {
     loadData();
   }, []);
 
-  async function loadData() {
-    const [incomeData, goalsData, me] = await Promise.all([
-      base44.entities.WeeklyIncome.list("-week_start", 12),
-      base44.entities.SavingsGoal.list("-created_date", 50),
-      base44.auth.me(),
-    ]);
-    setIncomes(incomeData);
-    setGoals(goalsData);
-    setUserEmail(me?.email || "");
-    setLoading(false);
+async function loadData() {
+    try {
+      setLoading(true);
+      const [incomeData, goalsData, me] = await Promise.all([
+        base44.entities.WeeklyIncome.list("-week_start", 12),
+        base44.entities.SavingsGoal.list("-created_date", 50),
+        base44.auth.me(),
+      ]);
+      setIncomes(incomeData);
+      setGoals(goalsData);
+      setUserEmail(me?.email || "");
+    } catch (error) {
+      console.error("Failed to load budget data:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Income
