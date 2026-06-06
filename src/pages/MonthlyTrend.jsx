@@ -75,14 +75,20 @@ export default function MonthlyTrend() {
     // Calculate running totals
     const originalDebt = loans.reduce((s, l) => s + (l.original_amount || 0), 0);
     const currentBalance = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.current_balance || 0), 0);
-    const totalPaidToDate = loans.reduce((s, l) => s + ((l.original_amount || 0) - (l.current_balance || 0)), 0);
+    const totalPaidToDate = loans.reduce((s, l) => s + Math.max(0, (l.original_amount || 0) - (l.current_balance || 0)), 0);
 
-    let cumulativePaid = 0;
+    // BUG FIX: Calculate base payments made before user started tracking individual logs
+    const totalLoggedPayments = Object.values(byMonth).reduce((s, v) => s + v, 0);
+    const untrackedPaid = Math.max(0, totalPaidToDate - totalLoggedPayments);
+
+    let cumulativePaid = untrackedPaid; // Start from the untracked baseline instead of 0
+    
     const data = sortedKeys.map(key => {
       const monthPaid = byMonth[key] || 0;
       cumulativePaid += monthPaid;
 
-      const approxRemaining = Math.max(currentBalance - (totalPaidToDate - cumulativePaid), 0);
+      // BUG FIX: In the past, the remaining balance was HIGHER. Add payments since to find past balance.
+      const approxRemaining = currentBalance + (totalPaidToDate - cumulativePaid);
       const monthlyLoanPayments = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.monthly_payment || 0), 0);
 
       return {
@@ -99,7 +105,7 @@ export default function MonthlyTrend() {
       };
     });
 
-    // Only show months with meaningful data (remove leading zeros for totalPaid)
+    // Only show months with meaningful data
     const filtered = type === "totalPaid"
       ? data.filter(d => d.value > 0)
       : data;
