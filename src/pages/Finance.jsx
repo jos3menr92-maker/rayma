@@ -42,21 +42,25 @@ export default function Finance() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { loadData(); }, []);
-
-  async function loadData() {
-    const [inc, b, l, me] = await Promise.all([
-      base44.entities.WeeklyIncome.list("-week_start", 52),
-      base44.entities.Bill.list("-created_date", 100),
-      base44.entities.Loan.list("-created_date", 100),
-      base44.auth.me(),
-    ]);
-    setIncomes(inc);
-    setBills(b.filter(x => x.is_active !== false));
-    setLoans(l.filter(x => x.status !== "paid_off"));
-    setUserProfile(me);
-    setLoading(false);
+async function loadData() {
+    try {
+      setLoading(true);
+      const [inc, b, l, me] = await Promise.all([
+        base44.entities.WeeklyIncome.list("-week_start", 52),
+        base44.entities.Bill.list("-created_date", 100),
+        base44.entities.Loan.list("-created_date", 100),
+        base44.auth.me(),
+      ]);
+      setIncomes(inc);
+      setBills(b.filter((x) => x.is_active !== false));
+      setLoans(l.filter((x) => x.status !== "paid_off"));
+      setUserProfile(me);
+    } catch (error) {
+      console.error("Failed to load finance data:", error);
+    } finally {
+      setLoading(false);
+    }
   }
-
   // Monthly fixed expenses
   const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
   const monthlyLoans = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
