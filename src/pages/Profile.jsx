@@ -40,7 +40,7 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
   
-  // FAIL-SAFE TRANSLATION WRAPPER: Tries to translate, falls back to English if missing
+  // FAIL-SAFE TRANSLATION WRAPPER
   const T = (key, fallback) => {
     const translated = t(lang, key);
     return translated && translated !== key ? translated : fallback;
@@ -71,27 +71,29 @@ export default function Profile() {
     }
   }, [searchParams, loading]);
 
-async function handleSave(e) { 
-    e.preventDefault(); 
-    setSaving(true); 
-    
+  async function loadUser() { 
     try {
-      // Try to save to the database
-      await base44.auth.updateMe(form); 
+      const me = await base44.auth.me(); 
+      setUser(me); 
+      setForm({ 
+        preferred_name: me.preferred_name || me.full_name || "", 
+        avatar_id: me.avatar_id || "", 
+        avatar_emoji: me.avatar_emoji || "", 
+        avatar_photo_url: me.avatar_photo_url || "", 
+        preferred_currency: me.preferred_currency || "USD", 
+        preferred_language: me.preferred_language || "en", 
+        dashboard_greeting: me.dashboard_greeting || "", 
+        pay_frequency: me.pay_frequency || "", 
+        pay_day: me.pay_day || "", 
+        accent_color: me.accent_color || "", 
+        compact_mode: me.compact_mode || false, 
+      }); 
     } catch (err) {
-      console.error("Database save skipped: Missing columns in User table.", err);
+      console.error(err);
     } finally {
-      // ALWAYS update the UI language, even if the DB save fails!
-      if (form.preferred_language) {
-        setLang(form.preferred_language); 
-      }
-      
-      // Unfreeze the button
-      setSaving(false); 
-      setSaved(true); 
-      setTimeout(() => setSaved(false), 2500); 
+      setLoading(false); 
     }
-  }
+  } 
 
   async function executeAccountDeletion() {
     const doubleCheck = window.confirm(T("deleteWarning", "FINAL WARNING: This will permanently erase your profile and account. Proceed?"));
@@ -124,11 +126,22 @@ async function handleSave(e) {
   async function handleSave(e) { 
     e.preventDefault(); 
     setSaving(true); 
-    await base44.auth.updateMe(form); 
-    setLang(form.preferred_language); 
-    setSaving(false); setSaved(true); 
-    setTimeout(() => setSaved(false), 2500); 
-  } 
+    try {
+      // Try to save to the database
+      await base44.auth.updateMe(form); 
+    } catch (err) {
+      console.error("Database save skipped: Missing columns in User table.", err);
+    } finally {
+      // ALWAYS update the UI language, even if the DB save fails!
+      if (form.preferred_language) {
+        setLang(form.preferred_language); 
+      }
+      // Unfreeze the button
+      setSaving(false); 
+      setSaved(true); 
+      setTimeout(() => setSaved(false), 2500); 
+    }
+  }
 
   async function handlePhotoUpload(e) { 
     const file = e.target.files?.[0]; 
@@ -331,64 +344,4 @@ async function handleSave(e) {
               {form.pay_frequency === "monthly" && (
                 <div>
                   <Label className="text-xs font-medium text-muted-foreground">{T("paydayMonth", "Payday (day of month)")}</Label>
-                  <Input type="number" min={1} max={31} value={form.pay_day} onChange={e => setForm(f => ({ ...f, pay_day: e.target.value }))} placeholder="e.g. 15" className="mt-1 rounded-xl" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Financial Disclaimer */}
-          <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-sm text-destructive mb-1">{T("financialDisclaimer", "Financial Disclaimer")}</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {T("disclaimerText1", "RAYMA is not a financial advisor. All information is for educational purposes. Consult qualified professionals before making financial decisions. See")} <Link to="/terms" className="text-primary underline">{T("termsLink", "Terms of Service")}</Link> {T("disclaimerText2", "for full details.")}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Privacy & Legal */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <SectionHeader icon={Shield} title={T("privacyLegal", "Privacy & Legal")} subtitle={T("privacyLegalDesc", "Your data rights and policies")} />
-            <div className="space-y-1 -mx-1">
-              <Link to="/privacy" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
-                <Shield className="w-4 h-4 text-primary shrink-0" />
-                <span className="flex-1 text-sm font-medium text-foreground">{T("privacyPolicy", "Privacy Policy")}</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </Link>
-              <Link to="/terms" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
-                <FileText className="w-4 h-4 text-primary shrink-0" />
-                <span className="flex-1 text-sm font-medium text-foreground">{T("termsOfService", "Terms of Service")}</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </Link>
-              <Link to="/data-export" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors">
-                <FileText className="w-4 h-4 text-primary shrink-0" />
-                <span className="flex-1 text-sm font-medium text-foreground">{T("exportData", "Export My Data")}</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </Link>
-              <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-destructive/5 transition-colors text-left">
-                <Trash2 className="w-4 h-4 text-destructive shrink-0" />
-                <span className="flex-1 text-sm font-medium text-destructive">{T("deleteAccount", "Delete My Account")}</span>
-                <ChevronRight className="w-4 h-4 text-destructive/60" />
-              </button>
-            </div>
-          </div>
-
-          <Button type="submit" disabled={saving} className="w-full rounded-xl h-11 font-semibold">
-            {saving ? T("saving", "Saving...") : saved ? T("saved", "✓ Saved!") : <><Save className="w-4 h-4 mr-2" />{T("saveChanges", "Save Changes")}</>}
-          </Button>
-        </form>
-
-        {/* Logout */}
-        <div className="mt-4">
-          <Button variant="outline" className="w-full rounded-xl h-11 text-destructive border-destructive/30 hover:bg-destructive/5" onClick={handleLogout} >
-            <LogOut className="w-4 h-4 mr-2" /> {T("signOut", "Sign Out")}
-          </Button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
+                  <Input type="number" min={1} max={31} value={form.pay_day} onChange={e => setForm(f => ({ ...f
