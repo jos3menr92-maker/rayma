@@ -17,6 +17,29 @@ function StatCard({ icon: Icon, label, value, sub, color = "primary" }) {
     </div>
   );
 }
+<div className="bg-card border border-border rounded-2xl p-6 mt-6">
+  <h2 className="text-lg font-bold mb-4">Sponsor Code Management</h2>
+  <div className="flex gap-4">
+    <input
+      type="text"
+      placeholder="Enter new sponsor code..."
+      className="bg-background border border-border rounded-lg px-4 py-2 flex-grow"
+      value={newCode}
+      onChange={(e) => setNewCode(e.target.value)}
+    />
+    <Button onClick={async () => {
+      await base44.entities.PromoCode.create({ 
+        code: newCode, 
+        is_active: true, 
+        created_by_role: "admin" 
+      });
+      setNewCode("");
+      alert("Code created!");
+    }}>
+      Create Code
+    </Button>
+  </div>
+</div>
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -26,6 +49,7 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [promoCodes, setPromoCodes] = useState([]);
   const [recentFeedback, setRecentFeedback] = useState([]);
+  const [newCode, setNewCode] = useState("");
 
   useEffect(() => {
     loadData();
