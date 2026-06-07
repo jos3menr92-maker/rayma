@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
+import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import LoansList from './pages/LoansList';
 import AddLoan from './pages/AddLoan';
@@ -47,7 +48,7 @@ const PageLoader = () => (
 );
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -63,8 +64,8 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
+      // Redirect to custom Auth page automatically
+      window.location.href = '/auth';
       return null;
     }
   }
@@ -110,7 +111,6 @@ const AuthenticatedApp = () => {
 
 
 function App() {
-
   return (
     <AuthProvider>
       <LanguageProvider>
@@ -118,6 +118,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/home" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
             <Route path="/*" element={<AuthenticatedApp />} />
           </Routes>
         </Router>
