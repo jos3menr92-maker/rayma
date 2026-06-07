@@ -30,12 +30,12 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
   const [showGreeting, setShowGreeting] = useState(false);
   const touchStartX = useRef(null);
 
-  // Financial calculations for smart greeting
-  const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
-  const monthlyLoans = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.monthly_payment || 0), 0);
-  const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length : 0;
-  const monthlyIncome = avgWeeklyIncome * 4.33;
-  const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
+// Change your calculation logic to this:
+const monthlyBills = (bills || []).reduce((s, b) => s + (b.amount || 0), 0);
+const monthlyLoans = (loans || []).filter(l => l?.status !== "paid_off").reduce((s, l) => s + (l?.monthly_payment || 0), 0);
+const avgWeeklyIncome = (incomes || []).length > 0 ? (incomes || []).reduce((s, i) => s + (i.amount || 0), 0) / incomes.length : 0;
+const monthlyIncome = avgWeeklyIncome * 4.33;
+const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
 
   useEffect(() => {
     // Only show greeting if not previously dismissed this session
