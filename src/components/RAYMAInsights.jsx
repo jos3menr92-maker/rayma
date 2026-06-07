@@ -29,13 +29,16 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
   const [dismissed, setDismissed] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const touchStartX = useRef(null);
+  
+  const safeBills = bills || [];
+  const safeLoans = loans || [];
+  const safeIncomes = incomes || [];
 
-// Change your calculation logic to this:
-const monthlyBills = (bills || []).reduce((s, b) => s + (b.amount || 0), 0);
-const monthlyLoans = (loans || []).filter(l => l?.status !== "paid_off").reduce((s, l) => s + (l?.monthly_payment || 0), 0);
-const avgWeeklyIncome = (incomes || []).length > 0 ? (incomes || []).reduce((s, i) => s + (i.amount || 0), 0) / incomes.length : 0;
-const monthlyIncome = avgWeeklyIncome * 4.33;
-const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
+  const monthlyBills = safeBills.reduce((s, b) => s + (b?.amount || 0), 0);
+  const monthlyLoans = safeLoans.filter(l => l?.status !== "paid_off").reduce((s, l) => s + (l?.monthly_payment || 0), 0);
+  const avgWeeklyIncome = safeIncomes.length > 0 ? safeIncomes.reduce((s, i) => s + (i?.amount || 0), 0) / safeIncomes.length : 0;
+  const monthlyIncome = avgWeeklyIncome * 4.33;
+  const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
 
   useEffect(() => {
     // Only show greeting if not previously dismissed this session
