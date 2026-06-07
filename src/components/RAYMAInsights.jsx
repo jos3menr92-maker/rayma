@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, X, MessageSquare } from "lucide-react";
+import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, X, MessageSquare, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const CACHE_KEY = "rayma_insights_cache";
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function loadCache() {
   try {
@@ -13,9 +13,7 @@ function loadCache() {
     const parsed = JSON.parse(raw);
     if (Date.now() - parsed.timestamp > CACHE_TTL_MS) return null;
     return parsed.insights;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 function saveCache(insights) {
@@ -23,13 +21,18 @@ function saveCache(insights) {
 }
 
 export default function RAYMAInsights({ loans, bills, incomes }) {
+  // Add an early exit if data is totally missing
+  if (!loans && !bills) return null;
+
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [index, setIndex] = useState(0);
   const [dismissed, setDismissed] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const touchStartX = useRef(null);
-  
+
+  // Safe calculations with fallbacks
   const safeBills = bills || [];
   const safeLoans = loans || [];
   const safeIncomes = incomes || [];
@@ -41,31 +44,28 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
   const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
 
   useEffect(() => {
-    // Only show greeting if not previously dismissed this session
     if (!sessionStorage.getItem("rayma_greeting_shown")) {
       setShowGreeting(true);
     }
-
     const cached = loadCache();
     if (cached && cached.length > 0) {
       setInsights(cached);
-    } else if (loans.length > 0 || bills.length > 0) {
+    } else if (safeLoans.length > 0 || safeBills.length > 0) {
       fetchInsights();
     }
-  }, [loans.length, bills.length]);
-
-  const handleDismissGreeting = () => {
-    setShowGreeting(false);
-    sessionStorage.setItem("rayma_greeting_shown", "true");
-  };
+  }, [safeLoans.length, safeBills.length]);
 
   async function fetchInsights(force = false) {
     if (loading) return;
     setLoading(true);
     setDismissed(false);
-    const today = new Date().getDate();
+    setError(null);
 
     try {
+      if (!base44?.integrations?.Core?.InvokeLLM) {
+        throw new Error("AI connection not available.");
+      }
+
       const result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are RAYMA, a proactive personal finance AI. Generate exactly 4 short, personalized, actionable insights. 
         Current monthly cash flow: $${cashFlow.toFixed(0)}.
@@ -80,12 +80,16 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
           }
         }
       });
+
       const list = result?.insights || [];
+      if (list.length === 0) throw new Error("No insights could be generated.");
+      
       setInsights(list);
       setIndex(0);
       saveCache(list);
     } catch (e) {
-      setDismissed(true);
+      console.error("RAYMA Insights Error:", e);
+      setError("Unable to load AI insights. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -102,26 +106,18 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
 
   return (
     <div className="mb-6">
-      {/* Smart Proactive Greeting */}
       {showGreeting && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4"
-        >
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4">
           <p className="text-sm font-medium text-foreground mb-3">
-            {cashFlow > 0 
-              ? "Hi! You're currently tracking positive this month. Want to explore some savings opportunities?" 
-              : "Hi! I'm RAYMA. I've analyzed your data and have some tips to help you balance your budget."}
+            {cashFlow > 0 ? "Hi! You're tracking positive this month. Want to explore some savings opportunities?" : "Hi! I'm RAYMA. I've analyzed your data and have some tips to help you balance your budget."}
           </p>
-          <button onClick={handleDismissGreeting} className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-lg">
+          <button onClick={() => { setShowGreeting(false); sessionStorage.setItem("rayma_greeting_shown", "true"); }} className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-lg">
             Let's see insights
           </button>
         </motion.div>
       )}
 
-      {/* Insights Carousel */}
-      {!dismissed && (insights.length > 0 || loading) && (
+      {!dismissed && (insights.length > 0 || loading || error) && (
         <div onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
              onTouchEnd={e => {
                if (touchStartX.current === null || insights.length < 2) return;
@@ -132,15 +128,10 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
              }}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-semibold uppercase tracking-wider text-primary">RAYMA Insights</span>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => fetchInsights(true)} disabled={loading} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              </button>
-              <button onClick={() => setDismissed(true)} className="p-1 text-muted-foreground hover:text-foreground transition-colors"><X className="w-3.5 h-3.5" /></button>
-            </div>
+            <button onClick={() => setDismissed(true)} className="p-1 text-muted-foreground hover:text-foreground transition-colors"><X className="w-3.5 h-3.5" /></button>
           </div>
 
           {loading ? (
@@ -148,25 +139,25 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
               <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
               <p className="text-xs text-muted-foreground">RAYMA is thinking...</p>
             </div>
+          ) : error ? (
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                <p className="text-xs font-medium">{error}</p>
+              </div>
+              <button onClick={() => fetchInsights()} className="text-xs font-bold text-destructive underline self-start">
+                Retry Connection
+              </button>
+            </div>
           ) : current && (
-            <AnimatePresence mode="wait">
-              <motion.div key={index} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}
-                          className={`rounded-2xl border p-4 ${typeStyles[current.type] || typeStyles.tip}`}>
-                <p className="text-sm font-semibold text-foreground mb-1">{current.title}</p>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4">{current.body}</p>
-                
-                <div className="flex items-center justify-between">
-                  <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80">
-                    <MessageSquare className="w-3 h-3" /> Ask RAYMA about this
-                  </button>
-                  <div className="flex gap-1">
-                    {insights.map((_, i) => (
-                      <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === index ? "bg-primary w-3" : "bg-muted-foreground/40"}`} />
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+            <motion.div key={index} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} 
+                        className={`rounded-2xl border p-4 ${typeStyles[current.type] || typeStyles.tip}`}>
+              <p className="text-sm font-semibold text-foreground mb-1">{current.title}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4">{current.body}</p>
+              <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80">
+                <MessageSquare className="w-3 h-3" /> Ask RAYMA about this
+              </button>
+            </motion.div>
           )}
         </div>
       )}
