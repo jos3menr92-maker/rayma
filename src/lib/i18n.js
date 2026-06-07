@@ -15,7 +15,40 @@ export const LANGUAGES = [
 ];
 
 export const translations = {
-  en: {
+  en: { 
+    // Add these keys to your 'en' object inside i18n.js
+    deleteWarning: "FINAL WARNING: This will permanently erase your profile and account. Proceed?",
+    deletingAccount: "Deleting Account Requirements...",
+    yourName: "Your name",
+    greetingPlaceholder: "e.g. Let's crush that debt!",
+    greetingDesc: "Shown on your dashboard every time you log in.",
+    uploading: "Uploading...",
+    uploadPhoto: "Upload Photo",
+    removePhoto: "Remove photo",
+    langUpdateDesc: "App language updates after saving.",
+    compactModeDesc: "Reduce spacing for a denser layout",
+    dashboardAccent: "Dashboard Accent",
+    colorDefault: "Default",
+    colorViolet: "Violet",
+    colorRose: "Rose",
+    colorAmber: "Amber",
+    colorSky: "Sky",
+    colorEmerald: "Emerald",
+    accentDesc: "Accent color preference is saved to your profile.",
+    payScheduleDesc: "Used for income reminders and cash flow accuracy",
+    selectFrequency: "Select frequency…",
+    freqWeekly: "Weekly",
+    freqBiweekly: "Bi-weekly",
+    freqMonthly: "Monthly",
+    selectDay: "Select day…",
+    dayMonday: "Monday", dayTuesday: "Tuesday", dayWednesday: "Wednesday", 
+    dayThursday: "Thursday", dayFriday: "Friday", daySaturday: "Saturday", daySunday: "Sunday",
+    financialDisclaimer: "Financial Disclaimer",
+    disclaimerText1: "RAYMA is not a financial advisor. All information is for educational purposes. Consult qualified professionals before making financial decisions. See",
+    disclaimerText2: "for full details.",
+    termsLink: "Terms of Service",
+    privacyLegalDesc: "Your data rights and policies",
+    exportData: "Export My Data",
     // Nav / Layout
     appName: "Debt & Bills",
     dashboard: "Dashboard",
