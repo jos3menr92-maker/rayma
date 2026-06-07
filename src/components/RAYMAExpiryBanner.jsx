@@ -1,29 +1,77 @@
-import { useState } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { AlertTriangle, XCircle } from "lucide-react";
 
-export default function RAYMAExpiryBanner({ message, type = "warning" }) {
-  const [isVisible, setIsVisible] = useState(true);
+/**
+ * Logic:
+ * - No rayma_expires_at AND within 6 months of created_date → free trial, no banner (or warn in last 30 days)
+ * - rayma_expires_at set (donated) → use that date, warn in last 30 days
+ * - Expired → show renewal banner
+ */
+function getEffectiveExpiry(user) {
+  // annual_pass_expires_at is set by Stripe webhook on purchase
+  if (user?.annual_pass_expires_at) return new Date(user.annual_pass_expires_at + "T00:00:00");
+  // Legacy field support
+  if (user?.rayma_expires_at) return new Date(user.rayma_expires_at + "T00:00:00");
+  if (user?.created_date) {
+    const trial = new Date(user.created_date);
+    trial.setMonth(trial.getMonth() + 6);
+    return trial;
+  }
+  return null;
+}
 
-  if (!isVisible) return null;
+export default function RAYMAExpiryBanner({ user }) {
+  const navigate = useNavigate();
 
-  const styles = {
-    warning: "bg-amber-50 border-amber-200 text-amber-800",
-    danger: "bg-red-50 border-red-200 text-red-800",
-    info: "bg-blue-50 border-blue-200 text-blue-800",
-  };
+  const expiry = getEffectiveExpiry(user);
+  if (!expiry) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+  if (daysLeft > 30) return null; // plenty of time, stay quiet
+
+  const isExpired = daysLeft <= 0;
+  const isDonated = !!(user?.annual_pass_expires_at || user?.rayma_expires_at);
+
+  if (isExpired) {
+    return (
+      <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-2xl p-3 mb-3">
+        <XCircle className="w-4 h-4 text-destructive shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-foreground">RAYMA has stopped</p>
+          <p className="text-[11px] text-muted-foreground">
+            {isDonated ? "Your Annual Pass has expired." : "Your free 6-month trial has ended."} Get an Annual Pass to restore AI features.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/support")}
+          className="shrink-0 text-[11px] font-semibold bg-destructive hover:bg-destructive/90 text-white px-3 py-1.5 rounded-xl transition-colors"
+        >
+          Upgrade
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className={`flex items-center justify-between p-4 border rounded-xl mb-6 ${styles[type] || styles.warning}`}>
-      <div className="flex items-center gap-3">
-        <AlertTriangle className="w-5 h-5 opacity-80" />
-        <p className="text-sm font-medium">{message || "Your trial is expiring soon."}</p>
-      </div>
-      <button 
-        onClick={() => setIsVisible(false)}
-        className="p-1 hover:bg-black/5 rounded-full transition-colors"
-      >
-        <X className="w-4 h-4" />
-      </button>
+    <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-400/30 rounded-2xl p-3 mb-3">
+      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-foreground">
+          RAYMA {isDonated ? "expires" : "free trial ends"} in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+        </p>
+        <p className="text-[11px] text-muted-foreground">
+          Get the Annual Pass before it expires to keep AI features running.
+          </p>
+          </div>
+          <button
+          onClick={() => navigate("/support")}
+          className="shrink-0 text-[11px] font-semibold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors"
+          >
+          Upgrade
+          </button>
     </div>
   );
-}a
+}
