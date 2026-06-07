@@ -27,6 +27,8 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
   const [loading, setLoading] = useState(false);
   const [index, setIndex] = useState(0);
   const [dismissed, setDismissed] = useState(false);
+  // Added proactive greeting state
+  const [showGreeting, setShowGreeting] = useState(true);
   const touchStartX = useRef(null);
 
   useEffect(() => {
@@ -97,8 +99,6 @@ Return 4 insights. Each should have:
     setLoading(false);
   }
 
-  if (dismissed || (insights.length === 0 && !loading)) return null;
-
   const typeStyles = {
     tip:         "border-primary/30 bg-primary/5",
     warning:     "border-amber-400/30 bg-amber-400/5",
@@ -109,82 +109,104 @@ Return 4 insights. Each should have:
   const current = insights[index];
 
   return (
-    <div
-      className="mb-6"
-      onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
-      onTouchEnd={e => {
-        if (touchStartX.current === null || insights.length < 2) return;
-        const dx = e.changedTouches[0].clientX - touchStartX.current;
-        if (dx < -40) setIndex(i => (i + 1) % insights.length);
-        else if (dx > 40) setIndex(i => (i - 1 + insights.length) % insights.length);
-        touchStartX.current = null;
-      }}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-primary">RAYMA Insights</span>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="mb-6">
+      {/* Proactive Greeting */}
+      {showGreeting && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4"
+        >
+          <p className="text-sm font-medium text-foreground mb-3">
+            Hi! I'm RAYMA. I'm ready to analyze your latest data—how can I help you take control of your finances today?
+          </p>
           <button
-            onClick={() => fetchInsights(true)}
-            disabled={loading}
-            className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
-            title="Refresh insights"
+            onClick={() => setShowGreeting(false)}
+            className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-lg"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            Let's get started
           </button>
-          <button onClick={() => setDismissed(true)} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
+        </motion.div>
+      )}
 
-      {loading ? (
-        <div className={`rounded-2xl border border-border bg-card p-4 flex items-center gap-3`}>
-          <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
-          <p className="text-xs text-muted-foreground">RAYMA is analyzing your finances…</p>
-        </div>
-      ) : current ? (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            className={`rounded-2xl border p-4 ${typeStyles[current.type] || typeStyles.tip}`}
-          >
-            <p className="text-sm font-semibold text-foreground mb-1">{current.title}</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{current.body}</p>
-
-            {/* Pagination dots + arrows */}
-            <div className="flex items-center justify-between mt-3">
-              <div className="flex gap-1">
-                {insights.map((_, i) => (
-                  <button key={i} onClick={() => setIndex(i)}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${i === index ? "bg-primary w-3" : "bg-muted-foreground/40"}`}
-                  />
-                ))}
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setIndex((i) => (i - 1 + insights.length) % insights.length)}
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setIndex((i) => (i + 1) % insights.length)}
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+      {/* Insights Carousel (hidden if dismissed) */}
+      {!dismissed && (insights.length > 0 || loading) && (
+        <div
+          onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={e => {
+            if (touchStartX.current === null || insights.length < 2) return;
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            if (dx < -40) setIndex(i => (i + 1) % insights.length);
+            else if (dx > 40) setIndex(i => (i - 1 + insights.length) % insights.length);
+            touchStartX.current = null;
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">RAYMA Insights</span>
             </div>
-          </motion.div>
-        </AnimatePresence>
-      ) : null}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchInsights(true)}
+                disabled={loading}
+                className="p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                title="Refresh insights"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              </button>
+              <button onClick={() => setDismissed(true)} className="p-1 text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className={`rounded-2xl border border-border bg-card p-4 flex items-center gap-3`}>
+              <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
+              <p className="text-xs text-muted-foreground">RAYMA is analyzing your finances…</p>
+            </div>
+          ) : current ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className={`rounded-2xl border p-4 ${typeStyles[current.type] || typeStyles.tip}`}
+              >
+                <p className="text-sm font-semibold text-foreground mb-1">{current.title}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{current.body}</p>
+
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex gap-1">
+                    {insights.map((_, i) => (
+                      <button key={i} onClick={() => setIndex(i)}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${i === index ? "bg-primary w-3" : "bg-muted-foreground/40"}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setIndex((i) => (i - 1 + insights.length) % insights.length)}
+                      className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setIndex((i) => (i + 1) % insights.length)}
+                      className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
