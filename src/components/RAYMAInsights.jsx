@@ -20,10 +20,7 @@ function saveCache(insights) {
   localStorage.setItem(CACHE_KEY, JSON.stringify({ insights, timestamp: Date.now() }));
 }
 
-export default function RAYMAInsights({ loans, bills, incomes }) {
-  // Defensive check: If data isn't ready, don't crash
-  if (!loans && !bills) return null;
-
+export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,13 +29,10 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
   const [showGreeting, setShowGreeting] = useState(false);
   const touchStartX = useRef(null);
 
-  const safeBills = bills || [];
-  const safeLoans = loans || [];
-  const safeIncomes = incomes || [];
-
-  const monthlyBills = safeBills.reduce((s, b) => s + (b?.amount || 0), 0);
-  const monthlyLoans = safeLoans.filter(l => l?.status !== "paid_off").reduce((s, l) => s + (l?.monthly_payment || 0), 0);
-  const avgWeeklyIncome = safeIncomes.length > 0 ? safeIncomes.reduce((s, i) => s + (i?.amount || 0), 0) / safeIncomes.length : 0;
+  // Calculations are now safe because props default to []
+  const monthlyBills = bills.reduce((s, b) => s + (b?.amount || 0), 0);
+  const monthlyLoans = loans.filter(l => l?.status !== "paid_off").reduce((s, l) => s + (l?.monthly_payment || 0), 0);
+  const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (i?.amount || 0), 0) / incomes.length : 0;
   const monthlyIncome = avgWeeklyIncome * 4.33;
   const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
 
@@ -49,12 +43,12 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
     const cached = loadCache();
     if (cached && cached.length > 0) {
       setInsights(cached);
-    } else if (safeLoans.length > 0 || safeBills.length > 0) {
+    } else if (loans.length > 0 || bills.length > 0) {
       fetchInsights();
     }
-  }, [safeLoans.length, safeBills.length]);
+  }, [loans.length, bills.length]);
 
-  async function fetchInsights(force = false) {
+  async function fetchInsights() {
     if (loading) return;
     setLoading(true);
     setDismissed(false);
