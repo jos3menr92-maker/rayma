@@ -27,7 +27,6 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
   const [loading, setLoading] = useState(false);
   const [index, setIndex] = useState(0);
   const [dismissed, setDismissed] = useState(false);
-  const [showGreeting, setShowGreeting] = useState(false); // <--- Add this line
   // Added proactive greeting state
   const [showGreeting, setShowGreeting] = useState(true);
   const touchStartX = useRef(null);
