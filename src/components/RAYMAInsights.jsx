@@ -20,7 +20,12 @@ function saveCache(insights) {
   localStorage.setItem(CACHE_KEY, JSON.stringify({ insights, timestamp: Date.now() }));
 }
 
-export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) {
+export default function RAYMAInsights(props) {
+  // Extract props with defaults, ensuring they are NEVER undefined
+  const loans = props.loans || [];
+  const bills = props.bills || [];
+  const incomes = props.incomes || [];
+
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -29,11 +34,11 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
   const [showGreeting, setShowGreeting] = useState(false);
   const touchStartX = useRef(null);
 
+  // Now, calculate using the safe variables above
   const monthlyBills = bills.reduce((s, b) => s + (b?.amount || 0), 0);
   const monthlyLoans = loans.filter(l => l?.status !== "paid_off").reduce((s, l) => s + (l?.monthly_payment || 0), 0);
   const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (i?.amount || 0), 0) / incomes.length : 0;
-  const monthlyIncome = avgWeeklyIncome * 4.33;
-  const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
+  // ... rest of your component
 
   useEffect(() => {
     if (!sessionStorage.getItem("rayma_greeting_shown")) {
