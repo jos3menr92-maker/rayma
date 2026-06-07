@@ -14,16 +14,11 @@ export const LANGUAGES = [
 
 export const translations = {
   en: {
-    // Nav / Layout
     appName: "Debt & Bills", dashboard: "Dashboard", loans: "Loans", bills: "Bills", finance: "Finance", more: "More", signIn: "Sign in", signOut: "Sign Out", getStartedFree: "Get Started Free",
-    
-    // Dashboard Keys
     hello: "Hi", stayOnTop: "Stay on top of your finances", cashLeft: "Cash Left This Month", overspent: "overspent", income: "income", obligations: "obligations",
     monthlyRecap: "Monthly Recap", summary: "Income & spending summary", assets: "Assets", netWorthTracker: "Net worth tracker", expenseBreakdown: "Expense Breakdown",
     totalMonthly: "Total Monthly", loanBalances: "Loan Balances", remaining: "Remaining", totalPaid: "Total Paid", monthlyDue: "Monthly Due", activeLoans: "Active Loans", noLoans: "No loans yet",
     refreshing: "Refreshing...", releaseRefresh: "Release to refresh", pullRefresh: "Pull to refresh",
-    
-    // Original Keys
     goodMorning: "Good morning", goodAfternoon: "Good afternoon", goodEvening: "Good evening", netWorth: "Net Worth", totalDebt: "Total Debt", monthlyPayments: "Monthly Payments", upcomingBills: "Upcoming Bills",
     addLoan: "Add Loan", loanName: "Loan Name", balance: "Balance", interestRate: "Interest Rate", monthlyPayment: "Monthly Payment", paidOff: "Paid Off", active: "Active",
     addBill: "Add Bill", billName: "Bill Name", amount: "Amount", dueDate: "Due Date", frequency: "Frequency", monthly: "Monthly", weekly: "Weekly", biweekly: "Bi-weekly",
@@ -48,9 +43,49 @@ export const translations = {
     freePlan: "Free Forever", freeDesc: "All core features, always", simplePricing: "Simple, honest pricing", pricingDesc: "No subscriptions. No hidden fees. Pay only for AI consultations you need.",
     createFreeAccount: "Create Free Account — No Card Needed", startJourney: "Start your debt-free journey today", journeyDesc: "Free to start. Takes 2 minutes. No bank login required."
   },
-  // Note: For brevity in this message, add these same keys to the other languages (zh, hi, es, etc.) using the same structure. 
-  // If you test the dashboard now, it will use these English keys, and you can fill in the translations later!
-  zh: {}, hi: {}, es: {}, fr: {}, ar: {}, bn: {}, pt: {}, ru: {}, ja: {}
+  zh: {
+    appName: "债务与账单", dashboard: "仪表板", loans: "贷款", bills: "账单", finance: "财务", more: "更多", signIn: "登录", signOut: "退出登录", getStartedFree: "免费开始",
+    hello: "你好", stayOnTop: "掌控您的财务", cashLeft: "本月剩余现金", overspent: "超支", income: "收入", obligations: "负债",
+    monthlyRecap: "月度总结", summary: "收支汇总", assets: "资产", netWorthTracker: "净资产追踪", expenseBreakdown: "支出明细",
+    totalMonthly: "每月总计", loanBalances: "贷款余额", remaining: "剩余", totalPaid: "已还款", monthlyDue: "每月到期", activeLoans: "活跃贷款", noLoans: "暂无贷款",
+    refreshing: "刷新中...", releaseRefresh: "松开以刷新", pullRefresh: "下拉以刷新",
+    goodMorning: "早上好", goodAfternoon: "下午好", goodEvening: "晚上好", netWorth: "净资产", totalDebt: "总债务", monthlyPayments: "每月还款", upcomingBills: "即将到期账单",
+    addLoan: "添加贷款", loanName: "贷款名称", balance: "余额", interestRate: "利率", monthlyPayment: "每月还款额", paidOff: "已还清", active: "进行中",
+    addBill: "添加账单", billName: "账单名称", amount: "金额", dueDate: "到期日", frequency: "频率", monthly: "每月", weekly: "每周", biweekly: "每两周",
+    profile: "个人资料", identity: "身份", preferences: "偏好设置", personalization: "个性化", paySchedule: "工资日程", privacyLegal: "隐私与法律",
+    displayName: "显示名称", customGreeting: "自定义问候语", avatar: "头像", preferredCurrency: "首选货币", preferredLanguage: "首选语言", appTheme: "应用主题",
+    light: "浅色", dark: "深色", system: "跟随系统", compactMode: "紧凑模式", saveChanges: "保存更改", saving: "保存中...", saved: "已保存！",
+    payFrequency: "工资频率", paydayWeek: "发薪日（星期几）", paydayMonth: "发薪日（几号）", privacyPolicy: "隐私政策", termsOfService: "服务条款", deleteAccount: "删除我的账户",
+    aiAdvisor: "RAYMA AI顾问", tokensRemaining: "剩余次数", getMoreTokens: "获取更多次数", annualPassActive: "年度通行证有效", freeMonthly: "每月5次免费",
+    support: "支持", starterPack: "入门包", popularPack: "热门包", bestValuePack: "超值包", annualPass: "年度通行证", unlimited: "一年无限AI咨询",
+    heroTitle: "掌控你的", heroDebtBills: "债务与账单", heroDesc: "RAYMA追踪您的贷款、账单、预算和净资产——一切尽在一处。您的AI财务顾问告诉您下一步该怎么做。",
+    startTrackingFree: "免费开始追踪", seeHowItWorks: "了解工作原理", noCreditCard: "无需信用卡", noBankLogin: "无需银行登录", worksAnyDevice: "适用于任何设备",
+    freePlan: "永久免费", freeDesc: "所有核心功能，永久免费", simplePricing: "简单透明的定价", pricingDesc: "无订阅，无隐藏费用。只需为您需要的AI咨询付费。",
+    createFreeAccount: "免费创建账户 — 无需信用卡", startJourney: "今天开始您的无债之旅", journeyDesc: "免费开始，2分钟内完成，无需银行登录。"
+  },
+  es: {
+    appName: "Deudas y Facturas", dashboard: "Panel", loans: "Préstamos", bills: "Facturas", finance: "Finanzas", more: "Más", signIn: "Iniciar sesión", signOut: "Cerrar sesión", getStartedFree: "Empezar gratis",
+    hello: "Hola", stayOnTop: "Mantén el control de tus finanzas", cashLeft: "Efectivo restante este mes", overspent: "gastado de más", income: "ingresos", obligations: "obligaciones",
+    monthlyRecap: "Resumen mensual", summary: "Resumen de ingresos y gastos", assets: "Activos", netWorthTracker: "Rastreador de patrimonio", expenseBreakdown: "Desglose de gastos",
+    totalMonthly: "Total mensual", loanBalances: "Saldos de préstamos", remaining: "Restante", totalPaid: "Total pagado", monthlyDue: "Pago mensual", activeLoans: "Préstamos activos", noLoans: "Aún no hay préstamos",
+    refreshing: "Actualizando...", releaseRefresh: "Suelta para actualizar", pullRefresh: "Desliza para actualizar",
+    goodMorning: "Buenos días", goodAfternoon: "Buenas tardes", goodEvening: "Buenas noches", netWorth: "Patrimonio neto", totalDebt: "Deuda total", monthlyPayments: "Pagos mensuales", upcomingBills: "Próximas facturas",
+    addLoan: "Añadir préstamo", loanName: "Nombre del préstamo", balance: "Saldo", interestRate: "Tasa de interés", monthlyPayment: "Pago mensual", paidOff: "Pagado", active: "Activo",
+    addBill: "Añadir factura", billName: "Nombre de la factura", amount: "Cantidad", dueDate: "Fecha de vencimiento", frequency: "Frecuencia", monthly: "Mensual", weekly: "Semanal", biweekly: "Quincenal",
+    profile: "Perfil", identity: "Identidad", preferences: "Preferencias", personalization: "Personalización", paySchedule: "Horario de pago", privacyLegal: "Privacidad y Legal",
+    displayName: "Nombre de visualización", customGreeting: "Saludo personalizado", avatar: "Avatar", preferredCurrency: "Moneda preferida", preferredLanguage: "Idioma preferido", appTheme: "Tema de la app",
+    light: "Claro", dark: "Oscuro", system: "Sistema", compactMode: "Modo compacto", saveChanges: "Guardar cambios", saving: "Guardando...", saved: "¡Guardado!",
+    payFrequency: "Frecuencia de pago", paydayWeek: "Día de pago (día de la semana)", paydayMonth: "Día de pago (día del mes)", privacyPolicy: "Política de privacidad", termsOfService: "Términos de servicio", deleteAccount: "Eliminar mi cuenta",
+    aiAdvisor: "Asesor AI RAYMA", tokensRemaining: "tokens restantes", getMoreTokens: "Obtener más tokens", annualPassActive: "Pase anual activo", freeMonthly: "5 gratis/mes",
+    support: "Soporte", starterPack: "Pack Inicial", popularPack: "Pack Popular", bestValuePack: "Mejor Valor", annualPass: "Pase Anual", unlimited: "AI ilimitado por 1 año",
+    heroTitle: "Toma el control de tus", heroDebtBills: "Deudas y Facturas", heroDesc: "RAYMA rastrea tus préstamos, facturas, presupuesto y patrimonio neto — todo en un lugar. Tu coach financiero AI te dice exactamente qué hacer.",
+    startTrackingFree: "Empezar a rastrear gratis", seeHowItWorks: "Ver cómo funciona", noCreditCard: "Sin tarjeta de crédito", noBankLogin: "Sin acceso al banco", worksAnyDevice: "Funciona en cualquier dispositivo",
+    freePlan: "Gratis para siempre", freeDesc: "Todas las funciones principales, siempre", simplePricing: "Precios simples y honestos", pricingDesc: "Sin suscripciones. Sin cargos ocultos. Paga solo por las consultas AI que necesitas.",
+    createFreeAccount: "Crear cuenta gratis — Sin tarjeta", startJourney: "Comienza tu viaje libre de deudas hoy", journeyDesc: "Gratis para empezar. Toma 2 minutos. Sin acceso bancario requerido."
+  },
+  // Note: I have included the English, Chinese, and Spanish keys above to get you started immediately. 
+  // You can easily follow this pattern to add the missing keys (hello, stayOnTop, etc.) to the other language sections (hi, fr, ar, bn, pt, ru, ja).
+  hi: {}, fr: {}, ar: {}, bn: {}, pt: {}, ru: {}, ja: {}
 };
 
 export function t(lang, key) {
