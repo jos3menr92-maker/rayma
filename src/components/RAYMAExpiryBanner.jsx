@@ -1,77 +1,159 @@
-import { useNavigate } from "react-router-dom";
-import { AlertTriangle, XCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, X, MessageSquare, AlertCircle } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
-/**
- * Logic:
- * - No rayma_expires_at AND within 6 months of created_date → free trial, no banner (or warn in last 30 days)
- * - rayma_expires_at set (donated) → use that date, warn in last 30 days
- * - Expired → show renewal banner
- */
-function getEffectiveExpiry(user) {
-  // annual_pass_expires_at is set by Stripe webhook on purchase
-  if (user?.annual_pass_expires_at) return new Date(user.annual_pass_expires_at + "T00:00:00");
-  // Legacy field support
-  if (user?.rayma_expires_at) return new Date(user.rayma_expires_at + "T00:00:00");
-  if (user?.created_date) {
-    const trial = new Date(user.created_date);
-    trial.setMonth(trial.getMonth() + 6);
-    return trial;
-  }
-  return null;
+const CACHE_KEY = "rayma_insights_cache";
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.timestamp > CACHE_TTL_MS) return null;
+    return parsed.insights;
+  } catch { return null; }
 }
 
-export default function RAYMAExpiryBanner({ user }) {
-  const navigate = useNavigate();
+function saveCache(insights) {
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ insights, timestamp: Date.now() }));
+}
 
-  const expiry = getEffectiveExpiry(user);
-  if (!expiry) return null;
+export default function RAYMAInsights({ loans, bills, incomes }) {
+  const [insights, setInsights] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null); // Added for robust error tracking
+  const [index, setIndex] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(false);
+  const touchStartX = useRef(null);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
+  const monthlyLoans = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length : 0;
+  const monthlyIncome = avgWeeklyIncome * 4.33;
+  const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
 
-  if (daysLeft > 30) return null; // plenty of time, stay quiet
+  useEffect(() => {
+    if (!sessionStorage.getItem("rayma_greeting_shown")) {
+      setShowGreeting(true);
+    }
+    const cached = loadCache();
+    if (cached && cached.length > 0) {
+      setInsights(cached);
+    } else if (loans.length > 0 || bills.length > 0) {
+      fetchInsights();
+    }
+  }, [loans.length, bills.length]);
 
-  const isExpired = daysLeft <= 0;
-  const isDonated = !!(user?.annual_pass_expires_at || user?.rayma_expires_at);
+  async function fetchInsights(force = false) {
+    if (loading) return;
+    setLoading(true);
+    setDismissed(false);
+    setError(null); // Reset any existing error state
 
-  if (isExpired) {
-    return (
-      <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-2xl p-3 mb-3">
-        <XCircle className="w-4 h-4 text-destructive shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-foreground">RAYMA has stopped</p>
-          <p className="text-[11px] text-muted-foreground">
-            {isDonated ? "Your Annual Pass has expired." : "Your free 6-month trial has ended."} Get an Annual Pass to restore AI features.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/support")}
-          className="shrink-0 text-[11px] font-semibold bg-destructive hover:bg-destructive/90 text-white px-3 py-1.5 rounded-xl transition-colors"
-        >
-          Upgrade
-        </button>
-      </div>
-    );
+    try {
+      // Check if base44 integration exists before calling
+      if (!base44?.integrations?.Core?.InvokeLLM) {
+        throw new Error("AI connection not available.");
+      }
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are RAYMA, a proactive personal finance AI. Generate exactly 4 short, personalized, actionable insights. 
+        Current monthly cash flow: $${cashFlow.toFixed(0)}.
+        Return 4 insights as a JSON object with array "insights", each with title, body, and type (tip, warning, opportunity, win).`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            insights: {
+              type: "array",
+              items: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, type: { type: "string" } } }
+            }
+          }
+        }
+      });
+
+      const list = result?.insights || [];
+      if (list.length === 0) throw new Error("No insights could be generated.");
+      
+      setInsights(list);
+      setIndex(0);
+      saveCache(list);
+    } catch (e) {
+      console.error("RAYMA Insights Error:", e);
+      setError("Unable to load AI insights. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
+  const typeStyles = {
+    tip: "border-primary/30 bg-primary/5",
+    warning: "border-amber-400/30 bg-amber-400/5",
+    opportunity: "border-chart-3/30 bg-chart-3/5",
+    win: "border-primary/40 bg-primary/10",
+  };
+
+  const current = insights[index];
+
   return (
-    <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-400/30 rounded-2xl p-3 mb-3">
-      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-foreground">
-          RAYMA {isDonated ? "expires" : "free trial ends"} in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
-        </p>
-        <p className="text-[11px] text-muted-foreground">
-          Get the Annual Pass before it expires to keep AI features running.
+    <div className="mb-6">
+      {showGreeting && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4">
+          <p className="text-sm font-medium text-foreground mb-3">
+            {cashFlow > 0 ? "Hi! You're tracking positive this month. Want to explore some savings opportunities?" : "Hi! I'm RAYMA. I've analyzed your data and have some tips to help you balance your budget."}
           </p>
-          </div>
-          <button
-          onClick={() => navigate("/support")}
-          className="shrink-0 text-[11px] font-semibold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors"
-          >
-          Upgrade
+          <button onClick={() => { setShowGreeting(false); sessionStorage.setItem("rayma_greeting_shown", "true"); }} className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-lg">
+            Let's see insights
           </button>
+        </motion.div>
+      )}
+
+      {!dismissed && (insights.length > 0 || loading || error) && (
+        <div onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+             onTouchEnd={e => {
+               if (touchStartX.current === null || insights.length < 2) return;
+               const dx = e.changedTouches[0].clientX - touchStartX.current;
+               if (dx < -40) setIndex(i => (i + 1) % insights.length);
+               else if (dx > 40) setIndex(i => (i - 1 + insights.length) % insights.length);
+               touchStartX.current = null;
+             }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">RAYMA Insights</span>
+            </div>
+            <button onClick={() => setDismissed(true)} className="p-1 text-muted-foreground hover:text-foreground transition-colors"><X className="w-3.5 h-3.5" /></button>
+          </div>
+
+          {loading ? (
+            <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <p className="text-xs text-muted-foreground">RAYMA is thinking...</p>
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                <p className="text-xs font-medium">{error}</p>
+              </div>
+              <button onClick={() => fetchInsights()} className="text-xs font-bold text-destructive underline self-start">
+                Retry Connection
+              </button>
+            </div>
+          ) : current && (
+            <motion.div key={index} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} 
+                        className={`rounded-2xl border p-4 ${typeStyles[current.type] || typeStyles.tip}`}>
+              <p className="text-sm font-semibold text-foreground mb-1">{current.title}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4">{current.body}</p>
+              <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80">
+                <MessageSquare className="w-3 h-3" /> Ask RAYMA about this
+              </button>
+            </motion.div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
