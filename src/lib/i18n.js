@@ -72,7 +72,7 @@ export const translations = {
     light: "हल्का", dark: "गहरा", system: "सिस्टम", compactMode: "कॉम्पैक्ट मोड", saveChanges: "परिवर्तन सहेजें", saving: "सहेज रहे हैं...", saved: "सहेजा गया!",
     payFrequency: "वेतन आवृत्ति", paydayWeek: "वेतन दिवस (सप्ताह का दिन)", paydayMonth: "वेतन दिवस (महीने की तारीख)", privacyPolicy: "गोपनीयता नीति", termsOfService: "सेवा की शर्तें", deleteAccount: "मेरा खाता हटाएं",
     aiAdvisor: "RAYMA AI सलाहकार", tokensRemaining: "टोकन शेष", getMoreTokens: "अधिक टोकन प्राप्त करें", annualPassActive: "वार्षिक पास सक्रिय", freeMonthly: "प्रति माह 5 निःशुल्क",
-    support: "सहायता", starterPack: "स्टार्टर पैक", popularPack: "लोकप्रिय पैक", bestValuePack: "सर्वश्रेष्ठ पैक", annualPass: "वार्षिक पास", unlimited: "1 वर्ष के लिए असीमित AI",
+    support: "सहायता", starterPack: "सहायता", popularPack: "लोकप्रिय पैक", bestValuePack: "सर्वश्रेष्ठ पैक", annualPass: "वार्षिक पास", unlimited: "1 वर्ष के लिए असीमित AI",
     heroTitle: "अपने पर नियंत्रण रखें", heroDebtBills: "कर्ज़ और बिल", heroDesc: "RAYMA आपके ऋण, बिल, बजट और कुल संपत्ति को एक जगह ट्रैक करता है। आपका AI वित्तीय कोच आपको बताता है कि आगे क्या करना है।",
     startTrackingFree: "मुफ्त ट्रैकिंग शुरू करें", seeHowItWorks: "देखें यह कैसे काम करता है", noCreditCard: "क्रेडिट कार्ड की आवश्यकता नहीं", noBankLogin: "बैंक लॉगिन की आवश्यकता नहीं", worksAnyDevice: "किसी भी डिवाइस पर काम करता है",
     freePlan: "हमेशा के लिए मुफ्त", freeDesc: "सभी मुख्य सुविधाएं, हमेशा", simplePricing: "सरल, ईमानदार मूल्य", pricingDesc: "कोई सदस्यता नहीं। कोई छिपी फीस नहीं। केवल AI परामर्श के लिए भुगतान करें।",
