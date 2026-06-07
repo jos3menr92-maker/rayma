@@ -21,19 +21,18 @@ function saveCache(insights) {
 }
 
 export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) {
-  // Use useMemo to ensure calculations only run when data is valid
+  // 1. Calculations moved to useMemo to prevent crashing if props are null
   const stats = useMemo(() => {
-    const safeBills = Array.isArray(bills) ? bills : [];
     const safeLoans = Array.isArray(loans) ? loans : [];
+    const safeBills = Array.isArray(bills) ? bills : [];
     const safeIncomes = Array.isArray(incomes) ? incomes : [];
 
     const monthlyBills = safeBills.reduce((s, b) => s + (b?.amount || 0), 0);
     const monthlyLoans = safeLoans.filter(l => l?.status !== "paid_off").reduce((s, l) => s + (l?.monthly_payment || 0), 0);
     const avgWeeklyIncome = safeIncomes.length > 0 ? safeIncomes.reduce((s, i) => s + (i?.amount || 0), 0) / safeIncomes.length : 0;
     const monthlyIncome = avgWeeklyIncome * 4.33;
-    const cashFlow = monthlyIncome - monthlyLoans - monthlyBills;
-
-    return { monthlyBills, monthlyLoans, monthlyIncome, cashFlow };
+    
+    return { cashFlow: monthlyIncome - monthlyLoans - monthlyBills };
   }, [loans, bills, incomes]);
 
   const [insights, setInsights] = useState([]);
@@ -44,16 +43,15 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
   const [showGreeting, setShowGreeting] = useState(false);
 
   useEffect(() => {
-    if (!sessionStorage.getItem("rayma_greeting_shown")) {
-      setShowGreeting(true);
-    }
+    if (!sessionStorage.getItem("rayma_greeting_shown")) setShowGreeting(true);
+    
     const cached = loadCache();
-    if (cached && cached.length > 0) {
+    if (cached?.length > 0) {
       setInsights(cached);
-    } else if (loans?.length > 0 || bills?.length > 0) {
+    } else if ((loans?.length > 0 || bills?.length > 0)) {
       fetchInsights();
     }
-  }, []);
+  }, []); // Only run on mount to prevent infinite loops
 
   async function fetchInsights() {
     if (loading) return;
@@ -63,11 +61,11 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     try {
       if (!base44?.integrations?.Core?.InvokeLLM) throw new Error("AI not initialized.");
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are RAYMA. Generate 4 insights. Cash flow: $${stats.cashFlow.toFixed(0)}. Return JSON with "insights" array.`,
+        prompt: `You are RAYMA, a proactive personal finance AI. Generate 4 insights. Cash flow: $${stats.cashFlow.toFixed(0)}. Return JSON with "insights" array.`,
         response_json_schema: { type: "object", properties: { insights: { type: "array", items: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, type: { type: "string" } } } } } }
       });
       const list = result?.insights || [];
-      if (list.length === 0) throw new Error("No data returned.");
+      if (list.length === 0) throw new Error("No insights generated.");
       setInsights(list);
       saveCache(list);
     } catch (e) {
@@ -84,42 +82,32 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     win: "border-primary/40 bg-primary/10",
   };
 
-  const current = insights[index];
-
   return (
     <div className="mb-6">
       {showGreeting && (
-        <motion.div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4">
-          <p className="text-sm text-foreground mb-3">
-            {stats.cashFlow > 0 ? "Hi! You're tracking positive." : "Hi! I'm RAYMA. I have tips to help your budget."}
-          </p>
-          <button onClick={() => { setShowGreeting(false); sessionStorage.setItem("rayma_greeting_shown", "true"); }} className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-lg">See insights</button>
-        </motion.div>
+        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4">
+          <p className="text-sm font-medium text-foreground mb-3">Hi! I'm RAYMA. I've analyzed your data to help balance your budget.</p>
+          <button onClick={() => { setShowGreeting(false); sessionStorage.setItem("rayma_greeting_shown", "true"); }} className="text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-lg">Let's see insights</button>
+        </div>
       )}
 
       {!dismissed && (insights.length > 0 || loading || error) && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-primary" /><span className="text-xs font-semibold uppercase text-primary">RAYMA Insights</span></div>
+            <span className="text-xs font-semibold uppercase text-primary">RAYMA Insights</span>
             <button onClick={() => setDismissed(true)}><X className="w-3.5 h-3.5" /></button>
           </div>
-          {loading ? <div className="p-4 text-xs">Thinking...</div> : error ? (
-            <div className="border border-destructive/20 bg-destructive/5 p-4">
-              <div className="flex items-center gap-2 text-destructive mb-2"><AlertCircle className="w-4 h-4" />{error}</div>
-              <button onClick={fetchInsights} className="text-xs underline">Retry</button>
+
+          {loading ? <div className="text-xs p-4 border rounded-2xl">RAYMA is thinking...</div> : error ? (
+            <div className="border border-destructive/20 bg-destructive/5 p-4 rounded-2xl">
+              <p className="text-xs text-destructive mb-2">{error}</p>
+              <button onClick={fetchInsights} className="text-xs underline text-destructive">Retry</button>
             </div>
-          ) : current && (
-            <motion.div className={`border p-4 rounded-2xl ${typeStyles[current.type]}`}>
-              <p className="text-sm font-semibold mb-1">{current.title}</p>
-              <p className="text-xs text-muted-foreground mb-4">{current.body}</p>
-              <div className="flex justify-between items-center">
-                 <button className="text-[10px] font-bold uppercase text-primary"><MessageSquare className="w-3 h-3 inline" /> Ask RAYMA</button>
-                 <div className="flex gap-1">
-                    {insights.map((_, i) => (
-                      <button key={i} onClick={() => setIndex(i)} className={`w-1.5 h-1.5 rounded-full ${i === index ? "bg-primary w-3" : "bg-muted-foreground/40"}`} />
-                    ))}
-                 </div>
-              </div>
+          ) : insights[index] && (
+            <motion.div className={`border p-4 rounded-2xl ${typeStyles[insights[index].type]}`}>
+              <p className="text-sm font-semibold mb-1">{insights[index].title}</p>
+              <p className="text-xs text-muted-foreground mb-4">{insights[index].body}</p>
+              <button className="text-[10px] font-bold uppercase text-primary"><MessageSquare className="w-3 h-3 inline" /> Ask RAYMA</button>
             </motion.div>
           )}
         </div>
