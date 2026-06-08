@@ -142,7 +142,7 @@
   font-size: 13px;   /* Slightly larger font helps clarity */
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s ease-in-out;
+  transition: none;
   
   /* These force the browser to sharpen the text rendering */
   -webkit-font-smoothing: antialiased;
@@ -151,7 +151,7 @@
   
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: none;
 }
 
 .driver-popover-footer button:hover {
