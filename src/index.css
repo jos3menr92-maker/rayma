@@ -89,7 +89,6 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  /* iOS safe area support for notch / Dynamic Island / home indicator */
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
@@ -109,4 +108,36 @@
     @apply bg-background text-foreground;
     font-family: var(--font-body);
   }
+}
+
+/* --- RAYMA Tour Custom Styling --- */
+.driver-popover {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  color: hsl(var(--foreground));
+}
+
+.driver-popover .driver-popover-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: hsl(var(--primary));
+  margin-bottom: 8px;
+}
+
+.driver-popover .driver-popover-description {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+
+.driver-popover-footer button {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: 0.5rem;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
 }
