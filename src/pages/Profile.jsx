@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"; 
+import { useEffect, useState, useRef } from "react"; 
 import { base44 } from "@/api/base44Client"; 
 import { motion } from "framer-motion"; 
 import { 
@@ -7,7 +7,7 @@ import {
   AlertCircle, Download, LifeBuoy, Fingerprint, Lock
 } from "lucide-react"; 
 import AvatarPicker, { getInitialsColor } from "@/components/AvatarPicker"; 
-import { Link, useSearchParams, useNavigate } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom"; 
 import { Button } from "@/components/ui/button"; 
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label"; 
@@ -15,9 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"; 
 import { Separator } from "@/components/ui/separator"; 
 import { useLanguage } from "@/lib/LanguageContext"; 
-import { LANGUAGES, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 
-// Stable Human-Feature Avatars for a professional look
 const HUMAN_AVATARS = [
   { id: "h1", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" },
   { id: "h2", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" },
@@ -44,19 +43,18 @@ export default function Profile() {
   const { lang, setLang } = useLanguage(); 
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
 
+  const fileInputRef = useRef(null);
   const [user, setUser] = useState(null); 
   const [loading, setLoading] = useState(true); 
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system"); 
-  const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
-  
   const [form, setForm] = useState({ 
     preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
-    preferred_currency: "USD", dashboard_greeting: "", pay_frequency: "", 
-    pay_day: "", compact_mode: false, preferred_language: "en"
+    preferred_currency: "USD", preferred_language: "en", dashboard_greeting: "", 
+    pay_frequency: "", pay_day: "", compact_mode: false 
   });
 
   useEffect(() => { loadUser(); }, []); 
@@ -80,6 +78,16 @@ export default function Profile() {
     } catch (err) { console.error(err); } finally { setLoading(false); }
   } 
 
+  async function handlePhotoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setForm(f => ({ ...f, avatar_photo_url: file_url, avatar_emoji: "" }));
+    } catch (err) { console.error(err); } finally { setUploadingPhoto(false); }
+  }
+
   async function handleSave(e) { 
     e.preventDefault(); 
     setSaving(true); 
@@ -92,148 +100,85 @@ export default function Profile() {
   }
 
   async function executeAccountDeletion() {
-    const confirm1 = window.confirm("Are you absolutely sure? This will permanently erase your financial history.");
-    if (!confirm1) return;
-    const confirm2 = window.prompt("To confirm deletion, type 'DELETE' below:");
-    if (confirm2 !== "DELETE") return;
-
+    if (!window.confirm("Permanent account deletion? This cannot be undone.")) return;
     setDeleting(true);
     try {
       await base44.auth.deleteMe();
       await base44.auth.logout();
       window.location.href = "/login";
     } catch (err) { 
-      // Fallback if deleteMe isn't a function
       await base44.auth.updateMe({ preferred_name: "[DELETED]" });
       await base44.auth.logout();
       window.location.href = "/login";
     }
   }
 
-  if (loading || deleting) return <div className="flex items-center justify-center min-h-screen animate-pulse">RAYMA...</div>;
+  if (loading || deleting) return <div className="flex items-center justify-center min-h-screen">RAYMA...</div>;
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-32">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         
-        {/* Header: Visual Presence */}
-        <div className="bg-card border border-border rounded-3xl p-8 text-center mb-6 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4">
-             <Badge variant="outline" className="capitalize">{user?.role || "User"}</Badge>
-          </div>
+        {/* Profile Card Header */}
+        <div className="bg-card border border-border rounded-3xl p-8 text-center mb-6 shadow-sm">
           <div className="relative inline-block">
-            <div className="w-28 h-28 rounded-full border-4 border-background shadow-xl mx-auto overflow-hidden bg-muted flex items-center justify-center">
-              {form.avatar_photo_url ? (
-                <img src={form.avatar_photo_url} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-3xl font-bold text-primary">
-                  {form.preferred_name?.charAt(0) || user?.full_name?.charAt(0)}
-                </span>
-              )}
+            <div className="w-28 h-28 rounded-full border-4 border-background shadow-xl overflow-hidden bg-muted flex items-center justify-center text-4xl">
+              {uploadingPhoto ? <Loader2 className="animate-spin" /> : 
+               form.avatar_photo_url ? <img src={form.avatar_photo_url} className="w-full h-full object-cover" /> : 
+               <span className="font-bold text-primary">{form.preferred_name?.charAt(0)}</span>}
             </div>
-            <button className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-lg border-2 border-background">
-              <Camera className="w-4 h-4" />
+            <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 p-3 bg-primary text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform">
+              <Camera className="w-5 h-5" />
             </button>
+            <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
           </div>
-          <h1 className="text-2xl font-bold mt-4">{form.preferred_name || user?.full_name}</h1>
-          <p className="text-sm text-muted-foreground">{user?.email}</p>
+          <h1 className="text-2xl font-bold mt-4">{form.preferred_name || "User"}</h1>
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
-          
-          {/* Section 1: Human-Feature Avatars */}
+          {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a realistic avatar or photo" />
+            <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Upload a selfie or choose a professional avatar" />
             <div className="grid grid-cols-5 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
-                <button 
-                  key={av.id} 
-                  type="button" 
-                  onClick={() => setForm({...form, avatar_photo_url: av.url})}
-                  className={`relative rounded-xl overflow-hidden border-2 transition-all ${form.avatar_photo_url === av.url ? "border-primary scale-105 shadow-md" : "border-transparent opacity-70"}`}
-                >
+                <button key={av.id} type="button" onClick={() => setForm({...form, avatar_photo_url: av.url})} className={`relative rounded-xl overflow-hidden border-2 transition-all ${form.avatar_photo_url === av.url ? "border-primary scale-105" : "border-transparent opacity-70"}`}>
                   <img src={av.url} alt="Human Avatar" />
                 </button>
               ))}
             </div>
-            <div className="mt-6">
-              <Label className="text-xs">Display Name</Label>
-              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="mt-1" />
-            </div>
+            <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="mt-6 rounded-xl" placeholder="Display Name" />
           </div>
 
-          {/* Section 2: Pay Schedule (Compliance: Accurate Reporting) */}
+          {/* Compliance & Settings (Pay Schedule, Currency, etc...) */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps RAYMA calculate your cash flow" />
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">Frequency</Label>
-                <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">Primary Payday</Label>
-                <Input placeholder="e.g. Friday" value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="mt-1" />
-              </div>
+              <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
+                <SelectTrigger><SelectValue placeholder="Frequency" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input placeholder="Primary Payday" value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} />
             </div>
           </div>
 
-          {/* Section 3: App Store Compliance (Legal & Data) */}
+          {/* Legal Section - MANDATORY for App Store */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Shield} title="Privacy & Security" subtitle="Manage your data and legal agreements" />
-            <div className="space-y-1 mt-4">
-               <button type="button" className="w-full flex items-center justify-between p-3 hover:bg-muted rounded-xl transition-colors text-sm">
-                  <div className="flex items-center gap-3"><Download className="w-4 h-4 text-primary" /> Export Financial Data (JSON)</div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-               </button>
-               <Separator />
-               <Link to="/privacy-policy" className="w-full flex items-center justify-between p-3 hover:bg-muted rounded-xl transition-colors text-sm">
-                  <div className="flex items-center gap-3"><Shield className="w-4 h-4 text-primary" /> Privacy Policy</div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <SectionHeader icon={Shield} title="Privacy & Legal" />
+            <div className="space-y-1">
+               <Link to="/privacy-policy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm">
+                  Privacy Policy <ChevronRight className="w-4 h-4" />
                </Link>
-               <Link to="/terms" className="w-full flex items-center justify-between p-3 hover:bg-muted rounded-xl transition-colors text-sm">
-                  <div className="flex items-center gap-3"><FileText className="w-4 h-4 text-primary" /> Terms of Service & EULA</div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+               <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm">
+                  Terms of Service & EULA <ChevronRight className="w-4 h-4" />
                </Link>
             </div>
           </div>
 
-          {/* Section 4: Support */}
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={LifeBuoy} title="Help & Support" subtitle="Get assistance with your account" />
-             <button type="button" className="w-full flex items-center justify-between p-3 hover:bg-muted rounded-xl transition-colors text-sm">
-                  <div className="flex items-center gap-3"><Mail className="w-4 h-4 text-primary" /> Contact Rayma Support</div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-             </button>
-          </div>
-
-          {/* Danger Zone */}
-          <div className="pt-4">
-            <button 
-              type="button" 
-              onClick={executeAccountDeletion}
-              className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-destructive/5 text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors font-semibold text-sm"
-            >
-              <Trash2 className="w-4 h-4" />
-              Permanently Delete Account
-            </button>
-            <p className="text-[10px] text-center text-muted-foreground mt-3 px-6">
-              Deleting your account will immediately erase all loan data, bill tracking, and AI insights. This action cannot be undone.
-            </p>
-          </div>
-
-          <div className="fixed bottom-20 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t border-border flex justify-center z-50">
-             <Button type="submit" disabled={saving} className="w-full max-w-md h-12 rounded-2xl text-md font-bold shadow-xl shadow-primary/20">
-                {saving ? "Updating Profile..." : saved ? "✓ Profile Updated" : "Save All Changes"}
-             </Button>
-          </div>
-
+          <Button type="submit" className="w-full h-12 rounded-2xl font-bold">Save All Changes</Button>
         </form>
       </motion.div>
     </div>
