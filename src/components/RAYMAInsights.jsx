@@ -36,7 +36,7 @@ export default function RAYMAInsights({ loans, bills, incomes }) {
 
   useEffect(() => {
     // 1. Handle Greeting Logic
-    const hasSeenTour = localStorage.getItem("rayma_tour_complete");
+    const hasSeenTour = localStorage.getItem("rayma_tour_test");
     if (!hasSeenTour) {
       setIsFirstTime(true);
       setShowGreeting(true);
@@ -129,7 +129,7 @@ Return 4 insights. Each should have:
     setShowGreeting(false);
 
     if (isFirstTime) {
-      localStorage.setItem("rayma_tour_complete", "true");
+      localStorage.setItem("rayma_tour_test", "true");
       setIsFirstTime(false);
   
       // Initialize the Product Tour
