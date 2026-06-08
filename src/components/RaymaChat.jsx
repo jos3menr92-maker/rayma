@@ -47,6 +47,24 @@ export default function RaymaChat() {
   }
 
   async function handleSend() {
+    // --- TOUR COMMAND INTERCEPTOR ---
+    const isTourCommand = input.trim().toLowerCase() === "/tour" || input.trim().toLowerCase().includes("start tour");
+    
+    if (isTourCommand) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput(""); 
+      
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: "I'd be happy to show you around! Starting the tour now." 
+      }]);
+
+      window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
+      setOpen(false); 
+      return; 
+    }
+    // ----------------------------------
+
     // --- DIAGNOSTIC PIN INTERCEPTOR ---
     const isPin = /^\d{6}$/.test(input.trim());
 
