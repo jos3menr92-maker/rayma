@@ -44,11 +44,8 @@ export default function RaymaChat() {
   }
   
 async function handleSend() {
-    // --- UPDATED TOUR COMMAND INTERCEPTOR ---
     const text = input.trim().toLowerCase();
-  
-    // Now includes your specific phrases!
-    const tourTriggers = [ "/tour", "start tour", "show me around", "guide me", "how does this work", "how do i use this", "i'm lost", "can i get a tour", "give me Head" ];  
+    const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me Head" ];  
     const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
   
     if (isTourCommand) {
