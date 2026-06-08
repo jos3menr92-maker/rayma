@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { Badge } from "@/components/ui/badge"; 
+import { Separator } from "@/components/ui/separator"; 
 import { useLanguage } from "@/lib/LanguageContext"; 
-import { LANGUAGES, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 
 const CURRENCIES = [ 
   { value: "USD", label: "$ USD — US Dollar" }, 
@@ -21,9 +22,6 @@ const CURRENCIES = [
   { value: "JPY", label: "¥ JPY — Japanese Yen" }, 
   { value: "INR", label: "₹ INR — Indian Rupee" }
 ];
-
-// Refined, finance-focused professional avatars
-const COOL_AVATARS = ["💼", "📈", "🎯", "🧠", "🌱", "🔑", "🛡️", "🏦", "🏛️", "🌟"];
 
 function SectionHeader({ icon: Icon, title, subtitle }) { 
   return ( 
@@ -108,7 +106,7 @@ export default function Profile() {
     setSaving(true); 
     try {
       await base44.auth.updateMe(form); 
-    } catch (err) { console.error("Database save skipped.", err); } 
+    } catch (err) { console.error("Database save failed.", err); } 
     finally {
       if (form.preferred_language) setLang(form.preferred_language); 
       setSaving(false); 
@@ -123,8 +121,8 @@ export default function Profile() {
         {/* Profile Card */}
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border border-primary/20 p-6 mb-6 text-center">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full ring-4 ring-primary/30 mx-auto mb-3 shadow-lg overflow-hidden flex items-center justify-center font-bold text-white text-4xl" style={{ backgroundColor: form.avatar_photo_url ? "transparent" : getInitialsColor(form.preferred_name, form.avatar_id) }}>
-              {form.avatar_photo_url ? <img src={form.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" /> : form.avatar_emoji || (form.preferred_name || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase()}
+            <div className="w-24 h-24 rounded-full ring-4 ring-primary/30 mx-auto mb-3 shadow-lg overflow-hidden flex items-center justify-center font-bold text-white text-xl" style={{ backgroundColor: form.avatar_photo_url ? "transparent" : getInitialsColor(form.preferred_name || user?.full_name, form.avatar_id) }}>
+              {form.avatar_photo_url ? <img src={form.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" /> : (form.preferred_name || user?.full_name || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase()}
             </div>
             <h2 className="text-xl font-bold font-heading text-foreground">{form.preferred_name || user?.full_name}</h2>
           </div>
@@ -139,14 +137,8 @@ export default function Profile() {
                 <Input value={form.preferred_name} onChange={e => setForm(f => ({ ...f, preferred_name: e.target.value }))} className="mt-1 rounded-xl" />
               </div>
               <div>
-                <Label className="text-xs font-medium text-muted-foreground">{T("avatar", "Choose Professional Avatar")}</Label>
-                <div className="grid grid-cols-5 gap-2 mt-2">
-                  {COOL_AVATARS.map(emoji => (
-                    <button key={emoji} type="button" onClick={() => setForm(f => ({ ...f, avatar_emoji: emoji, avatar_photo_url: "" }))} className={`text-2xl p-2 rounded-xl transition-all ${form.avatar_emoji === emoji ? "bg-primary/20 border-2 border-primary" : "bg-muted hover:bg-muted/70"}`}>
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+                <Label className="text-xs font-medium text-muted-foreground">{T("avatar", "Avatar")}</Label>
+                <AvatarPicker userName={form.preferred_name || user?.full_name} value={form.avatar_id} onChange={(id) => setForm(f => ({ ...f, avatar_id: id, avatar_photo_url: "" }))} />
               </div>
             </div>
           </div>
@@ -165,7 +157,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Appearance Section */}
+          {/* Personalization Section */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <SectionHeader icon={Palette} title={T("personalization", "Personalization")} />
             <div className="space-y-4">
@@ -182,8 +174,35 @@ export default function Profile() {
             </div>
           </div>
 
+          {/* Pay Schedule Section */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={Calendar} title={T("paySchedule", "Pay Schedule")} />
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground">{T("payFrequency", "Pay Frequency")}</Label>
+                <Select value={form.pay_frequency} onValueChange={v => setForm(f => ({ ...f, pay_frequency: v }))}>
+                  <SelectTrigger className="mt-1 rounded-xl"><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy & Legal */}
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <SectionHeader icon={Shield} title={T("privacyLegal", "Privacy & Legal")} />
+            <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-destructive/5 text-left">
+              <Trash2 className="w-4 h-4 text-destructive" />
+              <span className="text-sm font-medium text-destructive">Delete My Account</span>
+            </button>
+          </div>
+
           <Button type="submit" disabled={saving} className="w-full rounded-xl h-11 font-semibold">
-            {saving ? T("saving", "Saving...") : saved ? T("saved", "✓ Saved!") : "Save Changes"}
+            {saving ? "Saving..." : saved ? "✓ Saved!" : "Save Changes"}
           </Button>
         </form>
       </motion.div>
