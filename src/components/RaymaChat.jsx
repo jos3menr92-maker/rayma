@@ -47,8 +47,19 @@ export default function RaymaChat() {
   }
 
   async function handleSend() {
-    // --- TOUR COMMAND INTERCEPTOR ---
-    const isTourCommand = input.trim().toLowerCase() === "/tour" || input.trim().toLowerCase().includes("start tour");
+    // --- UPDATED TOUR COMMAND INTERCEPTOR ---
+    const text = input.trim().toLowerCase();
+    const tourTriggers = [
+      "/tour", 
+      "start tour", 
+      "show me around", 
+      "guide me", 
+      "how does this work", 
+      "how do i use this"
+    ];
+    
+    // Check if the input contains ANY of the triggers
+    const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
     
     if (isTourCommand) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
