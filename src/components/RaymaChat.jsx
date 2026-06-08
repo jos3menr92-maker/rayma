@@ -16,19 +16,16 @@ export default function RaymaChat() {
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Subscribe to conversation updates (real-time streaming)
   useEffect(() => {
     if (!conversation?.id) return;
     const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
       const msgs = data.messages || [];
       setMessages(msgs);
       const last = msgs[msgs.length - 1];
-      // Stop loading when last message is from assistant and not actively streaming
       if (last?.role === "assistant" && last?.status !== "streaming" && last?.status !== "pending") {
         setLoading(false);
       }
@@ -47,78 +44,55 @@ export default function RaymaChat() {
   }
 
   async function handleSend() {
-    // --- UPDATED TOUR COMMAND INTERCEPTOR ---
+    // --- TOUR COMMAND INTERCEPTOR ---
     const text = input.trim().toLowerCase();
-    const tourTriggers = [
-      "/tour", 
-      "start tour", 
-      "show me around", 
-      "guide me", 
-      "how does this work", 
-      "how do i use this"
-    ];
-    
-    // Check if the input contains ANY of the triggers
+    const tourTriggers = ["/tour", "start tour", "show me around", "guide me", "how does this work", "how do i use this"];
     const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
     
     if (isTourCommand) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput(""); 
-      
       setMessages(prev => [...prev, { 
         role: "assistant", 
         content: "I'd be happy to show you around! Starting the tour now." 
       }]);
-
       window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
       setOpen(false); 
       return; 
     }
-    // ----------------------------------
 
     // --- DIAGNOSTIC PIN INTERCEPTOR ---
     const isPin = /^\d{6}$/.test(input.trim());
-
     if (isPin) {
       setScanning(true);
-      
       setMessages(prev => [...prev, { role: "user", content: input }]);
       setInput(""); 
-
       const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
       const result = await runRemoteDiagnostic(input.trim(), mockLogs);
-
-      setMessages(prev => [...prev, { 
-        role: "assistant", 
-        content: result.userMessage,
-        actionCode: result.actionCode 
-      }]);
-
+      setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
       setScanning(false);
       return; 
     }
-    // ----------------------------------
 
+    // --- MAIN SEND LOGIC ---
     if (!input.trim() || loading || !conversation) return;
-    const text = input.trim();
+    
+    // RENAMED variable here to avoid the conflict
+    const messageContent = input.trim(); 
     setInput("");
     setLoading(true);
 
-    // Safety timeout — clear loading after 30s regardless
     const timeout = setTimeout(() => setLoading(false), 30000);
-    await base44.agents.addMessage(conversation, { role: "user", content: text });
+    await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
     clearTimeout(timeout);
   }
 
   async function handleScanFile(e) {
     const file = e.target.files?.[0];
     if (!file || !conversation) return;
-
     setScanning(true);
     setLoading(true);
     const timeout = setTimeout(() => setLoading(false), 60000);
-
-    // Upload file then send with message to RAYMA
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     await base44.agents.addMessage(conversation, {
       role: "user",
@@ -166,30 +140,21 @@ export default function RaymaChat() {
             exit={{ opacity: 0, y: 20 }}
             className="fixed bottom-24 right-4 w-80 bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] z-40"
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <div>
                 <p className="font-semibold text-foreground text-sm">RAYMA</p>
                 <p className="text-xs text-muted-foreground">AI Financial Advisor</p>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={handleClear}
-                  className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                  title="Clear conversation"
-                >
+                <button onClick={handleClear} className="p-1.5 hover:bg-muted rounded-lg transition-colors" title="Clear conversation">
                   <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                >
+                <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {initializing ? (
                 <div className="flex items-center justify-center h-full">
@@ -210,7 +175,6 @@ export default function RaymaChat() {
                           <ReactMarkdown className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                             {msg.content || "…"}
                           </ReactMarkdown>
-                          {/* This draws the button if our interceptor passed an actionCode */}
                           {msg.actionCode && (
                             <button
                               onClick={() => {
@@ -229,7 +193,6 @@ export default function RaymaChat() {
                   </div>
                 ))
               )}
-
               {loading && (
                 <div className="flex justify-start">
                   <div className="bg-muted px-3 py-2 rounded-lg">
@@ -244,7 +207,6 @@ export default function RaymaChat() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <div className="border-t border-border p-3 flex items-center gap-2 shrink-0">
               <button
                 onClick={() => scanFileRef.current?.click()}
