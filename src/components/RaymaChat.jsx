@@ -45,7 +45,7 @@ export default function RaymaChat() {
   
 async function handleSend() {
     const text = input.trim().toLowerCase();
-    const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me Head" ];  
+    const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];  
     const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
   
     if (isTourCommand) {
