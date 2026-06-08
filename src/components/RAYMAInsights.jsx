@@ -124,52 +124,65 @@ Return 4 insights. Each should have:
       setTimeout(() => chatInput.focus(), 300);
     }
   };
-
-  const handleGetStarted = () => {
-    setShowGreeting(false);
-
-    if (isFirstTime) {
-      localStorage.setItem("rayma_tour_test", "true");
-      setIsFirstTime(false);
-  
-      // Initialize the Product Tour
-      const driverObj = window.driver.js.driver({
-        showProgress: true,
-        animate: true,
-        steps: [
-          {
-            element: '#rayma-insights',
-            popover: {
-              title: 'AI Insights 💡',
-              description: 'I analyze your data daily to find savings, track debt progress, and flag upcoming risks.',
-              side: "bottom",
-              align: 'start'
-            }
-          },
-          {
-            element: '#rayma-chat-input', // Ensure this ID is on your chat input!
-            popover: {
-              title: 'Ask Me Anything 💬',
-              description: 'Want to run a simulation or adjust your budget? Just type it here and let’s figure it out together.',
-              side: "top",
-              align: 'center'
-            }
+// 1. Reusable Tour Function
+  const startProductTour = () => {
+    setShowGreeting(false); 
+    
+    const driverObj = window.driver.js.driver({
+      showProgress: true,
+      animate: true,
+      steps: [
+        {
+          element: '#rayma-insights',
+          popover: {
+            title: 'AI Insights 💡',
+            description: 'I analyze your data daily to find savings, track debt progress, and flag upcoming risks.',
+            side: "bottom",
+            align: 'start'
           }
-        ],
-        // When the user clicks "Done" or closes the tour, automatically focus the chat
-        onDestroyStarted: () => {
-          driverObj.destroy();
-          focusChatInput(); 
+        },
+        {
+          element: '#rayma-chat-input',
+          popover: {
+            title: 'Ask Me Anything 💬',
+            description: 'Want to run a simulation or adjust your budget? Just type it here and let’s figure it out together.',
+            side: "top",
+            align: 'center'
+          }
         }
-      });
+      ],
+      onDestroyStarted: () => {
+        driverObj.destroy();
+        focusChatInput(); 
+      }
+    });
 
-      // Start the tour!
-      driverObj.drive();
+    driverObj.drive();
+  };
 
+  // 2. The Global Listener (The "Walkie-Talkie")
+  useEffect(() => {
+    const handleRemoteTourStart = () => {
+      startProductTour();
+    };
+
+    window.addEventListener("trigger-rayma-tour", handleRemoteTourStart);
+    
+    return () => window.removeEventListener("trigger-rayma-tour", handleRemoteTourStart);
+  }, []);
+
+  // 3. Updated Button Logic
+  const handleGetStarted = () => {
+    if (isFirstTime) {
+      localStorage.setItem("rayma_tour_complete", "true");
+      setIsFirstTime(false);
+      startProductTour();
     } else {
+      setShowGreeting(false);
       focusChatInput();
     }
   };
+
 
   const typeStyles = {
     tip:         "border-primary/30 bg-primary/5",
