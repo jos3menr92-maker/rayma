@@ -3,6 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
+// Import driver.js and its default CSS
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
+
 const CACHE_KEY = "rayma_insights_cache";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
@@ -118,13 +122,10 @@ Return 4 insights. Each should have:
   }
 
   const focusChatInput = () => {
-    // Looks for the chat input using either an ID or the placeholder text
     const chatInput = document.getElementById("rayma-chat-input") || document.querySelector('input[placeholder*="Ask RAYMA"]');
     if (chatInput) {
       chatInput.scrollIntoView({ behavior: "smooth", block: "center" });
       setTimeout(() => chatInput.focus(), 300);
-    } else {
-      console.warn("Could not find chat input to focus.");
     }
   };
 
@@ -135,9 +136,40 @@ Return 4 insights. Each should have:
       localStorage.setItem("rayma_tour_complete", "true");
       setIsFirstTime(false);
       
-      // TODO: Later on, you can trigger driver.js or react-joyride here!
-      console.log("Start product tour placeholder triggered!"); 
-      focusChatInput(); // For now, we just drop them into the chat
+      // Initialize the Product Tour
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        steps: [
+          {
+            element: '#rayma-insights',
+            popover: {
+              title: 'AI Insights 💡',
+              description: 'I analyze your data daily to find savings, track debt progress, and flag upcoming risks.',
+              side: "bottom",
+              align: 'start'
+            }
+          },
+          {
+            element: '#rayma-chat-input', // Ensure this ID is on your chat input!
+            popover: {
+              title: 'Ask Me Anything 💬',
+              description: 'Want to run a simulation or adjust your budget? Just type it here and let’s figure it out together.',
+              side: "top",
+              align: 'center'
+            }
+          }
+        ],
+        // When the user clicks "Done" or closes the tour, automatically focus the chat
+        onDestroyStarted: () => {
+          driverObj.destroy();
+          focusChatInput(); 
+        }
+      });
+
+      // Start the tour!
+      driverObj.drive();
+
     } else {
       focusChatInput();
     }
