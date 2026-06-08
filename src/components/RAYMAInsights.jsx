@@ -133,7 +133,7 @@ Return 4 insights. Each should have:
       setIsFirstTime(false);
       
       // Initialize the Product Tour
-      const driverObj = driver({
+      window.driver.js.driver({
         showProgress: true,
         animate: true,
         steps: [
