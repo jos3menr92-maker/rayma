@@ -42,24 +42,44 @@ export default function RaymaChat() {
     setMessages(conv.messages || []);
     setInitializing(false);
   }
-
-  async function handleSend() {
-    // --- TOUR COMMAND INTERCEPTOR ---
+  
+async function handleSend() {
+    // --- UPDATED TOUR COMMAND INTERCEPTOR ---
     const text = input.trim().toLowerCase();
-    const tourTriggers = ["/tour", "start tour", "show me around", "guide me", "how does this work", "how do i use this"];
+    
+    // Now includes your specific phrases!
+    const tourTriggers = [
+      "/tour", 
+      "start tour", 
+      "show me around", 
+      "guide me", 
+      "how does this work", 
+      "how do i use this",
+      "i'm lost",
+      "can i get a tour"
+      "give me Head"
+    ];
+    
+    // Check if the input contains ANY of the triggers
     const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
     
     if (isTourCommand) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput(""); 
+      
       setMessages(prev => [...prev, { 
         role: "assistant", 
         content: "I'd be happy to show you around! Starting the tour now." 
       }]);
+
       window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
       setOpen(false); 
       return; 
     }
+    // ----------------------------------
+    
+    // ... (rest of your existing handleSend logic)
+
 
     // --- DIAGNOSTIC PIN INTERCEPTOR ---
     const isPin = /^\d{6}$/.test(input.trim());
