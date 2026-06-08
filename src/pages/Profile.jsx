@@ -4,19 +4,17 @@ import { motion } from "framer-motion";
 import { 
   User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
   FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor, 
-  AlertCircle, Download, LifeBuoy, Fingerprint, Lock
+  AlertCircle, Download, LifeBuoy, Fingerprint, Lock, Loader2
 } from "lucide-react"; 
-import AvatarPicker, { getInitialsColor } from "@/components/AvatarPicker"; 
 import { Link, useNavigate } from "react-router-dom"; 
 import { Button } from "@/components/ui/button"; 
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
-import { Badge } from "@/components/ui/badge"; 
-import { Separator } from "@/components/ui/separator"; 
 import { useLanguage } from "@/lib/LanguageContext"; 
 import { t } from "@/lib/i18n";
 
+// DiceBear Human Avatars for a clean, professional profile look
 const HUMAN_AVATARS = [
   { id: "h1", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" },
   { id: "h2", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" },
@@ -42,8 +40,8 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
-
   const fileInputRef = useRef(null);
+  
   const [user, setUser] = useState(null); 
   const [loading, setLoading] = useState(true); 
   const [saving, setSaving] = useState(false); 
@@ -51,6 +49,7 @@ export default function Profile() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system"); 
   const [deleting, setDeleting] = useState(false);
+  
   const [form, setForm] = useState({ 
     preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
     preferred_currency: "USD", preferred_language: "en", dashboard_greeting: "", 
@@ -125,7 +124,7 @@ export default function Profile() {
             <div className="w-28 h-28 rounded-full border-4 border-background shadow-xl overflow-hidden bg-muted flex items-center justify-center text-4xl">
               {uploadingPhoto ? <Loader2 className="animate-spin" /> : 
                form.avatar_photo_url ? <img src={form.avatar_photo_url} className="w-full h-full object-cover" /> : 
-               <span className="font-bold text-primary">{form.preferred_name?.charAt(0)}</span>}
+               <span className="font-bold text-primary">{form.preferred_name?.charAt(0) || "U"}</span>}
             </div>
             <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 p-3 bg-primary text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform">
               <Camera className="w-5 h-5" />
@@ -149,7 +148,7 @@ export default function Profile() {
             <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="mt-6 rounded-xl" placeholder="Display Name" />
           </div>
 
-          {/* Compliance & Settings (Pay Schedule, Currency, etc...) */}
+          {/* Compliance & Settings */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps RAYMA calculate your cash flow" />
             <div className="grid grid-cols-2 gap-4">
@@ -165,7 +164,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Legal Section - MANDATORY for App Store */}
+          {/* Privacy & Legal - App Store Required */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Shield} title="Privacy & Legal" />
             <div className="space-y-1">
@@ -178,7 +177,9 @@ export default function Profile() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-2xl font-bold">Save All Changes</Button>
+          <Button type="submit" className="w-full h-12 rounded-2xl font-bold">
+            {saving ? "Saving..." : saved ? "✓ Saved!" : "Save All Changes"}
+          </Button>
         </form>
       </motion.div>
     </div>
