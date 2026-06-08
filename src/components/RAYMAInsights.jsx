@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
