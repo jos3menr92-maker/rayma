@@ -131,9 +131,9 @@ Return 4 insights. Each should have:
     if (isFirstTime) {
       localStorage.setItem("rayma_tour_complete", "true");
       setIsFirstTime(false);
-      
+  
       // Initialize the Product Tour
-      window.driver.js.driver({
+      const driverObj = window.driver.js.driver({
         showProgress: true,
         animate: true,
         steps: [
