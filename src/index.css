@@ -133,11 +133,25 @@
   line-height: 1.5;
 }
 
+/* Sharper, cleaner tour buttons */
 .driver-popover-footer button {
   background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   border-radius: 0.5rem;
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 8px 16px; /* Increased padding */
+  font-size: 13px;   /* Slightly larger font helps clarity */
   font-weight: 600;
+  
+  /* These force the browser to sharpen the text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.driver-popover-footer button:hover {
+  opacity: 0.9;
 }
