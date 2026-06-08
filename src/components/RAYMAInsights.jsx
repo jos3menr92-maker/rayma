@@ -124,28 +124,61 @@ Return 4 insights. Each should have:
       setTimeout(() => chatInput.focus(), 300);
     }
   };
-// 1. Reusable Tour Function
+
+  // 1. Reusable Tour Function
   const startProductTour = () => {
     setShowGreeting(false); 
     
     const driverObj = window.driver.js.driver({
       showProgress: true,
       animate: true,
+      smoothScroll: true,
+      allowClose: false, // Keep them on the rails until it's done!
       steps: [
+        // Step 1: The Welcome (No element, pops up in center)
+        {
+          popover: {
+            title: 'Welcome to your Command Center! 🚀',
+            description: "I'm RAYMA. I don't just track your money—I help you manage it. Let me show you how to put me to work.",
+            align: 'center'
+          }
+        },
+        // Step 2: Active Loans & Operations
+        {
+          element: '#active-loans-section', 
+          popover: {
+            title: 'Take Action on Debt 💳',
+            description: "This is your active debt. See those PAY buttons? Use them to instantly log a payment. Want to see how an extra $50/month changes your payoff date? Just ask me to run a simulation.",
+            side: "right",
+            align: 'start'
+          }
+        },
+        // Step 3: Proactive Insights
         {
           element: '#rayma-insights',
           popover: {
-            title: 'AI Insights 💡',
-            description: 'I analyze your data daily to find savings, track debt progress, and flag upcoming risks.',
+            title: 'Daily AI Insights 💡',
+            description: "Swipe through these cards daily. I generate them based on your live data. If you see a strategy you want to try, tell me in the chat and we'll build a plan.",
             side: "bottom",
             align: 'start'
           }
         },
+        // Step 4: The High Score
+        {
+          element: '#financial-health-score', 
+          popover: {
+            title: 'Your Financial Health 🏥',
+            description: "Think of this as your high score. It recalculates dynamically. Every time you log a payment or stick to your budget, watch this number go up.",
+            side: "left",
+            align: 'start'
+          }
+        },
+        // Step 5: The Chat / Conclusion
         {
           element: '#rayma-chat-input',
           popover: {
-            title: 'Ask Me Anything 💬',
-            description: 'Want to run a simulation or adjust your budget? Just type it here and let’s figure it out together.',
+            title: 'Your Control Panel 💬',
+            description: "Don't just read the dashboard—talk to me! Try typing 'add a $40 water bill' or 'run a debt snowball simulation'. I'm ready when you are!",
             side: "top",
             align: 'center'
           }
@@ -182,7 +215,6 @@ Return 4 insights. Each should have:
       focusChatInput();
     }
   };
-
 
   const typeStyles = {
     tip:         "border-primary/30 bg-primary/5",
