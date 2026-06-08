@@ -140,7 +140,9 @@
   border-radius: 0.5rem;
   padding: 8px 16px; /* Increased padding */
   font-size: 13px;   /* Slightly larger font helps clarity */
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
   
   /* These force the browser to sharpen the text rendering */
   -webkit-font-smoothing: antialiased;
