@@ -3,9 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
-
 const CACHE_KEY = "rayma_insights_cache";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
