@@ -176,7 +176,11 @@ export default function Dashboard() {
       <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
       <DueSoonAlert loans={activeLoans} bills={bills} payments={payments} />
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
-      <FinancialHealthScore />
+      
+      {/* ADDED ID WRAPPER HERE */}
+      <div id="financial-health-score">
+        <FinancialHealthScore />
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-4">
         <button onClick={() => navigate("/monthly-recap")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
@@ -207,7 +211,8 @@ export default function Dashboard() {
       </div>
 
       {activeLoans.length > 0 ? (
-        <div>
+        // ADDED ID HERE
+        <div id="active-loans-section">
           <h2 className="text-sm font-semibold font-heading text-foreground mb-2">{T("activeLoans", "Active Loans")}</h2>
           <div className="space-y-2">{activeLoans.map((loan, i) => <LoanCard key={loan.id} loan={loan} index={i} />)}</div>
         </div>
