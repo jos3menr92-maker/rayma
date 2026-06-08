@@ -76,11 +76,7 @@ async function handleSend() {
       setOpen(false); 
       return; 
     }
-    // ----------------------------------
-    
-    // ... (rest of your existing handleSend logic)
-
-
+  
     // --- DIAGNOSTIC PIN INTERCEPTOR ---
     const isPin = /^\d{6}$/.test(input.trim());
     if (isPin) {
