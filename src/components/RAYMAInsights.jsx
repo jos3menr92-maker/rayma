@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Sparkles, ChevronLeft, ChevronRight, RefreshCw, X, 
-  TrendingUp, AlertTriangle, Send, BrainCircuit, CalendarClock, Settings
+  Sparkles, ChevronLeft, ChevronRight, X, 
+  TrendingUp, AlertTriangle, CalendarClock, Settings
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useNavigate } from "react-router-dom";
 
 const CACHE_KEY = "rayma_insights_cache";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -35,14 +34,9 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
   const [showGreeting, setShowGreeting] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(false);
   
-  // AI Chat & Action Engine State
-  const [chatQuery, setChatQuery] = useState("");
-  const [chatResponse, setChatResponse] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   
   const touchStartX = useRef(null);
-  const navigate = useNavigate();
 
   // 1. Fetch User Profile for Global Context
   useEffect(() => {
@@ -124,65 +118,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     setLoading(false);
   }
 
-  // 4. The Action Engine (Chat Input)
-  const handleAskRayma = async (e) => {
-    e.preventDefault();
-    if (!chatQuery.trim()) return;
-
-    setIsTyping(true);
-    setChatResponse("");
-    const query = chatQuery.toLowerCase();
-    
-    // Command: Navigation
-    if (query.includes("go to") || query.includes("take me to")) {
-        if (query.includes("profile")) { navigate("/profile"); setChatResponse("Teleporting you to your Profile."); } 
-        else if (query.includes("loans")) { navigate("/loans"); setChatResponse("Pulling up your Loans dashboard."); } 
-        else { setChatResponse("I can navigate you anywhere. Just tell me where!"); }
-        setIsTyping(false); setChatQuery(""); return;
-    }
-    
-    // Command: Themes
-    if (query.includes("dark mode") || query.includes("light mode")) {
-        const newTheme = query.includes("dark mode") ? "dark" : "light";
-        document.documentElement.classList.remove(newTheme === "dark" ? "light" : "dark");
-        document.documentElement.classList.add(newTheme);
-        localStorage.setItem("theme", newTheme);
-        setChatResponse(`Switched to ${newTheme} mode.`);
-        setIsTyping(false); setChatQuery(""); return;
-    }
-
-    // Command: Focus Mode
-    if (query.includes("focus mode")) {
-        try {
-            await base44.auth.updateMe({ compact_mode: true });
-            setChatResponse("Focus Mode activated. Dashboard colors muted.");
-        } catch(err) { setChatResponse("Error saving to profile."); }
-        setIsTyping(false); setChatQuery(""); return;
-    }
-
-    // Fallback: Send to LLM
-    try {
-        const result = await base44.integrations.Core.InvokeLLM({
-            prompt: `You are RAYMA, a financial AI assistant. The user asked: "${chatQuery}". Answer concisely in 1-2 sentences.`
-        });
-        setChatResponse(result?.text || "I processed that, but couldn't generate a verbal response.");
-    } catch (err) {
-        setChatResponse("I'm having trouble connecting to my API brain right now.");
-    }
-    
-    setIsTyping(false);
-    setChatQuery("");
-  };
-
-  const focusChatInput = () => {
-    const chatInput = document.getElementById("rayma-chat-input") || document.querySelector('input[placeholder*="Ask RAYMA"]');
-    if (chatInput) {
-      chatInput.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => chatInput.focus(), 300);
-    }
-  };
-
-  // 5. Your Original Product Tour
+  // 4. Your Original Product Tour
   const startProductTour = () => {
     setShowGreeting(false); 
     
@@ -197,11 +133,10 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
         { element: '#active-loans-section', popover: { title: 'Take Action on Debt 💳', description: "This is your active debt. See those PAY buttons? Use them to instantly log a payment.", side: "right", align: 'start' } },
         { element: '#rayma-insights', popover: { title: 'Daily AI Insights 💡', description: "Swipe through these cards daily. I generate them based on your live data.", side: "bottom", align: 'start' } },
         { element: '#financial-health-score', popover: { title: 'Your Financial Health 🏥', description: "Think of this as your high score. It recalculates dynamically.", side: "left", align: 'start' } },
-        { element: '#rayma-chat-input', popover: { title: 'Your Control Panel 💬', description: "Don't just read the dashboard—talk to me and command me!", side: "top", align: 'center' } }
+        { popover: { title: 'Your Control Panel 💬', description: "Click the floating teal bubble in the bottom right anytime to talk to me and command me!", align: 'center' } }
       ],
       onDestroyStarted: () => {
         driverObj.destroy();
-        focusChatInput(); 
       }
     });
 
@@ -221,7 +156,6 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
       startProductTour();
     } else {
       setShowGreeting(false);
-      focusChatInput();
     }
   };
 
@@ -273,45 +207,6 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
           </motion.div>
         </AnimatePresence>
       )}
-
-      {/* --- ADDED: The Action-Ready Chat Interface --- */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm" id="rayma-chat-input">
-        <form onSubmit={handleAskRayma} className="flex gap-2">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <BrainCircuit className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <input 
-              type="text" 
-              value={chatQuery}
-              onChange={(e) => setChatQuery(e.target.value)}
-              placeholder="Ask RAYMA to navigate, change themes, or run math..." 
-              className="w-full pl-9 pr-4 py-3 bg-muted/50 border-transparent focus:border-primary rounded-xl text-sm transition-all"
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={!chatQuery.trim() || isTyping}
-            className="p-3 bg-primary text-primary-foreground rounded-xl hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center"
-          >
-            {isTyping ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-          </button>
-        </form>
-        
-        <AnimatePresence>
-          {chatResponse && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-3 p-3 bg-primary/5 border border-primary/10 rounded-xl flex items-start gap-3 overflow-hidden"
-            >
-              <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-foreground/90">{chatResponse}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
       {/* --- RESTORED: Your Original Greeting Modal UI --- */}
       <AnimatePresence>
