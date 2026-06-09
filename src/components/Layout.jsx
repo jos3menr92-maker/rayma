@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
@@ -9,6 +9,7 @@ import RaymaChat from "./RaymaChat";
 import MoreMenu from "./MoreMenu";
 import FeedbackButton from "./FeedbackButton";
 import PushNotificationPrompt from "./PushNotificationPrompt";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -24,6 +25,21 @@ export default function Layout() {
   const [moreOpen, setMoreOpen] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
+  const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
+
+  const { loans, bills, incomes, userProfile } = useFinancialData();
+
+  useEffect(() => {
+    try {
+      const flag = sessionStorage.getItem("rayma_auto_open");
+      if (flag === "true") {
+        setRaymaAutoOpen(true);
+        sessionStorage.removeItem("rayma_auto_open");
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -75,7 +91,13 @@ export default function Layout() {
 
       <FeedbackButton />
       <PushNotificationPrompt />
-      <RaymaChat />
+      <RaymaChat
+        autoOpen={raymaAutoOpen}
+        loans={loans}
+        bills={bills}
+        incomes={incomes}
+        userProfile={userProfile}
+      />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-2">
