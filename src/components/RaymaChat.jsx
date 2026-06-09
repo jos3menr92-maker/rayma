@@ -13,6 +13,7 @@ export default function RaymaChat() {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [tourTriggered, setTourTriggered] = useState(false);
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
 
@@ -46,9 +47,10 @@ export default function RaymaChat() {
 async function handleSend() {
     const text = input.trim().toLowerCase();
     const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];  
-    const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
+    const isTourCommand = !tourTriggered && tourTriggers.some(trigger => text === trigger || text.startsWith(trigger + " ") || text.endsWith(" " + trigger));
   
     if (isTourCommand) {
+      setTourTriggered(true);
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput(""); 
       
@@ -109,6 +111,7 @@ async function handleSend() {
     setConversation(null);
     setMessages([]);
     setLoading(false);
+    setTourTriggered(false);
     setInitializing(true);
     const conv = await base44.agents.createConversation({ agent_name: "rayma" });
     setConversation(conv);
