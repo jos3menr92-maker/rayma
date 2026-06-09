@@ -8,6 +8,7 @@ import { base44 } from "@/api/base44Client";
 
 const CACHE_KEY = "rayma_insights_cache";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const TOUR_COMPLETED_KEY = "rayma_tour_completed";
 
 function loadCache() {
   try {
@@ -45,16 +46,17 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
 
   // 2. Initialization & Product Tour Check
   useEffect(() => {
-    const hasSeenTour = localStorage.getItem("rayma_tour_test");
-    if (!hasSeenTour) {
+    const tourCompleted = localStorage.getItem(TOUR_COMPLETED_KEY);
+    const hasSeenGreetingThisSession = sessionStorage.getItem("rayma_greeted");
+    
+    if (!tourCompleted) {
+      // First time ever - show greeting and allow tour
       setIsFirstTime(true);
       setShowGreeting(true);
-    } else {
-      const hasSeenGreetingThisSession = sessionStorage.getItem("rayma_greeted");
-      if (!hasSeenGreetingThisSession) {
-        setShowGreeting(true);
-        sessionStorage.setItem("rayma_greeted", "true");
-      }
+    } else if (!hasSeenGreetingThisSession) {
+      // Returning user - show greeting but no tour
+      setShowGreeting(true);
+      sessionStorage.setItem("rayma_greeted", "true");
     }
 
     const cached = loadCache();
@@ -99,7 +101,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     try {
       result = await base44.integrations.Core.InvokeLLM({
         prompt: `You are RAYMA, a proactive personal finance AI. Based on the user's financial data below, generate exactly 4 short, personalized, actionable insights...`,
-        response_json_schema: { type: "object", properties: { insights: { type: "array", items: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, type: { type: "string" }, } } } } }
+        response_json_schema: { type: "object", properties: { insights: { type: "array", items: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, type: { type: "string" } } } } } }
       });
     } catch (e) {
       console.error("LLM Error:", e);
@@ -151,7 +153,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
 
   const handleGetStarted = () => {
     if (isFirstTime) {
-      localStorage.setItem("rayma_tour_complete", "true");
+      localStorage.setItem(TOUR_COMPLETED_KEY, "true");
       setIsFirstTime(false);
       startProductTour();
     } else {
