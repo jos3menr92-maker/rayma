@@ -28,6 +28,7 @@ import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
 import DataExport from './pages/DataExport';
 import { LanguageProvider } from '@/lib/LanguageContext';
+import { FinancialDataProvider } from '@/lib/FinancialDataContext';
 
 // Lazy load less-visited pages
 const Finance = lazy(() => import('./pages/Finance'));
@@ -70,42 +71,44 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Render the main app
+  // Render the main app wrapped with FinancialDataProvider so consumers can use useFinancialData()
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/loans" element={<LoansList />} />
-        <Route path="/add-loan" element={<AddLoan />} />
-        <Route path="/loan/:id" element={<LoanDetail />} />
-        <Route path="/bills" element={<Bills />} />
-        <Route path="/calendar" element={<BillCalendar />} />
-        <Route path="/reminders" element={<Reminders />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/budget" element={<Budget />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/security" element={<SecurityAudit />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/delete-account" element={<DeleteAccount />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/data-export" element={<DataExport />} />
-        <Route path="/remote-support" element={<RemoteSupport />} />
+    <FinancialDataProvider>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/loans" element={<LoansList />} />
+          <Route path="/add-loan" element={<AddLoan />} />
+          <Route path="/loan/:id" element={<LoanDetail />} />
+          <Route path="/bills" element={<Bills />} />
+          <Route path="/calendar" element={<BillCalendar />} />
+          <Route path="/reminders" element={<Reminders />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/budget" element={<Budget />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/security" element={<SecurityAudit />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/delete-account" element={<DeleteAccount />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/data-export" element={<DataExport />} />
+          <Route path="/remote-support" element={<RemoteSupport />} />
 
-        <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
-        <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
-        <Route path="/simulator" element={<Suspense fallback={<PageLoader />}><Simulator /></Suspense>} />
-        <Route path="/documents" element={<Suspense fallback={<PageLoader />}><DocumentVault /></Suspense>} />
-        <Route path="/bank-accounts" element={<Suspense fallback={<PageLoader />}><BankAccounts /></Suspense>} />
-        <Route path="/budget-dashboard" element={<Suspense fallback={<PageLoader />}><BudgetDashboard /></Suspense>} />
-        <Route path="/debt-simulator" element={<Suspense fallback={<PageLoader />}><DebtPayoffSimulator /></Suspense>} />
-        <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
-        <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
-        <Route path="/tax-summary" element={<Suspense fallback={<PageLoader />}><TaxSummary /></Suspense>} />
-        <Route path="*" element={<PageNotFound />} />
-      </Route>
-    </Routes>
+          <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
+          <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
+          <Route path="/simulator" element={<Suspense fallback={<PageLoader />}><Simulator /></Suspense>} />
+          <Route path="/documents" element={<Suspense fallback={<PageLoader />}><DocumentVault /></Suspense>} />
+          <Route path="/bank-accounts" element={<Suspense fallback={<PageLoader />}><BankAccounts /></Suspense>} />
+          <Route path="/budget-dashboard" element={<Suspense fallback={<PageLoader />}><BudgetDashboard /></Suspense>} />
+          <Route path="/debt-simulator" element={<Suspense fallback={<PageLoader />}><DebtPayoffSimulator /></Suspense>} />
+          <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
+          <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
+          <Route path="/tax-summary" element={<Suspense fallback={<PageLoader />}><TaxSummary /></Suspense>} />
+          <Route path="*" element={<PageNotFound />} />
+        </Route>
+      </Routes>
+    </FinancialDataProvider>
   );
 };
 
