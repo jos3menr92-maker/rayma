@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from "react"; 
 import { base44 } from "@/api/base44Client"; 
-import { motion } from "framer-motion"; 
+import { motion, AnimatePresence } from "framer-motion"; 
 import { 
   User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
   FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor, 
-  AlertCircle, Download, LifeBuoy, Fingerprint, Lock, Loader2
+  AlertCircle, Download, LifeBuoy, Fingerprint, Lock, Loader2,
+  Bell, Sparkles, Gamepad2
 } from "lucide-react"; 
 import { Link, useNavigate } from "react-router-dom"; 
 import { Button } from "@/components/ui/button"; 
@@ -14,27 +15,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/LanguageContext"; 
 import { t } from "@/lib/i18n";
 
-// CSS Sprite grid for professional avatars (4x4 layout = 16 faces)
-const AVATAR_SPRITE_URL = "/avatar-grid.jpg"; // Must match the file in your public/assets folder
-const GRID_SIZE = "400% 400%"; 
-
+// Live, photorealistic avatars - Zero image uploading required
 const HUMAN_AVATARS = [
-  { id: "face1", bgPos: "0% 0%" },
-  { id: "face2", bgPos: "33.33% 0%" },
-  { id: "face3", bgPos: "66.66% 0%" },
-  { id: "face4", bgPos: "100% 0%" },
-  { id: "face5", bgPos: "0% 33.33%" },
-  { id: "face6", bgPos: "33.33% 33.33%" },
-  { id: "face7", bgPos: "66.66% 33.33%" },
-  { id: "face8", bgPos: "100% 33.33%" },
-  { id: "face9", bgPos: "0% 66.66%" },
-  { id: "face10", bgPos: "33.33% 66.66%" },
-  { id: "face11", bgPos: "66.66% 66.66%" },
-  { id: "face12", bgPos: "100% 66.66%" },
-  { id: "face13", bgPos: "0% 100%" },
-  { id: "face14", bgPos: "33.33% 100%" },
-  { id: "face15", bgPos: "66.66% 100%" },
-  { id: "face16", bgPos: "100% 100%" },
+  { id: "face1", url: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
+  { id: "face2", url: "https://i.pravatar.cc/150?u=a042581f4e29026704d" },
+  { id: "face3", url: "https://i.pravatar.cc/150?u=a04258114e29026702d" },
+  { id: "face4", url: "https://i.pravatar.cc/150?u=a048581f4e29026701d" },
+  { id: "face5", url: "https://i.pravatar.cc/150?u=a04258a2462d826712d" },
+  { id: "face6", url: "https://i.pravatar.cc/150?u=a042581f4e29026703d" },
+  { id: "face7", url: "https://i.pravatar.cc/150?u=a042581f4e29026705d" },
+  { id: "face8", url: "https://i.pravatar.cc/150?u=a042581f4e29026706d" },
 ];
 
 function SectionHeader({ icon: Icon, title, subtitle }) { 
@@ -61,14 +51,25 @@ export default function Profile() {
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "system"); 
   const [deleting, setDeleting] = useState(false);
+  const [showArcade, setShowArcade] = useState(false);
+  
+  // Set Dark Mode as the absolute default
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
   
   const [form, setForm] = useState({ 
     preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
-    preferred_currency: "USD", preferred_language: "en", dashboard_greeting: "", 
-    pay_frequency: "", pay_day: "", compact_mode: false 
+    preferred_currency: "USD", preferred_language: "en", 
+    pay_frequency: "", pay_day: "", compact_mode: false,
+    smart_alerts: true, auto_insights: true
   });
+
+  // Apply theme to document automatically
+  useEffect(() => {
+    if (theme === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   useEffect(() => { loadUser(); }, []); 
 
@@ -83,10 +84,11 @@ export default function Profile() {
         avatar_photo_url: me.avatar_photo_url || "", 
         preferred_currency: me.preferred_currency || "USD", 
         preferred_language: me.preferred_language || "en", 
-        dashboard_greeting: me.dashboard_greeting || "", 
         pay_frequency: me.pay_frequency || "", 
         pay_day: me.pay_day || "", 
         compact_mode: me.compact_mode || false, 
+        smart_alerts: me.smart_alerts !== false,
+        auto_insights: me.auto_insights !== false,
       }); 
     } catch (err) { console.error(err); } finally { setLoading(false); }
   } 
@@ -139,14 +141,7 @@ export default function Profile() {
               {uploadingPhoto ? <Loader2 className="animate-spin" /> : 
                form.avatar_photo_url ? <img src={form.avatar_photo_url} className="w-full h-full object-cover" /> : 
                form.avatar_id ? (
-                 <div 
-                   className="w-full h-full"
-                   style={{
-                     backgroundImage: `url(${AVATAR_SPRITE_URL})`,
-                     backgroundPosition: HUMAN_AVATARS.find(a => a.id === form.avatar_id)?.bgPos || "0% 0%",
-                     backgroundSize: GRID_SIZE
-                   }}
-                 />
+                 <img src={HUMAN_AVATARS.find(a => a.id === form.avatar_id)?.url} className="w-full h-full object-cover" alt="Profile" />
                ) : <span className="font-bold text-primary">{form.preferred_name?.charAt(0) || "U"}</span>}
             </div>
             <button onClick={() => fileInputRef.current.click()} type="button" className="absolute bottom-0 right-0 p-3 bg-primary text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform">
@@ -163,7 +158,6 @@ export default function Profile() {
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a professional avatar to represent you" />
             
-            {/* The flex-wrap and fixed sizes ensure the boxes won't collapse in your preview */}
             <div className="flex flex-wrap gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
                 <button 
@@ -171,19 +165,78 @@ export default function Profile() {
                   type="button" 
                   onClick={() => setForm({...form, avatar_id: av.id, avatar_photo_url: ""})} 
                   className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${form.avatar_id === av.id ? "border-primary scale-105 shadow-md" : "border-transparent opacity-70 hover:opacity-100"}`}
-                  style={{
-                    backgroundImage: `url(${AVATAR_SPRITE_URL})`,
-                    backgroundPosition: av.bgPos,
-                    backgroundSize: GRID_SIZE
-                  }}
-                  aria-label={`Select Avatar ${av.id}`}
-                />
+                >
+                  <img src={av.url} alt={`Avatar option`} className="w-full h-full object-cover" />
+                </button>
               ))}
             </div>
             
             <div className="mt-6">
               <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Display Name</Label>
               <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder="How should we call you?" />
+            </div>
+          </div>
+
+          {/* Theme & Focus */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <SectionHeader icon={Monitor} title="Theme & Focus" subtitle="Customize your dashboard experience" />
+            
+            <div className="space-y-4">
+              {/* Theme Selector */}
+              <div className="grid grid-cols-2 gap-3 p-1 bg-muted/50 rounded-xl border border-border/50">
+                <button type="button" onClick={() => setTheme("light")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "light" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                  <Sun className="w-4 h-4" /> Light Mode
+                </button>
+                <button type="button" onClick={() => setTheme("dark")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "dark" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                  <Moon className="w-4 h-4" /> Dark Mode
+                </button>
+              </div>
+
+              {/* Focus Mode Toggle */}
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
+                <div>
+                  <p className="text-sm font-medium">Focus Mode</p>
+                  <p className="text-xs text-muted-foreground">Hides dashboard accent colors for a distraction-free view</p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setForm({...form, compact_mode: !form.compact_mode})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.compact_mode ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${form.compact_mode ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Smart Notifications */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <SectionHeader icon={Bell} title="Smart Notifications" subtitle="Let RAYMA handle the heavy lifting" />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3">
+                <div className="flex gap-3">
+                  <div className="mt-0.5"><Sparkles className="w-4 h-4 text-primary" /></div>
+                  <div>
+                    <p className="text-sm font-medium">Automated Cash Flow Insights</p>
+                    <p className="text-xs text-muted-foreground">RAYMA analyzes your weekly spending automatically</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setForm({...form, auto_insights: !form.auto_insights})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.auto_insights ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${form.auto_insights ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between p-3 border-t border-border/40">
+                <div className="flex gap-3">
+                  <div className="mt-0.5"><AlertCircle className="w-4 h-4 text-muted-foreground" /></div>
+                  <div>
+                    <p className="text-sm font-medium">Smart Bill Alerts</p>
+                    <p className="text-xs text-muted-foreground">Get notified only when upcoming obligations need attention</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setForm({...form, smart_alerts: !form.smart_alerts})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.smart_alerts ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${form.smart_alerts ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -213,36 +266,6 @@ export default function Profile() {
                     <SelectItem value="MXN">MXN ($)</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Experience & Focus */}
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Monitor} title="Experience & Focus" subtitle="Customize how RAYMA interacts with you" />
-            <div className="space-y-5">
-              <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Custom Assistant Greeting</Label>
-                <Input 
-                  placeholder="e.g., Let's automate your day!" 
-                  value={form.dashboard_greeting} 
-                  onChange={e => setForm({...form, dashboard_greeting: e.target.value})} 
-                  className="rounded-xl"
-                />
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border/50">
-                <div>
-                  <p className="text-sm font-medium">Focus Mode (Compact UI)</p>
-                  <p className="text-xs text-muted-foreground">Removes dashboard accent colors & condenses data</p>
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setForm({...form, compact_mode: !form.compact_mode})}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.compact_mode ? 'bg-primary' : 'bg-muted-foreground/30'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${form.compact_mode ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
               </div>
             </div>
           </div>
@@ -289,8 +312,47 @@ export default function Profile() {
           <Button type="submit" className="w-full h-12 rounded-2xl font-bold shadow-sm hover:shadow-md transition-all">
             {saving ? "Saving..." : saved ? "✓ Preferences Saved" : "Save All Changes"}
           </Button>
+
+          {/* The 80s Easter Egg Trigger */}
+          <div className="flex justify-center pt-8 pb-4">
+            <button 
+              type="button" 
+              onClick={() => setShowArcade(true)}
+              className="text-muted-foreground/30 hover:text-primary/60 transition-colors flex items-center gap-2 text-xs font-mono"
+            >
+              <Gamepad2 className="w-4 h-4" />
+              INSERT COIN
+            </button>
+          </div>
         </form>
       </motion.div>
+
+      {/* 80s Arcade Modal (Easter Egg) */}
+      <AnimatePresence>
+        {showArcade && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-[#0c0c0c] border-2 border-green-500/50 p-6 rounded-xl max-w-sm w-full shadow-[0_0_30px_rgba(34,197,94,0.2)]"
+            >
+              <div className="flex justify-between items-center mb-6 border-b border-green-500/30 pb-2">
+                <h3 className="text-green-400 font-mono text-lg tracking-widest uppercase">Terminal.exe</h3>
+                <button onClick={() => setShowArcade(false)} className="text-green-500 hover:text-green-300"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="h-48 border border-green-500/30 bg-black rounded flex flex-col items-center justify-center gap-4">
+                 <Gamepad2 className="w-12 h-12 text-green-500 animate-pulse" />
+                 <p className="text-green-400 font-mono text-sm text-center px-4">
+                   RAYMA ARCADE v1.0 <br/><br/>
+                   <span className="text-xs opacity-70">Coming soon. Take a deep breath. Your finances are automated.</span>
+                 </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
