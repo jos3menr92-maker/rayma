@@ -46,10 +46,27 @@ export default function Layout() {
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <QuickAddMenu open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
       <MoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
+      
       {/* Top bar with menu button */}
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
-          <span className="text-sm font-semibold font-heading text-foreground">RAYMA</span>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
+              {userProfile?.avatar_photo_url ? (
+                <img 
+                  src={`${userProfile.avatar_photo_url}?t=${Date.now()}`} 
+                  className="w-full h-full object-cover" 
+                  alt="Profile" 
+                />
+              ) : (
+                <span className="text-[10px] font-bold text-primary">
+                  {userProfile?.preferred_name?.charAt(0) || "R"}
+                </span>
+              )}
+            </div>
+            <span className="text-sm font-semibold font-heading text-foreground">RAYMA</span>
+          </div>
+          
           <div className="flex items-center gap-2">
             <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Menu className="w-5 h-5" />
@@ -57,6 +74,7 @@ export default function Layout() {
           </div>
         </div>
       </div>
+      
       <main className="flex-1 pb-safe overflow-y-auto">
         <Outlet />
       </main>
