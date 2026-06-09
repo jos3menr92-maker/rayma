@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { Mail, Lock, User, Loader2, ArrowRight, Chrome } from "lucide-react";
+import { Mail, Lock, User, Loader2, ArrowRight, Chrome, Fingerprint } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [activeProvider, setActiveProvider] = useState(null); // Tracks which social button is loading
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "", fullName: "" });
   
@@ -38,6 +39,29 @@ export default function Auth() {
     }
   };
 
+  // --- INJECTED: Premium Provider Login Handler ---
+  const handleProviderSignIn = async (provider) => {
+    setActiveProvider(provider);
+    setError("");
+    try {
+      if (provider === "passkey") {
+        // Trigger device Biometrics (FaceID / Fingerprint / Windows Hello)
+        await base44.auth.signInWithPasskey(); 
+      } else {
+        // Trigger Apple or Google OAuth
+        await base44.auth.signInWithOAuth({ provider });
+      }
+      
+      await checkAppState();
+      try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
+      navigate("/");
+    } catch (err) {
+      setError(err.message || `${provider} authentication is not fully configured yet.`);
+    } finally {
+      setActiveProvider(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm space-y-8">
@@ -62,6 +86,7 @@ export default function Auth() {
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50"
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 required
+                disabled={loading || activeProvider}
               />
             </div>
           )}
@@ -74,6 +99,7 @@ export default function Auth() {
               className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50"
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
+              disabled={loading || activeProvider}
             />
           </div>
 
@@ -85,6 +111,7 @@ export default function Auth() {
               className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50"
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
+              disabled={loading || activeProvider}
             />
           </div>
 
@@ -92,8 +119,8 @@ export default function Auth() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg"
+            disabled={loading || activeProvider}
+            className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> {isLogin ? "Sign In" : "Sign Up"} <ArrowRight className="w-4 h-4" /></>}
           </button>
@@ -105,15 +132,42 @@ export default function Auth() {
           <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or continue with</span></div>
         </div>
 
-        {/* Apple/Google Compliance Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium">
-            <Chrome className="w-4 h-4" /> Google
+        {/* --- UPGRADED: Apple, Google, and Fingerprint Buttons --- */}
+        <div className="space-y-3">
+          <button 
+            type="button" 
+            onClick={() => handleProviderSignIn("passkey")}
+            disabled={loading || activeProvider}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
+          >
+            {activeProvider === "passkey" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-5 h-5" />}
+            Sign in with Passkey / Biometrics
           </button>
-          <button type="button" className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.58c.07-2.65 2.37-3.91 2.47-3.96-1.34-1.94-3.41-2.2-4.17-2.24-1.78-.18-3.47 1.05-4.38 1.05-.91 0-2.3[...]" /></svg>
-            Apple
-          </button>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              type="button" 
+              onClick={() => handleProviderSignIn("google")}
+              disabled={loading || activeProvider}
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50"
+            >
+              {activeProvider === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />} 
+              Google
+            </button>
+            <button 
+              type="button" 
+              onClick={() => handleProviderSignIn("apple")}
+              disabled={loading || activeProvider}
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50"
+            >
+              {activeProvider === "apple" ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.58c.07-2.65 2.37-3.91 2.47-3.96-1.34-1.94-3.41-2.2-4.17-2.24-1.78-.18-3.47 1.05-4.38 1.05-.91 0-2.3-1.01-4.04-1.01-1.74 0-3.37 1.15-4.28 2.75-1.85 3.25-.48 8.04 1.33 10.66.89 1.28 1.94 2.7 3.32 2.65 1.33-.05 1.84-.86 3.44-.86 1.6 0 2.07.86 3.46.83 1.41-.03 2.33-1.28 3.22-2.57 1.03-1.49 1.46-2.94 1.48-3.02-.03-.02-2.82-1.08-2.88-4.24zm-2.4-7.23c.75-.92 1.25-2.2 1.11-3.48-1.09.04-2.45.74-3.23 1.68-.69.83-1.29 2.15-1.12 3.4 1.23.1 2.48-.68 3.24-1.6z" /></svg>
+              )}
+              Apple
+            </button>
+          </div>
         </div>
 
         {/* Toggle & Legal */}
