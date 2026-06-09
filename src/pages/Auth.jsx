@@ -23,6 +23,8 @@ export default function Auth() {
       if (isLogin) {
         await base44.auth.signIn(formData.email, formData.password);
         await checkAppState();
+        // Set a one-time session flag so RAYMA can auto-open after login
+        try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         navigate("/");
       } else {
         await base44.auth.signUp(formData.email, formData.password, { full_name: formData.fullName });
@@ -91,7 +93,7 @@ export default function Auth() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+            className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> {isLogin ? "Sign In" : "Sign Up"} <ArrowRight className="w-4 h-4" /></>}
           </button>
@@ -109,7 +111,7 @@ export default function Auth() {
             <Chrome className="w-4 h-4" /> Google
           </button>
           <button type="button" className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.58c.07-2.65 2.37-3.91 2.47-3.96-1.34-1.94-3.41-2.2-4.17-2.24-1.78-.18-3.47 1.05-4.38 1.05-.91 0-2.33-1.07-3.83-1.04-1.97.03-3.79 1.14-4.81 2.92-2.07 3.58-.53 8.78 1.45 11.66.97 1.41 2.12 3.01 3.63 2.95 1.46-.06 2.01-.94 3.76-.94 1.76 0 2.27.94 3.82.91 1.58-.03 2.58-1.42 3.54-2.83 1.11-1.61 1.56-3.17 1.58-3.26-.04-.01-3.15-1.21-3.19-4.88z"/></svg>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.58c.07-2.65 2.37-3.91 2.47-3.96-1.34-1.94-3.41-2.2-4.17-2.24-1.78-.18-3.47 1.05-4.38 1.05-.91 0-2.3[...]" /></svg>
             Apple
           </button>
         </div>
