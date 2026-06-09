@@ -14,13 +14,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/LanguageContext"; 
 import { t } from "@/lib/i18n";
 
-// DiceBear Human Avatars for a clean, professional profile look
+// CSS Sprite grid for professional avatars.
+// Assumes the provided avatar grid image is a 4x4 layout (16 faces total).
+const AVATAR_SPRITE_URL = "/avatar-grid.jpg"; // Update this with your actual image file name in the public folder
+const GRID_SIZE = "400% 400%"; 
+
 const HUMAN_AVATARS = [
-  { id: "h1", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" },
-  { id: "h2", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka" },
-  { id: "h3", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Julian" },
-  { id: "h4", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mimi" },
-  { id: "h5", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Casper" },
+  { id: "face1", bgPos: "0% 0%" },
+  { id: "face2", bgPos: "33.33% 0%" },
+  { id: "face3", bgPos: "66.66% 0%" },
+  { id: "face4", bgPos: "100% 0%" },
+  { id: "face5", bgPos: "0% 33.33%" },
+  { id: "face6", bgPos: "33.33% 33.33%" },
+  { id: "face7", bgPos: "66.66% 33.33%" },
+  { id: "face8", bgPos: "100% 33.33%" },
+  { id: "face9", bgPos: "0% 66.66%" },
+  { id: "face10", bgPos: "33.33% 66.66%" },
+  { id: "face11", bgPos: "66.66% 66.66%" },
+  { id: "face12", bgPos: "100% 66.66%" },
+  { id: "face13", bgPos: "0% 100%" },
+  { id: "face14", bgPos: "33.33% 100%" },
+  { id: "face15", bgPos: "66.66% 100%" },
+  { id: "face16", bgPos: "100% 100%" },
 ];
 
 function SectionHeader({ icon: Icon, title, subtitle }) { 
@@ -83,7 +98,7 @@ export default function Profile() {
     setUploadingPhoto(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setForm(f => ({ ...f, avatar_photo_url: file_url, avatar_emoji: "" }));
+      setForm(f => ({ ...f, avatar_photo_url: file_url, avatar_emoji: "", avatar_id: "" }));
     } catch (err) { console.error(err); } finally { setUploadingPhoto(false); }
   }
 
@@ -124,7 +139,16 @@ export default function Profile() {
             <div className="w-28 h-28 rounded-full border-4 border-background shadow-xl overflow-hidden bg-muted flex items-center justify-center text-4xl">
               {uploadingPhoto ? <Loader2 className="animate-spin" /> : 
                form.avatar_photo_url ? <img src={form.avatar_photo_url} className="w-full h-full object-cover" /> : 
-               <span className="font-bold text-primary">{form.preferred_name?.charAt(0) || "U"}</span>}
+               form.avatar_id ? (
+                 <div 
+                   className="w-full h-full"
+                   style={{
+                     backgroundImage: `url(${AVATAR_SPRITE_URL})`,
+                     backgroundPosition: HUMAN_AVATARS.find(a => a.id === form.avatar_id)?.bgPos || "0% 0%",
+                     backgroundSize: GRID_SIZE
+                   }}
+                 />
+               ) : <span className="font-bold text-primary">{form.preferred_name?.charAt(0) || "U"}</span>}
             </div>
             <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 p-3 bg-primary text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform">
               <Camera className="w-5 h-5" />
@@ -138,11 +162,20 @@ export default function Profile() {
           {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Upload a selfie or choose a professional avatar" />
-            <div className="grid grid-cols-5 gap-3 mt-4">
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
-                <button key={av.id} type="button" onClick={() => setForm({...form, avatar_photo_url: av.url})} className={`relative rounded-xl overflow-hidden border-2 transition-all ${form.avatar_photo_url === av.url ? "border-primary scale-105" : "border-transparent opacity-70"}`}>
-                  <img src={av.url} alt="Human Avatar" />
-                </button>
+                <button 
+                  key={av.id} 
+                  type="button" 
+                  onClick={() => setForm({...form, avatar_id: av.id, avatar_photo_url: ""})} 
+                  className={`relative w-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${form.avatar_id === av.id ? "border-primary scale-105" : "border-transparent opacity-70 hover:opacity-100"}`}
+                  style={{
+                    backgroundImage: `url(${AVATAR_SPRITE_URL})`,
+                    backgroundPosition: av.bgPos,
+                    backgroundSize: GRID_SIZE
+                  }}
+                  aria-label={`Select Avatar ${av.id}`}
+                />
               ))}
             </div>
             <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="mt-6 rounded-xl" placeholder="Display Name" />
