@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import RemoteSupport from './pages/RemoteSupport';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -114,6 +115,21 @@ const AuthenticatedApp = () => {
 
 
 function App() {
+  // --- Theme Persistence Logic ---
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    // Apply 'dark' class if theme is dark, or default if no preference is saved
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (savedTheme === "light") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      // Default fallback to dark mode if user hasn't set anything yet
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <LanguageProvider>
