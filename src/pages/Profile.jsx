@@ -14,9 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/LanguageContext"; 
 import { t } from "@/lib/i18n";
 
-// CSS Sprite grid for professional avatars.
-// Assumes the provided avatar grid image is a 4x4 layout (16 faces total).
-const AVATAR_SPRITE_URL = "/avatar-grid.jpg"; // Update this with your actual image file name in the public folder
+// CSS Sprite grid for professional avatars (4x4 layout = 16 faces)
+const AVATAR_SPRITE_URL = "/avatar-grid.jpg"; // Must match the file in your public/assets folder
 const GRID_SIZE = "400% 400%"; 
 
 const HUMAN_AVATARS = [
@@ -114,7 +113,7 @@ export default function Profile() {
   }
 
   async function executeAccountDeletion() {
-    if (!window.confirm("Permanent account deletion? This cannot be undone.")) return;
+    if (!window.confirm("FINAL WARNING: Permanent account deletion? This cannot be undone.")) return;
     setDeleting(true);
     try {
       await base44.auth.deleteMe();
@@ -150,7 +149,7 @@ export default function Profile() {
                  />
                ) : <span className="font-bold text-primary">{form.preferred_name?.charAt(0) || "U"}</span>}
             </div>
-            <button onClick={() => fileInputRef.current.click()} className="absolute bottom-0 right-0 p-3 bg-primary text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform">
+            <button onClick={() => fileInputRef.current.click()} type="button" className="absolute bottom-0 right-0 p-3 bg-primary text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform">
               <Camera className="w-5 h-5" />
             </button>
             <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
@@ -159,16 +158,19 @@ export default function Profile() {
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
+          
           {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Upload a selfie or choose a professional avatar" />
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 mt-4">
+            <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a professional avatar to represent you" />
+            
+            {/* The flex-wrap and fixed sizes ensure the boxes won't collapse in your preview */}
+            <div className="flex flex-wrap gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
                 <button 
                   key={av.id} 
                   type="button" 
                   onClick={() => setForm({...form, avatar_id: av.id, avatar_photo_url: ""})} 
-                  className={`relative w-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${form.avatar_id === av.id ? "border-primary scale-105" : "border-transparent opacity-70 hover:opacity-100"}`}
+                  className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${form.avatar_id === av.id ? "border-primary scale-105 shadow-md" : "border-transparent opacity-70 hover:opacity-100"}`}
                   style={{
                     backgroundImage: `url(${AVATAR_SPRITE_URL})`,
                     backgroundPosition: av.bgPos,
@@ -178,22 +180,92 @@ export default function Profile() {
                 />
               ))}
             </div>
-            <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="mt-6 rounded-xl" placeholder="Display Name" />
+            
+            <div className="mt-6">
+              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Display Name</Label>
+              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder="How should we call you?" />
+            </div>
           </div>
 
-          {/* Compliance & Settings */}
+          {/* Localization & Region */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <SectionHeader icon={Globe} title="Localization & Region" subtitle="Set your primary language and currency" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Language</Label>
+                <Select value={form.preferred_language} onValueChange={v => setForm({...form, preferred_language: v})}>
+                  <SelectTrigger><SelectValue placeholder="Select Language" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="fr">Français</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Currency</Label>
+                <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
+                  <SelectTrigger><SelectValue placeholder="Select Currency" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="MXN">MXN ($)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Experience & Focus */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <SectionHeader icon={Monitor} title="Experience & Focus" subtitle="Customize how RAYMA interacts with you" />
+            <div className="space-y-5">
+              <div>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Custom Assistant Greeting</Label>
+                <Input 
+                  placeholder="e.g., Let's automate your day!" 
+                  value={form.dashboard_greeting} 
+                  onChange={e => setForm({...form, dashboard_greeting: e.target.value})} 
+                  className="rounded-xl"
+                />
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border/50">
+                <div>
+                  <p className="text-sm font-medium">Focus Mode (Compact UI)</p>
+                  <p className="text-xs text-muted-foreground">Removes dashboard accent colors & condenses data</p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setForm({...form, compact_mode: !form.compact_mode})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.compact_mode ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${form.compact_mode ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Pay Schedule */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps RAYMA calculate your cash flow" />
             <div className="grid grid-cols-2 gap-4">
-              <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
-                <SelectTrigger><SelectValue placeholder="Frequency" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input placeholder="Primary Payday" value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} />
+              <div>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Frequency</Label>
+                <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
+                  <SelectTrigger><SelectValue placeholder="Frequency" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Primary Payday</Label>
+                <Input placeholder="e.g., 1st & 15th" value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="rounded-xl" />
+              </div>
             </div>
           </div>
 
@@ -201,17 +273,21 @@ export default function Profile() {
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Shield} title="Privacy & Legal" />
             <div className="space-y-1">
-               <Link to="/privacy-policy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm">
-                  Privacy Policy <ChevronRight className="w-4 h-4" />
+               <Link to="/privacy-policy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
+                  Privacy Policy <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
-               <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm">
-                  Terms of Service & EULA <ChevronRight className="w-4 h-4" />
+               <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
+                  Terms of Service & EULA <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
+               <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center justify-between p-3 hover:bg-red-500/10 text-red-500 rounded-xl text-sm transition-colors">
+                  <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete Account & Data</span>
+                  <ChevronRight className="w-4 h-4 opacity-50" />
+               </button>
             </div>
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-2xl font-bold">
-            {saving ? "Saving..." : saved ? "✓ Saved!" : "Save All Changes"}
+          <Button type="submit" className="w-full h-12 rounded-2xl font-bold shadow-sm hover:shadow-md transition-all">
+            {saving ? "Saving..." : saved ? "✓ Preferences Saved" : "Save All Changes"}
           </Button>
         </form>
       </motion.div>
