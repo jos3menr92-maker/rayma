@@ -4,6 +4,7 @@ import { MessageSquare, X, Send, Trash2, Loader2, ScanLine } from "lucide-react"
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { runRemoteDiagnostic } from "../lib/runRemoteDiagnostic";
+import { useNavigate } from "react-router-dom";
 
 export default function RaymaChat() {
   const [open, setOpen] = useState(false);
@@ -13,8 +14,16 @@ export default function RaymaChat() {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
+  const navigate = useNavigate();
+
+  // Fetch User Profile so RAYMA knows who she is talking to
+  useEffect(() => {
+    base44.auth.me().then(me => setUserProfile(me)).catch(console.error);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,43 +52,122 @@ export default function RaymaChat() {
     setInitializing(false);
   }
   
-async function handleSend() {
+  async function handleSend() {
     const text = input.trim().toLowerCase();
-    const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];  
-    const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
-  
-    if (isTourCommand) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
-      setInput(""); 
-      
-      setMessages(prev => [...prev, { 
-        role: "assistant", 
-        content: "I'd be happy to show you around! Starting the tour now." 
-      }]);
+    const messageContent = input.trim(); 
+    if (!text) return;
 
+    // --- 1. TOUR INTERCEPTOR ---
+    const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];  
+    if (tourTriggers.some(trigger => text.includes(trigger))) {
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setInput(""); 
+      setMessages(prev => [...prev, { role: "assistant", content: "I'd be happy to show you around! Starting the tour now." }]);
       window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
       setOpen(false); 
       return; 
     }
+
+    // --- 2. HELP & CAPABILITIES MENU ---
+    if (text === "help" || text.includes("what can you do") || text.includes("who are you")) {
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setInput("");
+      const helpText = `I am RAYMA, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document" (using the scanner icon below)\n* **Learn:** "Show me around" (to restart the tour)\n* **Security:** "Log me out"\n\nOr just ask me any financial question, and I will calculate the best move.`;
+      setMessages(prev => [...prev, { role: "assistant", content: helpText }]);
+      return;
+    }
+
+    // --- 3. LOGOUT COMMAND ---
+    if (text.includes("log out") || text.includes("sign out")) {
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setInput("");
+      setMessages(prev => [...prev, { role: "assistant", content: "Logging you out securely. See you next time!" }]);
+      setTimeout(async () => {
+        await base44.auth.logout();
+        window.location.href = "/login";
+      }, 1500);
+      return;
+    }
+
+    // --- 4. NAVIGATION COMMANDS ---
+    if (text.includes("go to") || text.includes("take me to") || text.includes("open ")) {
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setInput("");
+      if (text.includes("profile") || text.includes("settings")) {
+        navigate("/profile");
+        setMessages(prev => [...prev, { role: "assistant", content: "Teleporting you to your Profile & Settings." }]);
+      } else if (text.includes("loan") || text.includes("debt")) {
+        navigate("/loans");
+        setMessages(prev => [...prev, { role: "assistant", content: "Pulling up your Loans dashboard." }]);
+      } else if (text.includes("dashboard") || text.includes("home")) {
+        navigate("/");
+        setMessages(prev => [...prev, { role: "assistant", content: "Taking you to the main Command Center." }]);
+      } else {
+        setMessages(prev => [...prev, { role: "assistant", content: "I can navigate you anywhere. Just tell me where!" }]);
+      }
+      return;
+    }
+
+    // --- 5. THEME & SETTINGS COMMANDS ---
+    if (text.includes("dark mode") || text.includes("light mode")) {
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setInput("");
+      const newTheme = text.includes("dark mode") ? "dark" : "light";
+      document.documentElement.classList.remove(newTheme === "dark" ? "light" : "dark");
+      document.documentElement.classList.add(newTheme);
+      localStorage.setItem("theme", newTheme);
+      setMessages(prev => [...prev, { role: "assistant", content: `Done! Switched to ${newTheme} mode.` }]);
+      return;
+    }
+
+    if (text.includes("focus mode")) {
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setInput("");
+      try {
+          await base44.auth.updateMe({ compact_mode: true });
+          setMessages(prev => [...prev, { role: "assistant", content: "Focus Mode activated. I've muted the dashboard colors so you can concentrate." }]);
+      } catch(err) { 
+          setMessages(prev => [...prev, { role: "assistant", content: "I had trouble saving that setting, please try again." }]); 
+      }
+      return;
+    }
+
+    // --- 6. SECRET DEBUG MODE ---
+    if (text.includes("debug mode") || text.includes("developer mode")) {
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setInput("");
+      
+      const isDebug = localStorage.getItem("rayma_debug_mode") === "true";
+      const newState = !isDebug;
+      localStorage.setItem("rayma_debug_mode", newState ? "true" : "false");
+      
+      window.dispatchEvent(new CustomEvent("toggle-debug-mode"));
+      
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: newState 
+          ? "🛠️ **Debug Mode Enabled.** Advanced metrics and developer tools are now active." 
+          : "🔒 **Debug Mode Disabled.** Returning to standard user view." 
+      }]);
+      return;
+    }
   
-    // --- DIAGNOSTIC PIN INTERCEPTOR ---
-    const isPin = /^\d{6}$/.test(input.trim());
+    // --- 7. DIAGNOSTIC PIN INTERCEPTOR ---
+    const isPin = /^\d{6}$/.test(text);
     if (isPin) {
       setScanning(true);
-      setMessages(prev => [...prev, { role: "user", content: input }]);
+      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
       setInput(""); 
       const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
-      const result = await runRemoteDiagnostic(input.trim(), mockLogs);
+      const result = await runRemoteDiagnostic(messageContent, mockLogs);
       setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
       setScanning(false);
       return; 
     }
 
-    // --- MAIN SEND LOGIC ---
-    if (!input.trim() || loading || !conversation) return;
+    // --- MAIN API SEND LOGIC ---
+    if (loading || !conversation) return;
     
-    // RENAMED variable here to avoid the conflict
-    const messageContent = input.trim(); 
     setInput("");
     setLoading(true);
 
@@ -164,7 +252,7 @@ async function handleSend() {
               ) : messages.length === 0 ? (
                 <div className="flex justify-start">
                   <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
-                    Hi! I'm RAYMA, your AI financial advisor. How can I help you today?
+                    Hi {userProfile?.preferred_name || "there"}! I'm RAYMA, your AI financial advisor. Type <b>"What can you do?"</b> to see my commands, or just ask me a question!
                   </div>
                 </div>
               ) : (
