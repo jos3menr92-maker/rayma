@@ -4,6 +4,7 @@ import { MessageSquare, X, Send, Trash2, Loader2, ScanLine } from "lucide-react"
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { runRemoteDiagnostic } from "../lib/runRemoteDiagnostic";
+import { useNavigate } from "react-router-dom"; // Added for routing commands
 
 export default function RaymaChat() {
   const [open, setOpen] = useState(false);
@@ -16,6 +17,7 @@ export default function RaymaChat() {
   const [tourTriggered, setTourTriggered] = useState(false);
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
+  const navigate = useNavigate(); // Hook added to allow RAYMA to change pages
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,6 +64,76 @@ async function handleSend() {
       window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
       setOpen(false); 
       return; 
+    }
+
+    // --- INJECTED: SUPER DEBUG MODE ---
+    if (text === "rayma debug mode r4yma-d3v-2026") {
+      setMessages(prev => [...prev, { role: "user", content: "********" }]);
+      setInput("");
+      const isDebug = localStorage.getItem("rayma_debug_mode") === "true";
+      const newState = !isDebug;
+      localStorage.setItem("rayma_debug_mode", newState ? "true" : "false");
+      window.dispatchEvent(new CustomEvent("toggle-debug-mode"));
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: newState 
+          ? "🔐 **SUPER DEBUG MODE UNLOCKED.** Advanced developer metrics are now active." 
+          : "🔒 **SUPER DEBUG MODE SECURED.** Returning to standard user environment." 
+      }]);
+      return;
+    }
+
+    // --- INJECTED: HELP & SYSTEM COMMANDS ---
+    if (text === "help" || text === "what can you do" || text === "who are you") {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      const helpText = `I am RAYMA, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document"\n* **Learn:** "Start tour"\n* **Security:** "Log me out"`;
+      setMessages(prev => [...prev, { role: "assistant", content: helpText }]);
+      return;
+    }
+
+    if (text === "log out" || text === "sign out") {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      setMessages(prev => [...prev, { role: "assistant", content: "Logging you out securely. See you next time!" }]);
+      setTimeout(async () => { await base44.auth.logout(); window.location.href = "/login"; }, 1500);
+      return;
+    }
+
+    // --- INJECTED: NAVIGATION COMMANDS ---
+    if (text.includes("go to") || text.includes("take me to") || text.includes("open ")) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      if (text.includes("profile") || text.includes("settings")) { navigate("/profile"); setMessages(prev => [...prev, { role: "assistant", content: "Teleporting you to your Profile & Settings." }]); } 
+      else if (text.includes("loan") || text.includes("debt")) { navigate("/loans"); setMessages(prev => [...prev, { role: "assistant", content: "Pulling up your Loans dashboard." }]); } 
+      else if (text.includes("dashboard") || text.includes("home")) { navigate("/"); setMessages(prev => [...prev, { role: "assistant", content: "Taking you to the main Command Center." }]); } 
+      else { setMessages(prev => [...prev, { role: "assistant", content: "I can navigate you anywhere. Just tell me where!" }]); }
+      return;
+    }
+
+    // --- INJECTED: THEME & SETTINGS COMMANDS ---
+    if (text === "dark mode" || text === "switch to dark mode") {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      document.documentElement.classList.remove("light"); document.documentElement.classList.add("dark"); localStorage.setItem("theme", "dark");
+      setMessages(prev => [...prev, { role: "assistant", content: `Done! Switched to dark mode.` }]);
+      return;
+    }
+
+    if (text === "light mode" || text === "switch to light mode") {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      document.documentElement.classList.remove("dark"); document.documentElement.classList.add("light"); localStorage.setItem("theme", "light");
+      setMessages(prev => [...prev, { role: "assistant", content: `Done! Switched to light mode.` }]);
+      return;
+    }
+
+    if (text.includes("focus mode")) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      try { await base44.auth.updateMe({ compact_mode: true }); setMessages(prev => [...prev, { role: "assistant", content: "Focus Mode activated. Colors muted." }]); } 
+      catch(err) { setMessages(prev => [...prev, { role: "assistant", content: "Trouble saving setting." }]); }
+      return;
     }
   
     // --- DIAGNOSTIC PIN INTERCEPTOR ---
