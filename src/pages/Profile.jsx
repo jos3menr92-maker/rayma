@@ -146,7 +146,7 @@ export default function Profile() {
           <div className="relative inline-block">
             <div className="w-28 h-28 rounded-full border-4 border-background shadow-xl overflow-hidden bg-muted flex items-center justify-center text-4xl">
               {uploadingPhoto ? <Loader2 className="animate-spin" /> : 
-               form.avatar_photo_url ? <img src={form.avatar_photo_url} className="w-full h-full object-cover" /> : 
+               form.avatar_photo_url ? <img src={`${form.avatar_photo_url}?t=${Date.now()}`} className="w-full h-full object-cover" /> : 
                form.avatar_id ? (
                  <img src={HUMAN_AVATARS.find(a => a.id === form.avatar_id)?.url} className="w-full h-full object-cover" alt="Profile" />
                ) : <span className="font-bold text-primary">{form.preferred_name?.charAt(0) || "U"}</span>}
