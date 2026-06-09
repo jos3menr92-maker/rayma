@@ -15,16 +15,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/LanguageContext"; 
 import { t } from "@/lib/i18n";
 
-// Live, photorealistic avatars - Zero image uploading required
+// 15 distinct, professional avatars
 const HUMAN_AVATARS = [
-  { id: "face1", url: "https://i.pravatar.cc/150?u=a042581f4e29026024d" },
-  { id: "face2", url: "https://i.pravatar.cc/150?u=a042581f4e29026704d" },
-  { id: "face3", url: "https://i.pravatar.cc/150?u=a04258114e29026702d" },
-  { id: "face4", url: "https://i.pravatar.cc/150?u=a048581f4e29026701d" },
-  { id: "face5", url: "https://i.pravatar.cc/150?u=a04258a2462d826712d" },
-  { id: "face6", url: "https://i.pravatar.cc/150?u=a042581f4e29026703d" },
-  { id: "face7", url: "https://i.pravatar.cc/150?u=a042581f4e29026705d" },
-  { id: "face8", url: "https://i.pravatar.cc/150?u=a042581f4e29026706d" },
+  { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
+  { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
+  { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
+  { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
+  { id: "face5", url: "https://i.pravatar.cc/150?img=33" },
+  { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
+  { id: "face7", url: "https://i.pravatar.cc/150?img=38" },
+  { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
+  { id: "face9", url: "https://i.pravatar.cc/150?img=49" },
+  { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
+  { id: "face11", url: "https://i.pravatar.cc/150?img=51" },
+  { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
+  { id: "face13", url: "https://i.pravatar.cc/150?img=56" },
+  { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
+  { id: "face15", url: "https://i.pravatar.cc/150?img=60" },
 ];
 
 function SectionHeader({ icon: Icon, title, subtitle }) { 
@@ -158,13 +165,14 @@ export default function Profile() {
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a professional avatar to represent you" />
             
-            <div className="flex flex-wrap gap-3 mt-4">
+            {/* Updated Grid: 3 columns on mobile, 5 columns on desktop */}
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
                 <button 
                   key={av.id} 
                   type="button" 
                   onClick={() => setForm({...form, avatar_id: av.id, avatar_photo_url: ""})} 
-                  className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${form.avatar_id === av.id ? "border-primary scale-105 shadow-md" : "border-transparent opacity-70 hover:opacity-100"}`}
+                  className={`relative aspect-square w-full rounded-xl overflow-hidden border-2 transition-all ${form.avatar_id === av.id ? "border-primary scale-105 shadow-md" : "border-transparent opacity-70 hover:opacity-100"}`}
                 >
                   <img src={av.url} alt={`Avatar option`} className="w-full h-full object-cover" />
                 </button>
