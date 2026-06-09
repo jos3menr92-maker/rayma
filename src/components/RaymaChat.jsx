@@ -43,15 +43,13 @@ export default function RaymaChat() {
     setInitializing(false);
   }
   
-  async function handleSend() {
+async function handleSend() {
     const text = input.trim().toLowerCase();
-    const messageContent = input.trim(); 
-    if (!text) return;
-
-    // --- 1. TOUR INTERCEPTOR (FIXED to exact matches) ---
-    const exactTourTriggers = ["tour", "start tour", "show me around", "guide me", "how does this work", "how do i use this", "i'm lost", "can i get a tour"];  
-    if (exactTourTriggers.includes(text)) {
-      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+    const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];  
+    const isTourCommand = tourTriggers.some(trigger => text.includes(trigger));
+  
+    if (isTourCommand) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput(""); 
       
       setMessages(prev => [...prev, { 
@@ -63,43 +61,25 @@ export default function RaymaChat() {
       setOpen(false); 
       return; 
     }
-
-    // --- 2. SUPER DEBUG MODE (Restored Password) ---
-    if (text === "rayma debug mode r4yma-d3v-2026") {
-      setMessages(prev => [...prev, { role: "user", content: "********" }]);
-      setInput("");
-      
-      const isDebug = localStorage.getItem("rayma_debug_mode") === "true";
-      const newState = !isDebug;
-      localStorage.setItem("rayma_debug_mode", newState ? "true" : "false");
-      
-      window.dispatchEvent(new CustomEvent("toggle-debug-mode"));
-      
-      setMessages(prev => [...prev, { 
-        role: "assistant", 
-        content: newState 
-          ? "🔐 **SUPER DEBUG MODE UNLOCKED.** Advanced developer metrics are now active." 
-          : "🔒 **SUPER DEBUG MODE SECURED.** Returning to standard user environment." 
-      }]);
-      return;
-    }
-
-    // --- 3. DIAGNOSTIC PIN INTERCEPTOR ---
-    const isPin = /^\d{6}$/.test(text);
+  
+    // --- DIAGNOSTIC PIN INTERCEPTOR ---
+    const isPin = /^\d{6}$/.test(input.trim());
     if (isPin) {
       setScanning(true);
-      setMessages(prev => [...prev, { role: "user", content: messageContent }]);
+      setMessages(prev => [...prev, { role: "user", content: input }]);
       setInput(""); 
       const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
-      const result = await runRemoteDiagnostic(messageContent, mockLogs);
+      const result = await runRemoteDiagnostic(input.trim(), mockLogs);
       setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
       setScanning(false);
       return; 
     }
 
-    // --- 4. MAIN SEND LOGIC ---
-    if (loading || !conversation) return;
+    // --- MAIN SEND LOGIC ---
+    if (!input.trim() || loading || !conversation) return;
     
+    // RENAMED variable here to avoid the conflict
+    const messageContent = input.trim(); 
     setInput("");
     setLoading(true);
 
