@@ -1,28 +1,37 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrency } from "@/hooks/useCurrency";
 import { base44 } from "@/api/base44Client";
 import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
-import MiniCalendar from "../components/calendar/MiniCalendar";
 import { Wallet, TrendingDown, TrendingUp, CreditCard, AlertCircle, CalendarDays, BarChart2, FileText, RefreshCw } from "lucide-react";
 import { getInitialsColor } from "@/components/AvatarPicker";
-import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
 import LoanCard from "../components/LoanCard";
 import DueThisWeek from "../components/DueThisWeek";
-import NetWorthChart from "../components/NetWorthChart";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+
+// --- LAZY LOADED COMPONENTS (Optimized for Mobile Main Thread) ---
+const MiniCalendar = lazy(() => import("../components/calendar/MiniCalendar"));
+const FinancialHealthScore = lazy(() => import("../components/FinancialHealthScore"));
+const NetWorthChart = lazy(() => import("../components/NetWorthChart"));
 
 const COLORS = [
   "hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", 
   "hsl(var(--chart-4))", "hsl(var(--destructive))", "#34d399", "#f97316", 
   "#a78bfa", "#38bdf8", "#fb7185", "#facc15", "#4ade80"
 ];
+
+// --- NATIVE SKELETON LOADER (App Store Compliance) ---
+function WidgetSkeleton({ height = "h-48" }) {
+  return (
+    <div className={`w-full ${height} bg-slate-800/20 rounded-3xl animate-pulse border border-slate-700/30 mb-4`}></div>
+  );
+}
 
 function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency }) {
   const fmt = formatCurrency || ((v) => `$${Math.round(v || 0).toLocaleString()}`);
@@ -173,13 +182,20 @@ export default function Dashboard() {
       )}
 
       <DueThisWeek loans={activeLoans} bills={bills} />
-      <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
+      
+      {/* LAZY LOADED: MiniCalendar */}
+      <Suspense fallback={<WidgetSkeleton height="h-[340px]" />}>
+        <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
+      </Suspense>
+
       <DueSoonAlert loans={activeLoans} bills={bills} payments={payments} />
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
       
-      {/* ADDED ID WRAPPER HERE */}
       <div id="financial-health-score">
-        <FinancialHealthScore />
+        {/* LAZY LOADED: Financial Health Score */}
+        <Suspense fallback={<WidgetSkeleton height="h-32" />}>
+          <FinancialHealthScore />
+        </Suspense>
       </div>
 
       <div className="grid grid-cols-2 gap-2 mb-4">
@@ -193,7 +209,10 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <NetWorthChart />
+      {/* LAZY LOADED: Net Worth Chart */}
+      <Suspense fallback={<WidgetSkeleton height="h-64" />}>
+        <NetWorthChart />
+      </Suspense>
 
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
         <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("expenseBreakdown", "Expense Breakdown")}</h2>
@@ -211,7 +230,6 @@ export default function Dashboard() {
       </div>
 
       {activeLoans.length > 0 ? (
-        // ADDED ID HERE
         <div id="active-loans-section">
           <h2 className="text-sm font-semibold font-heading text-foreground mb-2">{T("activeLoans", "Active Loans")}</h2>
           <div className="space-y-2">{activeLoans.map((loan, i) => <LoanCard key={loan.id} loan={loan} index={i} />)}</div>
