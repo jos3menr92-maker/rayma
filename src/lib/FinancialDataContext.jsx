@@ -34,12 +34,24 @@ export function FinancialDataProvider({ children }) {
     }
   }
 
+  // Refresh just the user profile
+  async function refreshUserProfile() {
+    try {
+      const me = await base44.auth.me();
+      setUserProfile(me || null);
+      return me;
+    } catch (e) {
+      console.error("Failed to refresh user profile:", e);
+      return null;
+    }
+  }
+
   useEffect(() => {
     loadAll();
   }, []);
 
   return (
-    <FinancialDataContext.Provider value={{ loans, bills, incomes, userProfile, loading, reload: loadAll }}>
+    <FinancialDataContext.Provider value={{ loans, bills, incomes, userProfile, loading, reload: loadAll, refreshUserProfile }}>
       {children}
     </FinancialDataContext.Provider>
   );
