@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import Arcade from "./arcade";
 import RemoteSupport from './pages/RemoteSupport';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
