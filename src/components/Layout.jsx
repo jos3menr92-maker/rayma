@@ -23,6 +23,8 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
@@ -41,6 +43,14 @@ export default function Layout() {
     }
   }, []);
 
+  // Reset image state when userProfile changes
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+  }, [userProfile?.avatar_photo_url]);
+
+  const hasValidAvatar = userProfile?.avatar_photo_url && !imageError;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -51,12 +61,14 @@ export default function Layout() {
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
-              {userProfile?.avatar_photo_url ? (
+            <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center flex-shrink-0">
+              {hasValidAvatar && imageLoaded ? (
                 <img 
-                  src={`${userProfile.avatar_photo_url}?t=${Date.now()}`} 
+                  src={userProfile.avatar_photo_url}
                   className="w-full h-full object-cover" 
-                  alt="Profile" 
+                  alt="Profile"
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <span className="text-[10px] font-bold text-primary">
