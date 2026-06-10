@@ -1,7 +1,6 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { useFinancialData } from '@/lib/FinancialDataContext';
 
-// 1. We dynamically import the games ONLY when the user clicks them!
 const RetroSnake = lazy(() => import('./RetroSnake'));
 const SpaceInvaders = lazy(() => import('./SpaceInvaders'));
 
@@ -19,7 +18,6 @@ const PlaceholderGame = ({ title, description }) => (
   </div>
 );
 
-// We need a loading screen for the half-second it takes to download the game file
 const LoadingScreen = () => (
   <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
     <div className="w-12 h-12 border-4 border-slate-700 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
@@ -30,10 +28,7 @@ const LoadingScreen = () => (
 const Arcade = () => {
   const { financialData, userProfile } = useFinancialData();
   const [activeGame, setActiveGame] = useState('space_invaders'); 
-  
-  const [highScores, setHighScores] = useState({
-    space_invaders: 0, retro_snake: 0, neon_pong: 0
-  });
+  const [highScores, setHighScores] = useState({ space_invaders: 0, retro_snake: 0, neon_pong: 0 });
 
   const handleUpdateScore = (gameId, newScore) => {
     if (newScore > (highScores[gameId] || 0)) {
@@ -43,14 +38,10 @@ const Arcade = () => {
 
   const renderActiveGame = () => {
     switch(activeGame) {
-      case 'retro_snake': 
-        return <RetroSnake onUpdateScore={handleUpdateScore} />;
-      case 'space_invaders': 
-        return <SpaceInvaders onUpdateScore={handleUpdateScore} />;
-      case 'neon_pong': 
-        return <PlaceholderGame title={GAMES_REGISTRY.neon_pong.title} description={GAMES_REGISTRY.neon_pong.description} />;
-      default: 
-        return null;
+      case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} />;
+      case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} />;
+      case 'neon_pong': return <PlaceholderGame title={GAMES_REGISTRY.neon_pong.title} description={GAMES_REGISTRY.neon_pong.description} />;
+      default: return null;
     }
   };
 
@@ -68,37 +59,38 @@ const Arcade = () => {
         </div>
         <div className="text-right hidden md:block">
           <div className="text-xs font-bold text-slate-500 uppercase mb-1">Player</div>
-          <div className="text-3xl font-mono font-bold text-white">
-            {userProfile?.preferred_name || 'Guest'}
-          </div>
+          <div className="text-3xl font-mono font-bold text-white">{userProfile?.preferred_name || 'Guest'}</div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
         <nav className="lg:col-span-1 space-y-4">
           <div className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 px-4">Select Terminal</div>
-          {Object.values(GAMES_REGISTRY).map((game) => (
-            <button
-              key={game.id}
-              onClick={() => setActiveGame(game.id)}
-              className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
-                activeGame === game.id ? `bg-slate-900 border-${game.accentColor.split('-')[1]}-500` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
-              }`}
-            >
-              <div className="flex flex-col items-start">
-                <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${activeGame === game.id ? game.accentColor : 'text-slate-500'}`}>
-                  Terminal {game.id === 'space_invaders' ? '01' : game.id === 'retro_snake' ? '02' : '03'}
-                </span>
-                <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
-                  {game.title}
-                </span>
-              </div>
-            </button>
-          ))}
+          {Object.values(GAMES_REGISTRY).map((game) => {
+            const colorMap = { 'text-purple-500': 'purple', 'text-lime-500': 'lime', 'text-cyan-400': 'cyan' };
+            const color = colorMap[game.accentColor] || 'slate';
+            return (
+              <button
+                key={game.id}
+                onClick={() => setActiveGame(game.id)}
+                className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
+                  activeGame === game.id ? `bg-slate-900 border-${color}-500` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex flex-col items-start">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${activeGame === game.id ? game.accentColor : 'text-slate-500'}`}>
+                    Terminal {game.id === 'space_invaders' ? '01' : game.id === 'retro_snake' ? '02' : '03'}
+                  </span>
+                  <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
+                    {game.title}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </nav>
 
         <section className="lg:col-span-2">
-          {/* 2. Wrap the active game in a Suspense fallback so it can show a loading screen while downloading the file! */}
           <Suspense fallback={<LoadingScreen />}>
             {renderActiveGame()}
           </Suspense>
@@ -106,7 +98,6 @@ const Arcade = () => {
 
         <aside className="space-y-8">
           <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-3xl rounded-full" />
             <h2 className="text-xl font-black italic mb-6">TOP SCORES</h2>
             <div className="space-y-4">
               {Object.values(GAMES_REGISTRY).map((game) => (
