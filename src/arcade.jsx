@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useFinancialData } from '@/lib/FinancialDataContext';
-import RetroSnake from './RetroSnake'; // <-- This pulls in your new file!
+
+// 1. We dynamically import the games ONLY when the user clicks them!
+const RetroSnake = lazy(() => import('./RetroSnake'));
+const SpaceInvaders = lazy(() => import('./SpaceInvaders'));
 
 const GAMES_REGISTRY = {
   space_invaders: { id: 'space_invaders', title: 'Space Invaders', description: 'Defend your portfolio from descending aliens!', accentColor: 'text-purple-500' },
@@ -8,7 +11,6 @@ const GAMES_REGISTRY = {
   neon_pong: { id: 'neon_pong', title: 'Neon Pong', description: 'Classic bounce action. Deflect the bear market!', accentColor: 'text-cyan-400' }
 };
 
-// Generic placeholder for games that aren't built yet
 const PlaceholderGame = ({ title, description }) => (
   <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
     <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">{title}</h3>
@@ -17,9 +19,17 @@ const PlaceholderGame = ({ title, description }) => (
   </div>
 );
 
+// We need a loading screen for the half-second it takes to download the game file
+const LoadingScreen = () => (
+  <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
+    <div className="w-12 h-12 border-4 border-slate-700 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+    <div className="text-cyan-500 font-mono font-bold tracking-widest animate-pulse">DOWNLOADING GAME DATA...</div>
+  </div>
+);
+
 const Arcade = () => {
   const { financialData, userProfile } = useFinancialData();
-  const [activeGame, setActiveGame] = useState('retro_snake');
+  const [activeGame, setActiveGame] = useState('space_invaders'); 
   
   const [highScores, setHighScores] = useState({
     space_invaders: 0, retro_snake: 0, neon_pong: 0
@@ -31,13 +41,12 @@ const Arcade = () => {
     }
   };
 
-  // The router that decides which game file to load
   const renderActiveGame = () => {
     switch(activeGame) {
       case 'retro_snake': 
         return <RetroSnake onUpdateScore={handleUpdateScore} />;
       case 'space_invaders': 
-        return <PlaceholderGame title={GAMES_REGISTRY.space_invaders.title} description={GAMES_REGISTRY.space_invaders.description} />;
+        return <SpaceInvaders onUpdateScore={handleUpdateScore} />;
       case 'neon_pong': 
         return <PlaceholderGame title={GAMES_REGISTRY.neon_pong.title} description={GAMES_REGISTRY.neon_pong.description} />;
       default: 
@@ -50,11 +59,11 @@ const Arcade = () => {
       <header className="max-w-7xl mx-auto mb-12 flex justify-between items-end">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-3 h-3 bg-lime-500 rounded-full animate-pulse" />
-            <span className="text-xs font-black uppercase tracking-widest text-lime-500">System Online</span>
+            <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
+            <span className="text-xs font-black uppercase tracking-widest text-purple-500">System Online</span>
           </div>
           <h1 className="text-6xl font-black italic uppercase tracking-tighter leading-none">
-            RAYMA <span className="text-lime-500">Arcade</span>
+            RAYMA <span className="text-purple-500">Arcade</span>
           </h1>
         </div>
         <div className="text-right hidden md:block">
@@ -73,11 +82,11 @@ const Arcade = () => {
               key={game.id}
               onClick={() => setActiveGame(game.id)}
               className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
-                activeGame === game.id ? 'bg-slate-900 border-lime-500' : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
+                activeGame === game.id ? `bg-slate-900 border-${game.accentColor.split('-')[1]}-500` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
               }`}
             >
               <div className="flex flex-col items-start">
-                <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${activeGame === game.id ? 'text-lime-500' : 'text-slate-500'}`}>
+                <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${activeGame === game.id ? game.accentColor : 'text-slate-500'}`}>
                   Terminal {game.id === 'space_invaders' ? '01' : game.id === 'retro_snake' ? '02' : '03'}
                 </span>
                 <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
@@ -89,18 +98,21 @@ const Arcade = () => {
         </nav>
 
         <section className="lg:col-span-2">
-          {renderActiveGame()}
+          {/* 2. Wrap the active game in a Suspense fallback so it can show a loading screen while downloading the file! */}
+          <Suspense fallback={<LoadingScreen />}>
+            {renderActiveGame()}
+          </Suspense>
         </section>
 
         <aside className="space-y-8">
           <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-lime-500/5 blur-3xl rounded-full" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-3xl rounded-full" />
             <h2 className="text-xl font-black italic mb-6">TOP SCORES</h2>
             <div className="space-y-4">
               {Object.values(GAMES_REGISTRY).map((game) => (
                 <div key={game.id} className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-400 uppercase">{game.title}</span>
-                  <span className="font-mono text-lg font-bold text-lime-400">
+                  <span className={`font-mono text-lg font-bold ${game.accentColor.replace('text-', 'text-').replace('500', '400')}`}>
                     {(highScores[game.id] || 0).toString().padStart(4, '0')}
                   </span>
                 </div>
