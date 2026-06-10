@@ -6,6 +6,12 @@ export default function RetroSnake({ onUpdateScore }) {
   const [score, setScore] = useState(0);
   const canvasRef = useRef(null);
 
+  // OPTIMIZATION 1: Prevent game-reset glitches if the parent dashboard re-renders
+  const latestScoreUpdate = useRef(onUpdateScore);
+  useEffect(() => {
+    latestScoreUpdate.current = onUpdateScore;
+  }, [onUpdateScore]);
+
   useEffect(() => {
     if (!isGameRunning || gameOver) return;
 
@@ -34,10 +40,14 @@ export default function RetroSnake({ onUpdateScore }) {
     };
     window.addEventListener('keydown', handleKeyDown);
 
+    // OPTIMIZATION 2: Memory-safe touch binding for mobile devices
     const attachControls = (id, handler) => {
       const el = document.getElementById(id);
       if (!el) return () => {};
-      const trigger = (e) => { e.preventDefault(); handler(); };
+      const trigger = (e) => { 
+        if (e.cancelable) e.preventDefault(); 
+        handler(); 
+      };
       el.addEventListener('touchstart', trigger, { passive: false });
       el.addEventListener('mousedown', trigger);
       return () => {
@@ -53,7 +63,8 @@ export default function RetroSnake({ onUpdateScore }) {
 
     const endGame = (finalScore) => {
       setGameOver(true);
-      onUpdateScore('retro_snake', finalScore);
+      // Use the ref here to safely send the score without triggering a reset
+      latestScoreUpdate.current && latestScoreUpdate.current('retro_snake', finalScore);
       window.cancelAnimationFrame(animationFrameId);
     };
 
@@ -69,11 +80,13 @@ export default function RetroSnake({ onUpdateScore }) {
 
       const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
+      // Wall Collision
       if (head.x < 0 || head.x >= canvas.width / gridSize || head.y < 0 || head.y >= canvas.height / gridSize) {
         endGame(currentScore);
         return;
       }
 
+      // Self Collision
       for (let i = 0; i < snake.length; i++) {
         if (snake[i].x === head.x && snake[i].y === head.y) {
           endGame(currentScore);
@@ -83,6 +96,7 @@ export default function RetroSnake({ onUpdateScore }) {
 
       snake.unshift(head);
 
+      // Food logic
       if (head.x === food.x && head.y === food.y) {
         currentScore += 10;
         setScore(currentScore);
@@ -113,7 +127,7 @@ export default function RetroSnake({ onUpdateScore }) {
       cleanupUp(); cleanupDown(); cleanupLeft(); cleanupRight();
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, onUpdateScore]); 
+  }, [isGameRunning, gameOver]); // REMOVED onUpdateScore to prevent glitches
 
   useEffect(() => {
     return () => { setIsGameRunning(false); };
