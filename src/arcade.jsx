@@ -312,15 +312,3 @@ const Arcade = () => {
 };
 
 export default Arcade;
-                  </div>
-                ))}
-              </div>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Arcade;
