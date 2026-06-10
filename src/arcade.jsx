@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useFinancialData } from '@/lib/FinancialDataContext'; // Fixed absolute path to prevent crashes
+import { useFinancialData } from '@/lib/FinancialDataContext';
 
 const GAMES_REGISTRY = {
   space_invaders: { id: 'space_invaders', title: 'Space Invaders', description: 'Defend your portfolio from descending aliens!', accentColor: 'text-purple-500' },
@@ -14,7 +14,8 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    if (!isGameRunning || gameId !== 'retro_snake') return;
+    // Stop loop if game is over or not running
+    if (!isGameRunning || gameId !== 'retro_snake' || gameOver) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -26,12 +27,12 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
     let food = { x: 20, y: 10 };
     let dx = 1;
     let dy = 0;
-    let currentScore = 0;
+    let currentScore = score; // Resume score if restarting
     
     let frameCount = 0;
     const speed = 6; 
 
-    // Keyboard Controls
+    // Keyboard Support
     const handleKeyDown = (e) => {
       if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(e.key) > -1) {
           e.preventDefault();
@@ -43,16 +44,29 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
 
-    // On-Screen Button Controls
-    const handleUp = () => { if (dy === 0) { dx = 0; dy = -1; } };
-    const handleDown = () => { if (dy === 0) { dx = 0; dy = 1; } };
-    const handleLeft = () => { if (dx === 0) { dx = -1; dy = 0; } };
-    const handleRight = () => { if (dx === 0) { dx = 1; dy = 0; } };
+    // Instant Mobile Touch Support
+    const attachControls = (id, handler) => {
+      const el = document.getElementById(id);
+      if (!el) return () => {};
+      const trigger = (e) => { e.preventDefault(); handler(); };
+      el.addEventListener('touchstart', trigger, { passive: false });
+      el.addEventListener('mousedown', trigger);
+      return () => {
+        el.removeEventListener('touchstart', trigger);
+        el.removeEventListener('mousedown', trigger);
+      };
+    };
 
-    document.getElementById('btn-up')?.addEventListener('click', handleUp);
-    document.getElementById('btn-down')?.addEventListener('click', handleDown);
-    document.getElementById('btn-left')?.addEventListener('click', handleLeft);
-    document.getElementById('btn-right')?.addEventListener('click', handleRight);
+    const cleanupUp = attachControls('btn-up', () => { if (dy === 0) { dx = 0; dy = -1; } });
+    const cleanupDown = attachControls('btn-down', () => { if (dy === 0) { dx = 0; dy = 1; } });
+    const cleanupLeft = attachControls('btn-left', () => { if (dx === 0) { dx = -1; dy = 0; } });
+    const cleanupRight = attachControls('btn-right', () => { if (dx === 0) { dx = 1; dy = 0; } });
+
+    const endGame = (finalScore) => {
+      setGameOver(true);
+      onUpdateScore(gameId, finalScore);
+      window.cancelAnimationFrame(animationFrameId);
+    };
 
     const render = () => {
       animationFrameId = window.requestAnimationFrame(render);
@@ -106,73 +120,109 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
       });
     };
 
-    const endGame = (finalScore) => {
-      setIsGameRunning(false);
-      setGameOver(true);
-      onUpdateScore(gameId, finalScore);
-      window.cancelAnimationFrame(animationFrameId);
-    };
-
     render();
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.getElementById('btn-up')?.removeEventListener('click', handleUp);
-      document.getElementById('btn-down')?.removeEventListener('click', handleDown);
-      document.getElementById('btn-left')?.removeEventListener('click', handleLeft);
-      document.getElementById('btn-right')?.removeEventListener('click', handleRight);
+      cleanupUp(); cleanupDown(); cleanupLeft(); cleanupRight();
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameId]);
+  }, [isGameRunning, gameId, gameOver]); 
 
+  // Reset entirely if they leave the page
   useEffect(() => {
-    setIsGameRunning(false);
-    setGameOver(false);
-    setScore(0);
-  }, [gameId]);
+    return () => { setIsGameRunning(false); };
+  }, []);
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
       {!isGameRunning ? (
         <>
-          {gameOver && <div className="text-red-500 font-black text-4xl mb-4 tracking-widest z-10">GAME OVER</div>}
-          <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2 z-10">
+          <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">
             {GAMES_REGISTRY[gameId].title}
           </h3>
-          <div className="text-slate-400 font-mono mb-8 text-center max-w-md h-12 z-10">
-            {gameOver ? `FINAL SCORE: ${score}` : GAMES_REGISTRY[gameId].description}
+          <div className="text-slate-400 font-mono mb-8 text-center max-w-md h-12">
+            {GAMES_REGISTRY[gameId].description}
           </div>
           
           {gameId === 'retro_snake' ? (
              <button
                onClick={() => { setGameOver(false); setScore(0); setIsGameRunning(true); }}
-               className="px-8 py-4 bg-lime-500 text-black font-black uppercase tracking-widest hover:bg-lime-400 transition-colors rounded shadow-[0_0_15px_rgba(132,204,22,0.5)] z-10"
+               className="px-8 py-4 bg-lime-500 text-black font-black uppercase tracking-widest hover:bg-lime-400 transition-colors rounded shadow-[0_0_15px_rgba(132,204,22,0.5)]"
              >
-               {gameOver ? 'Try Again' : 'Insert Coin'}
+               Insert Coin
              </button>
           ) : (
-             <div className="px-8 py-4 bg-slate-800 text-slate-500 font-black uppercase tracking-widest border border-slate-700 z-10">
+             <div className="px-8 py-4 bg-slate-800 text-slate-500 font-black uppercase tracking-widest border border-slate-700">
                Module Loading...
              </div>
           )}
         </>
       ) : (
-        <>
-          <div className="absolute top-4 right-6 text-white font-mono font-bold text-xl opacity-50 z-10">
-            {score.toString().padStart(4, '0')}
-          </div>
-          <canvas ref={canvasRef} width={800} height={450} className="w-full h-full bg-slate-900 absolute inset-0 z-0" />
+        /* ====================================================
+           IMMERSIVE FULLSCREEN MODE
+           ==================================================== */
+        <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center overscroll-none touch-none">
           
-          {/* 80s Arcade D-PAD Controls */}
-          <div className="absolute bottom-6 right-6 flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity z-20">
-            <button id="btn-up" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">↑</button>
-            <div className="flex gap-1">
-              <button id="btn-left" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">←</button>
-              <button id="btn-down" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">↓</button>
-              <button id="btn-right" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">→</button>
-            </div>
+          {/* Top Navigation Bar */}
+          <div className="absolute top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-start z-50 pointer-events-none">
+             <div className="bg-black/60 backdrop-blur-sm border border-slate-800 text-lime-400 font-mono text-2xl md:text-3xl font-black px-6 py-3 rounded-2xl pointer-events-auto shadow-lg">
+               {score.toString().padStart(4, '0')}
+             </div>
+             <button
+               onClick={() => { setIsGameRunning(false); setGameOver(false); setScore(0); }}
+               className="bg-black/60 backdrop-blur-sm border border-slate-800 text-slate-400 hover:text-white hover:bg-red-500/80 hover:border-red-500 font-black px-6 py-3 rounded-2xl pointer-events-auto transition-all shadow-lg flex items-center gap-2"
+             >
+               <span className="hidden sm:inline">EXIT</span> ✖
+             </button>
           </div>
-        </>
+
+          {/* Canvas - Automatically fits the screen whether portrait or landscape */}
+          <canvas ref={canvasRef} width={800} height={450} className="w-full h-[100dvh] max-w-7xl object-contain bg-slate-900 border-y-4 sm:border-4 border-slate-800 z-10 shadow-2xl" />
+          
+          {/* Mobile Controls & Action Buttons */}
+          <div className="absolute bottom-8 left-4 right-4 sm:left-12 sm:right-12 flex justify-between items-end z-50 pointer-events-none">
+             
+             {/* Mobile D-PAD */}
+             <div className="flex flex-col items-center gap-1 pointer-events-auto opacity-60 hover:opacity-100 transition-opacity">
+                <button id="btn-up" className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-800/90 backdrop-blur border-b-4 border-slate-900 rounded-2xl text-white text-3xl active:bg-lime-500 active:border-lime-700 active:text-black active:translate-y-1 transition-all flex items-center justify-center select-none">↑</button>
+                <div className="flex gap-1">
+                  <button id="btn-left" className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-800/90 backdrop-blur border-b-4 border-slate-900 rounded-2xl text-white text-3xl active:bg-lime-500 active:border-lime-700 active:text-black active:translate-y-1 transition-all flex items-center justify-center select-none">←</button>
+                  <button id="btn-down" className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-800/90 backdrop-blur border-b-4 border-slate-900 rounded-2xl text-white text-3xl active:bg-lime-500 active:border-lime-700 active:text-black active:translate-y-1 transition-all flex items-center justify-center select-none">↓</button>
+                  <button id="btn-right" className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-800/90 backdrop-blur border-b-4 border-slate-900 rounded-2xl text-white text-3xl active:bg-lime-500 active:border-lime-700 active:text-black active:translate-y-1 transition-all flex items-center justify-center select-none">→</button>
+                </div>
+             </div>
+
+             {/* Action Buttons (For Space Invaders / Pong) */}
+             <div className="flex gap-4 pointer-events-auto opacity-60 hover:opacity-100 transition-opacity mb-2">
+                 <button id="btn-b" className="w-20 h-20 sm:w-24 sm:h-24 bg-blue-500/90 backdrop-blur border-b-4 border-blue-700 rounded-full text-white font-black text-3xl active:bg-blue-400 active:border-blue-600 active:translate-y-1 transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center justify-center select-none">B</button>
+                 <button id="btn-a" className="w-20 h-20 sm:w-24 sm:h-24 bg-red-500/90 backdrop-blur border-b-4 border-red-700 rounded-full text-white font-black text-3xl active:bg-red-400 active:border-red-600 active:translate-y-1 transition-all shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center justify-center select-none">A</button>
+             </div>
+          </div>
+
+          {/* Game Over Screen */}
+          {gameOver && (
+             <div className="absolute inset-0 z-[60] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-auto">
+                <div className="text-red-500 font-black text-6xl sm:text-8xl mb-2 tracking-widest text-center animate-pulse drop-shadow-[0_0_20px_rgba(239,68,68,0.8)]">GAME OVER</div>
+                <div className="text-white font-mono text-2xl sm:text-3xl mb-12 bg-black/50 px-8 py-4 rounded-xl border border-slate-800">FINAL SCORE: <span className="text-lime-400">{score}</span></div>
+                
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <button
+                    onClick={() => { setGameOver(false); setScore(0); }}
+                    className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase tracking-widest hover:bg-lime-400 rounded-xl shadow-[0_0_30px_rgba(132,204,22,0.4)] border-b-4 border-lime-700 active:translate-y-1 active:border-b-0 transition-all"
+                  >
+                     Play Again
+                  </button>
+                  <button
+                    onClick={() => { setIsGameRunning(false); setGameOver(false); setScore(0); }}
+                    className="px-10 py-5 bg-slate-800 text-white font-black text-xl uppercase tracking-widest hover:bg-slate-700 rounded-xl border-b-4 border-slate-900 active:translate-y-1 active:border-b-0 transition-all"
+                  >
+                     Main Menu
+                  </button>
+                </div>
+             </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -183,9 +233,7 @@ const Arcade = () => {
   const [activeGame, setActiveGame] = useState('retro_snake');
   
   const [highScores, setHighScores] = useState({
-    space_invaders: 0,
-    retro_snake: 0,
-    neon_pong: 0
+    space_invaders: 0, retro_snake: 0, neon_pong: 0
   });
 
   const handleUpdateScore = (gameId, newScore) => {
@@ -222,9 +270,7 @@ const Arcade = () => {
               key={game.id}
               onClick={() => setActiveGame(game.id)}
               className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
-                activeGame === game.id
-                  ? 'bg-slate-900 border-lime-500'
-                  : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
+                activeGame === game.id ? 'bg-slate-900 border-lime-500' : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
               }`}
             >
               <div className="flex flex-col items-start">
@@ -250,9 +296,7 @@ const Arcade = () => {
             <div className="space-y-4">
               {Object.values(GAMES_REGISTRY).map((game) => (
                 <div key={game.id} className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase">
-                    {game.title}
-                  </span>
+                  <span className="text-xs font-bold text-slate-400 uppercase">{game.title}</span>
                   <span className="font-mono text-lg font-bold text-lime-400">
                     {(highScores[game.id] || 0).toString().padStart(4, '0')}
                   </span>
