@@ -3,11 +3,27 @@ import { useFinancialData } from '@/lib/FinancialDataContext';
 
 const RetroSnake = lazy(() => import('./RetroSnake'));
 const SpaceInvaders = lazy(() => import('./SpaceInvaders'));
+const SkyStriker = lazy(() => import('./SkyStriker')); // Added the plane game!
 
 const GAMES_REGISTRY = {
-  space_invaders: { id: 'space_invaders', title: 'Space Invaders', description: 'Defend your portfolio from descending aliens!', accentColor: 'text-purple-500' },
-  retro_snake: { id: 'retro_snake', title: 'Retro Snake', description: 'Eat the profits, grow the snake. Don\'t crash!', accentColor: 'text-lime-500' },
-  neon_pong: { id: 'neon_pong', title: 'Neon Pong', description: 'Classic bounce action. Deflect the bear market!', accentColor: 'text-cyan-400' }
+  space_invaders: { 
+    id: 'space_invaders', 
+    title: 'Space Invaders', 
+    description: 'Defend your portfolio from descending aliens!', 
+    accentColor: 'text-purple-500' 
+  },
+  retro_snake: { 
+    id: 'retro_snake', 
+    title: 'Retro Snake', 
+    description: 'Eat the profits, grow the snake. Don\'t crash!', 
+    accentColor: 'text-lime-500' 
+  },
+  sky_striker: { 
+    id: 'sky_striker', 
+    title: 'Sky Striker', 
+    description: 'Take to the skies! Dogfight through market volatility.', 
+    accentColor: 'text-cyan-400' 
+  }
 };
 
 const PlaceholderGame = ({ title, description }) => (
@@ -28,7 +44,7 @@ const LoadingScreen = () => (
 const Arcade = () => {
   const { financialData, userProfile } = useFinancialData();
   const [activeGame, setActiveGame] = useState('space_invaders'); 
-  const [highScores, setHighScores] = useState({ space_invaders: 0, retro_snake: 0, neon_pong: 0 });
+  const [highScores, setHighScores] = useState({ space_invaders: 0, retro_snake: 0, sky_striker: 0 });
 
   const handleUpdateScore = (gameId, newScore) => {
     if (newScore > (highScores[gameId] || 0)) {
@@ -40,8 +56,8 @@ const Arcade = () => {
     switch(activeGame) {
       case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} />;
       case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} />;
-      case 'neon_pong': return <PlaceholderGame title={GAMES_REGISTRY.neon_pong.title} description={GAMES_REGISTRY.neon_pong.description} />;
-      default: return null;
+      case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} />;
+      default: return <PlaceholderGame title="Unknown Terminal" description="Signal lost." />;
     }
   };
 
