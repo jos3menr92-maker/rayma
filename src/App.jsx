@@ -107,6 +107,7 @@ const AuthenticatedApp = () => {
           <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
           <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
           <Route path="/tax-summary" element={<Suspense fallback={<PageLoader />}><TaxSummary /></Suspense>} />
+          <Route path="/arcade" element={<Arcade />} />
           <Route path="*" element={<PageNotFound />} />
         </Route>
       </Routes>
