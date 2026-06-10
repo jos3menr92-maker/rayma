@@ -28,6 +28,7 @@ import Landing from './pages/Landing';
 import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
 import DataExport from './pages/DataExport';
+import Arcade from './arcade'; // <-- ADDED ARCADE IMPORT
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { FinancialDataProvider } from '@/lib/FinancialDataContext';
 
@@ -95,6 +96,7 @@ const AuthenticatedApp = () => {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/data-export" element={<DataExport />} />
           <Route path="/remote-support" element={<RemoteSupport />} />
+          <Route path="/arcade" element={<Arcade />} /> {/* <-- ADDED ARCADE ROUTE */}
 
           <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
           <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
