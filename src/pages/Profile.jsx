@@ -325,7 +325,7 @@ export default function Profile() {
           <div className="flex justify-center pt-8 pb-4">
             <button 
               type="button" 
-              onClick={() => setShowArcade(true)}
+              onClick={() => setShowArcade("/arcade")}
               className="text-muted-foreground/30 hover:text-primary/60 transition-colors flex items-center gap-2 text-xs font-mono"
             >
               <Gamepad2 className="w-4 h-4" />
