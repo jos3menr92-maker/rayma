@@ -6,6 +6,12 @@ export default function SpaceInvaders({ onUpdateScore }) {
   const [gameWon, setGameWon] = useState(false);
   const [score, setScore] = useState(0);
   const canvasRef = useRef(null);
+  
+  // OPTIMIZATION 1: Prevent game-reset glitches if the parent dashboard re-renders
+  const latestScoreUpdate = useRef(onUpdateScore);
+  useEffect(() => {
+    latestScoreUpdate.current = onUpdateScore;
+  }, [onUpdateScore]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver || gameWon) return;
@@ -88,19 +94,25 @@ export default function SpaceInvaders({ onUpdateScore }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    // Touch Action Links
+    // Touch Action Links (OPTIMIZATION 2: Memory-safe event binding)
     const attachMoveControl = (id, direction) => {
       const el = document.getElementById(id);
       if (!el) return () => {};
-      const start = (e) => { e.preventDefault(); player.dx = direction * player.speed; };
-      const stop = (e) => { e.preventDefault(); if (Math.sign(player.dx) === direction) player.dx = 0; };
+      const start = (e) => { e.cancelable && e.preventDefault(); player.dx = direction * player.speed; };
+      const stop = (e) => { e.cancelable && e.preventDefault(); if (Math.sign(player.dx) === direction) player.dx = 0; };
+      
       el.addEventListener('touchstart', start, { passive: false });
       el.addEventListener('mousedown', start);
       el.addEventListener('touchend', stop);
       el.addEventListener('mouseup', stop);
+      el.addEventListener('mouseleave', stop); // Added fallback for dragged fingers
+      
       return () => {
-        el.removeEventListener('touchstart', start); el.removeEventListener('mousedown', start);
-        el.removeEventListener('touchend', stop); el.removeEventListener('mouseup', stop);
+        el.removeEventListener('touchstart', start); 
+        el.removeEventListener('mousedown', start);
+        el.removeEventListener('touchend', stop); 
+        el.removeEventListener('mouseup', stop);
+        el.removeEventListener('mouseleave', stop);
       };
     };
 
@@ -108,7 +120,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
       const el = document.getElementById(id);
       if (!el) return () => {};
       const fire = (e) => {
-        e.preventDefault();
+        e.cancelable && e.preventDefault();
         bullets.push({ x: player.x + player.width / 2 - 2, y: player.y, width: 4, height: 12, speed: 7 });
       };
       el.addEventListener('touchstart', fire, { passive: false });
@@ -126,7 +138,8 @@ export default function SpaceInvaders({ onUpdateScore }) {
     const triggerEnd = (won = false) => {
       if (won) setGameWon(true);
       else setGameOver(true);
-      onUpdateScore('space_invaders', currentScore);
+      // Use the ref here to prevent dependency issues
+      latestScoreUpdate.current && latestScoreUpdate.current('space_invaders', currentScore);
       window.cancelAnimationFrame(animationFrameId);
     };
 
@@ -143,9 +156,9 @@ export default function SpaceInvaders({ onUpdateScore }) {
       if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
       // Draw Player Cannon
-      ctx.fillStyle = '#a855f7'; // Purple Signature Core
+      ctx.fillStyle = '#a855f7'; 
       ctx.fillRect(player.x, player.y, player.width, player.height);
-      ctx.fillRect(player.x + player.width / 2 - 4, player.y - 6, 8, 6); // Cannon Tip
+      ctx.fillRect(player.x + player.width / 2 - 4, player.y - 6, 8, 6);
 
       // Player Bullets Cycle
       ctx.fillStyle = '#f472b6';
@@ -180,7 +193,6 @@ export default function SpaceInvaders({ onUpdateScore }) {
         ctx.fillStyle = `rgba(168, 85, 247, ${bunker.health / 5})`;
         ctx.fillRect(bunker.x, bunker.y, bunker.width, bunker.height);
 
-        // Bullet protection checks
         bullets.forEach((b, bIdx) => {
           if (b.x < bunker.x + bunker.width && b.x + b.width > bunker.x && b.y < bunker.y + bunker.height && b.y + b.height > bunker.y) {
             bullets.splice(bIdx, 1);
@@ -198,7 +210,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
       // Aliens Management System
       let liveAliens = aliens.filter(a => a.alive);
       if (liveAliens.length === 0) {
-        currentScore += 200; // Bonus payout Clear
+        currentScore += 200; 
         setScore(currentScore);
         triggerEnd(true);
         return;
@@ -219,34 +231,38 @@ export default function SpaceInvaders({ onUpdateScore }) {
 
       // Draw Invaders & Collision Checks
       ctx.fillStyle = '#c084fc';
+      let scoreChanged = false; // OPTIMIZATION 3: Batch score updates
+
       aliens.forEach(alien => {
         if (!alien.alive) return;
         
-        // Draw Core Blocks Shape
         ctx.fillRect(alien.x, alien.y, alien.width, alien.height);
-        ctx.fillStyle = '#0f172a'; // Eyes
+        ctx.fillStyle = '#0f172a'; 
         ctx.fillRect(alien.x + 6, alien.y + 6, 6, 6);
         ctx.fillRect(alien.x + alien.width - 12, alien.y + 6, 6, 6);
         ctx.fillStyle = '#c084fc';
 
-        // Check if Invaders broke through frontlines
         if (alien.y + alien.height >= player.y) {
           triggerEnd(false);
           return;
         }
 
-        // Check laser impacts on Invaders
         bullets.forEach((b, bIdx) => {
           if (b.x < alien.x + alien.width && b.x + b.width > alien.x && b.y < alien.y + alien.height && b.y + b.height > alien.y) {
             alien.alive = false;
             bullets.splice(bIdx, 1);
             currentScore += alien.points;
-            setScore(currentScore);
+            scoreChanged = true;
           }
         });
       });
 
-      // Random Fire Counterattacks from base frontline
+      // Update React state only once per frame if multiple aliens are hit
+      if (scoreChanged) {
+        setScore(currentScore);
+      }
+
+      // Random Fire Counterattacks
       if (Math.random() < 0.015 && liveAliens.length > 0) {
         const randomAlien = liveAliens[Math.floor(Math.random() * liveAliens.length)];
         alienBullets.push({ x: randomAlien.x + randomAlien.width / 2, y: randomAlien.y + randomAlien.height, width: 3, height: 10, speed: 4 + currentWave });
@@ -255,13 +271,14 @@ export default function SpaceInvaders({ onUpdateScore }) {
 
     renderLoop();
 
+    // STRICT CLEANUP
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       cleanupLeft(); cleanupRight(); cleanupFire();
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, gameWon, onUpdateScore]);
+  }, [isGameRunning, gameOver, gameWon]); // REMOVED onUpdateScore from dependencies
 
   useEffect(() => {
     return () => { setIsGameRunning(false); };
@@ -300,7 +317,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
 
           <canvas ref={canvasRef} width={800} height={450} className="w-full h-[100dvh] max-w-7xl object-contain bg-slate-900 border-y-4 sm:border-4 border-slate-800 z-10 shadow-2xl" />
           
-          {/* Mobile Controller Layout split left/right */}
+          {/* Mobile Controller Layout */}
           <div className="absolute bottom-8 left-4 right-4 sm:left-12 sm:right-12 flex justify-between items-end z-50 pointer-events-none">
              <div className="flex gap-3 pointer-events-auto opacity-60 hover:opacity-100 transition-opacity">
                 <button id="btn-left" className="w-20 h-16 sm:w-24 sm:h-20 bg-slate-800/90 backdrop-blur border-b-4 border-slate-900 rounded-2xl text-white text-3xl active:bg-purple-500 active:border-purple-700 active:text-black active:translate-y-1 transition-all flex items-center justify-center select-none">←</button>
