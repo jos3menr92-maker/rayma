@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useFinancialData } from './lib/FinancialDataContext';
+import { useFinancialData } from '@/lib/FinancialDataContext'; // Fixed absolute path to prevent crashes
 
 const GAMES_REGISTRY = {
   space_invaders: { id: 'space_invaders', title: 'Space Invaders', description: 'Defend your portfolio from descending aliens!', accentColor: 'text-purple-500' },
@@ -21,7 +21,7 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
     const ctx = canvas.getContext('2d');
     
     let animationFrameId;
-    const gridSize = 25; // 800/25 = 32 cols, 450/25 = 18 rows
+    const gridSize = 25; 
     let snake = [{ x: 10, y: 10 }];
     let food = { x: 20, y: 10 };
     let dx = 1;
@@ -29,10 +29,10 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
     let currentScore = 0;
     
     let frameCount = 0;
-    const speed = 6; // Lower is faster
+    const speed = 6; 
 
+    // Keyboard Controls
     const handleKeyDown = (e) => {
-      // Prevent screen scrolling when using arrows
       if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(e.key) > -1) {
           e.preventDefault();
       }
@@ -41,8 +41,18 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
       if (e.key === 'ArrowLeft' && dx === 0) { dx = -1; dy = 0; }
       if (e.key === 'ArrowRight' && dx === 0) { dx = 1; dy = 0; }
     };
-
     window.addEventListener('keydown', handleKeyDown);
+
+    // On-Screen Button Controls
+    const handleUp = () => { if (dy === 0) { dx = 0; dy = -1; } };
+    const handleDown = () => { if (dy === 0) { dx = 0; dy = 1; } };
+    const handleLeft = () => { if (dx === 0) { dx = -1; dy = 0; } };
+    const handleRight = () => { if (dx === 0) { dx = 1; dy = 0; } };
+
+    document.getElementById('btn-up')?.addEventListener('click', handleUp);
+    document.getElementById('btn-down')?.addEventListener('click', handleDown);
+    document.getElementById('btn-left')?.addEventListener('click', handleLeft);
+    document.getElementById('btn-right')?.addEventListener('click', handleRight);
 
     const render = () => {
       animationFrameId = window.requestAnimationFrame(render);
@@ -86,13 +96,12 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Draw Food
-      ctx.fillStyle = '#ef4444'; // Red food
+      ctx.fillStyle = '#ef4444'; 
       ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
 
       // Draw Snake
-      ctx.fillStyle = '#84cc16'; // Lime green snake
       snake.forEach((segment, index) => {
-        ctx.fillStyle = index === 0 ? '#bef264' : '#84cc16'; // Lighter head
+        ctx.fillStyle = index === 0 ? '#bef264' : '#84cc16'; 
         ctx.fillRect(segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2);
       });
     };
@@ -108,11 +117,14 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      document.getElementById('btn-up')?.removeEventListener('click', handleUp);
+      document.getElementById('btn-down')?.removeEventListener('click', handleDown);
+      document.getElementById('btn-left')?.removeEventListener('click', handleLeft);
+      document.getElementById('btn-right')?.removeEventListener('click', handleRight);
       window.cancelAnimationFrame(animationFrameId);
     };
   }, [isGameRunning, gameId]);
 
-  // Reset states when switching games
   useEffect(() => {
     setIsGameRunning(false);
     setGameOver(false);
@@ -123,23 +135,23 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
       {!isGameRunning ? (
         <>
-          {gameOver && <div className="text-red-500 font-black text-4xl mb-4 tracking-widest">GAME OVER</div>}
-          <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">
+          {gameOver && <div className="text-red-500 font-black text-4xl mb-4 tracking-widest z-10">GAME OVER</div>}
+          <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2 z-10">
             {GAMES_REGISTRY[gameId].title}
           </h3>
-          <div className="text-slate-400 font-mono mb-8 text-center max-w-md h-12">
+          <div className="text-slate-400 font-mono mb-8 text-center max-w-md h-12 z-10">
             {gameOver ? `FINAL SCORE: ${score}` : GAMES_REGISTRY[gameId].description}
           </div>
           
           {gameId === 'retro_snake' ? (
              <button
                onClick={() => { setGameOver(false); setScore(0); setIsGameRunning(true); }}
-               className="px-8 py-4 bg-lime-500 text-black font-black uppercase tracking-widest hover:bg-lime-400 transition-colors rounded shadow-[0_0_15px_rgba(132,204,22,0.5)]"
+               className="px-8 py-4 bg-lime-500 text-black font-black uppercase tracking-widest hover:bg-lime-400 transition-colors rounded shadow-[0_0_15px_rgba(132,204,22,0.5)] z-10"
              >
                {gameOver ? 'Try Again' : 'Insert Coin'}
              </button>
           ) : (
-             <div className="px-8 py-4 bg-slate-800 text-slate-500 font-black uppercase tracking-widest border border-slate-700">
+             <div className="px-8 py-4 bg-slate-800 text-slate-500 font-black uppercase tracking-widest border border-slate-700 z-10">
                Module Loading...
              </div>
           )}
@@ -149,7 +161,17 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
           <div className="absolute top-4 right-6 text-white font-mono font-bold text-xl opacity-50 z-10">
             {score.toString().padStart(4, '0')}
           </div>
-          <canvas ref={canvasRef} width={800} height={450} className="w-full h-full bg-slate-900" />
+          <canvas ref={canvasRef} width={800} height={450} className="w-full h-full bg-slate-900 absolute inset-0 z-0" />
+          
+          {/* 80s Arcade D-PAD Controls */}
+          <div className="absolute bottom-6 right-6 flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity z-20">
+            <button id="btn-up" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">↑</button>
+            <div className="flex gap-1">
+              <button id="btn-left" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">←</button>
+              <button id="btn-down" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">↓</button>
+              <button id="btn-right" className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-lg text-slate-300 font-black text-xl hover:bg-slate-700 active:bg-lime-500 active:text-black">→</button>
+            </div>
+          </div>
         </>
       )}
     </div>
@@ -157,7 +179,7 @@ const GameCanvas = ({ gameId, onUpdateScore }) => {
 };
 
 const Arcade = () => {
-  const { financialData } = useFinancialData();
+  const { financialData, userProfile } = useFinancialData();
   const [activeGame, setActiveGame] = useState('retro_snake');
   
   const [highScores, setHighScores] = useState({
@@ -185,9 +207,9 @@ const Arcade = () => {
           </h1>
         </div>
         <div className="text-right hidden md:block">
-          <div className="text-xs font-bold text-slate-500 uppercase mb-1">Session Liquidity</div>
+          <div className="text-xs font-bold text-slate-500 uppercase mb-1">Player</div>
           <div className="text-3xl font-mono font-bold text-white">
-            ${financialData?.cash_balance?.toLocaleString() || '0'}
+            {userProfile?.preferred_name || 'Guest'}
           </div>
         </div>
       </header>
