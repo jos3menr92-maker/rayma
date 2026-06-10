@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import Arcade from "./arcade";
 import RemoteSupport from './pages/RemoteSupport';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -107,7 +106,6 @@ const AuthenticatedApp = () => {
           <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
           <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
           <Route path="/tax-summary" element={<Suspense fallback={<PageLoader />}><TaxSummary /></Suspense>} />
-          <Route path="/arcade" element={<Arcade />} />
           <Route path="*" element={<PageNotFound />} />
         </Route>
       </Routes>
