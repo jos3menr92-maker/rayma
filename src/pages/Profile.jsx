@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react"; 
 import { base44 } from "@/api/base44Client"; 
-import { motion, AnimatePresence } from "framer-motion"; 
+import { motion } from "framer-motion"; 
 import { 
   User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
   FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor, 
@@ -50,6 +50,7 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
+  const navigate = useNavigate(); // <-- Added Navigation Hook
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const fileInputRef = useRef(null);
   
@@ -59,7 +60,6 @@ export default function Profile() {
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
-  const [showArcade, setShowArcade] = useState(false);
   
   // Set Dark Mode as the absolute default
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
@@ -325,7 +325,7 @@ export default function Profile() {
           <div className="flex justify-center pt-8 pb-4">
             <button 
               type="button" 
-              onClick={() => setShowArcade("/arcade")}
+              onClick={() => navigate("/arcade")} // <-- Now correctly links to the game
               className="text-muted-foreground/30 hover:text-primary/60 transition-colors flex items-center gap-2 text-xs font-mono"
             >
               <Gamepad2 className="w-4 h-4" />
@@ -335,32 +335,6 @@ export default function Profile() {
         </form>
       </motion.div>
 
-      {/* 80s Arcade Modal (Easter Egg) */}
-      <AnimatePresence>
-        {showArcade && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          >
-            <motion.div 
-              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="bg-[#0c0c0c] border-2 border-green-500/50 p-6 rounded-xl max-w-sm w-full shadow-[0_0_30px_rgba(34,197,94,0.2)]"
-            >
-              <div className="flex justify-between items-center mb-6 border-b border-green-500/30 pb-2">
-                <h3 className="text-green-400 font-mono text-lg tracking-widest uppercase">Terminal.exe</h3>
-                <button onClick={() => setShowArcade(false)} className="text-green-500 hover:text-green-300"><X className="w-5 h-5" /></button>
-              </div>
-              <div className="h-48 border border-green-500/30 bg-black rounded flex flex-col items-center justify-center gap-4">
-                 <Gamepad2 className="w-12 h-12 text-green-500 animate-pulse" />
-                 <p className="text-green-400 font-mono text-sm text-center px-4">
-                   RAYMA ARCADE v1.0 <br/><br/>
-                   <span className="text-xs opacity-70">Coming soon. Take a deep breath. Your finances are automated.</span>
-                 </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
