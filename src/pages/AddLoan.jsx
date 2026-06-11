@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronLeft, Save } from "lucide-react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 CONNECTED TO SUPABASE
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AddLoan() {
   const navigate = useNavigate();
-  // Grab the user and the reload function from our Brain
   const { userProfile, reload } = useFinancialData(); 
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +14,8 @@ export default function AddLoan() {
     name: "",
     current_balance: "",
     interest_rate: "",
-    monthly_payment: "",
+    monthly_payment: "", // We keep the DB column name, but treat it as "Amount per period"
+    payment_frequency: "monthly", // 🚀 NEW: Our frequency selector
     due_day: ""
   });
 
@@ -30,14 +30,14 @@ export default function AddLoan() {
     try {
       if (!userProfile?.id) throw new Error("You must be logged in to add a loan.");
 
-      // 🚀 THE WRITE PIPELINE: Send the new loan directly to Supabase
       const { error } = await supabase.from('loans').insert([{
         user_id: userProfile.id,
         name: formData.name,
         current_balance: parseFloat(formData.current_balance) || 0,
-        original_amount: parseFloat(formData.current_balance) || 0, // Setting original to match current
+        original_amount: parseFloat(formData.current_balance) || 0,
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
+        payment_frequency: formData.payment_frequency, // 🚀 NEW: Saving the frequency
         due_day: parseInt(formData.due_day) || null,
         status: 'active'
       }]);
@@ -47,10 +47,7 @@ export default function AddLoan() {
         throw error;
       }
 
-      // Tell the Context to fetch the fresh data we just saved!
       await reload();
-      
-      // Go back to the dashboard/loans page
       navigate("/");
 
     } catch (error) {
@@ -114,9 +111,10 @@ export default function AddLoan() {
           </div>
         </div>
 
+        {/* 🚀 THE NEW FREQUENCY ROW */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Monthly Payment</label>
+            <label className="text-sm font-semibold text-foreground">Payment Amount</label>
             <input 
               required 
               type="number"
@@ -129,19 +127,35 @@ export default function AddLoan() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Due Day (1-31)</label>
-            <input 
-              required 
-              type="number"
-              min="1"
-              max="31"
-              name="due_day"
-              value={formData.due_day}
+            <label className="text-sm font-semibold text-foreground">Frequency</label>
+            <select 
+              name="payment_frequency"
+              value={formData.payment_frequency}
               onChange={handleChange}
-              placeholder="e.g. 15" 
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
-            />
+            >
+              <option value="weekly">Weekly</option>
+              <option value="bi-weekly">Bi-Weekly</option>
+              <option value="semi-monthly">Semi-Monthly</option>
+              <option value="monthly">Monthly</option>
+              <option value="annually">Annually</option>
+            </select>
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-foreground">Due Day (1-31)</label>
+          <input 
+            required 
+            type="number"
+            min="1"
+            max="31"
+            name="due_day"
+            value={formData.due_day}
+            onChange={handleChange}
+            placeholder="e.g. 15" 
+            className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+          />
         </div>
 
         <button 
