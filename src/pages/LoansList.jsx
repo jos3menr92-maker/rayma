@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🔌 CONNECTED TO OUR BRAIN
 import LoanCard from "../components/LoanCard";
 import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,26 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function LoansList() {
   const navigate = useNavigate();
-  const [loans, setLoans] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // 🚀 Pulling real data and loading state straight from Supabase Context!
+  const { loans, loading } = useFinancialData();
+
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("default");
 
-  useEffect(() => {
-    loadLoans();
-  }, []);
-
-  async function loadLoans() {
-    // Paginate: fetch 50 at a time
-    const data = await base44.entities.Loan.list("-created_date", 50);
-    setLoans(data);
-    setLoading(false);
-  }
-
   const filtered = useMemo(() => loans
     .filter((l) => {
-      const matchesSearch = l.name.toLowerCase().includes(search.toLowerCase());
+      const loanName = l.name || ""; // Added safeguard for empty names
+      const matchesSearch = loanName.toLowerCase().includes(search.toLowerCase());
       const matchesFilter =
         filter === "all" ||
         (filter === "active" && l.status !== "paid_off") ||
@@ -35,8 +27,12 @@ export default function LoansList() {
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      if (sort === "amount_high") return (b.current_balance || 0) - (a.current_balance || 0);
-      if (sort === "amount_low") return (a.current_balance || 0) - (b.current_balance || 0);
+      // Safeguard to handle both 'current_balance' or 'remaining_balance' depending on your DB
+      const balA = a.current_balance || a.remaining_balance || 0;
+      const balB = b.current_balance || b.remaining_balance || 0;
+
+      if (sort === "amount_high") return balB - balA;
+      if (sort === "amount_low") return balA - balB;
       if (sort === "interest") return (b.interest_rate || 0) - (a.interest_rate || 0);
       if (sort === "due_date") return (a.due_day || 99) - (b.due_day || 99);
       return 0;
