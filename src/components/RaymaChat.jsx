@@ -6,9 +6,6 @@ import ReactMarkdown from "react-markdown";
 import { runRemoteDiagnostic } from "../lib/runRemoteDiagnostic";
 import { useNavigate } from "react-router-dom"; // Added for routing commands
 
-// --- MOVED OUTSIDE: This completely fixes the "Cannot access before initialization" error ---
-const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];
-
 export default function RaymaChat() {
   const [open, setOpen] = useState(false);
   const [conversation, setConversation] = useState(null);
@@ -49,10 +46,9 @@ export default function RaymaChat() {
     setInitializing(false);
   }
   
-  async function handleSend() {
+async function handleSend() {
     const text = input.trim().toLowerCase();
-    
-    // Now safely checks against the globally initialized array above
+    const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];  
     const isTourCommand = !tourTriggered && tourTriggers.some(trigger => text === trigger || text.startsWith(trigger + " ") || text.endsWith(" " + trigger));
   
     if (isTourCommand) {
