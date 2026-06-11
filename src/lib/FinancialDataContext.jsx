@@ -54,7 +54,7 @@ export function FinancialDataProvider({ children }) {
     }
   }
 
-  // Refresh just the user profile (Kept exactly as you had it for the Avatar fixes)
+  // Refresh just the user profile
   async function refreshUserProfile() {
     try {
       const me = await base44.auth.me();
