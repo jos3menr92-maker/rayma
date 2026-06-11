@@ -149,9 +149,28 @@ export default function Dashboard() {
           </h1>
           <p className="text-sm text-muted-foreground">{userProfile?.dashboard_greeting || T("stayOnTop", "Stay on top of your finances")}</p>
         </div>
-        <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-sm" style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
-          {userProfile?.avatar_photo_url ? <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover rounded-full" /> : (userProfile?.preferred_name || userProfile?.full_name || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?"}
-        </div>
+        
+        {/* --- APP STORE COMPLIANT PROFILE BUTTON (48px target, screen-reader safe, navigates to profile) --- */}
+        <button 
+          onClick={() => navigate("/profile")}
+          aria-label={userProfile?.preferred_name || userProfile?.full_name || 'Profile'}
+          className="w-12 h-12 flex-shrink-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform active:scale-95 shadow-sm"
+          style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}
+        >
+          {userProfile?.avatar_photo_url ? (
+            <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover rounded-full" />
+          ) : (
+            <span className="font-bold text-white text-sm">
+              {(userProfile?.preferred_name || userProfile?.full_name || "?")
+                .split(" ")
+                .slice(0, 2)
+                .map(n => n[0])
+                .join("")
+                .toUpperCase() || "?"}
+            </span>
+          )}
+        </button>
+
       </motion.div>
 
       <RAYMAExpiryBanner user={userProfile} />
