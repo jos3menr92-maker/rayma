@@ -5,11 +5,11 @@ import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal 
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
-
 import MoreMenu from "./MoreMenu";
 import FeedbackButton from "./FeedbackButton";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { getInitialsColor } from "@/components/AvatarPicker"; // <--- ADDED THIS
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -55,12 +55,14 @@ export default function Layout() {
       
       {/* Top bar with menu button */}
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        {/* APP STORE FIX: Increased h-12 to h-14 to comfortably fit 48px tap targets */}
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-14">
           <div className="flex items-center gap-3">
             
-            {/* AVATAR FIX: Safely loads the image, slightly larger (w-8 h-8) for visibility */}
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm">
+            {/* AVATAR FIX: Now uses getInitialsColor to match the Dashboard perfectly */}
+            <div 
+              className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm"
+              style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}
+            >
               {userProfile?.avatar_photo_url && !imageError ? (
                 <img 
                   src={userProfile.avatar_photo_url}
@@ -69,7 +71,7 @@ export default function Layout() {
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <span className="text-xs font-bold text-primary">
+                <span className="text-xs font-bold text-white">
                   {userProfile?.preferred_name?.charAt(0) || userProfile?.full_name?.charAt(0) || "R"}
                 </span>
               )}
@@ -79,7 +81,6 @@ export default function Layout() {
           </div>
           
           <div className="flex items-center">
-            {/* APP STORE FIX: 48x48px minimum tap target (w-12 h-12) */}
             <button 
               onClick={() => setDrawerOpen(true)} 
               aria-label="Open Menu"
