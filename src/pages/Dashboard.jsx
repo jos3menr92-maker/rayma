@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrency } from "@/hooks/useCurrency";
-import { base44 } from "@/api/base44Client";
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🔌 CONNECTED TO OUR BRAIN
 import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
@@ -72,12 +72,11 @@ export default function Dashboard() {
   const { lang } = useLanguage();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const { formatCurrency } = useCurrency();
-  const [loans, setLoans] = useState([]);
-  const [bills, setBills] = useState([]);
-  const [incomes, setIncomes] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState(null);
+  
+  // 🚀 Pulling real data straight from Supabase Context!
+  const { loans, bills, incomes, userProfile, loading, reload } = useFinancialData();
+  const [payments, setPayments] = useState([]); // Empty for now until we build a Payments table
+  
   const [refreshing, setRefreshing] = useState(false);
   const [pullStartY, setPullStartY] = useState(null);
   const [pullDistance, setPullDistance] = useState(0);
@@ -86,52 +85,36 @@ export default function Dashboard() {
     if (userProfile && userProfile.onboarding_complete === false) navigate("/onboarding");
   }, [userProfile, navigate]);
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
-      const [loansData, billsData, me, incomesData, paymentsData] = await Promise.all([
-        base44.entities.Loan.list("-created_date", 100),
-        base44.entities.Bill.list("-created_date", 100),
-        base44.auth.me(),
-        base44.entities.WeeklyIncome.list("-week_start", 52),
-        base44.entities.Payment.filter({ payment_type: "loan" }, "-payment_date", 200),
-      ]);
-      setLoans(loansData);
-      setBills(billsData.filter((b) => b.is_active !== false));
-      setIncomes(incomesData);
-      setPayments(paymentsData);
-      setUserProfile(me);
-    } catch (error) { console.error("Failed to load dashboard data:", error); } 
-    finally { if (isRefresh) setRefreshing(false); else setLoading(false); }
-  }, []);
-
   const handleTouchStart = (e) => setPullStartY(e.touches[0].clientY);
   const handleTouchMove = (e) => {
     if (pullStartY === null) return;
     const dist = e.touches[0].clientY - pullStartY;
     if (dist > 0 && window.scrollY === 0) setPullDistance(Math.min(dist, 80));
   };
-  const handleTouchEnd = () => {
-    if (pullDistance > 50) loadData(true);
+  const handleTouchEnd = async () => {
+    if (pullDistance > 50) {
+      setRefreshing(true);
+      await reload(); // Uses the reload function from our Context
+      setRefreshing(false);
+    }
     setPullDistance(0); setPullStartY(null);
   };
 
   const { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, billsPieData, loansPieData, loanPaymentsPieData } = useMemo(() => {
     const activeLoans = loans.filter((l) => l.status !== "paid_off");
     const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
-    const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
+    // Added safety check for remaining_balance just in case!
+    const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || l.remaining_balance || 0), 0);
     const totalPaid = totalDebt - totalRemaining;
     const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
     const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
     const monthlyTotal = monthlyLoans + monthlyBills;
+    
     return { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal,
       expensePieData: [...(monthlyLoans > 0 ? [{ name: "Loan Payments", value: monthlyLoans }] : []), ...(monthlyBills > 0 ? [{ name: "Bills", value: monthlyBills }] : [])],
-      billsPieData: bills.map(b => ({ name: b.name, value: b.amount || 0 })),
-      loansPieData: activeLoans.map(l => ({ name: l.name, value: l.current_balance || 0 })),
-      loanPaymentsPieData: activeLoans.filter(l => l.monthly_payment).map(l => ({ name: l.name, value: l.monthly_payment || 0 }))
+      billsPieData: bills.map(b => ({ name: b.name || "Unnamed Bill", value: b.amount || 0 })),
+      loansPieData: activeLoans.map(l => ({ name: l.name || "Unnamed Loan", value: l.current_balance || l.remaining_balance || 0 })),
+      loanPaymentsPieData: activeLoans.filter(l => l.monthly_payment).map(l => ({ name: l.name || "Unnamed", value: l.monthly_payment || 0 }))
     };
   }, [loans, bills]);
 
@@ -148,7 +131,6 @@ export default function Dashboard() {
   }, [incomes]);
   const cashLeft = monthlyIncome - (monthlyTotal || 0);
 
-  // Determine which image to show based on what the user saved
   const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
