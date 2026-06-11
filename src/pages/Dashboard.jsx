@@ -73,9 +73,8 @@ export default function Dashboard() {
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const { formatCurrency } = useCurrency();
   
-  // 🚀 Pulling real data straight from Supabase Context!
   const { loans, bills, incomes, userProfile, loading, reload } = useFinancialData();
-  const [payments, setPayments] = useState([]); // Empty for now until we build a Payments table
+  const [payments, setPayments] = useState([]); 
   
   const [refreshing, setRefreshing] = useState(false);
   const [pullStartY, setPullStartY] = useState(null);
@@ -94,7 +93,7 @@ export default function Dashboard() {
   const handleTouchEnd = async () => {
     if (pullDistance > 50) {
       setRefreshing(true);
-      await reload(); // Uses the reload function from our Context
+      await reload(); 
       setRefreshing(false);
     }
     setPullDistance(0); setPullStartY(null);
@@ -103,7 +102,6 @@ export default function Dashboard() {
   const { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, billsPieData, loansPieData, loanPaymentsPieData } = useMemo(() => {
     const activeLoans = loans.filter((l) => l.status !== "paid_off");
     const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
-    // Added safety check for remaining_balance just in case!
     const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || l.remaining_balance || 0), 0);
     const totalPaid = totalDebt - totalRemaining;
     const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
@@ -118,10 +116,16 @@ export default function Dashboard() {
     };
   }, [loans, bills]);
 
-  const today = new Date().getDate();
-  const upcomingLoans = activeLoans.filter((l) => l.due_day).sort((a, b) => {
-    const aDiff = a.due_day >= today ? a.due_day - today : a.due_day + 31 - today;
-    const bDiff = b.due_day >= today ? b.due_day - today : b.due_day + 31 - today;
+  // 🚀 CHANGED: Safely sort using the new full due_date calendar values!
+  const upcomingLoans = activeLoans.filter((l) => l.due_date || l.due_day).sort((a, b) => {
+    if (a.due_date && b.due_date) {
+      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+    }
+    const today = new Date().getDate();
+    const aDay = a.due_day || 31;
+    const bDay = b.due_day || 31;
+    const aDiff = aDay >= today ? aDay - today : aDay + 31 - today;
+    const bDiff = bDay >= today ? bDay - today : bDay + 31 - today;
     return aDiff - bDiff;
   }).slice(0, 3);
 
