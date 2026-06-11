@@ -14,9 +14,9 @@ export default function AddLoan() {
     name: "",
     current_balance: "",
     interest_rate: "",
-    monthly_payment: "", // We keep the DB column name, but treat it as "Amount per period"
-    payment_frequency: "monthly", // 🚀 NEW: Our frequency selector
-    due_day: ""
+    monthly_payment: "", 
+    payment_frequency: "monthly",
+    due_date: "" // 🚀 CHANGED: Now using a full date instead of just a day
   });
 
   const handleChange = (e) => {
@@ -37,8 +37,8 @@ export default function AddLoan() {
         original_amount: parseFloat(formData.current_balance) || 0,
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
-        payment_frequency: formData.payment_frequency, // 🚀 NEW: Saving the frequency
-        due_day: parseInt(formData.due_day) || null,
+        payment_frequency: formData.payment_frequency,
+        due_date: formData.due_date || null, // 🚀 CHANGED: Sending the real date to your database
         status: 'active'
       }]);
 
@@ -111,7 +111,6 @@ export default function AddLoan() {
           </div>
         </div>
 
-        {/* 🚀 THE NEW FREQUENCY ROW */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground">Payment Amount</label>
@@ -143,17 +142,15 @@ export default function AddLoan() {
           </div>
         </div>
 
+        {/* 🚀 THE NEW CALENDAR DATE PICKER */}
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground">Due Day (1-31)</label>
+          <label className="text-sm font-semibold text-foreground">Next Due Date</label>
           <input 
             required 
-            type="number"
-            min="1"
-            max="31"
-            name="due_day"
-            value={formData.due_day}
+            type="date"
+            name="due_date"
+            value={formData.due_date}
             onChange={handleChange}
-            placeholder="e.g. 15" 
             className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
           />
         </div>
