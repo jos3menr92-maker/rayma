@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🔌 CONNECTED TO OUR BRAIN
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import LoanCard from "../components/LoanCard";
 import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,8 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function LoansList() {
   const navigate = useNavigate();
-
-  // 🚀 Pulling real data and loading state straight from Supabase Context!
   const { loans, loading } = useFinancialData();
 
   const [search, setSearch] = useState("");
@@ -18,7 +16,7 @@ export default function LoansList() {
 
   const filtered = useMemo(() => loans
     .filter((l) => {
-      const loanName = l.name || ""; // Added safeguard for empty names
+      const loanName = l.name || "";
       const matchesSearch = loanName.toLowerCase().includes(search.toLowerCase());
       const matchesFilter =
         filter === "all" ||
@@ -27,14 +25,19 @@ export default function LoansList() {
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      // Safeguard to handle both 'current_balance' or 'remaining_balance' depending on your DB
       const balA = a.current_balance || a.remaining_balance || 0;
       const balB = b.current_balance || b.remaining_balance || 0;
 
       if (sort === "amount_high") return balB - balA;
       if (sort === "amount_low") return balA - balB;
       if (sort === "interest") return (b.interest_rate || 0) - (a.interest_rate || 0);
-      if (sort === "due_date") return (a.due_day || 99) - (b.due_day || 99);
+      
+      // 🚀 CHANGED: Now sorting by full calendar dates using getTime()!
+      if (sort === "due_date") {
+        const dateA = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+        const dateB = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+        return dateA - dateB;
+      }
       return 0;
     }), [loans, search, filter, sort]);
 
