@@ -6,6 +6,25 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getInitialsColor } from "@/components/AvatarPicker";
 
+// Bring in the same preset avatars used in Profile, Layout, and Dashboard
+const HUMAN_AVATARS = [
+  { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
+  { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
+  { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
+  { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
+  { id: "face5", url: "https://i.pravatar.cc/150?img=33" },
+  { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
+  { id: "face7", url: "https://i.pravatar.cc/150?img=38" },
+  { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
+  { id: "face9", url: "https://i.pravatar.cc/150?img=49" },
+  { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
+  { id: "face11", url: "https://i.pravatar.cc/150?img=51" },
+  { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
+  { id: "face13", url: "https://i.pravatar.cc/150?img=56" },
+  { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
+  { id: "face15", url: "https://i.pravatar.cc/150?img=60" },
+];
+
 export default function SideDrawer({ open, onClose }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -28,6 +47,10 @@ export default function SideDrawer({ open, onClose }) {
   function handleLogout() {
     base44.auth.logout();
   }
+
+  // Determine which image to show based on what the user saved
+  const presetAvatar = HUMAN_AVATARS.find(a => a.id === user?.avatar_id);
+  const imageToShow = user?.avatar_photo_url || presetAvatar?.url;
 
   return (
     <AnimatePresence>
@@ -60,8 +83,8 @@ export default function SideDrawer({ open, onClose }) {
                      backgroundColor: user?.avatar_id ? getInitialsColor(user?.preferred_name || user?.full_name, user?.avatar_id) : "#ccc"
                    }}
                  >
-                   {user?.avatar_photo_url ? (
-                     <img src={user.avatar_photo_url} alt="avatar" className="w-full h-full object-cover" />
+                   {imageToShow ? (
+                     <img src={imageToShow} alt="avatar" className="w-full h-full object-cover" />
                    ) : (
                      (user?.preferred_name || user?.full_name || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?"
                    )}
@@ -152,36 +175,3 @@ export default function SideDrawer({ open, onClose }) {
                 RAYMA · All rights reserved
               </p>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <div className="px-4 pt-5 pb-1">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">{title}</p>
-      <div className="bg-background rounded-2xl border border-border overflow-hidden divide-y divide-border">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function DrawerRow({ icon: Icon, label, value, small, chevron, onClick, destructive }) {
-  return (
-    <div
-      className={`flex items-start gap-3 px-4 py-3 ${onClick ? "hover:bg-muted/50 cursor-pointer transition-colors active:bg-muted" : ""}`}
-      onClick={onClick}
-    >
-      <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${destructive ? "text-destructive" : "text-muted-foreground"}`} />
-      <div className="flex-1 min-w-0">
-        <p className={`text-xs ${destructive ? "text-destructive font-medium" : "text-muted-foreground"}`}>{label}</p>
-        {value && <p className={`font-medium text-foreground ${small ? "text-xs mt-0.5 leading-relaxed" : "text-sm"} truncate`}>{value}</p>}
-      </div>
-      {chevron && <ChevronRight className={`w-4 h-4 mt-0.5 shrink-0 ${destructive ? "text-destructive/60" : "text-muted-foreground"}`} />}
-    </div>
-  );
-}
