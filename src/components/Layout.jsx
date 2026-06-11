@@ -23,7 +23,6 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
@@ -43,13 +42,10 @@ export default function Layout() {
     }
   }, []);
 
-  // Reset image state when userProfile changes
+  // Reset image error state when userProfile changes
   useEffect(() => {
-    setImageLoaded(false);
     setImageError(false);
   }, [userProfile?.avatar_photo_url]);
-
-  const hasValidAvatar = userProfile?.avatar_photo_url && !imageError;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -59,29 +55,37 @@ export default function Layout() {
       
       {/* Top bar with menu button */}
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-12">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center flex-shrink-0">
-              {hasValidAvatar && imageLoaded ? (
+        {/* APP STORE FIX: Increased h-12 to h-14 to comfortably fit 48px tap targets */}
+        <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-14">
+          <div className="flex items-center gap-3">
+            
+            {/* AVATAR FIX: Safely loads the image, slightly larger (w-8 h-8) for visibility */}
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm">
+              {userProfile?.avatar_photo_url && !imageError ? (
                 <img 
                   src={userProfile.avatar_photo_url}
                   className="w-full h-full object-cover" 
                   alt="Profile"
-                  onLoad={() => setImageLoaded(true)}
                   onError={() => setImageError(true)}
                 />
               ) : (
-                <span className="text-[10px] font-bold text-primary">
-                  {userProfile?.preferred_name?.charAt(0) || "R"}
+                <span className="text-xs font-bold text-primary">
+                  {userProfile?.preferred_name?.charAt(0) || userProfile?.full_name?.charAt(0) || "R"}
                 </span>
               )}
             </div>
-            <span className="text-sm font-semibold font-heading text-foreground">RAYMA</span>
+            
+            <span className="text-sm font-semibold font-heading text-foreground tracking-wide">RAYMA</span>
           </div>
           
-          <div className="flex items-center gap-2">
-            <button onClick={() => setDrawerOpen(true)} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Menu className="w-5 h-5" />
+          <div className="flex items-center">
+            {/* APP STORE FIX: 48x48px minimum tap target (w-12 h-12) */}
+            <button 
+              onClick={() => setDrawerOpen(true)} 
+              aria-label="Open Menu"
+              className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0"
+            >
+              <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
