@@ -39,9 +39,11 @@ export function FinancialDataProvider({ children }) {
       if (incomesRes.error) console.error("Supabase Incomes Error:", incomesRes.error);
 
       // 3. Save the real database rows into the app's state
-      setLoans(loansRes.data || []);
-      setBills(billsRes.data || []);
-      setIncomes(incomesRes.data || []);
+      console.log("Supabase Data Received:", { 
+        loans: loansRes.data, 
+        bills: billsRes.data, 
+        incomes: incomesRes.data 
+      });
 
     } catch (e) {
       console.error("Failed to load financial data from Supabase:", e);
