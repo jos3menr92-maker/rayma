@@ -39,18 +39,22 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
   
   const touchStartX = useRef(null);
 
+  // 1. Fetch User Profile for Global Context
   useEffect(() => {
     base44.auth.me().then(me => setUserProfile(me)).catch(console.error);
   }, []);
 
+  // 2. Initialization & Product Tour Check
   useEffect(() => {
     const tourCompleted = localStorage.getItem(TOUR_COMPLETED_KEY);
     const hasSeenGreetingThisSession = sessionStorage.getItem("rayma_greeted");
     
     if (!tourCompleted) {
+      // First time ever - show greeting and allow tour
       setIsFirstTime(true);
       setShowGreeting(true);
     } else if (!hasSeenGreetingThisSession) {
+      // Returning user - show greeting but no tour
       setShowGreeting(true);
       sessionStorage.setItem("rayma_greeted", "true");
     }
@@ -63,11 +67,13 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     }
   }, [loans.length, bills.length]);
 
+  // 3. The Hybrid Brain (Your Exact Math + Local AI Checks + LLM API)
   async function fetchInsights(force = false) {
     if (loading) return;
     setLoading(true);
     setDismissed(false);
 
+    // Your Exact Original Math
     const monthlyBills = bills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
     const monthlyLoans = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (Number(l.monthly_payment) || 0), 0);
     const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (Number(i.amount) || 0), 0) / incomes.length : 0;
@@ -76,17 +82,21 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     let localAlerts = [];
     const totalObligations = monthlyBills + monthlyLoans;
 
+    // Proactive Alert: DTI Engine
     if (monthlyIncome > 0 && (totalObligations / monthlyIncome) * 100 > 43) {
       localAlerts.push({ type: 'warning', title: "Cash Flow Bottleneck", body: `Your obligations take up >43% of your income. Adding debt right now isn't recommended.`});
     }
+    // Proactive Alert: Payday Collision Guard
     if (userProfile?.pay_day && bills.length > 0) {
       localAlerts.push({ type: 'opportunity', title: "Payday Collision Guard", body: `I'm tracking your bills against your ${userProfile.pay_day} payday to prevent overdrafts.`});
     }
+    // Proactive Alert: Missing APR Estimator
     const loanMissingAPR = loans.find(l => !l.interest_rate && !l.apr);
     if (loanMissingAPR) {
       localAlerts.push({ type: 'tip', title: "Missing Interest Data", body: `You left the interest blank on your ${loanMissingAPR.name || 'recent loan'}. I'm estimating it at 15% for now.`});
     }
 
+    // Your Original LLM API Call
     let result;
     try {
       result = await base44.integrations.Core.InvokeLLM({
@@ -98,6 +108,8 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     }
 
     const llmInsights = result?.insights || [];
+    
+    // Combine everything smoothly
     const combinedList = [...localAlerts, ...llmInsights];
     
     if (combinedList.length > 0) {
@@ -108,16 +120,20 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     setLoading(false);
   }
 
-  // --- THE BYPASS: Uses window instead of import, preventing the build crash ---
-  const startProductTour = () => {
+  // 4. OPTIMIZED: Lazy-Loaded Product Tour
+  const startProductTour = async () => {
     setShowGreeting(false); 
     
-    const driverObj = window.driver.js.driver({
+    // Dynamic Imports: Costs 0 data until this function is called
+    const { driver } = await import("driver.js");
+    await import("driver.js/dist/driver.css");
+    
+    const driverObj = driver({
       showProgress: true,
       animate: true,
       smoothScroll: true,
       allowClose: false,
-      popoverClass: 'driver-popover rayma-flat-theme', 
+      popoverClass: 'driver-popover rayma-flat-theme', // Injects our custom flat CSS
       steps: [
         { popover: { title: 'Welcome to your Command Center! 🚀', description: "I'm RAYMA. I don't just track your money—I help you manage it. Let me show you how to put me to work.", align: 'center' } },
         { element: '#active-loans-section', popover: { title: 'Take Action on Debt 💳', description: "This is your active debt. See those PAY buttons? Use them to instantly log a payment.", side: "right", align: 'start' } },
@@ -163,6 +179,8 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
 
   return (
     <div className="mb-6 space-y-4" id="rayma-insights">
+      
+      {/* --- RESTORED: Your Original Insight Carousel UI --- */}
       {insights.length > 0 && !dismissed && (
         <AnimatePresence mode="wait">
           <motion.div
@@ -196,6 +214,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
         </AnimatePresence>
       )}
 
+      {/* --- RESTORED: Your Original Greeting Modal UI --- */}
       <AnimatePresence>
         {showGreeting && (
           <motion.div 
@@ -217,6 +236,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 }
