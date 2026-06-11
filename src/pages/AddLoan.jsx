@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, Save } from "lucide-react";
+import { ChevronLeft, Save, AlertTriangle } from "lucide-react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -9,6 +9,7 @@ export default function AddLoan() {
   const navigate = useNavigate();
   const { userProfile, reload } = useFinancialData(); 
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(""); // 🚀 NEW: On-screen error tracker
 
   const [formData, setFormData] = useState({
     name: "",
@@ -16,7 +17,7 @@ export default function AddLoan() {
     interest_rate: "",
     monthly_payment: "", 
     payment_frequency: "monthly",
-    due_date: "" // 🚀 CHANGED: Now using a full date instead of just a day
+    due_date: ""
   });
 
   const handleChange = (e) => {
@@ -26,9 +27,16 @@ export default function AddLoan() {
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg(""); // Clear any old errors
 
     try {
-      if (!userProfile?.id) throw new Error("You must be logged in to add a loan.");
+      // 🚀 Adding strict error reporting so we know exactly what fails
+      if (!userProfile?.id) {
+        throw new Error("Missing User ID: The app doesn't know who is logged in.");
+      }
+      if (!supabase) {
+        throw new Error("Missing Supabase: The database client didn't load.");
+      }
 
       const { error } = await supabase.from('loans').insert([{
         user_id: userProfile.id,
@@ -38,13 +46,13 @@ export default function AddLoan() {
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
         payment_frequency: formData.payment_frequency,
-        due_date: formData.due_date || null, // 🚀 CHANGED: Sending the real date to your database
+        due_date: formData.due_date || null,
         status: 'active'
       }]);
 
       if (error) {
         console.error("Supabase Insert Error:", error);
-        throw error;
+        throw new Error(error.message); // Print the exact database error
       }
 
       await reload();
@@ -52,7 +60,7 @@ export default function AddLoan() {
 
     } catch (error) {
       console.error("Failed to add loan:", error);
-      alert("Failed to save the loan. Please try again.");
+      setErrorMsg(error.message || "Failed to save the loan."); // 🚀 Display the error on the screen!
     } finally {
       setLoading(false);
     }
@@ -69,6 +77,14 @@ export default function AddLoan() {
         </button>
         <h1 className="text-2xl font-bold font-heading text-foreground">Add New Loan</h1>
       </motion.div>
+
+      {/* 🚀 THE NEW ERROR BANNER */}
+      {errorMsg && (
+        <div className="mb-6 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <p className="text-sm text-destructive font-medium">{errorMsg}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
@@ -142,7 +158,6 @@ export default function AddLoan() {
           </div>
         </div>
 
-        {/* 🚀 THE NEW CALENDAR DATE PICKER */}
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-foreground">Next Due Date</label>
           <input 
