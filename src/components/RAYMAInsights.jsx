@@ -120,20 +120,16 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     setLoading(false);
   }
 
-  // 4. OPTIMIZED: Lazy-Loaded Product Tour
-  const startProductTour = async () => {
+  // 4. Your Original Product Tour
+  const startProductTour = () => {
     setShowGreeting(false); 
     
-    // Dynamic Imports: Costs 0 data until this function is called
-    const { driver } = await import("driver.js");
-    await import("driver.js/dist/driver.css");
-    
-    const driverObj = driver({
+    const driverObj = window.driver.js.driver({
       showProgress: true,
       animate: true,
       smoothScroll: true,
       allowClose: false,
-      popoverClass: 'driver-popover rayma-flat-theme', // Injects our custom flat CSS
+      popoverClass: 'driver-popover', 
       steps: [
         { popover: { title: 'Welcome to your Command Center! 🚀', description: "I'm RAYMA. I don't just track your money—I help you manage it. Let me show you how to put me to work.", align: 'center' } },
         { element: '#active-loans-section', popover: { title: 'Take Action on Debt 💳', description: "This is your active debt. See those PAY buttons? Use them to instantly log a payment.", side: "right", align: 'start' } },
