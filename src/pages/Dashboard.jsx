@@ -18,6 +18,25 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
+// Bring in the same preset avatars used in Profile.jsx
+const HUMAN_AVATARS = [
+  { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
+  { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
+  { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
+  { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
+  { id: "face5", url: "https://i.pravatar.cc/150?img=33" },
+  { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
+  { id: "face7", url: "https://i.pravatar.cc/150?img=38" },
+  { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
+  { id: "face9", url: "https://i.pravatar.cc/150?img=49" },
+  { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
+  { id: "face11", url: "https://i.pravatar.cc/150?img=51" },
+  { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
+  { id: "face13", url: "https://i.pravatar.cc/150?img=56" },
+  { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
+  { id: "face15", url: "https://i.pravatar.cc/150?img=60" },
+];
+
 const COLORS = [
   "hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", 
   "hsl(var(--chart-4))", "hsl(var(--destructive))", "#34d399", "#f97316", 
@@ -129,6 +148,10 @@ export default function Dashboard() {
   }, [incomes]);
   const cashLeft = monthlyIncome - (monthlyTotal || 0);
 
+  // Determine which image to show based on what the user saved
+  const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
+  const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
   return (
@@ -150,15 +173,14 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">{userProfile?.dashboard_greeting || T("stayOnTop", "Stay on top of your finances")}</p>
         </div>
         
-        {/* --- APP STORE COMPLIANT PROFILE BUTTON (48px target, screen-reader safe, navigates to profile) --- */}
         <button 
           onClick={() => navigate("/profile")}
           aria-label={userProfile?.preferred_name || userProfile?.full_name || 'Profile'}
           className="w-12 h-12 flex-shrink-0 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full transition-transform active:scale-95 shadow-sm"
           style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}
         >
-          {userProfile?.avatar_photo_url ? (
-            <img src={userProfile.avatar_photo_url} alt="avatar" className="w-full h-full object-cover rounded-full" />
+          {imageToShow ? (
+            <img src={imageToShow} alt="avatar" className="w-full h-full object-cover rounded-full" />
           ) : (
             <span className="font-bold text-white text-sm">
               {(userProfile?.preferred_name || userProfile?.full_name || "?")
@@ -196,7 +218,6 @@ export default function Dashboard() {
       <DueSoonAlert loans={activeLoans} bills={bills} payments={payments} />
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
       
-      {/* ADDED ID WRAPPER HERE */}
       <div id="financial-health-score">
         <FinancialHealthScore />
       </div>
@@ -230,7 +251,6 @@ export default function Dashboard() {
       </div>
 
       {activeLoans.length > 0 ? (
-        // ADDED ID HERE
         <div id="active-loans-section">
           <h2 className="text-sm font-semibold font-heading text-foreground mb-2">{T("activeLoans", "Active Loans")}</h2>
           <div className="space-y-2">{activeLoans.map((loan, i) => <LoanCard key={loan.id} loan={loan} index={i} />)}</div>
