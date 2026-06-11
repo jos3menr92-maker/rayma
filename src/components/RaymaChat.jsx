@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
-import { runRemoteDiagnostic } from "../lib/runRemoteDiagnostic";
-import { useNavigate } from "react-router-dom"; // Added for routing commands
+import { useNavigate } from "react-router-dom"; 
 
-export default function RaymaChat() {
+// --- UPDATED: Now receives the financial data from Layout.jsx ---
+export default function RaymaChat({ loans = [], bills = [], incomes = [], userProfile = null }) {
   const [open, setOpen] = useState(false);
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -17,7 +17,7 @@ export default function RaymaChat() {
   const [tourTriggered, setTourTriggered] = useState(false);
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
-  const navigate = useNavigate(); // Hook added to allow RAYMA to change pages
+  const navigate = useNavigate();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -64,6 +64,40 @@ export default function RaymaChat() {
       window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
       setOpen(false); 
       return; 
+    }
+
+    // --- INJECTED: LOAN ADVISOR LOGIC ---
+    if (text.includes("loan") && (text.includes("can i get") || text.includes("should i get") || text.includes("do i qualify") || text.includes("qualify for"))) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      setLoading(true);
+
+      const totalMonthlyObligations = 
+        loans.reduce((s, l) => s + (l.monthly_payment || 0), 0) + 
+        bills.reduce((s, b) => s + (b.amount || 0), 0);
+        
+      const monthlyIncome = incomes.length > 0 
+        ? (incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length) * 4.33 
+        : 0;
+        
+      const dti = monthlyIncome > 0 ? (totalMonthlyObligations / monthlyIncome) * 100 : 100;
+
+      let advisorResponse = "";
+      if (monthlyIncome === 0) {
+        advisorResponse = "I don't see any income logged in your account right now. Without income data, I can't calculate your debt-to-income ratio to advise on a new loan. Please add your income sources in the Dashboard first!";
+      } else if (dti > 45) {
+        advisorResponse = `Based on your current debt-to-income (DTI) ratio of **${dti.toFixed(1)}%**, your obligations are quite high relative to your income. Taking on a new loan right now might put significant strain on your cash flow. I strongly recommend focusing on paying down your existing debt first.`;
+      } else if (dti > 30) {
+        advisorResponse = `Your debt-to-income (DTI) ratio is **${dti.toFixed(1)}%**. It's in a manageable range, but be cautious. If you do take a new loan, ensure the monthly payment doesn't push your total obligations above 40% of your income.`;
+      } else {
+        advisorResponse = `Your debt-to-income (DTI) ratio is very healthy at **${dti.toFixed(1)}%**. If you have a clear plan for the funds and can comfortably afford the new monthly payment, it could be a viable option. Just remember to compare interest rates carefully!`;
+      }
+
+      setTimeout(() => {
+        setMessages(prev => [...prev, { role: "assistant", content: advisorResponse }]);
+        setLoading(false);
+      }, 600);
+      return;
     }
 
     // --- INJECTED: SUPER DEBUG MODE ---
@@ -136,15 +170,27 @@ export default function RaymaChat() {
       return;
     }
   
-    // --- DIAGNOSTIC PIN INTERCEPTOR ---
+    // --- DIAGNOSTIC PIN INTERCEPTOR (LAZY LOAD OPTIMIZED) ---
     const isPin = /^\d{6}$/.test(input.trim());
     if (isPin) {
       setScanning(true);
       setMessages(prev => [...prev, { role: "user", content: input }]);
       setInput(""); 
-      const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
-      const result = await runRemoteDiagnostic(input.trim(), mockLogs);
-      setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
+      
+      try {
+        // Dynamically fetch the function only when a 6-digit pin is actually typed
+        const module = await import("../lib/runRemoteDiagnostic");
+        const runRemoteDiagnostic = module.runRemoteDiagnostic;
+        
+        const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
+        const result = await runRemoteDiagnostic(input.trim(), mockLogs);
+        
+        setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
+      } catch (err) {
+        console.error("Diagnostic tool failed to load", err);
+        setMessages(prev => [...prev, { role: "assistant", content: "Error loading diagnostic protocol. Try again later." }]);
+      }
+      
       setScanning(false);
       return; 
     }
@@ -152,7 +198,6 @@ export default function RaymaChat() {
     // --- MAIN SEND LOGIC ---
     if (!input.trim() || loading || !conversation) return;
     
-    // RENAMED variable here to avoid the conflict
     const messageContent = input.trim(); 
     setInput("");
     setLoading(true);
@@ -214,7 +259,6 @@ export default function RaymaChat() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            // RESPONSIVE FIX: width adapts to mobile screen natively, max-height locks it so it doesn't overflow
             className="fixed bottom-24 right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] max-h-[75vh] z-40"
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
@@ -288,7 +332,6 @@ export default function RaymaChat() {
               <button
                 onClick={() => scanFileRef.current?.click()}
                 disabled={loading || initializing || scanning}
-                // APP STORE FIX: 48px target (h-12 w-12), forced not to shrink
                 className="h-12 w-12 flex items-center justify-center bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
                 title="Scan & analyze a document"
               >
@@ -300,14 +343,12 @@ export default function RaymaChat() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                 placeholder="Ask RAYMA…"
-                // APP STORE FIX: text-base to prevent iOS zooming, h-12
                 className="flex-1 h-12 bg-muted border-0 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-1 focus:ring-primary min-w-0"
                 disabled={loading || initializing}
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || loading || initializing}
-                // APP STORE FIX: 48px target (h-12 w-12), forced not to shrink
                 className="h-12 w-12 flex items-center justify-center bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0"
               >
                 <Send className="w-5 h-5" />
