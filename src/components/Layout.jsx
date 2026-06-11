@@ -9,7 +9,27 @@ import MoreMenu from "./MoreMenu";
 import FeedbackButton from "./FeedbackButton";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { getInitialsColor } from "@/components/AvatarPicker"; // <--- ADDED THIS
+import { getInitialsColor } from "@/components/AvatarPicker";
+import { base44 } from "@/api/base44Client";
+
+// Bring in the same preset avatars used in Profile.jsx
+const HUMAN_AVATARS = [
+  { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
+  { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
+  { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
+  { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
+  { id: "face5", url: "https://i.pravatar.cc/150?img=33" },
+  { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
+  { id: "face7", url: "https://i.pravatar.cc/150?img=38" },
+  { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
+  { id: "face9", url: "https://i.pravatar.cc/150?img=49" },
+  { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
+  { id: "face11", url: "https://i.pravatar.cc/150?img=51" },
+  { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
+  { id: "face13", url: "https://i.pravatar.cc/150?img=56" },
+  { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
+  { id: "face15", url: "https://i.pravatar.cc/150?img=60" },
+];
 
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -28,7 +48,13 @@ export default function Layout() {
   const isDragging = useRef(false);
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
 
-  const { loans, bills, incomes, userProfile } = useFinancialData();
+  // Directly fetch the profile so we don't rely on background hooks
+  const { loans, bills, incomes } = useFinancialData();
+  const [userProfile, setUserProfile] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(me => setUserProfile(me)).catch(console.error);
+  }, []);
 
   useEffect(() => {
     try {
@@ -42,10 +68,13 @@ export default function Layout() {
     }
   }, []);
 
-  // Reset image error state when userProfile changes
   useEffect(() => {
     setImageError(false);
-  }, [userProfile?.avatar_photo_url]);
+  }, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
+
+  // Determine which image to show based on what the user saved
+  const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
+  const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -53,19 +82,17 @@ export default function Layout() {
       <QuickAddMenu open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
       <MoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
       
-      {/* Top bar with menu button */}
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-14">
           <div className="flex items-center gap-3">
             
-            {/* AVATAR FIX: Now uses getInitialsColor to match the Dashboard perfectly */}
             <div 
               className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm"
               style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}
             >
-              {userProfile?.avatar_photo_url && !imageError ? (
+              {imageToShow && !imageError ? (
                 <img 
-                  src={userProfile.avatar_photo_url}
+                  src={imageToShow}
                   className="w-full h-full object-cover" 
                   alt="Profile"
                   onError={() => setImageError(true)}
@@ -96,7 +123,6 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* Floating Draggable Add Button */}
       <motion.button
         drag
         dragMomentum={false}
