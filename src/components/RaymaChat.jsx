@@ -46,7 +46,7 @@ export default function RaymaChat() {
     setInitializing(false);
   }
   
-async function handleSend() {
+  async function handleSend() {
     const text = input.trim().toLowerCase();
     const tourTriggers = [ "tour","start tour","show me around","guide me","how does this work","how do i use this","i'm lost","can i get a tour","give me head" ];  
     const isTourCommand = !tourTriggered && tourTriggers.some(trigger => text === trigger || text.startsWith(trigger + " ") || text.endsWith(" " + trigger));
@@ -214,7 +214,8 @@ async function handleSend() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 right-4 w-80 bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] z-40"
+            // RESPONSIVE FIX: width adapts to mobile screen natively, max-height locks it so it doesn't overflow
+            className="fixed bottom-24 right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] max-h-[75vh] z-40"
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <div>
@@ -223,7 +224,7 @@ async function handleSend() {
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={handleClear} className="p-1.5 hover:bg-muted rounded-lg transition-colors" title="Clear conversation">
-                  <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Trash2 className="w-4 h-4 text-muted-foreground" />
                 </button>
                 <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
                   <X className="w-4 h-4 text-muted-foreground" />
@@ -287,10 +288,11 @@ async function handleSend() {
               <button
                 onClick={() => scanFileRef.current?.click()}
                 disabled={loading || initializing || scanning}
-                className="h-10 p-2 bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
+                // APP STORE FIX: 48px target (h-12 w-12), forced not to shrink
+                className="h-12 w-12 flex items-center justify-center bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
                 title="Scan & analyze a document"
               >
-                {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+                {scanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <ScanLine className="w-5 h-5" />}
               </button>
               <input
                 type="text"
@@ -298,15 +300,17 @@ async function handleSend() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                 placeholder="Ask RAYMA…"
-                className="flex-1 h-10 bg-muted border-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                // APP STORE FIX: text-base to prevent iOS zooming, h-12
+                className="flex-1 h-12 bg-muted border-0 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-1 focus:ring-primary min-w-0"
                 disabled={loading || initializing}
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || loading || initializing}
-                className="h-10 p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                // APP STORE FIX: 48px target (h-12 w-12), forced not to shrink
+                className="h-12 w-12 flex items-center justify-center bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               </button>
               <input
                 ref={scanFileRef}
