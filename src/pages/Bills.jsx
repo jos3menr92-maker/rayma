@@ -1,8 +1,10 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
+import { base44 } from "@/api/base44Client"; // Kept only for Payments history
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, Receipt, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Edit3, Receipt, CheckCircle2, Sparkles } from "lucide-react"; // Added Sparkles for RAYMA!
 import BillPriceAlert from "../components/BillPriceAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +24,9 @@ export default function Bills() {
   const { lang } = useLanguage();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   
+  // 🧠 Pulling real data from your Supabase Brain
+  const { bills, userProfile, reload, loading } = useFinancialData();
+  
   const categories = [
     { value: "utilities", label: T("catUtilities", "⚡ Utilities") },
     { value: "subscriptions", label: T("catSubscriptions", "📱 Subscriptions") },
@@ -37,22 +42,14 @@ export default function Bills() {
   const emptyForm = { name: "", amount: "", payment_frequency: "monthly", due_day: "", due_day_of_week: "Friday", category: "other", notes: "", is_active: true };
 
   const { formatCurrency: fmt } = useCurrency();
-  const [bills, setBills] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-
-  const load = async () => {
-    const data = await base44.entities.Bill.list("-created_date", 50);
-    setBills(data);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, []);
+  const [paidBillId, setPaidBillId] = useState(null);
 
   const openAdd = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
+  
   const openEdit = (bill) => {
     setEditing(bill);
     setForm({
@@ -71,24 +68,39 @@ export default function Bills() {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
+    
+    // 🛡️ Data formatting before saving to Supabase
     const data = {
       ...form,
+      user_id: userProfile?.id, // Locks bill to the current user!
       amount: parseFloat(form.amount) || 0,
       due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
       due_day_of_week: (form.payment_frequency === "weekly" || form.payment_frequency === "biweekly") ? (form.due_day_of_week || "Monday") : null,
     };
-    if (editing) await base44.entities.Bill.update(editing.id, data);
-    else await base44.entities.Bill.create(data);
+
+    try {
+      if (editing) {
+        await supabase.from('bills').update(data).eq('id', editing.id);
+      } else {
+        await supabase.from('bills').insert([data]);
+      }
+      reload(); // 🔄 Tell the Brain to fetch the fresh data
+    } catch (err) {
+      console.error("Error saving bill to Supabase:", err);
+    }
+
     setSaving(false);
     setDialogOpen(false);
-    load();
   };
 
-  const handleDelete = async (id) => { await base44.entities.Bill.delete(id); load(); };
+  const handleDelete = async (id) => { 
+    await supabase.from('bills').delete().eq('id', id); 
+    reload(); 
+  };
 
-  const [paidBillId, setPaidBillId] = useState(null);
   const handleMarkPaid = async (bill) => {
     setPaidBillId(bill.id);
+    // 💡 Kept in Base44 temporarily until we migrate the payments table
     await base44.entities.Payment.create({
       bill_id: bill.id,
       payment_type: "bill",
@@ -105,6 +117,9 @@ export default function Bills() {
     if (freq === "biweekly") return s + (b.amount || 0) * 2.17;
     return s + (b.amount || 0);
   }, 0), [bills]);
+
+  // 🛡️ Dumb-proofing: Check if form is valid before allowing save
+  const isFormValid = form.name.trim() !== "" && form.amount !== "" && parseFloat(form.amount) >= 0;
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -172,18 +187,34 @@ export default function Bills() {
         )}
       </motion.div>
 
+      {/* DIALOG POPUP */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editing ? T("editBill", "Edit Bill") : T("addBill", "Add Bill")}</DialogTitle></DialogHeader>
-          <form onSubmit={handleSave} className="space-y-3 mt-2">
+          <DialogHeader>
+            <DialogTitle>{editing ? T("editBill", "Edit Bill") : T("addBill", "Add Bill")}</DialogTitle>
+          </DialogHeader>
+          
+          {/* ✨ RAYMA AI INTEGRATION BUTTON ✨ */}
+          {!editing && (
+            <button 
+              type="button" 
+              className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors border border-primary/20"
+              onClick={() => alert("RAYMA OCR Scanner coming soon! 🤖")} // Placeholder for future logic
+            >
+              <Sparkles className="w-4 h-4" /> Auto-fill with RAYMA
+            </button>
+          )}
+
+          <form onSubmit={handleSave} className="space-y-3 mt-4">
             <div>
               <Label className="text-xs text-muted-foreground">{T("name", "Name *")}</Label>
-              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Netflix" required className="mt-1 rounded-xl" />
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Netflix" required className="mt-1 rounded-xl border-primary/20 focus-visible:ring-primary" />
             </div>
+            
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">{T("amount", "Amount ($) *")}</Label>
-                <Input type="number" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" required className="mt-1 rounded-xl" />
+                <Input type="number" step="0.01" min="0" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" required className="mt-1 rounded-xl" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">{T("frequency", "Frequency")}</Label>
@@ -197,9 +228,11 @@ export default function Bills() {
                 </Select>
               </div>
             </div>
+
             {form.payment_frequency === "monthly" ? (
               <div>
                 <Label className="text-xs text-muted-foreground">{T("dueDayMonth", "Due Day of Month (1-31)")}</Label>
+                {/* 🛡️ Dumb-proofing: Min 1, Max 31 enforced here */}
                 <Input type="number" min="1" max="31" value={form.due_day} onChange={e => setForm(f => ({ ...f, due_day: e.target.value }))} placeholder="1" className="mt-1 rounded-xl" />
               </div>
             ) : (
@@ -213,6 +246,7 @@ export default function Bills() {
                 </Select>
               </div>
             )}
+            
             <div>
               <Label className="text-xs text-muted-foreground">{T("category", "Category")}</Label>
               <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
@@ -222,7 +256,9 @@ export default function Bills() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" disabled={saving} className="w-full rounded-xl">
+
+            {/* 🛡️ Dumb-proofing: Disabled button unless form is valid! */}
+            <Button type="submit" disabled={saving || !isFormValid} className="w-full rounded-xl shadow-lg mt-2">
               {saving ? T("saving", "Saving...") : editing ? T("saveChanges", "Save Changes") : T("addBill", "Add Bill")}
             </Button>
           </form>
