@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ const categories = [
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function AddBillDialog({ open, onClose, onSaved }) {
+  const { userProfile, reload } = useFinancialData(); // 🚀 CONNECTED TO BRAIN
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "", amount: "", payment_frequency: "monthly", due_day: "", due_day_of_week: "", category: "other", autopay: false, notes: "",
@@ -34,29 +36,35 @@ export default function AddBillDialog({ open, onClose, onSaved }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
+    
     const payload = {
       name: form.name,
+      user_id: userProfile?.id,
       amount: parseFloat(form.amount) || 0,
       payment_frequency: form.payment_frequency,
       category: form.category,
       notes: form.notes,
       is_active: true,
     };
+    
     if (isWeekly) {
       payload.due_day_of_week = form.due_day_of_week;
     } else {
-      payload.due_day = parseInt(form.due_day) || 1;
+      payload.due_day = parseInt(form.due_day) || null; // Fixed to allow null if no day provided
     }
-    await base44.entities.Bill.create(payload);
+    
+    await supabase.from('bills').insert([payload]);
     setSaving(false);
     setForm({ name: "", amount: "", payment_frequency: "monthly", due_day: "", due_day_of_week: "", category: "other", autopay: false, notes: "" });
+    reload(); // Refresh the brain!
     onClose();
-    onSaved();
+    if (onSaved) onSaved();
   }
 
   const isValid = form.name && form.amount && (isWeekly ? form.due_day_of_week : form.due_day);
 
   return (
+    // ... KEEP THE EXACT SAME UI CODE HERE ...
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
