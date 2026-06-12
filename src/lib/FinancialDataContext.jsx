@@ -45,6 +45,11 @@ export function FinancialDataProvider({ children }) {
         incomes: incomesRes.data 
       });
 
+      // 🚀 THE MISSING LINK: Actually saving the data to React!
+      setLoans(loansRes.data || []);
+      setBills(billsRes.data || []);
+      setIncomes(incomesRes.data || []);
+
     } catch (e) {
       console.error("Failed to load financial data from Supabase:", e);
       setLoans([]);
