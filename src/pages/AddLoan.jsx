@@ -9,7 +9,7 @@ export default function AddLoan() {
   const navigate = useNavigate();
   const { userProfile, reload } = useFinancialData(); 
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // 🚀 NEW: On-screen error tracker
+  const [errorMsg, setErrorMsg] = useState(""); 
 
   const [formData, setFormData] = useState({
     name: "",
@@ -17,6 +17,7 @@ export default function AddLoan() {
     interest_rate: "",
     monthly_payment: "", 
     payment_frequency: "monthly",
+    term_months: "", // 🚀 NEW: The code now tracks the term!
     due_date: ""
   });
 
@@ -27,16 +28,11 @@ export default function AddLoan() {
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg(""); // Clear any old errors
+    setErrorMsg("");
 
     try {
-      // 🚀 Adding strict error reporting so we know exactly what fails
-      if (!userProfile?.id) {
-        throw new Error("Missing User ID: The app doesn't know who is logged in.");
-      }
-      if (!supabase) {
-        throw new Error("Missing Supabase: The database client didn't load.");
-      }
+      if (!userProfile?.id) throw new Error("Missing User ID: The app doesn't know who is logged in.");
+      if (!supabase) throw new Error("Missing Supabase: The database client didn't load.");
 
       const { error } = await supabase.from('loans').insert([{
         user_id: userProfile.id,
@@ -46,13 +42,14 @@ export default function AddLoan() {
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
         payment_frequency: formData.payment_frequency,
+        term_months: parseInt(formData.term_months) || null, // 🚀 NEW: Sending term to Supabase
         due_date: formData.due_date || null,
         status: 'active'
       }]);
 
       if (error) {
         console.error("Supabase Insert Error:", error);
-        throw new Error(error.message); // Print the exact database error
+        throw new Error(error.message); 
       }
 
       await reload();
@@ -60,7 +57,7 @@ export default function AddLoan() {
 
     } catch (error) {
       console.error("Failed to add loan:", error);
-      setErrorMsg(error.message || "Failed to save the loan."); // 🚀 Display the error on the screen!
+      setErrorMsg(error.message || "Failed to save the loan."); 
     } finally {
       setLoading(false);
     }
@@ -78,7 +75,6 @@ export default function AddLoan() {
         <h1 className="text-2xl font-bold font-heading text-foreground">Add New Loan</h1>
       </motion.div>
 
-      {/* 🚀 THE NEW ERROR BANNER */}
       {errorMsg && (
         <div className="mb-6 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
@@ -158,16 +154,30 @@ export default function AddLoan() {
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground">Next Due Date</label>
-          <input 
-            required 
-            type="date"
-            name="due_date"
-            value={formData.due_date}
-            onChange={handleChange}
-            className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
-          />
+        {/* 🚀 THE NEW TERM AND DATE ROW */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-foreground">Term (Months)</label>
+            <input 
+              type="number"
+              name="term_months"
+              value={formData.term_months}
+              onChange={handleChange}
+              placeholder="e.g. 60" 
+              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-foreground">Next Due Date</label>
+            <input 
+              required 
+              type="date"
+              name="due_date"
+              value={formData.due_date}
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+            />
+          </div>
         </div>
 
         <button 
