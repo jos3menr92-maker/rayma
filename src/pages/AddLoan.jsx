@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, Save, AlertTriangle } from "lucide-react";
+import { ChevronLeft, Save, AlertTriangle, Sparkles } from "lucide-react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -13,8 +13,8 @@ export default function AddLoan() {
 
   const [formData, setFormData] = useState({
     name: "",
-    original_amount: "", // 🚀 NEW: The starting line
-    current_balance: "", // The current state
+    original_amount: "", 
+    current_balance: "", 
     interest_rate: "",
     monthly_payment: "", 
     payment_frequency: "monthly",
@@ -35,17 +35,29 @@ export default function AddLoan() {
       if (!userProfile?.id) throw new Error("Missing User ID: The app doesn't know who is logged in.");
       if (!supabase) throw new Error("Missing Supabase: The database client didn't load.");
 
+      // 🧠 RAYMA INTERCEPT: Auto-filling the missing blanks
+      let finalDueDate = formData.due_date;
+      
+      if (!finalDueDate) {
+        const today = new Date();
+        if (formData.payment_frequency === "weekly") today.setDate(today.getDate() + 7);
+        else if (formData.payment_frequency === "bi-weekly") today.setDate(today.getDate() + 14);
+        else today.setMonth(today.getMonth() + 1); // Default to exactly 1 month from today
+        
+        finalDueDate = today.toISOString().split('T')[0];
+      }
+
       const { error } = await supabase.from('loans').insert([{
         user_id: userProfile.id,
-        name: formData.name,
-        original_amount: parseFloat(formData.original_amount) || parseFloat(formData.current_balance) || 0, // 🚀 NEW: Saving original
+        name: formData.name || "Unnamed Loan", // RAYMA fallback
+        original_amount: parseFloat(formData.original_amount) || parseFloat(formData.current_balance) || 0, 
         current_balance: parseFloat(formData.current_balance) || 0,
-        remaining_balance: parseFloat(formData.current_balance) || 0, // 🚀 GHOST FIX: Silencing the Supabase error!
+        remaining_balance: parseFloat(formData.current_balance) || 0, 
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
         payment_frequency: formData.payment_frequency,
         total_payments: parseInt(formData.total_payments) || null,
-        due_date: formData.due_date || null,
+        due_date: finalDueDate, // 🚀 Sending RAYMA's calculated date!
         status: 'active'
       }]);
 
@@ -87,8 +99,8 @@ export default function AddLoan() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-foreground">Loan Name</label>
+          {/* Removed required */}
           <input 
-            required 
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -97,12 +109,10 @@ export default function AddLoan() {
           />
         </div>
 
-        {/* 🚀 THE NEW SPLIT ROW: ORIGINAL VS CURRENT */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground">Original Amount</label>
             <input 
-              required 
               type="number"
               step="0.01"
               name="original_amount"
@@ -115,7 +125,6 @@ export default function AddLoan() {
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground">Current Amount Owed</label>
             <input 
-              required 
               type="number"
               step="0.01"
               name="current_balance"
@@ -131,7 +140,6 @@ export default function AddLoan() {
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground">Payment Amount</label>
             <input 
-              required 
               type="number"
               step="0.01"
               name="monthly_payment"
@@ -142,15 +150,18 @@ export default function AddLoan() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Interest Rate (%)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-foreground">Interest Rate (%)</label>
+              <Sparkles className="w-3 h-3 text-primary/50" />
+            </div>
             <input 
               type="number"
               step="0.01"
               name="interest_rate"
               value={formData.interest_rate}
               onChange={handleChange}
-              placeholder="e.g. 5.5" 
-              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+              placeholder="RAYMA will calculate" 
+              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-primary/40"
             />
           </div>
         </div>
@@ -172,27 +183,33 @@ export default function AddLoan() {
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Total # of Payments</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-foreground">Total # of Payments</label>
+              <Sparkles className="w-3 h-3 text-primary/50" />
+            </div>
             <input 
               type="number"
               name="total_payments"
               value={formData.total_payments}
               onChange={handleChange}
-              placeholder="e.g. 60" 
-              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+              placeholder="RAYMA will calculate" 
+              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-primary/40"
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground">Next Due Date</label>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-foreground">Next Due Date</label>
+            <Sparkles className="w-3 h-3 text-primary/50" />
+          </div>
+          {/* Removed required so RAYMA can fill it */}
           <input 
-            required 
             type="date"
             name="due_date"
             value={formData.due_date}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+            className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-all"
           />
         </div>
 
