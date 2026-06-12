@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
 import { motion } from "framer-motion";
 import { Trash2, Zap, CheckCircle2 } from "lucide-react";
 
@@ -18,11 +18,12 @@ export default function BillCard({ bill, index = 0, onRefresh }) {
   const isToday = daysUntil === 0;
 
   async function handleDelete() {
-    await base44.entities.Bill.delete(bill.id);
-    onRefresh();
+    await supabase.from('bills').delete().eq('id', bill.id); // 🚀 DELETE FROM SUPABASE
+    if (onRefresh) onRefresh();
   }
 
   return (
+    // ... KEEP THE EXACT SAME UI CODE HERE ...
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
