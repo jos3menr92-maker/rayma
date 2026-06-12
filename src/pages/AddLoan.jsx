@@ -17,7 +17,7 @@ export default function AddLoan() {
     interest_rate: "",
     monthly_payment: "", 
     payment_frequency: "monthly",
-    term_months: "", // 🚀 NEW: The code now tracks the term!
+    total_payments: "", // 🚀 NEW: Tracks total payments instead of strict months
     due_date: ""
   });
 
@@ -42,7 +42,7 @@ export default function AddLoan() {
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
         payment_frequency: formData.payment_frequency,
-        term_months: parseInt(formData.term_months) || null, // 🚀 NEW: Sending term to Supabase
+        total_payments: parseInt(formData.total_payments) || null, // 🚀 NEW: Sending to the renamed column
         due_date: formData.due_date || null,
         status: 'active'
       }]);
@@ -154,14 +154,14 @@ export default function AddLoan() {
           </div>
         </div>
 
-        {/* 🚀 THE NEW TERM AND DATE ROW */}
+        {/* 🚀 THE NEW DUMB-PROOF ROW */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Term (Months)</label>
+            <label className="text-sm font-semibold text-foreground">Total # of Payments</label>
             <input 
               type="number"
-              name="term_months"
-              value={formData.term_months}
+              name="total_payments"
+              value={formData.total_payments}
               onChange={handleChange}
               placeholder="e.g. 60" 
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
