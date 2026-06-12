@@ -13,11 +13,12 @@ export default function AddLoan() {
 
   const [formData, setFormData] = useState({
     name: "",
-    current_balance: "",
+    original_amount: "", // 🚀 NEW: The starting line
+    current_balance: "", // The current state
     interest_rate: "",
     monthly_payment: "", 
     payment_frequency: "monthly",
-    total_payments: "", // 🚀 NEW: Tracks total payments instead of strict months
+    total_payments: "", 
     due_date: ""
   });
 
@@ -37,12 +38,13 @@ export default function AddLoan() {
       const { error } = await supabase.from('loans').insert([{
         user_id: userProfile.id,
         name: formData.name,
+        original_amount: parseFloat(formData.original_amount) || parseFloat(formData.current_balance) || 0, // 🚀 NEW: Saving original
         current_balance: parseFloat(formData.current_balance) || 0,
-        original_amount: parseFloat(formData.current_balance) || 0,
+        remaining_balance: parseFloat(formData.current_balance) || 0, // 🚀 GHOST FIX: Silencing the Supabase error!
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
         payment_frequency: formData.payment_frequency,
-        total_payments: parseInt(formData.total_payments) || null, // 🚀 NEW: Sending to the renamed column
+        total_payments: parseInt(formData.total_payments) || null,
         due_date: formData.due_date || null,
         status: 'active'
       }]);
@@ -95,15 +97,45 @@ export default function AddLoan() {
           />
         </div>
 
+        {/* 🚀 THE NEW SPLIT ROW: ORIGINAL VS CURRENT */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Current Balance</label>
+            <label className="text-sm font-semibold text-foreground">Original Amount</label>
+            <input 
+              required 
+              type="number"
+              step="0.01"
+              name="original_amount"
+              value={formData.original_amount}
+              onChange={handleChange}
+              placeholder="$0.00" 
+              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-foreground">Current Amount Owed</label>
             <input 
               required 
               type="number"
               step="0.01"
               name="current_balance"
               value={formData.current_balance}
+              onChange={handleChange}
+              placeholder="$0.00" 
+              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-foreground">Payment Amount</label>
+            <input 
+              required 
+              type="number"
+              step="0.01"
+              name="monthly_payment"
+              value={formData.monthly_payment}
               onChange={handleChange}
               placeholder="$0.00" 
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
@@ -125,19 +157,6 @@ export default function AddLoan() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Payment Amount</label>
-            <input 
-              required 
-              type="number"
-              step="0.01"
-              name="monthly_payment"
-              value={formData.monthly_payment}
-              onChange={handleChange}
-              placeholder="$0.00" 
-              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
-            />
-          </div>
-          <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground">Frequency</label>
             <select 
               name="payment_frequency"
@@ -152,10 +171,6 @@ export default function AddLoan() {
               <option value="annually">Annually</option>
             </select>
           </div>
-        </div>
-
-        {/* 🚀 THE NEW DUMB-PROOF ROW */}
-        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground">Total # of Payments</label>
             <input 
@@ -167,17 +182,18 @@ export default function AddLoan() {
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Next Due Date</label>
-            <input 
-              required 
-              type="date"
-              name="due_date"
-              value={formData.due_date}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
-            />
-          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-foreground">Next Due Date</label>
+          <input 
+            required 
+            type="date"
+            name="due_date"
+            value={formData.due_date}
+            onChange={handleChange}
+            className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+          />
         </div>
 
         <button 
