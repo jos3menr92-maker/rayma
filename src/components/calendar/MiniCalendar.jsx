@@ -18,18 +18,28 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
 
+  // 🧠 RAYMA HELPER: Safely extracts the day number from "YYYY-MM-DD" without timezone bugs
+  const extractDay = (dateStr) => {
+    if (!dateStr) return null;
+    return parseInt(dateStr.split('T')[0].split('-')[2], 10);
+  };
+
   // Build day map: bills, loans, paydays
   const dayMap = {};
+  
   bills.forEach(b => {
-    if (b.due_day) {
-      if (!dayMap[b.due_day]) dayMap[b.due_day] = [];
-      dayMap[b.due_day].push({ ...b, _type: "bill" });
+    const day = extractDay(b.due_date) || b.due_day;
+    if (day) {
+      if (!dayMap[day]) dayMap[day] = [];
+      dayMap[day].push({ ...b, _type: "bill" });
     }
   });
+
   loans.forEach(l => {
-    if (l.due_day) {
-      if (!dayMap[l.due_day]) dayMap[l.due_day] = [];
-      dayMap[l.due_day].push({ ...l, _type: "loan" });
+    const day = extractDay(l.due_date) || l.due_day;
+    if (day) {
+      if (!dayMap[day]) dayMap[day] = [];
+      dayMap[day].push({ ...l, _type: "loan" });
     }
   });
 
