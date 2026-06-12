@@ -2,7 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CreditCard, Receipt, DollarSign, PiggyBank, TrendingDown, ArrowLeftRight, ScanLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ const BILL_CATEGORIES = [
 
 export default function QuickAddMenu({ open, onClose }) {
   const navigate = useNavigate();
+  const { userProfile, reload } = useFinancialData(); // 🚀 CONNECTED TO BRAIN
   const [activeModal, setActiveModal] = useState(null); // 'loan' | 'bill' | 'income' | 'savings'
   const [saving, setSaving] = useState(false);
 
@@ -42,36 +44,56 @@ export default function QuickAddMenu({ open, onClose }) {
 
   async function saveBill(e) {
     e.preventDefault(); setSaving(true);
-    await base44.entities.Bill.create({ ...billForm, amount: parseFloat(billForm.amount) || 0, due_day: parseInt(billForm.due_day) || null, is_active: true });
-    setSaving(false); setBillForm({ name: "", amount: "", due_day: "", category: "other" }); close();
+    const data = {
+      ...billForm,
+      user_id: userProfile?.id,
+      amount: parseFloat(billForm.amount) || 0,
+      due_day: parseInt(billForm.due_day) || null,
+      is_active: true
+    };
+    await supabase.from('bills').insert([data]);
+    setSaving(false); setBillForm({ name: "", amount: "", due_day: "", category: "other" });
+    reload(); close();
   }
 
   async function saveIncome(e) {
     e.preventDefault(); setSaving(true);
-    await base44.entities.WeeklyIncome.create({ ...incomeForm, amount: parseFloat(incomeForm.amount) || 0 });
-    setSaving(false); setIncomeForm({ amount: "", week_start: startOfWeek(), note: "" }); close();
+    const data = {
+      ...incomeForm,
+      user_id: userProfile?.id,
+      amount: parseFloat(incomeForm.amount) || 0
+    };
+    await supabase.from('incomes').insert([data]);
+    setSaving(false); setIncomeForm({ amount: "", week_start: startOfWeek(), note: "" });
+    reload(); close();
   }
 
   async function saveSavings(e) {
     e.preventDefault(); setSaving(true);
-    await base44.entities.SavingsGoal.create({
+    const data = {
       name: savingsForm.name,
+      user_id: userProfile?.id,
       target_amount: parseFloat(savingsForm.target_amount) || 0,
       current_saved: parseFloat(savingsForm.current_saved) || 0,
       weekly_contribution: parseFloat(savingsForm.weekly_contribution) || 0,
       status: "active",
-    });
-    setSaving(false); setSavingsForm({ name: "", target_amount: "", current_saved: "", weekly_contribution: "" }); close();
+    };
+    await supabase.from('savings_goals').insert([data]); // Assuming you have a savings_goals table
+    setSaving(false); setSavingsForm({ name: "", target_amount: "", current_saved: "", weekly_contribution: "" });
+    reload(); close();
   }
 
   async function saveTransaction(e) {
     e.preventDefault(); setSaving(true);
     const amount = parseFloat(txForm.amount) || 0;
-    await base44.entities.Transaction.create({
+    const data = {
       ...txForm,
+      user_id: userProfile?.id,
       amount: txForm.type === "debit" ? -Math.abs(amount) : Math.abs(amount),
-    });
-    setSaving(false); setTxForm({ description: "", amount: "", date: new Date().toISOString().split("T")[0], category: "other", type: "debit" }); close();
+    };
+    await supabase.from('transactions').insert([data]); // Assuming you have a transactions table
+    setSaving(false); setTxForm({ description: "", amount: "", date: new Date().toISOString().split("T")[0], category: "other", type: "debit" });
+    reload(); close();
   }
 
   const actions = [
@@ -85,6 +107,8 @@ export default function QuickAddMenu({ open, onClose }) {
   ];
 
   return (
+    // ... KEEP THE EXACT SAME UI CODE HERE ...
+    // (Everything below the actions array stays exactly the same)
     <>
       <AnimatePresence>
         {open && !activeModal && (
