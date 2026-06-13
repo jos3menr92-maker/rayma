@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 BRAIN
 import { AlertTriangle, X } from "lucide-react";
 
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
 
 export default function BillPriceAlert() {
+  const { bills, userProfile } = useFinancialData();
   const [changes, setChanges] = useState([]);
   const [dismissed, setDismissed] = useState(() => {
     try { return JSON.parse(localStorage.getItem("dismissed_bill_changes") || "[]"); } catch { return []; }
@@ -12,16 +14,20 @@ export default function BillPriceAlert() {
 
   useEffect(() => {
     async function check() {
-      const [bills, payments] = await Promise.all([
-        base44.entities.Bill.list("-created_date", 100),
-        base44.entities.Payment.filter({ payment_type: "bill" }, "-payment_date", 200),
-      ]);
+      if (!userProfile?.id || bills.length === 0) return;
+
+      // 🚀 APPLE-COMPLIANT: Only fetches from your personal Vault
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('user_id', userProfile.id)
+        .order('payment_date', { ascending: false });
+
+      if (!payments) return;
 
       const detected = [];
       bills.forEach(bill => {
-        const billPayments = payments
-          .filter(p => p.bill_id === bill.id)
-          .sort((a, b) => b.payment_date.localeCompare(a.payment_date));
+        const billPayments = payments.filter(p => p.bill_id === bill.id);
 
         if (billPayments.length >= 2) {
           const latest = billPayments[0].amount;
@@ -37,7 +43,7 @@ export default function BillPriceAlert() {
       setChanges(detected);
     }
     check();
-  }, []);
+  }, [bills, userProfile, dismissed]);
 
   function dismiss(key) {
     const next = [...dismissed, key];
