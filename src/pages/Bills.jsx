@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
-import { base44 } from "@/api/base44Client"; // Kept only for Payments history
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, Receipt, CheckCircle2, Sparkles } from "lucide-react"; // Added Sparkles for RAYMA!
 import BillPriceAlert from "../components/BillPriceAlert";
@@ -100,14 +99,21 @@ export default function Bills() {
 
   const handleMarkPaid = async (bill) => {
     setPaidBillId(bill.id);
-    // 💡 Kept in Base44 temporarily until we migrate the payments table
-    await base44.entities.Payment.create({
-      bill_id: bill.id,
-      payment_type: "bill",
-      amount: bill.amount,
-      payment_date: format(new Date(), "yyyy-MM-dd"),
-      note: "Auto-logged from Bills page",
-    });
+    
+    // 🚀 APPLE-COMPLIANT: Writes directly to Supabase
+    try {
+      await supabase.from('payments').insert([{
+        bill_id: bill.id,
+        user_id: userProfile.id,
+        amount: bill.amount,
+        payment_type: "bill",
+        payment_date: format(new Date(), "yyyy-MM-dd"),
+        note: "Auto-logged from Bills page"
+      }]);
+    } catch (err) {
+      console.error("Failed to log payment:", err);
+    }
+    
     setPaidBillId(null);
   };
 
