@@ -13,29 +13,29 @@ import { getInitialsColor } from "@/components/AvatarPicker";
 // 🚨 REMOVED: import { base44 } from "@/api/base44Client"; (Apple/Google Compliance Fix)
 
 const HUMAN_AVATARS = [
-  { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
-  { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
-  { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
-  { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
-  { id: "face5", url: "https://i.pravatar.cc/150?img=33" },
-  { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
-  { id: "face7", url: "https://i.pravatar.cc/150?img=38" },
-  { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
-  { id: "face9", url: "https://i.pravatar.cc/150?img=49" },
-  { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
-  { id: "face11", url: "https://i.pravatar.cc/150?img=51" },
-  { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
-  { id: "face13", url: "https://i.pravatar.cc/150?img=56" },
-  { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
-  { id: "face15", url: "https://i.pravatar.cc/150?img=60" },
-];
+{ id: "face1", url: "https://i.pravatar.cc/150?img=11" },
+{ id: "face2", url: "https://i.pravatar.cc/150?img=12" },
+{ id: "face3", url: "https://i.pravatar.cc/150?img=14" },
+{ id: "face4", url: "https://i.pravatar.cc/150?img=32" },
+{ id: "face5", url: "https://i.pravatar.cc/150?img=33" },
+{ id: "face6", url: "https://i.pravatar.cc/150?img=37" },
+{ id: "face7", url: "https://i.pravatar.cc/150?img=38" },
+{ id: "face8", url: "https://i.pravatar.cc/150?img=47" },
+{ id: "face9", url: "https://i.pravatar.cc/150?img=49" },
+{ id: "face10", url: "https://i.pravatar.cc/150?img=50" },
+{ id: "face11", url: "https://i.pravatar.cc/150?img=51" },
+{ id: "face12", url: "https://i.pravatar.cc/150?img=52" },
+{ id: "face13", url: "https://i.pravatar.cc/150?img=56" },
+{ id: "face14", url: "https://i.pravatar.cc/150?img=59" },
+{ id: "face15", url: "https://i.pravatar.cc/150?img=60" }];
+
 
 const navItems = [
-  { path: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { path: "/loans", icon: List, label: "Loans" },
-  { path: "/bills", icon: Receipt, label: "Bills" },
-  { path: "/finance", icon: TrendingUp, label: "Finance" },
-];
+{ path: "/", icon: LayoutDashboard, label: "Dashboard" },
+{ path: "/loans", icon: List, label: "Loans" },
+{ path: "/bills", icon: Receipt, label: "Bills" },
+{ path: "/finance", icon: TrendingUp, label: "Finance" }];
+
 
 export default function Layout() {
   const location = useLocation();
@@ -58,15 +58,15 @@ export default function Layout() {
         sessionStorage.removeItem("rayma_auto_open");
       }
     } catch (e) {
+
       // ignore storage errors
-    }
-  }, []);
+    }}, []);
 
   useEffect(() => {
     setImageError(false);
   }, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
 
-  const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
+  const presetAvatar = HUMAN_AVATARS.find((a) => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
   return (
@@ -79,34 +79,34 @@ export default function Layout() {
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-14">
           <div className="flex items-center gap-3">
             
-            <div 
+            <div
               className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm"
-              style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}
-            >
-              {imageToShow && !imageError ? (
-                <img 
-                  src={imageToShow}
-                  className="w-full h-full object-cover" 
-                  alt="Profile"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <span className="text-xs font-bold text-white">
+              style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
+              
+              {imageToShow && !imageError ?
+              <img
+                src={imageToShow}
+                className="w-full h-full object-cover"
+                alt="Profile"
+                onError={() => setImageError(true)} /> :
+
+
+              <span className="text-xs font-bold text-white">
                   {userProfile?.preferred_name?.charAt(0) || userProfile?.full_name?.charAt(0) || "R"}
                 </span>
-              )}
+              }
             </div>
             
             <span className="text-sm font-semibold font-heading text-foreground tracking-wide">RAYMA</span>
           </div>
           
           <div className="flex items-center">
-            <button 
-              onClick={() => setDrawerOpen(true)} 
+            <button
+              onClick={() => setDrawerOpen(true)}
               aria-label="Open Menu"
-              className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0"
-            >
-              <Menu className="w-6 h-6" />
+              className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0">
+              
+              <Menu className="w-6 h-6 mx-1" />
             </button>
           </div>
         </div>
@@ -132,15 +132,15 @@ export default function Layout() {
           const dy = Math.abs(info.point.y - dragStartPos.current.y);
           if (dx > 5 || dy > 5) isDragging.current = true;
         }}
-        onDragEnd={() => setTimeout(() => { isDragging.current = false; }, 100)}
+        onDragEnd={() => setTimeout(() => {isDragging.current = false;}, 100)}
         onClick={(e) => {
-          if (isDragging.current) { e.preventDefault(); return; }
+          if (isDragging.current) {e.preventDefault();return;}
           setQuickAddOpen(true);
         }}
         style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
         className="fixed left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
-        title="Quick Add (drag to move)"
-      >
+        title="Quick Add (drag to move)">
+        
         <Plus className="w-6 h-6 text-primary-foreground" />
       </motion.button>
 
@@ -151,8 +151,8 @@ export default function Layout() {
         loans={loans}
         bills={bills}
         incomes={incomes}
-        userProfile={userProfile}
-      />
+        userProfile={userProfile} />
+      
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-2">
@@ -164,23 +164,23 @@ export default function Layout() {
                 key={item.path}
                 to={item.path}
                 className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
-                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}`
+                }>
+                
                 <Icon className="w-5 h-5" />
                 <span className="text-[10px] font-medium">{item.label}</span>
-              </Link>
-            );
+              </Link>);
+
           })}
           <button
             onClick={() => setMoreOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground"
-          >
+            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground">
+            
             <MoreHorizontal className="w-5 h-5" />
             <span className="text-[10px] font-medium">More</span>
           </button>
         </div>
       </nav>
-    </div>
-  );
+    </div>);
+
 }
