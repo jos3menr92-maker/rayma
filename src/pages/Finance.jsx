@@ -66,17 +66,22 @@ export default function Finance() {
   const monthlyExpenses = monthlyBills + monthlyLoans;
   const weeklyExpenses = monthlyExpenses / 4.33;
 
-  // Weekly income stats
+// 🚀 FIXED: Dynamic Income Stats (Weekly, Bi-weekly, Monthly, Quarterly)
   const totalIncomeLogged = incomes.reduce((s, i) => s + (i.amount || 0), 0);
-  const avgWeeklyIncome = incomes.length > 0 ? totalIncomeLogged / incomes.length : 0;
-  const monthlyIncome = avgWeeklyIncome * 4.33;
+  const avgLogged = incomes.length > 0 ? totalIncomeLogged / incomes.length : 0;
+  
+  let monthlyIncome = avgLogged; // Defaults to monthly if no frequency is set
+  if (payFreq === "weekly") monthlyIncome = avgLogged * 4.33;
+  else if (payFreq === "biweekly") monthlyIncome = avgLogged * 2.16;
+  else if (payFreq === "quarterly") monthlyIncome = avgLogged / 3;
+  
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
 
   // Check if current period logged
   const thisWeek = startOfWeek();
   const loggedThisWeek = incomes.some(i => i.week_start === thisWeek);
 
-  // Smart payday reminder
+  // 🚀 FIXED: Smart payday reminder (Now supports Quarterly!)
   const today = new Date();
   const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][today.getDay()];
   const todayDate = today.getDate();
@@ -86,7 +91,8 @@ export default function Finance() {
   const isPayday = payFreq && payDay && (
     (payFreq === "weekly" && todayName === payDay) ||
     (payFreq === "biweekly" && todayName === payDay) ||
-    (payFreq === "monthly" && String(todayDate) === String(payDay))
+    (payFreq === "monthly" && String(todayDate) === String(payDay)) ||
+    (payFreq === "quarterly" && String(todayDate) === String(payDay) && today.getMonth() % 3 === 0)
   );
 
   const showIncomeReminder = !loggedThisWeek && (isPayday || !payFreq);
