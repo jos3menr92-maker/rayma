@@ -57,7 +57,7 @@ export default function Finance() {
     setLocalLoading(false);
   }
 
-  // Monthly fixed expenses
+// Monthly fixed expenses
   const activeBills = useMemo(() => bills.filter(b => b.is_active !== false), [bills]);
   const activeLoans = useMemo(() => loans.filter(l => l.status !== "paid_off"), [loans]);
   
@@ -66,11 +66,18 @@ export default function Finance() {
   const monthlyExpenses = monthlyBills + monthlyLoans;
   const weeklyExpenses = monthlyExpenses / 4.33;
 
-// 🚀 FIXED: Dynamic Income Stats (Weekly, Bi-weekly, Monthly, Quarterly)
+  // 🚀 FIXED: Variables are defined FIRST
+  const today = new Date();
+  const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][today.getDay()];
+  const todayDate = today.getDate();
+  const payFreq = userProfile?.pay_frequency;
+  const payDay = userProfile?.pay_day;
+
+  // Weekly income stats
   const totalIncomeLogged = incomes.reduce((s, i) => s + (i.amount || 0), 0);
   const avgLogged = incomes.length > 0 ? totalIncomeLogged / incomes.length : 0;
   
-  let monthlyIncome = avgLogged; // Defaults to monthly if no frequency is set
+  let monthlyIncome = avgLogged;
   if (payFreq === "weekly") monthlyIncome = avgLogged * 4.33;
   else if (payFreq === "biweekly") monthlyIncome = avgLogged * 2.16;
   else if (payFreq === "quarterly") monthlyIncome = avgLogged / 3;
