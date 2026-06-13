@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { useCurrency } from "@/hooks/useCurrency";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { motion } from "framer-motion";
+import { Plus, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,6 @@ function getWeekLabel(dateStr) {
 
 function startOfWeek(date = new Date()) {
   const d = new Date(date);
-  // Anchor to Sunday (day 0) — consistent with QuickAddMenu
   d.setDate(d.getDate() - d.getDay());
   return d.toISOString().split("T")[0];
 }
@@ -30,40 +30,39 @@ function startOfWeek(date = new Date()) {
 export default function Finance() {
   const navigate = useNavigate();
   const { formatCurrency: fmt } = useCurrency();
+  
+  // 🧠 Pulling active loans and bills instantly from the Brain
+  const { bills, loans, userProfile, reload, loading: contextLoading } = useFinancialData();
+  
   const [incomes, setIncomes] = useState([]);
-  const [bills, setBills] = useState([]);
-  const [loans, setLoans] = useState([]);
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+  const [localLoading, setLocalLoading] = useState(true);
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "" });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
-async function loadData() {
-    try {
-      setLoading(true);
-      const [inc, b, l, me] = await Promise.all([
-        base44.entities.WeeklyIncome.list("-week_start", 52),
-        base44.entities.Bill.list("-created_date", 100),
-        base44.entities.Loan.list("-created_date", 100),
-        base44.auth.me(),
-      ]);
-      setIncomes(inc);
-      setBills(b.filter((x) => x.is_active !== false));
-      setLoans(l.filter((x) => x.status !== "paid_off"));
-      setUserProfile(me);
-    } catch (error) {
-      console.error("Failed to load finance data:", error);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => { 
+    fetchIncomes(); 
+  }, []);
+
+  // 🔌 Fetching exclusively from your Supabase vault
+  async function fetchIncomes() {
+    setLocalLoading(true);
+    const { data } = await supabase
+      .from('incomes')
+      .select('*')
+      .order('week_start', { ascending: false });
+      
+    setIncomes(data || []);
+    setLocalLoading(false);
   }
+
   // Monthly fixed expenses
-  const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
-  const monthlyLoans = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const activeBills = useMemo(() => bills.filter(b => b.is_active !== false), [bills]);
+  const activeLoans = useMemo(() => loans.filter(l => l.status !== "paid_off"), [loans]);
+  
+  const monthlyBills = activeBills.reduce((s, b) => s + (b.amount || 0), 0);
+  const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
   const monthlyExpenses = monthlyBills + monthlyLoans;
   const weeklyExpenses = monthlyExpenses / 4.33;
 
@@ -96,7 +95,7 @@ async function loadData() {
     : `You haven't recorded income yet for this period.`;
   const reminderSetupNeeded = !payFreq;
 
-  // Chart data — merge income weeks with expense line
+  // Chart data
   const chartData = [...incomes]
     .sort((a, b) => a.week_start.localeCompare(b.week_start))
     .slice(-16)
@@ -107,29 +106,46 @@ async function loadData() {
       cashflow: i.amount - weeklyExpenses,
     }));
 
-  // Expense breakdown for bar chart
   const expenseBreakdown = [
     ...(monthlyBills > 0 ? [{ name: "Bills", amount: monthlyBills }] : []),
     ...(monthlyLoans > 0 ? [{ name: "Loan Payments", amount: monthlyLoans }] : []),
   ];
 
+  // 🔌 Saving exactly to Supabase
   async function handleSaveIncome(e) {
     e.preventDefault();
     setSaving(true);
-    const data = { ...incomeForm, amount: parseFloat(incomeForm.amount) || 0 };
+    
+    const payload = { 
+      amount: parseFloat(incomeForm.amount) || 0,
+      week_start: incomeForm.week_start,
+      note: incomeForm.note,
+      user_id: userProfile?.id
+    };
+
     if (editingIncome) {
-      await base44.entities.WeeklyIncome.update(editingIncome.id, data);
+      await supabase.from('incomes').update(payload).eq('id', editingIncome.id);
     } else {
-      await base44.entities.WeeklyIncome.create(data);
+      await supabase.from('incomes').insert([payload]);
     }
+    
     setSaving(false);
     setIncomeDialog(false);
-    loadData();
+    fetchIncomes();
+    reload(); // Tell Brain to refresh global stats
   }
 
-  function openAdd() {
+ function openAdd() {
     setEditingIncome(null);
-    setIncomeForm({ amount: "", week_start: startOfWeek(), note: "" });
+    
+    // 🚀 NEW FEATURE: Find the most recent paycheck amount to auto-fill
+    const lastAmount = incomes.length > 0 ? incomes[0].amount : "";
+    
+    setIncomeForm({ 
+      amount: lastAmount, // Auto-fills the box!
+      week_start: startOfWeek(), 
+      note: "" 
+    });
     setIncomeDialog(true);
   }
 
@@ -140,11 +156,12 @@ async function loadData() {
   }
 
   async function handleDelete(id) {
-    await base44.entities.WeeklyIncome.delete(id);
-    loadData();
+    await supabase.from('incomes').delete().eq('id', id);
+    fetchIncomes();
+    reload();
   }
 
-  if (loading) return (
+  if (contextLoading || localLoading) return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
     </div>
@@ -153,8 +170,17 @@ async function loadData() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Finance Overview</h1>
-        <p className="text-sm text-muted-foreground mb-5">Income, expenses & cash flow</p>
+        
+        {/* 🚀 FIXED: Top Header with Permanent Action Button */}
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Finance</h1>
+            <p className="text-sm text-muted-foreground">Income, expenses & cash flow</p>
+          </div>
+          <Button size="sm" className="rounded-xl" onClick={openAdd}>
+            <Plus className="w-4 h-4 mr-1" /> Log
+          </Button>
+        </div>
 
         {/* Cash Flow Banner */}
         {showIncomeReminder && (
@@ -167,6 +193,7 @@ async function loadData() {
             <Button size="sm" className="rounded-xl text-xs shrink-0" onClick={openAdd}>Log</Button>
           </div>
         )}
+        
         {reminderSetupNeeded && (
           <div className="bg-muted/40 border border-border rounded-2xl p-3 mb-4 flex items-center gap-3">
             <span className="text-xl">⚙️</span>
@@ -246,15 +273,9 @@ async function loadData() {
           </div>
         )}
 
-        {/* Income Log — grouped by month */}
+        {/* 🚀 FIXED: Clean Income Log without the redundant button */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold font-heading text-foreground">Income Log</h2>
-            <Button size="sm" className="rounded-xl" onClick={openAdd}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> Log Income
-            </Button>
-          </div>
-
+          <h2 className="text-sm font-semibold font-heading text-foreground mb-3">Income Log</h2>
           {incomes.length === 0 ? (
             <div className="text-center py-8">
               <DollarSign className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -266,6 +287,7 @@ async function loadData() {
         </div>
       </motion.div>
 
+      {/* Popups */}
       <Dialog open={incomeDialog} onOpenChange={setIncomeDialog}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{editingIncome ? "Edit Income" : "Log Weekly Income"}</DialogTitle></DialogHeader>
