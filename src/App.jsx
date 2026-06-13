@@ -15,7 +15,6 @@ import LoansList from './pages/LoansList';
 import AddLoan from './pages/AddLoan';
 import LoanDetail from './pages/LoanDetail';
 import Bills from './pages/Bills';
-import BillCalendar from './pages/BillCalendar';
 import Reminders from './pages/Reminders';
 import Profile from './pages/Profile';
 import Budget from './pages/Budget';
@@ -83,7 +82,6 @@ const AuthenticatedApp = () => {
           <Route path="/add-loan" element={<AddLoan />} />
           <Route path="/loan/:id" element={<LoanDetail />} />
           <Route path="/bills" element={<Bills />} />
-          <Route path="/calendar" element={<BillCalendar />} />
           <Route path="/reminders" element={<Reminders />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/budget" element={<Budget />} />
