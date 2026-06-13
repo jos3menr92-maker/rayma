@@ -42,7 +42,7 @@ const LoadingScreen = () => (
 );
 
 const Arcade = () => {
-  const { financialData, userProfile } = useFinancialData();
+  const { userProfile } = useFinancialData();
   const [activeGame, setActiveGame] = useState('space_invaders'); 
   const [highScores, setHighScores] = useState({ space_invaders: 0, retro_snake: 0, sky_striker: 0 });
 
