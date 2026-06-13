@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, TrendingUp, PieChart as PieIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,32 +24,38 @@ const TYPE_COLORS = {
 const emptyForm = { name: "", amount: "", type: "cash", notes: "" };
 
 export default function AssetDashboard() {
+  const { loans, userProfile, loading: contextLoading } = useFinancialData(); // 🧠 Using Brain for liabilities!
   const [assets, setAssets] = useState([]);
-  const [loans, setLoans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [localLoading, setLocalLoading] = useState(true);
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    if (userProfile?.id) loadAssets(); 
+  }, [userProfile]);
 
-  async function loadData() {
-    const [a, l] = await Promise.all([
-      base44.entities.Asset.list("-updated_date", 100),
-      base44.entities.Loan.list("-created_date", 100),
-    ]);
-    setAssets(a);
-    setLoans(l.filter(x => x.status !== "paid_off"));
-    setLoading(false);
+  async function loadAssets() {
+    setLocalLoading(true);
+    const { data } = await supabase
+      .from('assets')
+      .select('*')
+      .eq('user_id', userProfile.id) // 🔒 Security lock!
+      .order('created_at', { ascending: false });
+      
+    setAssets(data || []);
+    setLocalLoading(false);
   }
 
+  // 🧮 Net Worth Math
+  const activeLoans = loans.filter(x => x.status !== "paid_off");
   const totalAssets = assets.reduce((s, a) => s + (a.amount || 0), 0);
-  const totalLiabilities = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
+  const totalLiabilities = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
   const netWorth = totalAssets - totalLiabilities;
 
   const pieData = assets.map(a => ({ name: a.name, value: a.amount || 0, type: a.type }));
-
   const byType = assets.reduce((acc, a) => {
     const t = a.type || "other";
     acc[t] = (acc[t] || 0) + (a.amount || 0);
@@ -61,27 +68,37 @@ export default function AssetDashboard() {
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
-    const data = { ...form, amount: parseFloat(form.amount) || 0 };
-    if (editing) await base44.entities.Asset.update(editing.id, data);
-    else await base44.entities.Asset.create(data);
+    
+    const payload = { 
+      ...form, 
+      amount: parseFloat(form.amount) || 0,
+      user_id: userProfile.id 
+    };
+
+    if (editing) {
+      await supabase.from('assets').update(payload).eq('id', editing.id);
+    } else {
+      await supabase.from('assets').insert([payload]);
+    }
+    
     setSaving(false);
     setDialogOpen(false);
-    loadData();
+    loadAssets();
   }
 
   async function handleDelete(id) {
-    await base44.entities.Asset.delete(id);
-    loadData();
+    await supabase.from('assets').delete().eq('id', id);
+    loadAssets();
   }
 
-  if (loading) return (
+  if (contextLoading || localLoading) return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
     </div>
   );
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-8">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold font-heading text-foreground">Assets</h1>
@@ -121,7 +138,7 @@ export default function AssetDashboard() {
                   contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
               </PieChart>
             </ResponsiveContainer>
-            {/* By type legend */}
+            
             <div className="grid grid-cols-2 gap-2 mt-2">
               {Object.entries(byType).map(([type, amount]) => (
                 <div key={type} className="flex items-center gap-2">
@@ -168,7 +185,6 @@ export default function AssetDashboard() {
             <div className="text-center py-12">
               <TrendingUp className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">No assets yet. Add your cash, investments, and property.</p>
-              <Button className="mt-4 rounded-xl" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> Add Asset</Button>
             </div>
           )}
         </div>
