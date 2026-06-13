@@ -132,6 +132,7 @@ export default function Layout() {
           const dy = Math.abs(info.point.y - dragStartPos.current.y);
           if (dx > 5 || dy > 5) isDragging.current = true;
         }}
+        onDragEnd={() => setTimeout(() => { isDragging.current = false; }, 100)}
         onClick={(e) => {
           if (isDragging.current) { e.preventDefault(); return; }
           setQuickAddOpen(true);
