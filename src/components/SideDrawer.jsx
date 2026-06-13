@@ -71,8 +71,8 @@ export default function SideDrawer({ open, onClose }) {
 
               <Section title="Navigate">
                 <DrawerRow icon={LayoutDashboard} label="Dashboard" chevron onClick={() => go("/")} />
-                <DrawerRow icon={TrendingUp} label="Income & Cash Flow" chevron onClick={() => go("/finance")} /> {/* ✨ RENAMED! */}
-                <DrawerRow icon={PiggyBank} label="Savings Vault" chevron onClick={() => go("/budget-dashboard")} /> {/* ✨ RENAMED! */}
+                <DrawerRow icon={TrendingUp} label="Income & Cash Flow" chevron onClick={() => go("/finance")} />
+                <DrawerRow icon={PiggyBank} label="Savings Vault" chevron onClick={() => go("/budget-dashboard")} />
                 <DrawerRow icon={BarChart2} label="Assets & Net Worth" chevron onClick={() => go("/assets")} />
                 <DrawerRow icon={Folder} label="Document Vault" chevron onClick={() => go("/documents")} />
               </Section>
@@ -82,10 +82,18 @@ export default function SideDrawer({ open, onClose }) {
                 <DrawerRow icon={Download} label="Export My Data" value="GDPR compliant" chevron onClick={() => go("/data-export")} />
               </Section>
 
+              {/* ✨ RESTORED & UPDATED: App Info with new Gmail */}
+              <Section title="About RAYMA">
+                <DrawerRow icon={Info} label="Version" value="1.0.0" />
+                <DrawerRow icon={Mail} label="Support Email" value="rayma.app2026@gmail.com" />
+              </Section>
+
+              {/* ✨ RESTORED: Privacy & Legal with Delete Account */}
               <Section title="Privacy & Legal">
                 <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => go("/privacy")} />
                 <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => go("/terms")} />
                 <DrawerRow icon={Lock} label="Security" value="All data encrypted" small />
+                <DrawerRow icon={Trash2} label="Delete Account" chevron onClick={() => go("/delete-account")} destructive />
               </Section>
             </div>
 
