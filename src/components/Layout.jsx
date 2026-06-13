@@ -10,9 +10,8 @@ import FeedbackButton from "./FeedbackButton";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { getInitialsColor } from "@/components/AvatarPicker";
-import { base44 } from "@/api/base44Client";
+// 🚨 REMOVED: import { base44 } from "@/api/base44Client"; (Apple/Google Compliance Fix)
 
-// Bring in the same preset avatars used in Profile.jsx
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
   { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -48,13 +47,8 @@ export default function Layout() {
   const isDragging = useRef(false);
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
 
-  // Directly fetch the profile so we don't rely on background hooks
-  const { loans, bills, incomes } = useFinancialData();
-  const [userProfile, setUserProfile] = useState(null);
-
-  useEffect(() => {
-    base44.auth.me().then(me => setUserProfile(me)).catch(console.error);
-  }, []);
+  // 🧠 SECURE: Grabbing everything safely from the Supabase Brain!
+  const { loans, bills, incomes, userProfile } = useFinancialData();
 
   useEffect(() => {
     try {
@@ -72,7 +66,6 @@ export default function Layout() {
     setImageError(false);
   }, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
 
-  // Determine which image to show based on what the user saved
   const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
