@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { useCurrency } from "@/hooks/useCurrency";
 import { motion } from "framer-motion";
 import { ArrowLeft, Edit3, Trash2, Plus, DollarSign, Calendar, Percent, Building } from "lucide-react";
@@ -23,6 +24,8 @@ export default function LoanDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { formatCurrency } = useCurrency();
+  const { reload } = useFinancialData(); // 🚀 Connects to Brain to refresh Dashboard
+
   const [loan, setLoan] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +43,12 @@ export default function LoanDetail() {
   }, [id]);
 
   async function loadData() {
-    const [loanData, paymentData] = await Promise.all([
-      base44.entities.Loan.filter({ id }),
-      base44.entities.Payment.filter({ loan_id: id }, "-payment_date", 100),
-    ]);
-    setLoan(loanData[0]);
-    setPayments(paymentData);
+    // 🚀 Fetch from Supabase
+    const { data: loanData } = await supabase.from('loans').select('*').eq('id', id).single();
+    const { data: paymentData } = await supabase.from('payments').select('*').eq('loan_id', id).order('payment_date', { ascending: false });
+    
+    setLoan(loanData);
+    setPayments(paymentData || []);
     setLoading(false);
   }
 
@@ -54,20 +57,21 @@ export default function LoanDetail() {
     setSaving(true);
     const amount = parseFloat(payForm.amount);
 
-    await base44.entities.Payment.create({
+    // 🚀 Save to Supabase
+    await supabase.from('payments').insert([{
       loan_id: id,
-      payment_type: "loan",
       amount,
       payment_date: payForm.payment_date,
       note: payForm.note,
-    });
+    }]);
 
     const newBalance = Math.max((loan.current_balance || 0) - amount, 0);
-    await base44.entities.Loan.update(id, {
+    await supabase.from('loans').update({
       current_balance: newBalance,
       status: newBalance <= 0 ? "paid_off" : "active",
-    });
+    }).eq('id', id);
 
+    reload(); // 🔄 Refresh global Brain
     setPayForm({ amount: "", payment_date: new Date().toISOString().split("T")[0], note: "" });
     setPaymentOpen(false);
     setSaving(false);
@@ -78,23 +82,28 @@ export default function LoanDetail() {
     const payment = payments.find((p) => p.id === paymentId);
     if (!payment) return;
 
-    await base44.entities.Payment.delete(paymentId);
+    await supabase.from('payments').delete().eq('id', paymentId);
     const newBalance = (loan.current_balance || 0) + (payment.amount || 0);
-    await base44.entities.Loan.update(id, {
+    
+    await supabase.from('loans').update({
       current_balance: newBalance,
       status: newBalance > 0 ? "active" : "paid_off",
-    });
+    }).eq('id', id);
+    
+    reload();
     loadData();
   }
 
   async function handleDeleteLoan() {
-    await Promise.all(payments.map(p => base44.entities.Payment.delete(p.id)));
-    await base44.entities.Loan.delete(id);
-    navigate("/");
+    await supabase.from('payments').delete().eq('loan_id', id);
+    await supabase.from('loans').delete().eq('id', id);
+    reload();
+    navigate("/loans"); // 🚀 Better UX: goes back to loans list instead of home
   }
 
   async function handleSaveEdit(updatedData) {
-    await base44.entities.Loan.update(id, updatedData);
+    await supabase.from('loans').update(updatedData).eq('id', id);
+    reload();
     setEditOpen(false);
     loadData();
   }
@@ -111,7 +120,7 @@ export default function LoanDetail() {
     return (
       <div className="max-w-lg mx-auto px-4 pt-6 text-center">
         <p className="text-muted-foreground">Loan not found</p>
-        <Button variant="ghost" onClick={() => navigate("/")} className="mt-4">
+        <Button variant="ghost" onClick={() => navigate("/loans")} className="mt-4">
           Go back
         </Button>
       </div>
@@ -127,10 +136,7 @@ export default function LoanDetail() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <div className="flex gap-2">
@@ -240,34 +246,15 @@ export default function LoanDetail() {
             <form onSubmit={handleAddPayment} className="space-y-4 mt-2">
               <div>
                 <Label className="text-xs text-muted-foreground">Amount *</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="$0.00"
-                  value={payForm.amount}
-                  onChange={(e) => setPayForm((p) => ({ ...p, amount: e.target.value }))}
-                  required
-                  className="mt-1 rounded-xl"
-                />
+                <Input type="number" step="0.01" placeholder="$0.00" value={payForm.amount} onChange={(e) => setPayForm((p) => ({ ...p, amount: e.target.value }))} required className="mt-1 rounded-xl" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Date *</Label>
-                <Input
-                  type="date"
-                  value={payForm.payment_date}
-                  onChange={(e) => setPayForm((p) => ({ ...p, payment_date: e.target.value }))}
-                  required
-                  className="mt-1 rounded-xl"
-                />
+                <Input type="date" value={payForm.payment_date} onChange={(e) => setPayForm((p) => ({ ...p, payment_date: e.target.value }))} required className="mt-1 rounded-xl" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Note</Label>
-                <Input
-                  placeholder="Optional note"
-                  value={payForm.note}
-                  onChange={(e) => setPayForm((p) => ({ ...p, note: e.target.value }))}
-                  className="mt-1 rounded-xl"
-                />
+                <Input placeholder="Optional note" value={payForm.note} onChange={(e) => setPayForm((p) => ({ ...p, note: e.target.value }))} className="mt-1 rounded-xl" />
               </div>
               <Button type="submit" disabled={saving || !payForm.amount} className="w-full rounded-xl">
                 {saving ? "Saving..." : "Save Payment"}
