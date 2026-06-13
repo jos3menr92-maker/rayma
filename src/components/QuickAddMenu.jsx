@@ -18,21 +18,18 @@ export default function QuickAddMenu({ open, onClose }) {
     <AnimatePresence>
       {open && (
         <>
-          {/* Dark Overlay */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             onClick={onClose}
           />
-          
-          {/* 🚀 FIXED: Added flex-col and max-h-[85vh] to prevent the menu from growing taller than the screen */}
+          {/* 🚀 FIXED: Removed the stretching flex-col so it hugs the content again */}
           <motion.div
             initial={{ y: "100%", opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border shadow-2xl max-h-[85vh] flex flex-col"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border shadow-2xl"
           >
-            {/* Header: Pinned to the top */}
-            <div className="flex-none flex items-center justify-between px-5 pt-5 pb-3">
+            <div className="flex items-center justify-between px-5 pt-4 pb-3">
               <div>
                 <h2 className="text-base font-bold font-heading text-foreground">Quick Add</h2>
                 <p className="text-xs text-muted-foreground">What would you like to track?</p>
@@ -41,9 +38,9 @@ export default function QuickAddMenu({ open, onClose }) {
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            {/* 🚀 FIXED: Added overflow-y-auto and pb-10 to allow scrolling and clear the bottom bezel */}
-            <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-10 grid grid-cols-1 gap-2">
+            
+            {/* 🚀 FIXED: Added max-h-[60vh] and pb-24 so you can over-scroll past the bottom bezel */}
+            <div className="overflow-y-auto overscroll-contain max-h-[60vh] px-4 pb-24 grid grid-cols-1 gap-2">
               {actions.map((a, i) => {
                 const Icon = a.icon;
                 return (
@@ -52,7 +49,7 @@ export default function QuickAddMenu({ open, onClose }) {
                     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                     onClick={a.action}
-                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl border text-left transition-all active:scale-[0.98] shrink-0 ${a.color}`}
+                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl border text-left transition-all active:scale-[0.98] ${a.color}`}
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/60">
                       <Icon className="w-5 h-5" />
