@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CreditCard, Receipt, DollarSign, PiggyBank, TrendingDown, ArrowLeftRight, ScanLine } from "lucide-react";
+import { X, CreditCard, Receipt, DollarSign, PiggyBank, ArrowLeftRight, ScanLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function QuickAddMenu({ open, onClose }) {
@@ -9,16 +9,8 @@ export default function QuickAddMenu({ open, onClose }) {
     { key: "scan", icon: ScanLine, label: "Scan & Log Document", color: "bg-primary/10 text-primary border-primary/20", badge: "AI", action: () => { onClose(); navigate("/documents"); } },
     { key: "loan", icon: CreditCard, label: "Add Loan", color: "bg-blue-500/10 text-blue-600 border-blue-200", action: () => { onClose(); navigate("/add-loan"); } },
     { key: "bill", icon: Receipt, label: "Add Bill", color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => { onClose(); navigate("/bills"); } },
-    
-    // 🚀 FIXED: Now sends user directly to the Finance Overview for the Payday log
     { key: "income", icon: DollarSign, label: "Log Income", color: "bg-green-500/10 text-green-600 border-green-200", action: () => { onClose(); navigate("/finance"); } }, 
-    
-    // 🚀 FIXED: Routes to the dedicated savings page
     { key: "savings", icon: PiggyBank, label: "Add Savings Goal", color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => { onClose(); navigate("/savings"); } }, 
-    
-    { key: "payment", icon: TrendingDown, label: "Record Payment", color: "bg-red-500/10 text-red-600 border-red-200", action: () => { onClose(); navigate("/loans"); } },
-    
-    // 🚀 FIXED: Routes to the Bank Accounts page where Plaid will live!
     { key: "transaction", icon: ArrowLeftRight, label: "Log Transaction", color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => { onClose(); navigate("/bank-accounts"); } }, 
   ];
 
