@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
 import { useCurrency } from "@/hooks/useCurrency";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,8 +24,6 @@ function startOfWeek(date = new Date()) {
 
 export default function Finance() {
   const { formatCurrency: fmt } = useCurrency();
-  
-  // 🧠 Upgraded: Pulling incomes safely from the Brain instead of leaking data!
   const { bills, loans, incomes, userProfile, reload, loading } = useFinancialData();
   
   const [incomeDialog, setIncomeDialog] = useState(false);
@@ -50,7 +48,6 @@ export default function Finance() {
   else if (payFreq === "quarterly") monthlyIncome = avgIncome / 3;
 
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
-  const weeklyExpenses = monthlyExpenses / 4.33;
 
   const today = new Date();
   const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][today.getDay()];
@@ -60,12 +57,13 @@ export default function Finance() {
     e.preventDefault();
     setSaving(true);
     
-    // 🔒 SECURE PAYLOAD: Locks the income strictly to this user
+    // 🔒 SECURE PAYLOAD
     const payload = { 
       amount: parseFloat(incomeForm.amount) || 0, 
       week_start: incomeForm.week_start, 
       note: incomeForm.note, 
-      user_id: userProfile?.id 
+      user_id: userProfile?.id,
+      is_active: true
     };
     
     try {
@@ -74,7 +72,7 @@ export default function Finance() {
       } else {
         await supabase.from('incomes').insert([payload]);
       }
-      await reload(); // 🔄 Tell the Brain to instantly fetch fresh data
+      await reload(); // 🔄 Instantly pull the new data to the screen
       setIncomeDialog(false);
     } catch (error) {
       console.error("Error saving income:", error);
@@ -94,18 +92,21 @@ export default function Finance() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        
+        {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div>
-            {/* ✨ RENAMED TO MATCH YOUR NEW MENU */}
             <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Income & Cash Flow</h1>
-            <p className="text-sm text-muted-foreground">Track your incoming money & payday forecasts</p>
+            <p className="text-sm text-muted-foreground">Track your incoming money & forecasts</p>
           </div>
-          <Button size="sm" className="rounded-xl" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> Log</Button>
+          <Button size="sm" className="rounded-xl shadow-sm" onClick={openAdd}>
+            <Plus className="w-4 h-4 mr-1" /> Log
+          </Button>
         </div>
 
         {isPayday && (
-          <div className="bg-primary/10 border border-primary/30 rounded-2xl p-3 mb-4 flex items-center gap-3">
-            <span className="text-xl">🎉</span>
+          <div className="bg-primary/10 border border-primary/30 rounded-2xl p-3 mb-5 flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground">Payday!</p>
               <p className="text-xs text-muted-foreground">Log your income to keep your records accurate.</p>
@@ -113,14 +114,70 @@ export default function Finance() {
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-3 mb-5">
-           {/* Cards for Monthly Income/Expenses/CashFlow placeholder */}
+        {/* 🚀 RESTORED: The Top Metric Cards */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
+            <div className="flex items-center gap-1.5 mb-1 text-green-500">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <p className="text-[9px] uppercase tracking-wider font-bold">Income</p>
+            </div>
+            <p className="text-sm font-bold text-foreground">{fmt(monthlyIncome)}</p>
+          </div>
+          
+          <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
+            <div className="flex items-center gap-1.5 mb-1 text-orange-500">
+              <TrendingDown className="w-3.5 h-3.5" />
+              <p className="text-[9px] uppercase tracking-wider font-bold">Expenses</p>
+            </div>
+            <p className="text-sm font-bold text-foreground">{fmt(monthlyExpenses)}</p>
+          </div>
+
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3 shadow-sm">
+            <div className="flex items-center gap-1.5 mb-1 text-primary">
+              <DollarSign className="w-3.5 h-3.5" />
+              <p className="text-[9px] uppercase tracking-wider font-bold">Cash Flow</p>
+            </div>
+            <p className="text-sm font-bold text-foreground">{fmt(monthlyCashFlow)}</p>
+          </div>
         </div>
         
-        <CashFlowForecast loans={loans} bills={bills} incomes={incomes} />
+        {/* Forecast Component */}
+        <div className="mb-8">
+          <CashFlowForecast loans={loans} bills={bills} incomes={incomes} />
+        </div>
+
+        {/* 🚀 RESTORED: Recent Income Logs UI */}
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">Recent Logs</h2>
+          <div className="space-y-3">
+            {incomes.length === 0 ? (
+              <div className="text-center py-10 bg-card border border-border rounded-2xl shadow-sm">
+                <Receipt className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No income logged yet.</p>
+                <button onClick={openAdd} className="text-xs text-primary font-semibold mt-1">Tap to log your first paycheck</button>
+              </div>
+            ) : (
+              incomes.map((inc) => (
+                <div key={inc.id} className="flex justify-between items-center p-4 bg-card border border-border rounded-2xl shadow-sm hover:border-primary/30 transition-colors cursor-pointer" onClick={() => { setEditingIncome(inc); setIncomeForm({ amount: inc.amount, week_start: inc.week_start || startOfWeek(), note: inc.note || "" }); setIncomeDialog(true); }}>
+                  <div className="flex gap-3 items-center">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+                      <DollarSign className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">{inc.note || "Income Logged"}</p>
+                      <p className="text-xs text-muted-foreground">Week of {getWeekLabel(inc.week_start)}</p>
+                    </div>
+                  </div>
+                  <p className="font-bold text-foreground text-sm">{fmt(inc.amount)}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
         
       </motion.div>
 
+      {/* Log Income Modal */}
       <Dialog open={incomeDialog} onOpenChange={setIncomeDialog}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{editingIncome ? "Edit Income" : "Log Income"}</DialogTitle></DialogHeader>
@@ -136,11 +193,15 @@ export default function Finance() {
             
             <form onSubmit={handleSaveIncome} className="space-y-3">
               <div>
-                <Label className="text-xs">Amount</Label>
-                <Input type="number" step="0.01" value={incomeForm.amount} onChange={e => setIncomeForm(f => ({...f, amount: e.target.value}))} required className="rounded-xl" />
+                <Label className="text-xs text-muted-foreground ml-1">Amount</Label>
+                <Input type="number" step="0.01" value={incomeForm.amount} onChange={e => setIncomeForm(f => ({...f, amount: e.target.value}))} required className="rounded-xl" placeholder="0.00" />
               </div>
               <div>
-                <Label className="text-xs">Date</Label>
+                <Label className="text-xs text-muted-foreground ml-1">Note / Source</Label>
+                <Input type="text" value={incomeForm.note} onChange={e => setIncomeForm(f => ({...f, note: e.target.value}))} className="rounded-xl" placeholder="e.g. Weekly Paycheck" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground ml-1">Date</Label>
                 <Input type="date" value={incomeForm.week_start} onChange={e => setIncomeForm(f => ({...f, week_start: e.target.value}))} required className="rounded-xl" />
               </div>
               <Button type="submit" disabled={saving} className="w-full rounded-xl shadow-lg mt-2">
