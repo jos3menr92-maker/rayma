@@ -95,7 +95,7 @@ const AuthenticatedApp = () => {
           <Route path="/data-export" element={<DataExport />} />
           <Route path="/remote-support" element={<RemoteSupport />} />
           <Route path="/arcade" element={<Arcade />} /> {/* <-- ADDED ARCADE ROUTE */}
-
+          <Route path="/feedback" element={<Feedback />} />
           <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
           <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
           <Route path="/simulator" element={<Suspense fallback={<PageLoader />}><Simulator /></Suspense>} />
