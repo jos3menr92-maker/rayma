@@ -108,12 +108,26 @@ export default function RetroSnake({ onUpdateScore }) {
         snake.pop();
       }
 
+      // 1. Draw Background
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // ✨ 2. Draw NEON ARCADE WALLS (Inside the canvas so collision is pixel-perfect)
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = '#84cc16'; // Lime green
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#84cc16';
+      // Inset by 4px so the thick stroke doesn't get cut off by the canvas edge
+      ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+      
+      // Reset shadow so the snake doesn't get blurry
+      ctx.shadowBlur = 0;
+
+      // 3. Draw Food
       ctx.fillStyle = '#ef4444'; 
       ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
 
+      // 4. Draw Snake
       snake.forEach((segment, index) => {
         ctx.fillStyle = index === 0 ? '#bef264' : '#84cc16'; 
         ctx.fillRect(segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2);
@@ -127,7 +141,7 @@ export default function RetroSnake({ onUpdateScore }) {
       cleanupUp(); cleanupDown(); cleanupLeft(); cleanupRight();
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver]); // REMOVED onUpdateScore to prevent glitches
+  }, [isGameRunning, gameOver]);
 
   useEffect(() => {
     return () => { setIsGameRunning(false); };
@@ -164,7 +178,8 @@ export default function RetroSnake({ onUpdateScore }) {
              </button>
           </div>
 
-          <canvas ref={canvasRef} width={800} height={450} className="w-full h-[100dvh] max-w-7xl object-contain bg-slate-900 border-y-4 sm:border-4 border-slate-800 z-10 shadow-2xl" />
+          {/* ✨ Removed the misleading CSS borders so the canvas handles the glowing walls natively! */}
+          <canvas ref={canvasRef} width={800} height={450} className="w-full h-[100dvh] max-w-7xl object-contain bg-slate-900 z-10 drop-shadow-[0_0_30px_rgba(132,204,22,0.15)]" />
           
           <div className="absolute bottom-8 left-4 right-4 sm:left-12 sm:right-12 flex justify-between items-end z-50 pointer-events-none">
              <div className="flex flex-col items-center gap-1 pointer-events-auto opacity-60 hover:opacity-100 transition-opacity">
