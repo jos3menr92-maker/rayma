@@ -3,17 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Landmark, PiggyBank, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle } from "lucide-react";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
 import { useState } from "react";
+import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download } from "lucide-react";
 
 const moreItems = [
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
-  { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" }, // ✨ RENAMED!
+  { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" }, // 🐷 KEPT YOUR SAVINGS VAULT!
+  { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", desc: "Advanced category tracking" }, // ✨ RECOVERED!
   { path: "/debt-simulator", icon: TrendingDown, label: "Debt Simulator", desc: "Plan your payoff strategy" },
   { path: "/documents", icon: FolderOpen, label: "Document Vault", desc: "Store & scan financial docs" },
   { path: "/monthly-recap", icon: CalendarDays, label: "Monthly Recap", desc: "Income & spending summary" },
   { path: "/assets", icon: BarChart2, label: "Assets & Net Worth", desc: "Track what you own" },
+  { path: "/data-export", icon: Download, label: "Export Data", desc: "Download your RAYMA records" }, // ✨ ADDED!
   { path: "/trend", icon: TrendingUp, label: "Monthly Trend", desc: "Spending trends over time" },
   { path: "/tax-summary", icon: FileText, label: "Tax Summary", desc: "Annual report & deductibles" },
-  // 🗑️ Bill Calendar Removed!
   { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
   { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
   { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
