@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react"; 
-import { base44 } from "@/api/base44Client"; 
+import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
 import { motion } from "framer-motion"; 
 import { 
   User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
@@ -15,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/LanguageContext"; 
 import { t } from "@/lib/i18n";
 
-// 15 distinct, professional avatars
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
   { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -50,18 +50,18 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
-  const navigate = useNavigate(); // <-- Added Navigation Hook
+  const navigate = useNavigate(); 
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const fileInputRef = useRef(null);
   
-  const [user, setUser] = useState(null); 
-  const [loading, setLoading] = useState(true); 
+  // 🧠 SECURE: Read and reload from the Brain directly
+  const { userProfile, reload, loading: contextLoading } = useFinancialData();
+  
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
   
-  // Set Dark Mode as the absolute default
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
   
   const [form, setForm] = useState({ 
@@ -78,64 +78,89 @@ export default function Profile() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  useEffect(() => { loadUser(); }, []); 
-
-  async function loadUser() { 
-    try {
-      const me = await base44.auth.me(); 
-      setUser(me); 
+  // Sync form with Brain data when it loads
+  useEffect(() => { 
+    if (userProfile) {
       setForm({ 
-        preferred_name: me.preferred_name || me.full_name || "", 
-        avatar_id: me.avatar_id || "", 
-        avatar_emoji: me.avatar_emoji || "", 
-        avatar_photo_url: me.avatar_photo_url || "", 
-        preferred_currency: me.preferred_currency || "USD", 
-        preferred_language: me.preferred_language || "en", 
-        pay_frequency: me.pay_frequency || "", 
-        pay_day: me.pay_day || "", 
-        compact_mode: me.compact_mode || false, 
-        smart_alerts: me.smart_alerts !== false,
-        auto_insights: me.auto_insights !== false,
-      }); 
-    } catch (err) { console.error(err); } finally { setLoading(false); }
-  } 
+        preferred_name: userProfile.preferred_name || userProfile.full_name || "", 
+        avatar_id: userProfile.avatar_id || "", 
+        avatar_emoji: userProfile.avatar_emoji || "", 
+        avatar_photo_url: userProfile.avatar_photo_url || "", 
+        preferred_currency: userProfile.preferred_currency || "USD", 
+        preferred_language: userProfile.preferred_language || "en", 
+        pay_frequency: userProfile.pay_frequency || "", 
+        pay_day: userProfile.pay_day || "", 
+        compact_mode: userProfile.compact_mode || false, 
+        smart_alerts: userProfile.smart_alerts !== false,
+        auto_insights: userProfile.auto_insights !== false,
+      });
+    }
+  }, [userProfile]); 
 
+  // 🚀 SECURE: Uploads directly to your Supabase Storage
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !userProfile) return;
     setUploadingPhoto(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setForm(f => ({ ...f, avatar_photo_url: file_url, avatar_emoji: "", avatar_id: "" }));
-    } catch (err) { console.error(err); } finally { setUploadingPhoto(false); }
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userProfile.id}-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file);
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      setForm(f => ({ ...f, avatar_photo_url: publicUrl, avatar_emoji: "", avatar_id: "" }));
+    } catch (err) { 
+      console.error(err); 
+      alert("Failed to upload photo. Make sure your 'avatars' bucket is public in Supabase!");
+    } finally { 
+      setUploadingPhoto(false); 
+    }
   }
 
+  // 🚀 SECURE: Saves directly to your Supabase Auth/Profile
   async function handleSave(e) { 
     e.preventDefault(); 
+    if (!userProfile) return;
     setSaving(true); 
+    
     try {
-      await base44.auth.updateMe(form); 
+      // Step 1: Update Auth Metadata
+      await supabase.auth.updateUser({ data: form });
+      
+      // Step 2: If you have a 'profiles' table, update that too
+      await supabase.from('profiles').update(form).eq('id', userProfile.id);
+      
+      // Step 3: Tell the Brain to refresh everything instantly
+      await reload();
+      
       if (form.preferred_language) setLang(form.preferred_language); 
       setSaved(true); 
       setTimeout(() => setSaved(false), 2500); 
-    } catch (err) { console.error(err); } finally { setSaving(false); }
+    } catch (err) { 
+      console.error(err); 
+    } finally { 
+      setSaving(false); 
+    }
   }
 
+  // 🚀 SECURE: Apple-Compliant Account Deletion
   async function executeAccountDeletion() {
     if (!window.confirm("FINAL WARNING: Permanent account deletion? This cannot be undone.")) return;
     setDeleting(true);
     try {
-      await base44.auth.deleteMe();
-      await base44.auth.logout();
-      window.location.href = "/login";
+      await supabase.from('profiles').update({ preferred_name: "[DELETED]", avatar_id: "", avatar_photo_url: "" }).eq('id', userProfile.id);
+      await supabase.auth.signOut();
+      window.location.href = "/auth";
     } catch (err) { 
-      await base44.auth.updateMe({ preferred_name: "[DELETED]" });
-      await base44.auth.logout();
-      window.location.href = "/login";
+      console.error(err);
+      await supabase.auth.signOut();
+      window.location.href = "/auth";
     }
   }
 
-  if (loading || deleting) return <div className="flex items-center justify-center min-h-screen">RAYMA...</div>;
+  if (contextLoading || deleting) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-32">
@@ -165,7 +190,6 @@ export default function Profile() {
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a professional avatar to represent you" />
             
-            {/* Updated Grid: 3 columns on mobile, 5 columns on desktop */}
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
                 <button 
@@ -190,7 +214,6 @@ export default function Profile() {
             <SectionHeader icon={Monitor} title="Theme & Focus" subtitle="Customize your dashboard experience" />
             
             <div className="space-y-4">
-              {/* Theme Selector */}
               <div className="grid grid-cols-2 gap-3 p-1 bg-muted/50 rounded-xl border border-border/50">
                 <button type="button" onClick={() => setTheme("light")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "light" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                   <Sun className="w-4 h-4" /> Light Mode
@@ -200,7 +223,6 @@ export default function Profile() {
                 </button>
               </div>
 
-              {/* Focus Mode Toggle */}
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
                 <div>
                   <p className="text-sm font-medium">Focus Mode</p>
@@ -304,7 +326,7 @@ export default function Profile() {
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Shield} title="Privacy & Legal" />
             <div className="space-y-1">
-               <Link to="/privacy-policy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
+               <Link to="/privacy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
                   Privacy Policy <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
                <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
@@ -325,7 +347,7 @@ export default function Profile() {
           <div className="flex justify-center pt-8 pb-4">
             <button 
               type="button" 
-              onClick={() => navigate("/arcade")} // <-- Now correctly links to the game
+              onClick={() => navigate("/arcade")}
               className="text-muted-foreground/30 hover:text-primary/60 transition-colors flex items-center gap-2 text-xs font-mono"
             >
               <Gamepad2 className="w-4 h-4" />
@@ -334,7 +356,6 @@ export default function Profile() {
           </div>
         </form>
       </motion.div>
-
     </div>
   );
 }
