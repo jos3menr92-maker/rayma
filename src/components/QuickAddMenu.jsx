@@ -10,7 +10,8 @@ export default function QuickAddMenu({ open, onClose }) {
     { key: "loan", icon: CreditCard, label: "Add Loan", color: "bg-blue-500/10 text-blue-600 border-blue-200", action: () => { onClose(); navigate("/add-loan"); } },
     { key: "bill", icon: Receipt, label: "Add Bill", color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => { onClose(); navigate("/bills"); } },
     { key: "income", icon: DollarSign, label: "Log Income", color: "bg-green-500/10 text-green-600 border-green-200", action: () => { onClose(); navigate("/finance"); } }, 
-    { key: "savings", icon: PiggyBank, label: "Add Savings Goal", color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => { onClose(); navigate("/savings"); } }, 
+    // 🚀 FIXED: Re-routed to the actual Savings Vault (/budget-dashboard)
+    { key: "savings", icon: PiggyBank, label: "Add Savings Goal", color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => { onClose(); navigate("/budget-dashboard"); } }, 
     { key: "transaction", icon: ArrowLeftRight, label: "Log Transaction", color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => { onClose(); navigate("/bank-accounts"); } }, 
   ];
 
@@ -23,7 +24,6 @@ export default function QuickAddMenu({ open, onClose }) {
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             onClick={onClose}
           />
-          {/* 🚀 FIXED: Removed the stretching flex-col so it hugs the content again */}
           <motion.div
             initial={{ y: "100%", opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
@@ -39,7 +39,6 @@ export default function QuickAddMenu({ open, onClose }) {
               </button>
             </div>
             
-            {/* 🚀 FIXED: Added max-h-[60vh] and pb-24 so you can over-scroll past the bottom bezel */}
             <div className="overflow-y-auto overscroll-contain max-h-[60vh] px-4 pb-24 grid grid-cols-1 gap-2">
               {actions.map((a, i) => {
                 const Icon = a.icon;
