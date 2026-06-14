@@ -62,9 +62,9 @@ export default function Layout() {
 
 
 
+
       // ignore storage errors
-    }}, []);useEffect(() => {setImageError(false);
-    }, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
+    }}, []);useEffect(() => {setImageError(false);}, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
 
   const presetAvatar = HUMAN_AVATARS.find((a) => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
@@ -106,7 +106,7 @@ export default function Layout() {
               aria-label="Open Menu"
               className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0">
               
-              <Menu className="w-6 h-6 my-4" />
+              <Menu className="w-6 h-6 my-3" />
             </button>
           </div>
         </div>
