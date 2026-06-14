@@ -15,23 +15,24 @@ import LoansList from './pages/LoansList';
 import AddLoan from './pages/AddLoan';
 import LoanDetail from './pages/LoanDetail';
 import Bills from './pages/Bills';
-import Reminders from './pages/Reminders';
-import Profile from './pages/Profile';
-import Budget from './pages/Budget';
-import Support from './pages/Support';
-import SecurityAudit from './pages/SecurityAudit';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import DeleteAccount from './pages/DeleteAccount';
 import Landing from './pages/Landing';
-import Admin from './pages/Admin';
 import Onboarding from './pages/Onboarding';
-import DataExport from './pages/DataExport';
-import Arcade from './arcade'; // <-- ADDED ARCADE IMPORT
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { FinancialDataProvider } from '@/lib/FinancialDataContext';
 
-// Lazy load less-visited pages
+// 🛋️ THE LAZY LOUNGE: Lightning fast boot times!
+const Profile = lazy(() => import('./pages/Profile'));
+const Reminders = lazy(() => import('./pages/Reminders'));
+const Budget = lazy(() => import('./pages/Budget'));
+const Support = lazy(() => import('./pages/Support'));
+const SecurityAudit = lazy(() => import('./pages/SecurityAudit'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const DeleteAccount = lazy(() => import('./pages/DeleteAccount'));
+const Admin = lazy(() => import('./pages/Admin'));
+const DataExport = lazy(() => import('./pages/DataExport'));
+const Arcade = lazy(() => import('./arcade')); 
+const Feedback = lazy(() => import('./pages/Feedback'));
 const Finance = lazy(() => import('./pages/Finance'));
 const MonthlyTrend = lazy(() => import('./pages/MonthlyTrend'));
 const Simulator = lazy(() => import('./pages/Simulator'));
@@ -77,25 +78,28 @@ const AuthenticatedApp = () => {
     <FinancialDataProvider>
       <Routes>
         <Route element={<Layout />}>
+          {/* Core App Pages (Immediate Load) */}
           <Route path="/" element={<Dashboard />} />
           <Route path="/loans" element={<LoansList />} />
           <Route path="/add-loan" element={<AddLoan />} />
           <Route path="/loan/:id" element={<LoanDetail />} />
           <Route path="/bills" element={<Bills />} />
-          <Route path="/reminders" element={<Reminders />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/budget" element={<Budget />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/security" element={<SecurityAudit />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/delete-account" element={<DeleteAccount />} />
-          <Route path="/admin" element={<Admin />} />
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/data-export" element={<DataExport />} />
           <Route path="/remote-support" element={<RemoteSupport />} />
-          <Route path="/arcade" element={<Arcade />} /> {/* <-- ADDED ARCADE ROUTE */}
-          <Route path="/feedback" element={<Feedback />} />
+
+          {/* Lazy App Pages (Protected from crashing with Suspense) */}
+          <Route path="/reminders" element={<Suspense fallback={<PageLoader />}><Reminders /></Suspense>} />
+          <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
+          <Route path="/budget" element={<Suspense fallback={<PageLoader />}><Budget /></Suspense>} />
+          <Route path="/support" element={<Suspense fallback={<PageLoader />}><Support /></Suspense>} />
+          <Route path="/security" element={<Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense>} />
+          <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
+          <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
+          <Route path="/delete-account" element={<Suspense fallback={<PageLoader />}><DeleteAccount /></Suspense>} />
+          <Route path="/admin" element={<Suspense fallback={<PageLoader />}><Admin /></Suspense>} />
+          <Route path="/data-export" element={<Suspense fallback={<PageLoader />}><DataExport /></Suspense>} />
+          <Route path="/arcade" element={<Suspense fallback={<PageLoader />}><Arcade /></Suspense>} />
+          <Route path="/feedback" element={<Suspense fallback={<PageLoader />}><Feedback /></Suspense>} /> 
           <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
           <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
           <Route path="/simulator" element={<Suspense fallback={<PageLoader />}><Simulator /></Suspense>} />
@@ -106,6 +110,7 @@ const AuthenticatedApp = () => {
           <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
           <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
           <Route path="/tax-summary" element={<Suspense fallback={<PageLoader />}><TaxSummary /></Suspense>} />
+          
           <Route path="*" element={<PageNotFound />} />
         </Route>
       </Routes>
@@ -118,13 +123,11 @@ function App() {
   // --- Theme Persistence Logic ---
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-    // Apply 'dark' class if theme is dark, or default if no preference is saved
     if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else if (savedTheme === "light") {
       document.documentElement.classList.remove("dark");
     } else {
-      // Default fallback to dark mode if user hasn't set anything yet
       document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
     }
