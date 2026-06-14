@@ -71,14 +71,12 @@ export default function Profile() {
     smart_alerts: true, auto_insights: true
   });
 
-  // Apply theme to document automatically
   useEffect(() => {
     if (theme === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Sync form with Brain data when it loads
   useEffect(() => { 
     if (userProfile) {
       setForm({ 
@@ -97,7 +95,6 @@ export default function Profile() {
     }
   }, [userProfile]); 
 
-  // 🚀 SECURE: Uploads directly to your Supabase Storage
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
     if (!file || !userProfile) return;
@@ -119,20 +116,14 @@ export default function Profile() {
     }
   }
 
-  // 🚀 SECURE: Saves directly to your Supabase Auth/Profile
   async function handleSave(e) { 
     e.preventDefault(); 
     if (!userProfile) return;
     setSaving(true); 
     
     try {
-      // Step 1: Update Auth Metadata
       await supabase.auth.updateUser({ data: form });
-      
-      // Step 2: If you have a 'profiles' table, update that too
       await supabase.from('profiles').update(form).eq('id', userProfile.id);
-      
-      // Step 3: Tell the Brain to refresh everything instantly
       await reload();
       
       if (form.preferred_language) setLang(form.preferred_language); 
@@ -145,18 +136,21 @@ export default function Profile() {
     }
   }
 
-  // 🚀 SECURE: Apple-Compliant Account Deletion
+  // 🚀 UPGRADED: 30-Day Soft Deletion Strategy
   async function executeAccountDeletion() {
-    if (!window.confirm("FINAL WARNING: Permanent account deletion? This cannot be undone.")) return;
+    if (!window.confirm("Your account will be deactivated and permanently deleted in 30 days. Proceed?")) return;
     setDeleting(true);
     try {
-      await supabase.from('profiles').update({ preferred_name: "[DELETED]", avatar_id: "", avatar_photo_url: "" }).eq('id', userProfile.id);
+      // Tags the profile for deletion instead of wiping it immediately
+      await supabase.from('profiles').update({ 
+        deleted_at: new Date().toISOString() 
+      }).eq('id', userProfile.id);
+      
       await supabase.auth.signOut();
       window.location.href = "/auth";
     } catch (err) { 
       console.error(err);
-      await supabase.auth.signOut();
-      window.location.href = "/auth";
+      setDeleting(false);
     }
   }
 
@@ -176,9 +170,22 @@ export default function Profile() {
                  <img src={HUMAN_AVATARS.find(a => a.id === form.avatar_id)?.url} className="w-full h-full object-cover" alt="Profile" />
                ) : <span className="font-bold text-primary">{form.preferred_name?.charAt(0) || "U"}</span>}
             </div>
+            
             <button onClick={() => fileInputRef.current.click()} type="button" className="absolute bottom-0 right-0 p-3 bg-primary text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform">
               <Camera className="w-5 h-5" />
             </button>
+
+            {/* ✨ NEW: The Erase Picture Button */}
+            {form.avatar_photo_url && (
+              <button 
+                onClick={() => setForm(f => ({ ...f, avatar_photo_url: "" }))} 
+                type="button" 
+                className="absolute top-0 right-0 p-2 bg-destructive text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform"
+                title="Remove Photo"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
             <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
           </div>
           <h1 className="text-2xl font-bold mt-4">{form.preferred_name || "User"}</h1>
