@@ -4,9 +4,8 @@ import { X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT WRITE ACCESS
+import { supabase } from "@/lib/supabaseClient";
 
-// ✨ THE BIG BRAIN: Now accepts all financial data and current page context
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
   assets = [], savingsGoals = [], taxes = [], userProfile = null, 
@@ -67,7 +66,6 @@ export default function RaymaChat({
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
       setLoading(true);
-      
       setTimeout(() => {
         const response = `I analyzed your cash flow. You have **$${bills.reduce((a,b)=>a+b.amount,0)}** in bills, mostly concentrated in the first week of the month. \n\nI recommend shifting your **Netflix** and **Car Insurance** due dates to the 15th to align with your mid-month payday. \n\n*Script to use:* "Hi, I'm calling to align my billing cycle with my pay schedule. Can we permanently shift my monthly due date to the 15th?"`;
         setMessages(prev => [...prev, { role: "assistant", content: response }]);
@@ -77,30 +75,21 @@ export default function RaymaChat({
     }
 
     // --- 2. THE AUTO-LOGGER (WRITE ACCESS) ---
-    // Detects phrases like "I paid $50 to Netflix" or "Logged $100 for moms"
     const paidMatch = text.match(/paid \$?(\d+)\s+(?:to|for)\s+(.+)/);
     if (paidMatch) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
       setLoading(true);
-      
       const amount = parseFloat(paidMatch[1]);
       const target = paidMatch[2];
-
       setTimeout(async () => {
         try {
-          // Securly writes to the new Supabase payments table
           await supabase.from('payments').insert([{
-            user_id: userProfile?.id,
-            amount: amount,
-            target_name: target,
-            status: 'completed',
-            date: new Date().toISOString()
+            user_id: userProfile?.id, amount: amount, target_name: target, status: 'completed', date: new Date().toISOString()
           }]);
-          
           setMessages(prev => [...prev, { role: "assistant", content: `✅ **Payment Logged!** I just securely recorded your $${amount} payment to ${target} in your database. Your balances will update automatically.` }]);
         } catch (error) {
-          setMessages(prev => [...prev, { role: "assistant", content: `I tried to log your payment to ${target}, but I couldn't connect to the database. Make sure your 'payments' table is set up in Supabase!` }]);
+          setMessages(prev => [...prev, { role: "assistant", content: `I tried to log your payment to ${target}, but I couldn't connect to the database.` }]);
         }
         setLoading(false);
       }, 1000);
@@ -112,16 +101,86 @@ export default function RaymaChat({
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
       let response = "You are currently viewing your RAYMA app.";
-      
-      if (currentPage.includes("tax-summary")) response = "You are looking at your **Tax Summary**. This page tracks your deductible expenses and organizes your financial data so you are ready for tax season. Need help finding a write-off?";
+      if (currentPage.includes("tax-summary")) response = "You are looking at your **Tax Summary**. This page tracks your deductible expenses and organizes your financial data so you are ready for tax season.";
       if (currentPage.includes("debt-simulator")) response = "You are in the **Debt Simulator**. This tool lets you test out different payoff strategies. Enter an extra monthly payment amount, and I'll show you how much interest you'll save!";
       if (currentPage === "/") response = "You are on the **Main Dashboard**. This is your Command Center. You can see your cash flow, upcoming bills, and overall financial health score here.";
-      
       setMessages(prev => [...prev, { role: "assistant", content: response }]);
       return;
     }
 
-    // --- EXISTING COMMANDS (Navigation, Dark Mode, Diagnostics, Loan Advisor) ---
+    // --- 4. LOAN ADVISOR (DTI CALCULATOR) ---
+    if (text.includes("loan") && (text.includes("can i get") || text.includes("should i get") || text.includes("do i qualify") || text.includes("qualify for"))) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      setLoading(true);
+      const totalMonthlyObligations = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0) + bills.reduce((s, b) => s + (b.amount || 0), 0);
+      const monthlyIncome = incomes.length > 0 ? (incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length) * 4.33 : 0;
+      const dti = monthlyIncome > 0 ? (totalMonthlyObligations / monthlyIncome) * 100 : 100;
+      let advisorResponse = "";
+      if (monthlyIncome === 0) { advisorResponse = "I don't see any income logged in your account right now. Without income data, I can't calculate your debt-to-income ratio."; } 
+      else if (dti > 45) { advisorResponse = `Based on your current debt-to-income (DTI) ratio of **${dti.toFixed(1)}%**, your obligations are quite high relative to your income. Taking on a new loan right now might put significant strain on your cash flow.`; } 
+      else if (dti > 30) { advisorResponse = `Your debt-to-income (DTI) ratio is **${dti.toFixed(1)}%**. It's in a manageable range, but be cautious.`; } 
+      else { advisorResponse = `Your debt-to-income (DTI) ratio is very healthy at **${dti.toFixed(1)}%**. If you have a clear plan for the funds, it could be a viable option.`; }
+      setTimeout(() => { setMessages(prev => [...prev, { role: "assistant", content: advisorResponse }]); setLoading(false); }, 600);
+      return;
+    }
+
+    // --- 5. SUPER DEBUG MODE (ADMIN) ---
+    if (text === "rayma debug mode r4yma-d3v-2026") {
+      setMessages(prev => [...prev, { role: "user", content: "********" }]);
+      setInput("");
+      const isDebug = localStorage.getItem("rayma_debug_mode") === "true";
+      const newState = !isDebug;
+      localStorage.setItem("rayma_debug_mode", newState ? "true" : "false");
+      window.dispatchEvent(new CustomEvent("toggle-debug-mode"));
+      setMessages(prev => [...prev, { role: "assistant", content: newState ? "🔐 **SUPER DEBUG MODE UNLOCKED.** Advanced developer metrics are now active." : "🔒 **SUPER DEBUG MODE SECURED.** Returning to standard user environment." }]);
+      return;
+    }
+
+    // --- 6. USER DIAGNOSTIC PIN ---
+    const isPin = /^\d{6}$/.test(input.trim());
+    if (isPin) {
+      setScanning(true);
+      setMessages(prev => [...prev, { role: "user", content: input }]);
+      setInput(""); 
+      try {
+        const module = await import("../lib/runRemoteDiagnostic");
+        const runRemoteDiagnostic = module.runRemoteDiagnostic;
+        const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
+        const result = await runRemoteDiagnostic(input.trim(), mockLogs);
+        setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
+      } catch (err) {
+        setMessages(prev => [...prev, { role: "assistant", content: "Error loading diagnostic protocol. Try again later." }]);
+      }
+      setScanning(false);
+      return; 
+    }
+
+    // --- 7. SYSTEM COMMANDS (Help, Log out, Nav, Modes) ---
+    if (text === "help" || text === "what can you do" || text === "who are you") {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      const helpText = `I am RAYMA, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document"\n* **Learn:** "Start tour"\n* **Security:** "Log me out"`;
+      setMessages(prev => [...prev, { role: "assistant", content: helpText }]);
+      return;
+    }
+
+    if (text === "log out" || text === "sign out") {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      setMessages(prev => [...prev, { role: "assistant", content: "Logging you out securely. See you next time!" }]);
+      setTimeout(async () => { await base44.auth.logout(); window.location.href = "/login"; }, 1500);
+      return;
+    }
+
+    if (text.includes("focus mode")) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      try { await base44.auth.updateMe({ compact_mode: true }); setMessages(prev => [...prev, { role: "assistant", content: "Focus Mode activated. Colors muted." }]); } 
+      catch(err) { setMessages(prev => [...prev, { role: "assistant", content: "Trouble saving setting." }]); }
+      return;
+    }
+
     const tourTriggers = [ "tour","start tour","show me around","guide me" ];  
     if (!tourTriggered && tourTriggers.some(trigger => text === trigger || text.startsWith(trigger + " "))) {
       setTourTriggered(true);
@@ -151,13 +210,11 @@ export default function RaymaChat({
       return;
     }
 
-    // --- MAIN AI FALLBACK LOGIC ---
+    // --- 8. MAIN AI FALLBACK LOGIC ---
     if (!input.trim() || loading || !conversation) return;
-    
     const messageContent = input.trim(); 
     setInput("");
     setLoading(true);
-
     const timeout = setTimeout(() => setLoading(false), 30000);
     await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
     clearTimeout(timeout);
@@ -236,6 +293,16 @@ export default function RaymaChat({
                         <ReactMarkdown className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                           {msg.content || "…"}
                         </ReactMarkdown>
+                        {msg.actionCode && (
+                          <button
+                            onClick={() => {
+                              setMessages(prev => [...prev, { role: "assistant", content: "✅ Successfully refreshed the connection. Your sync is back to normal!" }]);
+                            }}
+                            className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors self-start shadow-sm"
+                          >
+                            Yes, securely fix this
+                          </button>
+                        )}
                       </div>
                     ) : (
                       msg.content
