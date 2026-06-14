@@ -1,44 +1,25 @@
-import { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { useMemo } from "react";
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
 import { motion } from "framer-motion";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp, TrendingDown, CheckCircle2, DollarSign, Calendar } from "lucide-react";
 
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
-
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))", "#34d399", "#f97316", "#a78bfa"];
-
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 export default function MonthlyRecap() {
-  const [incomes, setIncomes] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [bills, setBills] = useState([]);
-  const [loans, setLoans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // 🚀 SECURE: Pulls everything instantly from your Supabase Brain
+  const { incomes, payments, bills, loans, loading } = useFinancialData();
 
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
   const monthName = MONTH_NAMES[currentMonth];
 
-  useEffect(() => {
-    Promise.all([
-      base44.entities.WeeklyIncome.list("-week_start", 52),
-      base44.entities.Payment.list("-payment_date", 200),
-      base44.entities.Bill.list("-created_date", 100),
-      base44.entities.Loan.list("-created_date", 100),
-    ]).then(([inc, pay, b, l]) => {
-      setIncomes(inc);
-      setPayments(pay);
-      setBills(b.filter(x => x.is_active !== false));
-      setLoans(l.filter(x => x.status !== "paid_off"));
-      setLoading(false);
-    });
-  }, []);
-
-  // This month's income (weeks that started in this month)
+  // This month's income
   const thisMonthIncomes = incomes.filter(i => {
+    if (!i.week_start) return false;
     const d = new Date(i.week_start + "T00:00:00");
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   });
@@ -46,6 +27,7 @@ export default function MonthlyRecap() {
 
   // This month's payments
   const thisMonthPayments = payments.filter(p => {
+    if (!p.payment_date) return false;
     const d = new Date(p.payment_date + "T00:00:00");
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   });
@@ -54,15 +36,18 @@ export default function MonthlyRecap() {
   const loansPaid = thisMonthPayments.filter(p => p.payment_type === "loan").length;
 
   // Monthly fixed expenses
-  const monthlyExpenses = bills.reduce((s, b) => s + (b.amount || 0), 0) + loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const activeBills = bills.filter(x => x.is_active !== false);
+  const activeLoans = loans.filter(x => x.status !== "paid_off");
+  const monthlyExpenses = activeBills.reduce((s, b) => s + (b.amount || 0), 0) + activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
   const cashFlow = totalIncome - monthlyExpenses;
 
-  // Last 6 months income chart
+  // Last 6 months chart data
   const last6 = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(currentYear, currentMonth - (5 - i), 1);
     const m = d.getMonth();
     const y = d.getFullYear();
     const monthIncomes = incomes.filter(inc => {
+      if (!inc.week_start) return false;
       const id = new Date(inc.week_start + "T00:00:00");
       return id.getMonth() === m && id.getFullYear() === y;
     });
@@ -73,13 +58,11 @@ export default function MonthlyRecap() {
     };
   });
 
-  // Bill categories breakdown
-  const billCategories = bills.reduce((acc, b) => {
+  const billPieData = Object.entries(activeBills.reduce((acc, b) => {
     const key = b.category || "other";
     acc[key] = (acc[key] || 0) + (b.amount || 0);
     return acc;
-  }, {});
-  const billPieData = Object.entries(billCategories).map(([name, value]) => ({ name, value }));
+  }, {})).map(([name, value]) => ({ name, value }));
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -160,8 +143,7 @@ export default function MonthlyRecap() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} width={36} />
-                <Tooltip formatter={(v, n) => [fmt(v), n === "income" ? "Income" : "Expenses"]}
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                <Tooltip formatter={(v, n) => [fmt(v), n === "income" ? "Income" : "Expenses"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
                 <Bar dataKey="income" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
                 <Bar dataKey="expenses" fill="hsl(var(--destructive))" opacity={0.6} radius={[4,4,0,0]} />
               </BarChart>
