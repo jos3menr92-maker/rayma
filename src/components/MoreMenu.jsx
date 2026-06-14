@@ -24,6 +24,7 @@ const moreItems = [
   { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true },
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
   { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
+  { path: "/profile", icon: User, label: "RAYMA v2.0.0", desc: "Core identity & settings" },
 ];
 
 export default function MoreMenu({ open, onClose }) {
