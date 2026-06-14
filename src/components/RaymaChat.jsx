@@ -176,8 +176,10 @@ export default function RaymaChat({
     if (text.includes("focus mode")) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
-      try { await base44.auth.updateMe({ compact_mode: true }); setMessages(prev => [...prev, { role: "assistant", content: "Focus Mode activated. Colors muted." }]); } 
-      catch(err) { setMessages(prev => [...prev, { role: "assistant", content: "Trouble saving setting." }]); }
+      // Safely apply it locally without hitting the old Base44 database!
+      document.documentElement.classList.add("focus-mode");
+      localStorage.setItem("focus_mode", "true");
+      setMessages(prev => [...prev, { role: "assistant", content: "Focus Mode activated. UI muted." }]);
       return;
     }
 
