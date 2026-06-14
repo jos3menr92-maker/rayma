@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react"; // ✨ Added Sparkles
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
@@ -13,35 +13,29 @@ import { getInitialsColor } from "@/components/AvatarPicker";
 // 🚨 REMOVED: import { base44 } from "@/api/base44Client"; (Apple/Google Compliance Fix)
 
 const HUMAN_AVATARS = [
-{ id: "face1", url: "https://i.pravatar.cc/150?img=11" },
-{ id: "face2", url: "https://i.pravatar.cc/150?img=12" },
-{ id: "face3", url: "https://i.pravatar.cc/150?img=14" },
-{ id: "face4", url: "https://i.pravatar.cc/150?img=32" },
-{ id: "face5", url: "https://i.pravatar.cc/150?img=33" },
-{ id: "face6", url: "https://i.pravatar.cc/150?img=37" },
-{ id: "face7", url: "https://i.pravatar.cc/150?img=38" },
-{ id: "face8", url: "https://i.pravatar.cc/150?img=47" },
-{ id: "face9", url: "https://i.pravatar.cc/150?img=49" },
-{ id: "face10", url: "https://i.pravatar.cc/150?img=50" },
-{ id: "face11", url: "https://i.pravatar.cc/150?img=51" },
-{ id: "face12", url: "https://i.pravatar.cc/150?img=52" },
-{ id: "face13", url: "https://i.pravatar.cc/150?img=56" },
-{ id: "face14", url: "https://i.pravatar.cc/150?img=59" },
-{ id: "face15", url: "https://i.pravatar.cc/150?img=60" }];
-
-
-const navItems = [
-{ path: "/", icon: LayoutDashboard, label: "Dashboard" },
-{ path: "/loans", icon: List, label: "Loans" },
-{ path: "/bills", icon: Receipt, label: "Bills" },
-{ path: "/finance", icon: TrendingUp, label: "Finance" }];
-
+  { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
+  { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
+  { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
+  { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
+  { id: "face5", url: "https://i.pravatar.cc/150?img=33" },
+  { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
+  { id: "face7", url: "https://i.pravatar.cc/150?img=38" },
+  { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
+  { id: "face9", url: "https://i.pravatar.cc/150?img=49" },
+  { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
+  { id: "face11", url: "https://i.pravatar.cc/150?img=51" },
+  { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
+  { id: "face13", url: "https://i.pravatar.cc/150?img=56" },
+  { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
+  { id: "face15", url: "https://i.pravatar.cc/150?img=60" }
+];
 
 export default function Layout() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [raymaOpen, setRaymaOpen] = useState(false); // ✨ NEW: Controls the RAYMA Centerpiece
   const [imageError, setImageError] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
@@ -58,13 +52,13 @@ export default function Layout() {
         sessionStorage.removeItem("rayma_auto_open");
       }
     } catch (e) {
-
-
-
-
-
       // ignore storage errors
-    }}, []);useEffect(() => {setImageError(false);}, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
+    }
+  }, []);
+  
+  useEffect(() => {
+    setImageError(false);
+  }, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
 
   const presetAvatar = HUMAN_AVATARS.find((a) => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
@@ -83,18 +77,18 @@ export default function Layout() {
               className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm"
               style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
               
-              {imageToShow && !imageError ?
-              <img
-                src={imageToShow}
-                className="w-full h-full object-cover"
-                alt="Profile"
-                onError={() => setImageError(true)} /> :
-
-
-              <span className="text-xs font-bold text-white">
+              {imageToShow && !imageError ? (
+                <img
+                  src={imageToShow}
+                  className="w-full h-full object-cover"
+                  alt="Profile"
+                  onError={() => setImageError(true)} 
+                /> 
+              ) : (
+                <span className="text-xs font-bold text-white">
                   {userProfile?.preferred_name?.charAt(0) || userProfile?.full_name?.charAt(0) || "R"}
                 </span>
-              }
+              )}
             </div>
             
             <span className="text-sm font-semibold font-heading text-foreground tracking-wide">RAYMA</span>
@@ -105,7 +99,6 @@ export default function Layout() {
               onClick={() => setDrawerOpen(true)}
               aria-label="Open Menu"
               className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0">
-              
               <Menu className="w-6 h-6 my-3" />
             </button>
           </div>
@@ -140,47 +133,57 @@ export default function Layout() {
         style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
         className="fixed left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
         title="Quick Add (drag to move)">
-        
         <Plus className="w-6 h-6 text-primary-foreground" />
       </motion.button>
 
-      <FeedbackButton />
       <PushNotificationPrompt />
       <RaymaChat
         autoOpen={raymaAutoOpen}
+        forceOpen={raymaOpen} // ✨ Wire the new state to the Chat Component
+        onClose={() => setRaymaOpen(false)} // ✨ Let the Chat Component close itself
         loans={loans}
         bills={bills}
         incomes={incomes}
-        userProfile={userProfile} />
+        userProfile={userProfile} 
+      />
       
-
+      {/* ✨ Premium 5-Slot Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        <div className="flex items-center justify-around max-w-lg mx-auto py-2 px-2">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 ${
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}`
-                }>
-                
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </Link>);
+        <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
+          
+          <Link to="/" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Home</span>
+          </Link>
 
-          })}
-          <button
-            onClick={() => setMoreOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground">
-            
+          <Link to="/finance" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/finance" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+            <TrendingUp className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Finance</span>
+          </Link>
+
+          {/* ✨ RAYMA Centerpiece Button */}
+          <div className="relative -top-5 flex justify-center w-16">
+            <button
+              onClick={() => setRaymaOpen(true)}
+              className="absolute flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 shadow-[0_4px_20px_rgba(34,211,238,0.4)] border-4 border-background hover:scale-105 active:scale-95 transition-all duration-300 z-50 group"
+            >
+              <Sparkles className="w-6 h-6 text-cyan-400 dark:text-cyan-600 group-hover:animate-pulse" />
+              <div className="absolute inset-0 rounded-full border border-cyan-400/30 animate-[ping_3s_ease-in-out_infinite]" />
+            </button>
+          </div>
+
+          <Link to="/bills" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/bills" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+            <Receipt className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Bills</span>
+          </Link>
+
+          <button onClick={() => setMoreOpen(true)} className="flex flex-col items-center gap-0.5 w-12 text-muted-foreground hover:text-foreground">
             <MoreHorizontal className="w-5 h-5" />
             <span className="text-[10px] font-medium">More</span>
           </button>
+          
         </div>
       </nav>
-    </div>);
-
+    </div>
+  );
 }
