@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2, Download, Zap, TrendingUp, LayoutDashboard, PiggyBank, Folder, BarChart2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE LOGOUT
+import { supabase } from "@/lib/supabaseClient"; 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getInitialsColor } from "@/components/AvatarPicker";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useFinancialData } from "@/lib/FinancialDataContext"; 
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -19,7 +19,7 @@ const HUMAN_AVATARS = [
 
 export default function SideDrawer({ open, onClose }) {
   const navigate = useNavigate();
-  const { userProfile: user } = useFinancialData(); // 🔒 Fetch securely from Brain
+  const { userProfile: user } = useFinancialData(); 
 
   function go(path) { onClose(); navigate(path); }
 
@@ -31,7 +31,7 @@ export default function SideDrawer({ open, onClose }) {
   };
 
   async function handleLogout() {
-    await supabase.auth.signOut(); // 🔒 Apple-Compliant Logout
+    await supabase.auth.signOut(); 
     window.location.href = "/auth";
   }
 
@@ -82,13 +82,11 @@ export default function SideDrawer({ open, onClose }) {
                 <DrawerRow icon={Download} label="Export My Data" value="GDPR compliant" chevron onClick={() => go("/data-export")} />
               </Section>
 
-              {/* ✨ RESTORED & UPDATED: App Info with new Gmail */}
               <Section title="About RAYMA">
                 <DrawerRow icon={Info} label="RAYMA" value="v2.0.0" />
                 <DrawerRow icon={Mail} label="Support Email" value="rayma.app2026@gmail.com" />
               </Section>
 
-              {/* ✨ RESTORED: Privacy & Legal with Delete Account */}
               <Section title="Privacy & Legal">
                 <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => go("/privacy")} />
                 <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => go("/terms")} />
@@ -97,7 +95,8 @@ export default function SideDrawer({ open, onClose }) {
               </Section>
             </div>
 
-            <div className="border-t border-border p-4">
+            {/* ✨ ADDED pb-28 HERE: Lifts the button above the bottom navigation bar */}
+            <div className="border-t border-border p-4 pb-28">
               <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" /> Sign Out
               </Button>
