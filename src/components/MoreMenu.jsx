@@ -21,11 +21,11 @@ const moreItems = [
   { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
   { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
   { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Get Annual Pass or AI token packs", highlight: true },
-  { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true },
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
   { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
   { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", desc: "Report bugs or suggest features" },
-  { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" },
+  { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true },
+  { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" }
 ];
 
 export default function MoreMenu({ open, onClose }) {
