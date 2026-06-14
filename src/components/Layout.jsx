@@ -1,16 +1,14 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react"; // ✨ Added Sparkles
+import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import MoreMenu from "./MoreMenu";
-import FeedbackButton from "./FeedbackButton";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { getInitialsColor } from "@/components/AvatarPicker";
-// 🚨 REMOVED: import { base44 } from "@/api/base44Client"; (Apple/Google Compliance Fix)
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -35,13 +33,12 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [raymaOpen, setRaymaOpen] = useState(false); // ✨ NEW: Controls the RAYMA Centerpiece
+  const [raymaOpen, setRaymaOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
 
-  // 🧠 SECURE: Grabbing everything safely from the Supabase Brain!
   const { loans, bills, incomes, userProfile } = useFinancialData();
 
   useEffect(() => {
@@ -51,9 +48,7 @@ export default function Layout() {
         setRaymaAutoOpen(true);
         sessionStorage.removeItem("rayma_auto_open");
       }
-    } catch (e) {
-      // ignore storage errors
-    }
+    } catch (e) {}
   }, []);
   
   useEffect(() => {
@@ -139,15 +134,14 @@ export default function Layout() {
       <PushNotificationPrompt />
       <RaymaChat
         autoOpen={raymaAutoOpen}
-        forceOpen={raymaOpen} // ✨ Wire the new state to the Chat Component
-        onClose={() => setRaymaOpen(false)} // ✨ Let the Chat Component close itself
+        forceOpen={raymaOpen}
+        onClose={() => setRaymaOpen(false)}
         loans={loans}
         bills={bills}
         incomes={incomes}
         userProfile={userProfile} 
       />
       
-      {/* ✨ Premium 5-Slot Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
           
@@ -161,7 +155,6 @@ export default function Layout() {
             <span className="text-[10px] font-medium">Finance</span>
           </Link>
 
-          {/* ✨ RAYMA Centerpiece Button */}
           <div className="relative -top-5 flex justify-center w-16">
             <button
               onClick={() => setRaymaOpen(true)}
