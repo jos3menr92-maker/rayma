@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
-import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare } from "lucide-react";
+import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard,} from "lucide-react";
 
 const moreItems = [
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
@@ -25,6 +25,7 @@ const moreItems = [
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
   { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
   { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", desc: "Report bugs or suggest features" },
+  { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" },
 ];
 
 export default function MoreMenu({ open, onClose }) {
