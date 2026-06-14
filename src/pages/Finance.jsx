@@ -58,10 +58,11 @@ export default function Finance() {
     setSaving(true);
     
     // 🔒 SECURE PAYLOAD
-    const payload = { 
+const payload = { 
       amount: parseFloat(incomeForm.amount) || 0, 
       week_start: incomeForm.week_start, 
       note: incomeForm.note, 
+      source: incomeForm.note || "Manual Log", // 🚀 THIS FIXES THE CRASH!
       user_id: userProfile?.id,
       is_active: true
     };
