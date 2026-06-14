@@ -18,7 +18,7 @@ const moreItems = [
   { path: "/trend", icon: TrendingUp, label: "Monthly Trend", desc: "Spending trends over time" },
   { path: "/tax-summary", icon: FileText, label: "Tax Summary", desc: "Annual report & deductibles" },
   { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
-  { path: "/user-profile", icon: User, label: "Profile", desc: "Settings & preferences" },
+  { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
   { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
   { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Get Annual Pass or AI token packs", highlight: true },
   { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true },
