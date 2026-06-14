@@ -7,6 +7,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BR
 import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard,} from "lucide-react";
 
 const moreItems = [
+    { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" },
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
   { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" }, // 🐷 KEPT YOUR SAVINGS VAULT!
   { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", desc: "Advanced category tracking" }, // ✨ RECOVERED!
@@ -24,8 +25,7 @@ const moreItems = [
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
   { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
   { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", desc: "Report bugs or suggest features" },
-  { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true },
-  { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" }
+  { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true }
 ];
 
 export default function MoreMenu({ open, onClose }) {
