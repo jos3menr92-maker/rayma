@@ -84,7 +84,7 @@ export default function SideDrawer({ open, onClose }) {
 
               {/* ✨ RESTORED & UPDATED: App Info with new Gmail */}
               <Section title="About RAYMA">
-                <DrawerRow icon={Info} label="Version" value="1.0.0" />
+                <DrawerRow icon={Info} label="RAYMA" value="v2.0.0" />
                 <DrawerRow icon={Mail} label="Support Email" value="rayma.app2026@gmail.com" />
               </Section>
 
