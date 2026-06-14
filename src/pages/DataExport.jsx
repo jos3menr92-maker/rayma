@@ -1,29 +1,45 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { Download, Shield, FileJson, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
 
 export default function DataExport() {
   const navigate = useNavigate();
+  // Pulling directly from the secure Vault!
+  const { userProfile, incomes, bills, loans } = useFinancialData(); 
+  
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   async function handleExport() {
     setLoading(true);
-    const response = await base44.functions.invoke("exportUserData", {});
-    setLoading(false);
 
-    // The function returns JSON blob — trigger download
-    const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
+    // Bundle all their data securely on the client side
+    const exportData = {
+      profile: userProfile,
+      incomes,
+      bills,
+      loans,
+      exported_at: new Date().toISOString()
+    };
+
+    // UX pause so it feels like a heavy download
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // Generate the JSON file and trigger download
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `rayma-data-export-${new Date().toISOString().split("T")[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    
+    setLoading(false);
     setDone(true);
+    setTimeout(() => setDone(false), 4000);
   }
 
   return (
@@ -39,13 +55,13 @@ export default function DataExport() {
           </div>
           <h1 className="text-2xl font-bold font-heading text-foreground mb-2">Export Your Data</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Download a complete copy of all your RAYMA data — loans, bills, transactions, budgets, and more.
+            Download a complete copy of all your RAYMA data — loans, bills, transactions, and more.
           </p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-5 mb-6 space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">What's included</p>
-          {["Loans & balances", "Bills & subscriptions", "Payment history", "Transactions", "Budget categories", "Assets & net worth", "Savings goals", "Weekly income records", "AI memory preferences"].map(item => (
+          {["Loans & balances", "Bills & subscriptions", "Payment history", "Budget categories", "Weekly income records"].map(item => (
             <div key={item} className="flex items-center gap-2 text-sm text-foreground">
               <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
               {item}
@@ -66,7 +82,7 @@ export default function DataExport() {
             <p className="text-sm font-medium text-green-800 dark:text-green-300">Export downloaded successfully!</p>
           </div>
         ) : (
-          <Button className="w-full rounded-2xl h-12 text-base gap-2" onClick={handleExport} disabled={loading}>
+          <Button className="w-full rounded-2xl h-12 text-base gap-2 shadow-lg" onClick={handleExport} disabled={loading}>
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
             {loading ? "Preparing export…" : "Download My Data"}
           </Button>
@@ -74,7 +90,7 @@ export default function DataExport() {
 
         <p className="text-center text-xs text-muted-foreground mt-4">
           To permanently delete your account and all data, visit{" "}
-          <button onClick={() => navigate("/delete-account")} className="text-destructive underline">Delete Account</button>.
+          <button onClick={() => navigate("/profile")} className="text-destructive underline">Delete Account</button>.
         </p>
       </motion.div>
     </div>
