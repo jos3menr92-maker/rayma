@@ -5,7 +5,7 @@ import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift } 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// 🔋 THE NEW GAMIFIED POWER TIERS
+// 🔋 THE NEW GAMIFIED POWER TIERS (MONTHLY & ANNUAL OPTIONS)
 const PLANS = [
   {
     id: "power_insert_coin",
@@ -17,20 +17,38 @@ const PLANS = [
     color: "border-border",
   },
   {
-    id: "power_lithium_sub",
-    label: "Lithium Upgrade",
-    price: "$4.99 / mo",
-    desc: "Upgrades your daily capacity to 50 Energy Bars. Best for heavy users.",
+    id: "power_lithium_monthly",
+    label: "Lithium Upgrade (Monthly)",
+    price: "$5.99 / mo",
+    desc: "Upgrades your daily capacity to 50 Energy Bars. Billed monthly.",
+    icon: <BatteryCharging className="w-5 h-5 text-blue-500" />,
+    highlight: false,
+    color: "border-border",
+  },
+  {
+    id: "power_lithium_annual",
+    label: "Lithium Upgrade (Annual)",
+    price: "$49.99 / yr",
+    desc: "Upgrades your daily capacity to 50 Energy Bars. Save 30% over monthly!",
     icon: <BatteryCharging className="w-5 h-5 text-blue-500" />,
     highlight: true,
     color: "border-blue-500",
     badge: "POPULAR",
   },
   {
-    id: "power_generator_sub", // Make sure this ID matches your annual product ID in Stripe/App Store
+    id: "power_generator_monthly",
+    label: "Arcade Generator (Monthly)",
+    price: "$11.99 / mo",
+    desc: "200 daily Energy Bars + Gold Badge. Billed monthly.",
+    icon: <Gamepad2 className="w-5 h-5 text-primary" />,
+    highlight: false,
+    color: "border-border",
+  },
+  {
+    id: "power_generator_annual", // Make sure this ID matches your annual product ID in Stripe/App Store
     label: "Arcade Generator (Annual)",
-    price: "$9.99 / mo",
-    desc: "200 daily Energy Bars + Gold Badge. Billed annually ($95.99/yr) — Save 20%!",
+    price: "$95.99 / yr",
+    desc: "200 daily Energy Bars + Gold Badge. Save 33% over monthly!",
     icon: <Gamepad2 className="w-5 h-5 text-primary" />,
     highlight: false,
     color: "border-primary",
