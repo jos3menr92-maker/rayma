@@ -27,10 +27,10 @@ const PLANS = [
     badge: "POPULAR",
   },
   {
-    id: "power_generator_sub",
-    label: "Arcade Generator (Sponsor)",
+    id: "power_generator_sub", // Make sure this ID matches your annual product ID in Stripe/App Store
+    label: "Arcade Generator (Annual)",
     price: "$9.99 / mo",
-    desc: "200 daily Energy Bars + Gold Sponsor Badge. Keep RAYMA free for others!",
+    desc: "200 daily Energy Bars + Gold Badge. Billed annually ($95.99/yr) — Save 20%!",
     icon: <Gamepad2 className="w-5 h-5 text-primary" />,
     highlight: false,
     color: "border-primary",
