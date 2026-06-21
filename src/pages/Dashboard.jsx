@@ -1,3 +1,18 @@
+/**
+ * ==========================================
+ * RAYMA CONFIDENTIAL & PROPRIETARY
+ * ==========================================
+ * Copyright (C) 2026 RAYMA. All Rights Reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of RAYMA. The intellectual and technical
+ * concepts contained herein are proprietary to RAYMA and
+ * are protected by trade secret and copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written
+ * permission is obtained from RAYMA Management.
+ * ==========================================
+ */
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrency } from "@/hooks/useCurrency";
