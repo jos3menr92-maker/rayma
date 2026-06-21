@@ -1,3 +1,19 @@
+/**
+ * ==========================================
+ * RAYMA CONFIDENTIAL & PROPRIETARY
+ * ==========================================
+ * Copyright (C) 2026 RAYMA. All Rights Reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of RAYMA. The intellectual and technical
+ * concepts contained herein are proprietary to RAYMA and
+ * are protected by trade secret and copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written
+ * permission is obtained from RAYMA Management.
+ * ==========================================
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
