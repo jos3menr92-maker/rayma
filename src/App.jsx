@@ -97,7 +97,6 @@ const AuthenticatedApp = () => {
           <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
           <Route path="/delete-account" element={<Suspense fallback={<PageLoader />}><DeleteAccount /></Suspense>} />
           <Route path="/admin" element={<Suspense fallback={<PageLoader />}><Admin /></Suspense>} />
-          <Route path="/data-export" element={<Suspense fallback={<PageLoader />}><DataExport /></Suspense>} />
           <Route path="/arcade" element={<Suspense fallback={<PageLoader />}><Arcade /></Suspense>} />
           <Route path="/feedback" element={<Suspense fallback={<PageLoader />}><Feedback /></Suspense>} /> 
           <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
