@@ -28,9 +28,7 @@ const Support = lazy(() => import('./pages/Support'));
 const SecurityAudit = lazy(() => import('./pages/SecurityAudit'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const DeleteAccount = lazy(() => import('./pages/DeleteAccount'));
 const Admin = lazy(() => import('./pages/Admin'));
-const DataExport = lazy(() => import('./pages/DataExport'));
 const Arcade = lazy(() => import('./arcade')); 
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Finance = lazy(() => import('./pages/Finance'));
@@ -53,7 +51,6 @@ const PageLoader = () => (
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
-  // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -62,18 +59,15 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to custom Auth page automatically
       window.location.href = '/auth';
       return null;
     }
   }
 
-  // Render the main app wrapped with FinancialDataProvider so consumers can use useFinancialData()
   return (
     <FinancialDataProvider>
       <Routes>
@@ -95,7 +89,6 @@ const AuthenticatedApp = () => {
           <Route path="/security" element={<Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense>} />
           <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
           <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
-          <Route path="/delete-account" element={<Suspense fallback={<PageLoader />}><DeleteAccount /></Suspense>} />
           <Route path="/admin" element={<Suspense fallback={<PageLoader />}><Admin /></Suspense>} />
           <Route path="/arcade" element={<Suspense fallback={<PageLoader />}><Arcade /></Suspense>} />
           <Route path="/feedback" element={<Suspense fallback={<PageLoader />}><Feedback /></Suspense>} /> 
@@ -117,9 +110,7 @@ const AuthenticatedApp = () => {
   );
 };
 
-
 function App() {
-  // --- Theme Persistence Logic ---
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
