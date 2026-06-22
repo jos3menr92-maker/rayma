@@ -48,7 +48,11 @@ Deno.serve(async (req) => {
     const userData = await base44.auth.me();
     let updateData = {};
 
-    if (promoCode.reward_type === 'tokens') {
+    if (promoCode.reward_type === 'energy_bars') {
+      // Add energy bars to the user's current balance
+      const currentEnergyBars = userData.energy_bars || 10;
+      updateData.energy_bars = currentEnergyBars + promoCode.reward_value;
+    } else if (promoCode.reward_type === 'tokens') {
       const currentTokens = userData.ai_tokens || 0;
       updateData.ai_tokens = currentTokens + promoCode.reward_value;
     } else if (promoCode.reward_type === 'annual_pass') {
@@ -61,8 +65,8 @@ Deno.serve(async (req) => {
       updateData.annual_pass_expires_at = baseDate.toISOString().split('T')[0];
     }
 
-    // Mark user as sponsor/employee
-    updateData.is_sponsor = true;
+    // Mark user as sponsor/employee (optional, comment out if not needed)
+    // updateData.is_sponsor = true;
 
     await base44.asServiceRole.entities.User.update(user.id, updateData);
 
@@ -73,13 +77,39 @@ Deno.serve(async (req) => {
       redeemed_by: newRedeemedBy,
     });
 
-    console.log(`Promo code redeemed: ${code} by user ${user.email}`);
+    // Optional: Log redemption to audit table (if it exists)
+    try {
+      const redemptionData = {
+        promo_code_id: promoCode.id,
+        user_id: user.id,
+        reward_type: promoCode.reward_type,
+        reward_value: promoCode.reward_value,
+        user_agent: req.headers.get('user-agent') || 'unknown',
+      };
+      // This will fail silently if table doesn't exist yet
+      await base44.asServiceRole.entities.PromoRedemption.create(redemptionData);
+    } catch (auditErr) {
+      // Non-critical: redemption tracking failed but reward was applied
+      console.warn('Could not log redemption to audit table:', auditErr.message);
+    }
+
+    console.log(`✓ Promo code redeemed: ${code} by user ${user.email} | Type: ${promoCode.reward_type} | Value: +${promoCode.reward_value}`);
+
+    // Generate success message based on reward type
+    let rewardMessage = '';
+    if (promoCode.reward_type === 'energy_bars') {
+      rewardMessage = `You've unlocked ${promoCode.reward_value} Energy Bars! ⚡`;
+    } else if (promoCode.reward_type === 'tokens') {
+      rewardMessage = `You've been granted ${promoCode.reward_value} AI tokens! 🤖`;
+    } else if (promoCode.reward_type === 'annual_pass') {
+      rewardMessage = `You've been granted the Annual Pass! 🎉`;
+    }
 
     return Response.json({
       success: true,
       reward_type: promoCode.reward_type,
       reward_value: promoCode.reward_value,
-      message: `Welcome, sponsor! You've been granted ${promoCode.reward_type === 'tokens' ? promoCode.reward_value + ' AI tokens' : 'the Annual Pass'}. 🎉`,
+      message: rewardMessage,
     });
   } catch (error) {
     console.error('Promo code redemption error:', error.message);
