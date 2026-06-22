@@ -86,6 +86,17 @@
       "type": "string",
       "format": "date",
       "description": "Last date when daily energy was reset (for avoiding duplicate resets)"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": ["free", "power_lithium", "power_generator"],
+      "default": "free",
+      "description": "Active Stripe subscription tier. Set by the Stripe webhook on purchase. 'free' when no active subscription."
+    },
+    "subscription_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the current Stripe subscription period ends. Null if the user is on the free tier."
     }
   },
   "required": [
