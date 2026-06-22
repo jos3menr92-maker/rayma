@@ -1,21 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useFinancialData } from "@/lib/FinancialDataContext"; 
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
 import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard,} from "lucide-react";
 
 const moreItems = [
-    { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" },
+  { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" },
   { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
-  { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" }, // 🐷 KEPT YOUR SAVINGS VAULT!
-  { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", desc: "Advanced category tracking" }, // ✨ RECOVERED!
+  { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" }, 
+  { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", desc: "Advanced category tracking" }, 
   { path: "/debt-simulator", icon: TrendingDown, label: "Debt Simulator", desc: "Plan your payoff strategy" },
   { path: "/documents", icon: FolderOpen, label: "Document Vault", desc: "Store & scan financial docs" },
   { path: "/monthly-recap", icon: CalendarDays, label: "Monthly Recap", desc: "Income & spending summary" },
   { path: "/assets", icon: BarChart2, label: "Assets & Net Worth", desc: "Track what you own" },
-  { path: "/data-export", icon: Download, label: "Export Data", desc: "Download your RAYMA records" }, // ✨ ADDED!
+  // 🛡️ ROUTED TO VAULT
+  { path: "/profile", icon: Download, label: "Export Data", desc: "Go to Security Vault" }, 
   { path: "/trend", icon: TrendingUp, label: "Monthly Trend", desc: "Spending trends over time" },
   { path: "/tax-summary", icon: FileText, label: "Tax Summary", desc: "Annual report & deductibles" },
   { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
@@ -25,29 +25,20 @@ const moreItems = [
   { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
   { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
   { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", desc: "Report bugs or suggest features" },
-  { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true }
+  // 🛡️ ROUTED TO VAULT
+  { path: "/profile", icon: Trash2, label: "Delete Account", desc: "Go to Security Vault", isDelete: true }
 ];
 
 export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
-  const { userProfile } = useFinancialData(); // 🔒 Safe fetch from Supabase Context
+  const { userProfile } = useFinancialData(); 
   const isAdmin = userProfile?.role === "admin";
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
 
+  // 🧹 CLEANED: Removed the rogue popup logic. It just routes smoothly now.
   function go(path) {
-    if (path === "/delete-account") {
-      setShowDeleteConfirm(true);
-      return;
-    }
     navigate(path);
-    onClose();
-  }
-
-  function confirmDeletion() {
-    setShowDeleteConfirm(false);
-    navigate("/profile?action=delete");
     onClose();
   }
 
@@ -67,7 +58,7 @@ export default function MoreMenu({ open, onClose }) {
                 {visibleItems.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <button key={item.path} onClick={() => go(item.path)} className={`flex items-start gap-3 p-3 rounded-2xl border transition-all text-left ${item.isDelete ? "bg-destructive/5 border-destructive/20 hover:border-destructive hover:bg-destructive/10" : item.highlight ? "bg-primary/5 border-primary/30 hover:border-primary hover:bg-primary/10" : "bg-background border-border hover:border-primary/40 hover:bg-primary/5"}`}>
+                    <button key={item.label} onClick={() => go(item.path)} className={`flex items-start gap-3 p-3 rounded-2xl border transition-all text-left ${item.isDelete ? "bg-destructive/5 border-destructive/20 hover:border-destructive hover:bg-destructive/10" : item.highlight ? "bg-primary/5 border-primary/30 hover:border-primary hover:bg-primary/10" : "bg-background border-border hover:border-primary/40 hover:bg-primary/5"}`}>
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.isDelete ? "bg-destructive/10" : item.highlight ? "bg-primary/20" : "bg-primary/10"}`}>
                         <Icon className={`w-4 h-4 ${item.isDelete ? "text-destructive" : "text-primary"}`} />
                       </div>
@@ -82,23 +73,6 @@ export default function MoreMenu({ open, onClose }) {
             </div>
           </motion.div>
         </>
-      )}
-
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
-          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-card relative z-10 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-border">
-            <div className="flex items-center gap-3 mb-4 text-destructive">
-              <div className="p-2 bg-destructive/10 rounded-full shrink-0"><AlertTriangle className="w-6 h-6" /></div>
-              <h3 className="text-xl font-bold">Delete Account?</h3>
-            </div>
-            <p className="text-muted-foreground text-sm mb-6 leading-relaxed">Are you absolutely sure you want to delete your account? This action is <strong className="text-foreground">permanent</strong> and cannot be undone.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">Cancel</button>
-              <button onClick={confirmDeletion} className="px-4 py-2.5 rounded-xl text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-sm">Yes, Delete</button>
-            </div>
-          </motion.div>
-        </div>
       )}
     </AnimatePresence>
   );
