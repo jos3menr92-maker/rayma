@@ -54,14 +54,15 @@ export default function Profile() {
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const fileInputRef = useRef(null);
   
-  const { userProfile, reload, loading: contextLoading } = useFinancialData();
+  // 🧠 SECURE: Now pulling ALL data so we can export it!
+  const { userProfile, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
   
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
   
-  // 🔒 NEW: Security Vault State
+  // 🔒 Security Vault State
   const [showPasswordLock, setShowPasswordLock] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); 
 
@@ -139,7 +140,7 @@ export default function Profile() {
     }
   }
 
-  // 🔒 UNIFIED SECURITY LOGIC: This replaces the old loose delete button
+  // 🔒 UNIFIED SECURITY LOGIC
   const triggerSecurityCheck = (action) => {
     setPendingAction(action);
     setShowPasswordLock(true);
@@ -148,9 +149,25 @@ export default function Profile() {
   const executeSecurityAction = async () => {
     setShowPasswordLock(false);
     
+    // 🚀 STOLEN ENGINE: The Export Download Logic!
     if (pendingAction === 'export') {
-      alert("✅ Data Exported! Downloading your RAYMA financial history...");
-      // Export logic goes here later
+      const exportData = {
+        profile: userProfile,
+        incomes,
+        bills,
+        loans,
+        exported_at: new Date().toISOString()
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rayma-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert("✅ Data Exported! Check your downloads folder.");
     } 
     
     if (pendingAction === 'delete') {
@@ -344,7 +361,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* 🛡️ THE SECURITY VAULT: Safely unified here! */}
+          {/* 🛡️ THE SECURITY VAULT */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Shield} title="Privacy & Legal" subtitle="Manage your data and account security." />
             
@@ -386,7 +403,7 @@ export default function Profile() {
         </form>
       </motion.div>
 
-      {/* 🔐 THE PASSWORD MODAL: Pops up when they click Export or Delete! */}
+      {/* 🔐 THE PASSWORD MODAL */}
       {showPasswordLock && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
