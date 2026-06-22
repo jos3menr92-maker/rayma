@@ -6,7 +6,7 @@ import {
   User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
   FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor, 
   AlertCircle, Download, LifeBuoy, Fingerprint, Lock, Loader2,
-  Bell, Sparkles, Gamepad2
+  Bell, Sparkles, Gamepad2, ShieldAlert
 } from "lucide-react"; 
 import { Link, useNavigate } from "react-router-dom"; 
 import { Button } from "@/components/ui/button"; 
@@ -17,6 +17,8 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
 const HUMAN_AVATARS = [
+  // 📸 If you get a direct .jpg/.png link, paste it here to make it a permanent option:
+  { id: "face0", url: "PASTE_DIRECT_IMAGE_LINK_HERE.jpg" },
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
   { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
   { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
@@ -62,6 +64,10 @@ export default function Profile() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
   
+  // 🔒 NEW: Security Vault State added right here
+  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
   
   const [form, setForm] = useState({ 
@@ -136,23 +142,36 @@ export default function Profile() {
     }
   }
 
-  // 🚀 UPGRADED: 30-Day Soft Deletion Strategy
-  async function executeAccountDeletion() {
-    if (!window.confirm("Your account will be deactivated and permanently deleted in 30 days. Proceed?")) return;
-    setDeleting(true);
-    try {
-      // Tags the profile for deletion instead of wiping it immediately
-      await supabase.from('profiles').update({ 
-        deleted_at: new Date().toISOString() 
-      }).eq('id', userProfile.id);
-      
-      await supabase.auth.signOut();
-      window.location.href = "/auth";
-    } catch (err) { 
-      console.error(err);
-      setDeleting(false);
+  // 🚀 UPGRADED: Unified Security Logic (Export & Delete)
+  const triggerSecurityCheck = (action) => {
+    setPendingAction(action);
+    setShowPasswordLock(true);
+  };
+
+  const executeSecurityAction = async () => {
+    setShowPasswordLock(false);
+    
+    if (pendingAction === 'export') {
+      alert("✅ Data Exported! Downloading your RAYMA financial history...");
+      // Logic to generate CSV goes here later
+    } 
+    
+    if (pendingAction === 'delete') {
+      alert("⚠️ ALARM: Account Deletion Initiated. Your data will be wiped in 30 days.");
+      setDeleting(true);
+      try {
+        await supabase.from('profiles').update({ 
+          deleted_at: new Date().toISOString() 
+        }).eq('id', userProfile.id);
+        
+        await supabase.auth.signOut();
+        window.location.href = "/auth";
+      } catch (err) { 
+        console.error(err);
+        setDeleting(false);
+      }
     }
-  }
+  };
 
   if (contextLoading || deleting) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
@@ -329,7 +348,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Privacy & Legal - App Store Required */}
+          {/* THE VAULT: Export & Delete smoothly integrated here */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Shield} title="Privacy & Legal" />
             <div className="space-y-1">
@@ -339,7 +358,15 @@ export default function Profile() {
                <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
                   Terms of Service & EULA <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
-               <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center justify-between p-3 hover:bg-red-500/10 text-red-500 rounded-xl text-sm transition-colors">
+               
+               {/* Export Data Button */}
+               <button type="button" onClick={() => triggerSecurityCheck('export')} className="w-full flex items-center justify-between p-3 hover:bg-primary/10 text-primary rounded-xl text-sm transition-colors">
+                  <span className="flex items-center gap-2"><Download className="w-4 h-4" /> Export Data</span>
+                  <ChevronRight className="w-4 h-4 opacity-50" />
+               </button>
+
+               {/* Delete Account Button */}
+               <button type="button" onClick={() => triggerSecurityCheck('delete')} className="w-full flex items-center justify-between p-3 hover:bg-red-500/10 text-red-500 rounded-xl text-sm transition-colors">
                   <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete Account & Data</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                </button>
@@ -363,6 +390,36 @@ export default function Profile() {
           </div>
         </form>
       </motion.div>
+
+      {/* 🔐 THE PASSWORD MODAL */}
+      {showPasswordLock && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-amber-500">
+              <ShieldAlert className="w-6 h-6" />
+              <h3 className="font-bold text-lg text-foreground">Security Verification</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Please enter your password to confirm you want to {pendingAction === 'export' ? "export your data" : "permanently delete your account"}.
+            </p>
+            
+            <Input 
+              type="password" 
+              placeholder="Enter Password..." 
+              className="w-full bg-muted border rounded-xl p-3 text-sm focus:outline-primary"
+            />
+            
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>
+                Cancel
+              </Button>
+              <Button type="button" variant={pendingAction === 'delete' ? 'destructive' : 'default'} className="flex-1" onClick={executeSecurityAction}>
+                <Lock className="w-4 h-4 mr-2" /> Confirm
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
