@@ -79,7 +79,8 @@ export default function SideDrawer({ open, onClose }) {
 
               <Section title="Tools">
                 <DrawerRow icon={FileText} label="Tax Summary" value="Annual report" chevron onClick={() => go("/tax-summary")} />
-                <DrawerRow icon={Download} label="Export My Data" value="GDPR compliant" chevron onClick={() => go("/data-export")} />
+                {/* 🛡️ ROUTED TO VAULT */}
+                <DrawerRow icon={Download} label="Export My Data" value="Go to Security Vault" chevron onClick={() => go("/profile")} />
               </Section>
 
               <Section title="About RAYMA">
@@ -91,7 +92,8 @@ export default function SideDrawer({ open, onClose }) {
                 <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => go("/privacy")} />
                 <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => go("/terms")} />
                 <DrawerRow icon={Lock} label="Security" value="All data encrypted" small />
-                <DrawerRow icon={Trash2} label="Delete Account" chevron onClick={() => go("/delete-account")} destructive />
+                {/* 🛡️ ROUTED TO VAULT */}
+                <DrawerRow icon={Trash2} label="Delete Account" value="Go to Security Vault" chevron onClick={() => go("/profile")} destructive />
               </Section>
             </div>
 
