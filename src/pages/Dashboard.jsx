@@ -84,9 +84,16 @@ export default function Dashboard() {
   const [pullStartY, setPullStartY] = useState(null);
   const [pullDistance, setPullDistance] = useState(0);
 
+  // 🚨 THE BOUNCER: Kick unauthenticated users out to the login screen!
   useEffect(() => {
-    if (userProfile && userProfile.onboarding_complete === false) navigate("/onboarding");
-  }, [userProfile, navigate]);
+    if (!loading && !userProfile) {
+      navigate("/auth", { replace: true });
+      return;
+    }
+    if (userProfile && userProfile.onboarding_complete === false) {
+      navigate("/onboarding");
+    }
+  }, [userProfile, loading, navigate]);
 
   const handleTouchStart = (e) => setPullStartY(e.touches[0].clientY);
   const handleTouchMove = (e) => {
@@ -127,7 +134,11 @@ export default function Dashboard() {
   const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
+  // Render the loading spinner if data is still fetching
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
+
+  // 🚨 SECOND BOUNCER: Prevent the UI from rendering (and crashing) if there is no user profile
+  if (!userProfile) return null;
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-4 pb-24" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
@@ -175,7 +186,7 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* 🚀 NEW: Horizontal Mini-Cards for Bills */}
+      {/* Horizontal Mini-Cards for Bills */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBills", "Monthly Bills")}</h2>
@@ -197,7 +208,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 🚀 NEW: Horizontal Mini-Cards for Loans */}
+      {/* Horizontal Mini-Cards for Loans */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("activeLoans", "Active Loans")}</h2>
