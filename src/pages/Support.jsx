@@ -54,10 +54,11 @@ export default function Support() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoSuccess, setPromoSuccess] = useState(null);
 
-  // --- 📱 MOBILE WRAPPER DETECTION ---
+  // --- 📱 MOBILE WRAPPER DETECTION & LISTENER ---
   const [isNativeApp, setIsNativeApp] = useState(false);
 
   useEffect(() => {
+    // 1. Detect if we are inside the mobile app
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     const isIOS = /iPhone|iPad|iPod/.test(userAgent) && !/Safari|Chrome/.test(userAgent);
     const isAndroid = /Android/.test(userAgent) && /wv/.test(userAgent);
@@ -65,6 +66,19 @@ export default function Support() {
     if (isIOS || isAndroid) {
         setIsNativeApp(true);
     }
+
+    // 2. Listen for the Success Receipt coming DOWN from React Native
+    const handleNativeMessage = (event) => {
+      const data = event.detail;
+      if (data && data.action === 'PAYMENT_SUCCESS') {
+        setLoading(null); // Turn off the spinning loader
+        setPromoSuccess(`Native Purchase Simulated for: ${data.productId}`); // Show green banner
+        // 🚨 Note for later: This is where we will tell Base44 to update the database!
+      }
+    };
+
+    window.addEventListener('nativeMessage', handleNativeMessage);
+    return () => window.removeEventListener('nativeMessage', handleNativeMessage);
   }, []);
   // ------------------------------------------
 
@@ -80,10 +94,10 @@ export default function Support() {
     if (isNativeApp) {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({
-          action: 'INITIATE_NATIVE_PURCHASE',
+          action: 'TRIGGER_NATIVE_PAYMENT', // <-- FIXED to match React Native!
           productId: planId
         }));
-        setTimeout(() => setLoading(null), 3000); 
+        // We removed the 3-second timeout here because the listener above will clear the loader!
       } else {
         setError("Could not connect to the native app store. Please restart the app.");
         setLoading(null);
@@ -147,7 +161,9 @@ export default function Support() {
             <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-green-800 dark:text-green-300">Power Up Successful!</p>
-              <p className="text-xs text-green-700 dark:text-green-400">Your AI Battery has been recharged and upgraded.</p>
+              <p className="text-xs text-green-700 dark:text-green-400">
+                {typeof promoSuccess === 'string' ? promoSuccess : "Your AI Battery has been recharged and upgraded."}
+              </p>
             </div>
           </div>
         )}
