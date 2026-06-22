@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react"; 
-import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { supabase } from "@/lib/supabaseClient"; 
+import { useFinancialData } from "@/lib/FinancialDataContext"; 
 import { motion } from "framer-motion"; 
 import { 
   User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
@@ -17,8 +17,6 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
 const HUMAN_AVATARS = [
-  // 📸 If you get a direct .jpg/.png link, paste it here to make it a permanent option:
-  { id: "face0", url: "PASTE_DIRECT_IMAGE_LINK_HERE.jpg" },
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
   { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
   { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
@@ -56,7 +54,6 @@ export default function Profile() {
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const fileInputRef = useRef(null);
   
-  // 🧠 SECURE: Read and reload from the Brain directly
   const { userProfile, reload, loading: contextLoading } = useFinancialData();
   
   const [saving, setSaving] = useState(false); 
@@ -64,9 +61,9 @@ export default function Profile() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
   
-  // 🔒 NEW: Security Vault State added right here
+  // 🔒 NEW: Security Vault State
   const [showPasswordLock, setShowPasswordLock] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null); 
 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
   
@@ -142,7 +139,7 @@ export default function Profile() {
     }
   }
 
-  // 🚀 UPGRADED: Unified Security Logic (Export & Delete)
+  // 🔒 UNIFIED SECURITY LOGIC: This replaces the old loose delete button
   const triggerSecurityCheck = (action) => {
     setPendingAction(action);
     setShowPasswordLock(true);
@@ -153,7 +150,7 @@ export default function Profile() {
     
     if (pendingAction === 'export') {
       alert("✅ Data Exported! Downloading your RAYMA financial history...");
-      // Logic to generate CSV goes here later
+      // Export logic goes here later
     } 
     
     if (pendingAction === 'delete') {
@@ -194,7 +191,6 @@ export default function Profile() {
               <Camera className="w-5 h-5" />
             </button>
 
-            {/* ✨ NEW: The Erase Picture Button */}
             {form.avatar_photo_url && (
               <button 
                 onClick={() => setForm(f => ({ ...f, avatar_photo_url: "" }))} 
@@ -348,25 +344,24 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* THE VAULT: Export & Delete smoothly integrated here */}
+          {/* 🛡️ THE SECURITY VAULT: Safely unified here! */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Shield} title="Privacy & Legal" />
-            <div className="space-y-1">
-               <Link to="/privacy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
+            <SectionHeader icon={Shield} title="Privacy & Legal" subtitle="Manage your data and account security." />
+            
+            <div className="space-y-3 mt-4">
+               <Link to="/privacy" className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted rounded-xl text-sm transition-colors border border-border/50">
                   Privacy Policy <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
-               <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
+               <Link to="/terms" className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted rounded-xl text-sm transition-colors border border-border/50">
                   Terms of Service & EULA <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
                
-               {/* Export Data Button */}
-               <button type="button" onClick={() => triggerSecurityCheck('export')} className="w-full flex items-center justify-between p-3 hover:bg-primary/10 text-primary rounded-xl text-sm transition-colors">
+               <button type="button" onClick={() => triggerSecurityCheck('export')} className="w-full flex items-center justify-between p-3 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm transition-colors">
                   <span className="flex items-center gap-2"><Download className="w-4 h-4" /> Export Data</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                </button>
 
-               {/* Delete Account Button */}
-               <button type="button" onClick={() => triggerSecurityCheck('delete')} className="w-full flex items-center justify-between p-3 hover:bg-red-500/10 text-red-500 rounded-xl text-sm transition-colors">
+               <button type="button" onClick={() => triggerSecurityCheck('delete')} className="w-full flex items-center justify-between p-3 bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-sm transition-colors">
                   <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete Account & Data</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                </button>
@@ -391,7 +386,7 @@ export default function Profile() {
         </form>
       </motion.div>
 
-      {/* 🔐 THE PASSWORD MODAL */}
+      {/* 🔐 THE PASSWORD MODAL: Pops up when they click Export or Delete! */}
       {showPasswordLock && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
