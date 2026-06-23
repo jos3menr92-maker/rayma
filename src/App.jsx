@@ -9,6 +9,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
+import ProtectedLayout from './components/ProtectedLayout';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import LoansList from './pages/LoansList';
@@ -72,36 +73,36 @@ const AuthenticatedApp = () => {
     <FinancialDataProvider>
       <Routes>
         <Route element={<Layout />}>
-          {/* Core App Pages (Immediate Load) */}
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/loans" element={<LoansList />} />
-          <Route path="/add-loan" element={<AddLoan />} />
-          <Route path="/loan/:id" element={<LoanDetail />} />
-          <Route path="/bills" element={<Bills />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/remote-support" element={<RemoteSupport />} />
+          {/* Core App Pages (Immediate Load) - Protected */}
+          <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
+          <Route path="/loans" element={<ProtectedLayout><LoansList /></ProtectedLayout>} />
+          <Route path="/add-loan" element={<ProtectedLayout><AddLoan /></ProtectedLayout>} />
+          <Route path="/loan/:id" element={<ProtectedLayout><LoanDetail /></ProtectedLayout>} />
+          <Route path="/bills" element={<ProtectedLayout><Bills /></ProtectedLayout>} />
+          <Route path="/onboarding" element={<ProtectedLayout><Onboarding /></ProtectedLayout>} />
+          <Route path="/remote-support" element={<ProtectedLayout><RemoteSupport /></ProtectedLayout>} />
 
-          {/* Lazy App Pages (Protected from crashing with Suspense) */}
-          <Route path="/reminders" element={<Suspense fallback={<PageLoader />}><Reminders /></Suspense>} />
-          <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
-          <Route path="/budget" element={<Suspense fallback={<PageLoader />}><Budget /></Suspense>} />
-          <Route path="/support" element={<Suspense fallback={<PageLoader />}><Support /></Suspense>} />
-          <Route path="/security" element={<Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense>} />
-          <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
-          <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
-          <Route path="/admin" element={<Suspense fallback={<PageLoader />}><Admin /></Suspense>} />
-          <Route path="/arcade" element={<Suspense fallback={<PageLoader />}><Arcade /></Suspense>} />
-          <Route path="/feedback" element={<Suspense fallback={<PageLoader />}><Feedback /></Suspense>} /> 
-          <Route path="/finance" element={<Suspense fallback={<PageLoader />}><Finance /></Suspense>} />
-          <Route path="/trend" element={<Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense>} />
-          <Route path="/simulator" element={<Suspense fallback={<PageLoader />}><Simulator /></Suspense>} />
-          <Route path="/documents" element={<Suspense fallback={<PageLoader />}><DocumentVault /></Suspense>} />
-          <Route path="/bank-accounts" element={<Suspense fallback={<PageLoader />}><BankAccounts /></Suspense>} />
-          <Route path="/budget-dashboard" element={<Suspense fallback={<PageLoader />}><BudgetDashboard /></Suspense>} />
-          <Route path="/debt-simulator" element={<Suspense fallback={<PageLoader />}><DebtPayoffSimulator /></Suspense>} />
-          <Route path="/monthly-recap" element={<Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense>} />
-          <Route path="/assets" element={<Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense>} />
-          <Route path="/tax-summary" element={<Suspense fallback={<PageLoader />}><TaxSummary /></Suspense>} />
+          {/* Lazy App Pages (Protected from crashing with Suspense + Authentication) */}
+          <Route path="/reminders" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Reminders /></Suspense></ProtectedLayout>} />
+          <Route path="/profile" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedLayout>} />
+          <Route path="/budget" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Budget /></Suspense></ProtectedLayout>} />
+          <Route path="/support" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Support /></Suspense></ProtectedLayout>} />
+          <Route path="/security" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense></ProtectedLayout>} />
+          <Route path="/privacy" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense></ProtectedLayout>} />
+          <Route path="/terms" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><TermsOfService /></Suspense></ProtectedLayout>} />
+          <Route path="/admin" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Admin /></Suspense></ProtectedLayout>} />
+          <Route path="/arcade" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Arcade /></Suspense></ProtectedLayout>} />
+          <Route path="/feedback" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Feedback /></Suspense></ProtectedLayout>} /> 
+          <Route path="/finance" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Finance /></Suspense></ProtectedLayout>} />
+          <Route path="/trend" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><MonthlyTrend /></Suspense></ProtectedLayout>} />
+          <Route path="/simulator" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Simulator /></Suspense></ProtectedLayout>} />
+          <Route path="/documents" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><DocumentVault /></Suspense></ProtectedLayout>} />
+          <Route path="/bank-accounts" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><BankAccounts /></Suspense></ProtectedLayout>} />
+          <Route path="/budget-dashboard" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><BudgetDashboard /></Suspense></ProtectedLayout>} />
+          <Route path="/debt-simulator" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><DebtPayoffSimulator /></Suspense></ProtectedLayout>} />
+          <Route path="/monthly-recap" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense></ProtectedLayout>} />
+          <Route path="/assets" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense></ProtectedLayout>} />
+          <Route path="/tax-summary" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><TaxSummary /></Suspense></ProtectedLayout>} />
           
           <Route path="*" element={<PageNotFound />} />
         </Route>
