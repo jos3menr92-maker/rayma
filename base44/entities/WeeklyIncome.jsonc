@@ -1,0 +1,37 @@
+{
+  "name": "WeeklyIncome",
+  "type": "object",
+  "properties": {
+    "amount": {
+      "type": "number",
+      "description": "Income amount for the week"
+    },
+    "week_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date of the week"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional note"
+    }
+  },
+  "required": [
+    "amount",
+    "week_start"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

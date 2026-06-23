@@ -1,0 +1,54 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "loan_id": {
+      "type": "string",
+      "description": "ID of the loan this payment belongs to (if a loan payment)"
+    },
+    "bill_id": {
+      "type": "string",
+      "description": "ID of the bill this payment belongs to (if a bill payment)"
+    },
+    "payment_type": {
+      "type": "string",
+      "enum": [
+        "loan",
+        "bill"
+      ],
+      "default": "loan",
+      "description": "Whether this is a loan or bill payment"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Payment amount"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of payment"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional note about the payment"
+    }
+  },
+  "required": [
+    "amount",
+    "payment_date"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

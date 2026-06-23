@@ -1,0 +1,57 @@
+{
+  "name": "SavingsGoal",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Goal name (e.g. Emergency Fund, Vacation)"
+    },
+    "target_amount": {
+      "type": "number",
+      "description": "Total amount to save"
+    },
+    "current_saved": {
+      "type": "number",
+      "description": "Amount saved so far",
+      "default": 0
+    },
+    "weekly_contribution": {
+      "type": "number",
+      "description": "Planned weekly contribution"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target completion date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "name",
+    "target_amount"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

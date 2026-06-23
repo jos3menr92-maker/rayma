@@ -1,0 +1,89 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+    "preferred_name": {
+      "type": "string"
+    },
+    "avatar_id": {
+      "type": "string"
+    },
+    "avatar_emoji": {
+      "type": "string"
+    },
+    "avatar_photo_url": {
+      "type": "string"
+    },
+    "preferred_currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "preferred_language": {
+      "type": "string",
+      "default": "en",
+      "description": "ISO language code (en, zh, hi, es, fr, ar, bn, pt, ru, ja)"
+    },
+    "dashboard_greeting": {
+      "type": "string"
+    },
+    "pay_frequency": {
+      "type": "string"
+    },
+    "pay_day": {
+      "type": "string"
+    },
+    "accent_color": {
+      "type": "string"
+    },
+    "compact_mode": {
+      "type": "boolean",
+      "default": false
+    },
+    "rayma_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Legacy expiry field \u2014 kept for backward compat"
+    },
+    "ai_tokens": {
+      "type": "number",
+      "default": 5,
+      "description": "Remaining AI consultation tokens"
+    },
+    "ai_tokens_reset_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when monthly free tokens were last reset"
+    },
+    "annual_pass_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when annual pass expires. If set and in future, unlimited AI."
+    },
+    "is_sponsor": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this user is a sponsor or employee (redeemed promo code)"
+    }
+  },
+  "required": [
+    "preferred_name",
+    "avatar_id",
+    "avatar_emoji",
+    "avatar_photo_url",
+    "dashboard_greeting",
+    "pay_frequency",
+    "pay_day",
+    "accent_color",
+    "rayma_expires_at",
+    "ai_tokens_reset_date",
+    "annual_pass_expires_at"
+  ]
+}

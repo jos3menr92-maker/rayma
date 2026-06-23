@@ -1,0 +1,44 @@
+/**
+ * ==========================================
+ * RAYMA CONFIDENTIAL & PROPRIETARY
+ * ==========================================
+ * Copyright (C) 2026 RAYMA. All Rights Reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of RAYMA. The intellectual and technical
+ * concepts contained herein are proprietary to RAYMA and
+ * are protected by trade secret and copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written
+ * permission is obtained from RAYMA Management.
+ * ==========================================
+ */
+{
+  "name": "RAYMA — Debt & Bills Tracker",
+  "short_name": "RAYMA",
+  "description": "Track loans, bills, budget, and net worth with an AI financial advisor. No bank login required.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f8",
+  "theme_color": "#0dcfba",
+  "categories": ["finance", "productivity"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

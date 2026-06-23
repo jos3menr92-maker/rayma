@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-heading: 'DM Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+
+    /* Rayma Light Theme — Teal + Navy */
+    --background: 0 0% 97%;
+    --foreground: 215 25% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 18%;
+    --primary: 177 85% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 25%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 10% 94%;
+    --muted-foreground: 215 10% 50%;
+    --accent: 210 40% 35%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 65% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 15% 88%;
+    --input: 215 10% 90%;
+    --ring: 177 85% 45%;
+    --chart-1: 177 85% 45%;
+    --chart-2: 210 40% 35%;
+    --chart-3: 45 70% 50%;
+    --chart-4: 200 55% 50%;
+    --chart-5: 0 65% 52%;
+    --radius: 0.875rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 18%;
+    --sidebar-primary: 177 85% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 15% 88%;
+    --sidebar-ring: 177 85% 45%;
+  }
+
+  .dark {
+    --background: 215 30% 10%;
+    --foreground: 0 0% 95%;
+    --card: 215 25% 14%;
+    --card-foreground: 0 0% 95%;
+    --popover: 215 25% 14%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 177 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 30%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 215 20% 20%;
+    --muted-foreground: 215 10% 60%;
+    --accent: 210 40% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 25% 20%;
+    --input: 215 25% 16%;
+    --ring: 177 85% 50%;
+    --chart-1: 177 85% 50%;
+    --chart-2: 210 40% 45%;
+    --chart-3: 45 70% 50%;
+    --chart-4: 200 55% 50%;
+    --chart-5: 0 65% 55%;
+    --sidebar-background: 215 30% 10%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 177 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 30%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 25% 20%;
+    --sidebar-ring: 177 85% 50%;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pb-safe {
+    padding-bottom: max(5rem, calc(4rem + env(safe-area-inset-bottom)));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+}
+
+/* --- RAYMA Tour Custom Styling --- */
+.driver-popover {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  color: hsl(var(--foreground));
+}
+
+.driver-popover .driver-popover-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: hsl(var(--primary));
+  margin-bottom: 8px;
+}
+
+.driver-popover .driver-popover-description {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+
+/* Sharper, cleaner tour buttons */
+.driver-popover-footer button {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: 0.5rem;
+  padding: 8px 16px; /* Increased padding */
+  font-size: 13px;   /* Slightly larger font helps clarity */
+  font-weight: 700;
+  cursor: pointer;
+  transition: none;
+  
+  /* These force the browser to sharpen the text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  border: none;
+  cursor: pointer;
+  transition: none;
+}
+
+.driver-popover-footer button:hover {
+  opacity: 0.9;
+}

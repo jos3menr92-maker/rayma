@@ -1,0 +1,81 @@
+{
+  "name": "BankAccount",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Account nickname (e.g. Chase Checking)"
+    },
+    "institution": {
+      "type": "string",
+      "description": "Bank or institution name"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "checking",
+        "savings",
+        "credit",
+        "investment",
+        "other"
+      ],
+      "default": "checking"
+    },
+    "balance": {
+      "type": "number",
+      "description": "Current account balance"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "last_synced": {
+      "type": "string",
+      "format": "date",
+      "description": "Last time balance was updated"
+    },
+    "plaid_account_id": {
+      "type": "string",
+      "description": "Plaid account ID for automated sync (optional)"
+    },
+    "plaid_access_token": {
+      "type": "string",
+      "description": "Encrypted Plaid access token (internal use only)"
+    },
+    "link_method": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "plaid"
+      ],
+      "default": "manual",
+      "description": "How the account was linked"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "institution",
+    "balance"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

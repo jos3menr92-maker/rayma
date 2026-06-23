@@ -1,0 +1,100 @@
+{
+  "name": "Bill",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Bill name (e.g. Netflix, Electricity)"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Payment amount per period"
+    },
+    "payment_frequency": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "weekly",
+        "biweekly"
+      ],
+      "default": "monthly",
+      "description": "How often this bill is paid"
+    },
+    "due_day": {
+      "type": "number",
+      "description": "Day of month bill is due (1-31), for monthly bills"
+    },
+    "due_day_of_week": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "description": "Day of week payment is due, for weekly/biweekly bills"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "utilities",
+        "subscriptions",
+        "insurance",
+        "rent",
+        "food",
+        "transport",
+        "health",
+        "other"
+      ],
+      "default": "other"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "suggested_by_rayma": {
+      "type": "boolean",
+      "default": false,
+      "description": "Flag if RAYMA auto-detected this recurring payment from bank transactions"
+    },
+    "rayma_approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "ignored"
+      ],
+      "default": "pending",
+      "description": "User approval status for RAYMA-suggested bills"
+    },
+    "detected_from_merchant": {
+      "type": "string",
+      "description": "Merchant/company name detected from transactions"
+    }
+  },
+  "required": [
+    "name",
+    "amount"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

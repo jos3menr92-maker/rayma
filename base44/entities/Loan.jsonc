@@ -1,0 +1,104 @@
+{
+  "name": "Loan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Loan name (e.g. Car Loan, Credit Card)"
+    },
+    "lender": {
+      "type": "string",
+      "description": "Lender or institution name"
+    },
+    "original_amount": {
+      "type": "number",
+      "description": "Original loan amount"
+    },
+    "current_balance": {
+      "type": "number",
+      "description": "Current remaining balance"
+    },
+    "interest_rate": {
+      "type": "number",
+      "description": "Annual interest rate percentage"
+    },
+    "monthly_payment": {
+      "type": "number",
+      "description": "Payment amount per period"
+    },
+    "payment_frequency": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "weekly",
+        "biweekly"
+      ],
+      "default": "monthly",
+      "description": "How often loan payments are made"
+    },
+    "due_day": {
+      "type": "number",
+      "description": "Day of month payment is due (1-31), for monthly loans"
+    },
+    "due_day_of_week": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "description": "Day of week payment is due, for weekly/biweekly loans"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Loan start date"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "mortgage",
+        "auto",
+        "student",
+        "personal",
+        "credit_card",
+        "medical",
+        "other"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paid_off"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "name",
+    "original_amount",
+    "current_balance"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

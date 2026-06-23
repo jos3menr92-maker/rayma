@@ -1,0 +1,51 @@
+{
+  "name": "LoanAdjustment",
+  "type": "object",
+  "properties": {
+    "loan_id": {
+      "type": "string",
+      "description": "ID of the related loan"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Adjustment amount"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "add",
+        "subtract"
+      ],
+      "description": "add = increases total owed, subtract = reduces balance"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Optional note about the adjustment"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the adjustment"
+    }
+  },
+  "required": [
+    "loan_id",
+    "amount",
+    "direction",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

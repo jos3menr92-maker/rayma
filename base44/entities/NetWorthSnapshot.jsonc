@@ -1,0 +1,38 @@
+{
+  "name": "NetWorthSnapshot",
+  "type": "object",
+  "properties": {
+    "snapshot_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of snapshot"
+    },
+    "total_assets": {
+      "type": "number"
+    },
+    "total_liabilities": {
+      "type": "number"
+    },
+    "net_worth": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "snapshot_date",
+    "net_worth"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

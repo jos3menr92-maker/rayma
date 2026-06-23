@@ -1,0 +1,288 @@
+import { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3 } from "lucide-react";
+import { format } from "date-fns";
+
+const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
+
+const typeConfig = {
+  checking: { label: "Checking", icon: Wallet, color: "text-blue-400", bg: "bg-blue-400/10" },
+  savings:  { label: "Savings",  icon: PiggyBank, color: "text-green-400", bg: "bg-green-400/10" },
+  credit:   { label: "Credit",   icon: CreditCard, color: "text-red-400", bg: "bg-red-400/10" },
+  investment:{ label: "Investment", icon: BarChart3, color: "text-purple-400", bg: "bg-purple-400/10" },
+  other:    { label: "Other",    icon: Landmark, color: "text-muted-foreground", bg: "bg-muted" },
+};
+
+const emptyForm = { name: "", institution: "", account_type: "checking", balance: "", notes: "" };
+const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), description: "", amount: "", category: "other", type: "debit", notes: "" };
+
+export default function BankAccounts() {
+  const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [showDialog, setShowDialog] = useState(false);
+  const [showTxDialog, setShowTxDialog] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [txForm, setTxForm] = useState(emptyTx);
+  const [loading, setLoading] = useState(true);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    const [accs, txs] = await Promise.all([
+      base44.entities.BankAccount.list("-updated_date"),
+      base44.entities.Transaction.list("-date", 100),
+    ]);
+    setAccounts(accs);
+    setTransactions(txs);
+    setLoading(false);
+  };
+
+  const openAdd = () => { setEditing(null); setForm(emptyForm); setShowDialog(true); };
+  const openEdit = (acc) => { setEditing(acc); setForm({ ...acc }); setShowDialog(true); };
+
+  const saveAccount = async () => {
+    const data = { ...form, balance: parseFloat(form.balance) || 0, last_synced: format(new Date(), "yyyy-MM-dd") };
+    if (editing) await base44.entities.BankAccount.update(editing.id, data);
+    else await base44.entities.BankAccount.create(data);
+    setShowDialog(false);
+    fetchAll();
+  };
+
+  const deleteAccount = async (id) => {
+    if (!confirm("Delete this account?")) return;
+    await base44.entities.BankAccount.delete(id);
+    fetchAll();
+  };
+
+  const saveTx = async () => {
+    if (!txForm.bank_account_id) { alert("Please select a bank account."); return; }
+    await base44.entities.Transaction.create({ ...txForm, amount: parseFloat(txForm.amount) || 0 });
+    setShowTxDialog(false);
+    setTxForm(emptyTx);
+    fetchAll();
+  };
+
+  const exportCSV = () => {
+    const rows = [["Date","Description","Amount","Category","Type","Account"]];
+    transactions.forEach(tx => {
+      const acc = accounts.find(a => a.id === tx.bank_account_id);
+      rows.push([tx.date, tx.description, tx.amount, tx.category, tx.type, acc?.name || ""]);
+    });
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "transactions.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const totalAssets = accounts.filter(a => a.is_active && a.account_type !== "credit").reduce((s, a) => s + (a.balance || 0), 0);
+  const totalCredit = accounts.filter(a => a.account_type === "credit").reduce((s, a) => s + (a.balance || 0), 0);
+  const netBalance = totalAssets - totalCredit;
+  const visibleTxs = selectedAccount ? transactions.filter(t => t.bank_account_id === selectedAccount) : transactions;
+
+  return (
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-6 space-y-6">
+
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold font-heading text-foreground">Bank Accounts</h1>
+          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+            <RefreshCw className="w-3 h-3" /> Manual balances — update anytime
+          </p>
+        </div>
+        <Button size="sm" onClick={openAdd} className="shrink-0">
+          <Plus className="w-4 h-4 mr-1" /> Add Account
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-card border border-border rounded-2xl p-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Assets</p>
+          <p className="text-base font-bold text-primary">{fmt(totalAssets)}</p>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Credit</p>
+          <p className="text-base font-bold text-destructive">{fmt(totalCredit)}</p>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-3 text-center">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Net</p>
+          <p className={`text-base font-bold ${netBalance >= 0 ? "text-foreground" : "text-destructive"}`}>{fmt(netBalance)}</p>
+        </div>
+      </div>
+
+      {/* Accounts List */}
+      {loading ? (
+        <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
+      ) : accounts.length === 0 ? (
+        <div className="text-center py-16 bg-card border border-border rounded-3xl">
+          <Landmark className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+          <p className="font-semibold text-foreground mb-1">No accounts yet</p>
+          <p className="text-sm text-muted-foreground mb-4">Add your checking, savings, or credit accounts</p>
+          <Button onClick={openAdd}><Plus className="w-4 h-4 mr-1" />Add Account</Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {accounts.map(acc => {
+            const cfg = typeConfig[acc.account_type] || typeConfig.other;
+            const Icon = cfg.icon;
+            const isSelected = selectedAccount === acc.id;
+            return (
+              <div
+                key={acc.id}
+                onClick={() => setSelectedAccount(isSelected ? null : acc.id)}
+                className={`bg-card border rounded-2xl p-4 cursor-pointer transition-all ${isSelected ? "border-primary/50 shadow-sm" : "border-border hover:border-primary/20"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0`}>
+                      <Icon className={`w-5 h-5 ${cfg.color}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground text-sm">{acc.name}</p>
+                      <p className="text-xs text-muted-foreground">{acc.institution}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className={`font-bold text-sm ${acc.account_type === "credit" ? "text-destructive" : "text-foreground"}`}>{fmt(acc.balance)}</p>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0">{cfg.label}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1 ml-1" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => openEdit(acc)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => deleteAccount(acc.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                {acc.last_synced && (
+                  <p className="text-[10px] text-muted-foreground mt-2 pl-13">
+                    Last updated {acc.last_synced}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Transactions Section */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            {selectedAccount ? "Account Transactions" : "Recent Transactions"}
+          </h2>
+          <div className="flex gap-2">
+            <button onClick={exportCSV} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Download className="w-3.5 h-3.5" /> CSV
+            </button>
+            <Button size="sm" variant="outline" onClick={() => setShowTxDialog(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Log
+            </Button>
+          </div>
+        </div>
+
+        {visibleTxs.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm bg-card border border-border rounded-2xl">
+            No transactions yet
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {visibleTxs.slice(0, 20).map(tx => (
+              <div key={tx.id} className="flex items-center justify-between px-4 py-3 bg-card border border-border rounded-xl">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{tx.description}</p>
+                  <p className="text-xs text-muted-foreground">{tx.date} · {tx.category}</p>
+                </div>
+                <p className={`font-semibold text-sm ${tx.amount >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {tx.amount >= 0 ? "+" : ""}{fmt(tx.amount)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Add/Edit Account Dialog */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle>{editing ? "Edit Account" : "Add Account"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Account Name</Label><Input className="mt-1" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Chase Checking" /></div>
+            <div><Label>Institution</Label><Input className="mt-1" value={form.institution} onChange={e => setForm({ ...form, institution: e.target.value })} placeholder="e.g. Chase Bank" /></div>
+            <div><Label>Type</Label>
+              <Select value={form.account_type} onValueChange={v => setForm({ ...form, account_type: v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(typeConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Current Balance</Label><Input className="mt-1" type="number" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} placeholder="0.00" /></div>
+            <div><Label>Notes</Label><Input className="mt-1" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
+            <Button onClick={saveAccount}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Log Transaction Dialog */}
+      <Dialog open={showTxDialog} onOpenChange={setShowTxDialog}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle>Log Transaction</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Account</Label>
+              <Select value={txForm.bank_account_id} onValueChange={v => setTxForm({ ...txForm, bank_account_id: v })}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectContent>{accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Description</Label><Input className="mt-1" value={txForm.description} onChange={e => setTxForm({ ...txForm, description: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label>Amount</Label><Input className="mt-1" type="number" value={txForm.amount} onChange={e => setTxForm({ ...txForm, amount: e.target.value })} placeholder="-50.00" /></div>
+              <div><Label>Date</Label><Input className="mt-1" type="date" value={txForm.date} onChange={e => setTxForm({ ...txForm, date: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label>Category</Label>
+                <Select value={txForm.category} onValueChange={v => setTxForm({ ...txForm, category: v })}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["income","food","transport","utilities","subscriptions","health","insurance","rent","loan_payment","savings","entertainment","shopping","other"].map(c =>
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Type</Label>
+                <Select value={txForm.type} onValueChange={v => setTxForm({ ...txForm, type: v })}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="debit">Debit</SelectItem>
+                    <SelectItem value="credit">Credit</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTxDialog(false)}>Cancel</Button>
+            <Button onClick={saveTx}>Log Transaction</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

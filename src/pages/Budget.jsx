@@ -1,0 +1,128 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Trash2, Edit3, PiggyBank, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
+
+export default function Budget() {
+  const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [goalOpen, setGoalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [goalForm, setGoalForm] = useState({ name: "", target_amount: "", current_saved: "", notes: "" });
+  const [savingGoal, setSavingGoal] = useState(false);
+
+  useEffect(() => { loadData(); }, []);
+
+  async function loadData() {
+    setLoading(true);
+    const { data } = await supabase.from('savings_goals').select('*').order('created_at', { ascending: false });
+    setGoals(data || []);
+    setLoading(false);
+  }
+
+  function openAddGoal() {
+    setEditingGoal(null);
+    setGoalForm({ name: "", target_amount: "", current_saved: "", notes: "" });
+    setGoalOpen(true);
+  }
+
+  function openEditGoal(goal) {
+    setEditingGoal(goal);
+    setGoalForm({ name: goal.name, target_amount: goal.target_amount, current_saved: goal.current_saved || 0, notes: goal.notes || "" });
+    setGoalOpen(true);
+  }
+
+  async function handleSaveGoal(e) {
+    e.preventDefault();
+    setSavingGoal(true);
+    const data = {
+      name: goalForm.name,
+      target_amount: parseFloat(goalForm.target_amount) || 0,
+      current_saved: parseFloat(goalForm.current_saved) || 0,
+      notes: goalForm.notes,
+    };
+
+    if (editingGoal) await supabase.from('savings_goals').update(data).eq('id', editingGoal.id);
+    else await supabase.from('savings_goals').insert([data]);
+
+    setSavingGoal(false);
+    setGoalOpen(false);
+    loadData();
+  }
+
+  async function handleDeleteGoal(id) {
+    await supabase.from('savings_goals').delete().eq('id', id);
+    loadData();
+  }
+
+  const getProgressColor = (p) => {
+    if (p >= 100) return "bg-amber-500";
+    if (p >= 75) return "bg-green-500";
+    if (p >= 25) return "bg-primary";
+    return "bg-slate-400";
+  };
+
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Savings Vault</h1>
+        <p className="text-sm text-muted-foreground mb-6">Track your goals and level up your net worth</p>
+
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <PiggyBank className="w-4 h-4 text-primary" /> Active Goals
+          </h2>
+          <Button size="sm" className="rounded-xl" onClick={openAddGoal}><Plus className="w-4 h-4 mr-1" /> Add Goal</Button>
+        </div>
+
+        <div className="space-y-4">
+          <AnimatePresence>
+            {goals.map((goal, i) => {
+              const progress = Math.min((goal.current_saved / goal.target_amount) * 100, 100);
+              return (
+                <motion.div key={goal.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-3xl p-5 shadow-sm">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="font-bold text-foreground">{goal.name}</p>
+                      <p className="text-xs text-muted-foreground">{fmt(goal.current_saved)} / {fmt(goal.target_amount)}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => openEditGoal(goal)} className="p-2 text-muted-foreground hover:text-foreground"><Edit3 className="w-4 h-4" /></button>
+                      <button onClick={() => handleDeleteGoal(goal.id)} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                  <div className="w-full h-3 bg-muted rounded-full overflow-hidden mb-2">
+                    <motion.div className={`h-full ${getProgressColor(progress)}`} initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
+                  </div>
+                  <p className="text-xs font-bold text-primary">{progress.toFixed(0)}% reached</p>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      <Dialog open={goalOpen} onOpenChange={setGoalOpen}>
+        <DialogContent className="max-w-sm rounded-3xl">
+          <DialogHeader><DialogTitle>{editingGoal ? "Edit Goal" : "New Savings Goal"}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSaveGoal} className="space-y-4 mt-2">
+            <div><Label>Goal Name</Label><Input value={goalForm.name} onChange={e => setGoalForm(f => ({...f, name: e.target.value}))} required className="rounded-xl" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Target Amount</Label><Input type="number" value={goalForm.target_amount} onChange={e => setGoalForm(f => ({...f, target_amount: e.target.value}))} required className="rounded-xl" /></div>
+              <div><Label>Saved So Far</Label><Input type="number" value={goalForm.current_saved} onChange={e => setGoalForm(f => ({...f, current_saved: e.target.value}))} className="rounded-xl" /></div>
+            </div>
+            <Button type="submit" disabled={savingGoal} className="w-full rounded-xl">{savingGoal ? "Saving..." : "Save Goal"}</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

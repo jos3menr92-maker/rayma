@@ -1,0 +1,71 @@
+{
+  "name": "PromoCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "The promo code (e.g., SPONSOR2024)"
+    },
+    "reward_type": {
+      "type": "string",
+      "enum": [
+        "tokens",
+        "annual_pass"
+      ],
+      "description": "What this code grants"
+    },
+    "reward_value": {
+      "type": "number",
+      "description": "Number of tokens (if tokens) or null (if annual_pass)"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO datetime when this code expires"
+    },
+    "max_uses": {
+      "type": "number",
+      "description": "Maximum number of times this code can be used (null = unlimited)"
+    },
+    "times_used": {
+      "type": "number",
+      "default": 0,
+      "description": "How many times this code has been redeemed"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this code is currently active"
+    },
+    "redeemed_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of user IDs who have redeemed this code"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes (e.g., 'Employee discount', 'Early sponsor')"
+    }
+  },
+  "required": [
+    "code",
+    "reward_type",
+    "expires_at"
+  ],
+  "rls": {
+    "create": {
+      "created_by_role": "admin"
+    },
+    "read": {
+      "created_by_role": "admin"
+    },
+    "update": {
+      "created_by_role": "admin"
+    },
+    "delete": {
+      "created_by_role": "admin"
+    }
+  }
+}
