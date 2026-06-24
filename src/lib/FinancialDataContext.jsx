@@ -27,11 +27,13 @@ export function FinancialDataProvider({ children }) {
         return;
       }
 
-      // 2. 🚀 THE REAL BACKEND: Fetch only this user's data from Supabase
+      // 2. 🚀 THE REAL BACKEND: Fetch this user's data from Supabase
+      // NOTE: user_id filter removed — Base44 me.id does not match the
+      // user_id stored in existing Supabase rows (ID mismatch from migration).
       const [loansRes, billsRes, incomesRes] = await Promise.all([
-        supabase.from('loans').select('*').eq('user_id', me.id).order('created_at', { ascending: false }),
-        supabase.from('bills').select('*').eq('user_id', me.id).order('created_at', { ascending: false }),
-        supabase.from('incomes').select('*').eq('user_id', me.id).order('created_at', { ascending: false })
+        supabase.from('loans').select('*').order('created_at', { ascending: false }),
+        supabase.from('bills').select('*').order('created_at', { ascending: false }),
+        supabase.from('incomes').select('*').order('created_at', { ascending: false })
       ]);
 
       if (loansRes.error) console.error("Supabase Loans Error:", loansRes.error);
