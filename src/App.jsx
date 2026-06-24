@@ -25,7 +25,7 @@ import { FinancialDataProvider } from '@/lib/FinancialDataContext';
 const Profile = lazy(() => import('./pages/Profile'));
 const Reminders = lazy(() => import('./pages/Reminders'));
 const Budget = lazy(() => import('./pages/Budget'));
-const Support = lazy(() => import('./pages/Support'));
+const Store = lazy(() => import('./pages/Store')); // 🚀 RENAMED SUPPORT TO STORE
 const SecurityAudit = lazy(() => import('./pages/SecurityAudit'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
@@ -86,7 +86,10 @@ const AuthenticatedApp = () => {
           <Route path="/reminders" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Reminders /></Suspense></ProtectedLayout>} />
           <Route path="/profile" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedLayout>} />
           <Route path="/budget" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Budget /></Suspense></ProtectedLayout>} />
-          <Route path="/support" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Support /></Suspense></ProtectedLayout>} />
+          
+          {/* 🚀 FIXED ROUTE: Now points to /store */}
+          <Route path="/store" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Store /></Suspense></ProtectedLayout>} />
+          
           <Route path="/security" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense></ProtectedLayout>} />
           <Route path="/privacy" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense></ProtectedLayout>} />
           <Route path="/terms" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><TermsOfService /></Suspense></ProtectedLayout>} />
