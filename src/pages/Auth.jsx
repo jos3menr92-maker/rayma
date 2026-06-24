@@ -20,24 +20,33 @@ export default function Auth() {
     setLoading(true);
     setError("");
 
-    try {
+try {
       if (isLogin) {
-        await base44.auth.signIn(formData.email, formData.password);
+        // FIXED: Supabase v2 syntax for Sign In
+        const { error } = await base44.auth.signInWithPassword({ 
+          email: formData.email, 
+          password: formData.password 
+        });
+        if (error) throw error;
+        
         await checkAppState();
-        // Set a one-time session flag so RAYMA can auto-open after login
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         navigate("/");
       } else {
-        await base44.auth.signUp(formData.email, formData.password, { full_name: formData.fullName });
+        // FIXED: Supabase v2 syntax for Sign Up
+        const { error } = await base44.auth.signUp({ 
+          email: formData.email, 
+          password: formData.password,
+          options: {
+            data: { full_name: formData.fullName }
+          }
+        });
+        if (error) throw error;
+
         await checkAppState();
         navigate("/onboarding");
       }
-    } catch (err) {
-      setError(err.message || "Authentication failed. Please check your credentials.");
-    } finally {
-      setLoading(false);
     }
-  };
 
   // --- INJECTED: Premium Provider Login Handler ---
   const handleProviderSignIn = async (provider) => {
