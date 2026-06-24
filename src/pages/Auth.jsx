@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [activeProvider, setActiveProvider] = useState(null); // Tracks which social button is loading
+  const [activeProvider, setActiveProvider] = useState(null); 
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "", fullName: "" });
   
@@ -20,48 +20,7 @@ export default function Auth() {
     setLoading(true);
     setError("");
 
-    try {
-      if (isLogin) {
-        // FIXED: Supabase v2 syntax for Sign In
-        const { error } = await base44.auth.signInWithPassword({ 
-          email: formData.email, 
-          password: formData.password 
-        });
-        if (error) throw error;
-        
-        await checkAppState();
-        try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
-        navigate("/");
-      } else {
-        // FIXED: Supabase v2 syntax for Sign Up
-        const { error } = await base44.auth.signUp({ 
-          email: formData.email, 
-          password: formData.password,
-          options: {
-            data: { full_name: formData.fullName }
-          }
-        });
-        if (error) throw error;
-
-        await checkAppState();
-        navigate("/onboarding");
-      }
-    } catch (err) {
-      // 🛡️ RESTORED CATCH BLOCK
-      setError(err.message || "Authentication failed. Please check your credentials.");
-    } finally {
-      // 🛡️ RESTORED FINALLY BLOCK
-      setLoading(false);
-    }
-  };
-
-  // --- INJECTED: Premium Provider Login Handler ---
-const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    // 🕵️‍♂️ RECON: Print all available Base44 Auth methods to the console just in case
+    // 🕵️‍♂️ RECON: Print available Base44 Auth methods to the console
     console.log("AVAILABLE BASE44 AUTH METHODS:", Object.keys(base44.auth));
 
     try {
@@ -80,10 +39,26 @@ const handleSubmit = async (e) => {
         navigate("/onboarding");
       }
     } catch (err) {
-      // If it still crashes, we catch it securely
       setError(err.message || "Authentication failed. Check your console for the method name!");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProviderSignIn = async (provider) => {
+    setActiveProvider(provider);
+    setError("");
+    try {
+      if (provider === "passkey") {
+        await base44.auth.signInWithPasskey(); 
+      } else {
+        // FIXED: Using Base44 wrapper for OAuth
+        await base44.auth.loginWithProvider(provider, "/");
+      }
+    } catch (err) {
+      setError(err.message || `${provider} authentication is not fully configured yet.`);
+    } finally {
+      setActiveProvider(null);
     }
   };
 
