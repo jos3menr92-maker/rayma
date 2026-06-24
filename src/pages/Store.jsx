@@ -47,7 +47,8 @@ const PLANS = [
   },
 ];
 
-export default function Support() {
+// 🚀 RENAMED TO Store
+export default function Store() {
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState("");
   const [promoCode, setPromoCode] = useState("");
@@ -58,7 +59,6 @@ export default function Support() {
   const [isNativeApp, setIsNativeApp] = useState(false);
 
   useEffect(() => {
-    // 1. Detect if we are inside the mobile app
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     const isIOS = /iPhone|iPad|iPod/.test(userAgent) && !/Safari|Chrome/.test(userAgent);
     const isAndroid = /Android/.test(userAgent) && /wv/.test(userAgent);
@@ -67,20 +67,17 @@ export default function Support() {
         setIsNativeApp(true);
     }
 
-    // 2. Listen for the Success Receipt coming DOWN from React Native
     const handleNativeMessage = (event) => {
       const data = event.detail;
       if (data && data.action === 'PAYMENT_SUCCESS') {
-        setLoading(null); // Turn off the spinning loader
-        setPromoSuccess(`Native Purchase Simulated for: ${data.productId}`); // Show green banner
-        // 🚨 Note for later: This is where we will tell Base44 to update the database!
+        setLoading(null); 
+        setPromoSuccess(`Native Purchase Simulated for: ${data.productId}`); 
       }
     };
 
     window.addEventListener('nativeMessage', handleNativeMessage);
     return () => window.removeEventListener('nativeMessage', handleNativeMessage);
   }, []);
-  // ------------------------------------------
 
   const urlParams = new URLSearchParams(window.location.search);
   const successType = urlParams.get("success") === "true" ? urlParams.get("type") : null;
@@ -90,14 +87,12 @@ export default function Support() {
     setLoading(planId);
     setError("");
 
-    // 🚀 THE NATIVE BRIDGE: If user is on the mobile app, trigger Apple/Google Pay
     if (isNativeApp) {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({
-          action: 'TRIGGER_NATIVE_PAYMENT', // <-- FIXED to match React Native!
+          action: 'TRIGGER_NATIVE_PAYMENT',
           productId: planId
         }));
-        // We removed the 3-second timeout here because the listener above will clear the loader!
       } else {
         setError("Could not connect to the native app store. Please restart the app.");
         setLoading(null);
@@ -105,11 +100,11 @@ export default function Support() {
       return;
     }
 
-    // 🌐 THE WEB FLOW: If user is on a desktop/mobile web browser, use Stripe
+    // 🚀 FIXED: Stripe Redirect URLs now point to /store instead of /support
     const res = await base44.functions.invoke("createCheckoutSession", {
       purchaseType: planId,
-      successUrl: `${window.location.origin}/support?success=true&type=${planId}`,
-      cancelUrl: `${window.location.origin}/support?cancelled=true`,
+      successUrl: `${window.location.origin}/store?success=true&type=${planId}`,
+      cancelUrl: `${window.location.origin}/store?cancelled=true`,
     });
     
     setLoading(null);
@@ -120,7 +115,7 @@ export default function Support() {
     }
   }
 
-async function handlePromoCode(e) {
+  async function handlePromoCode(e) {
     e.preventDefault();
     if (!promoCode.trim()) return;
     
@@ -133,7 +128,6 @@ async function handlePromoCode(e) {
         code: promoCode.trim(),
       });
       
-      // If the function returns an error object (Supabase style)
       if (res.error) throw res.error;
       
       if (res.data?.success) {
@@ -145,10 +139,8 @@ async function handlePromoCode(e) {
       }
     } catch (err) {
       console.error("Promo redemption failed:", err);
-      // Catch hard crashes (like network failures or undeployed functions)
       setError(err.message || "Failed to connect to the server. Is the Edge Function deployed?");
     } finally {
-      // 🛡️ The Ultimate Safety Net: Always stop the spinner
       setPromoLoading(false);
     }
   }
@@ -157,7 +149,6 @@ async function handlePromoCode(e) {
     <div className="max-w-xl mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
             <Battery className="w-7 h-7 text-primary" />
@@ -169,7 +160,6 @@ async function handlePromoCode(e) {
           </p>
         </div>
 
-        {/* Success banner */}
         {(successType || promoSuccess) && (
           <div className="mb-6 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
@@ -182,14 +172,12 @@ async function handlePromoCode(e) {
           </div>
         )}
 
-        {/* Cancelled banner */}
         {cancelled && (
           <div className="mb-6 bg-muted border border-border rounded-2xl p-4">
             <p className="text-sm text-muted-foreground">Purchase cancelled. No quarters were taken.</p>
           </div>
         )}
 
-        {/* Error banner */}
         {error && (
           <div className="mb-4 bg-destructive/10 border border-destructive/20 rounded-xl p-3 text-sm text-destructive">
             {error}
@@ -197,7 +185,6 @@ async function handlePromoCode(e) {
         )}
 
         <div className="stripe-checkout-ui">
-          {/* Promo Code Section */}
           <div className="mb-6 bg-primary/5 border border-primary/30 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Gift className="w-5 h-5 text-primary" />
@@ -222,7 +209,6 @@ async function handlePromoCode(e) {
             </form>
           </div>
 
-          {/* New Gamified Plans - MERGED UI */}
           <div className="space-y-4">
             {PLANS.map((plan) => (
               <div key={plan.id} className={`relative bg-card border-2 rounded-2xl p-5 ${plan.color}`}>
@@ -242,17 +228,14 @@ async function handlePromoCode(e) {
                   </div>
                 </div>
 
-                {/* Pricing Buttons */}
                 {plan.isSubscription ? (
                   <div className="flex flex-col sm:flex-row gap-3 mt-4 pt-4 border-t border-border/50">
-                    {/* Monthly Button */}
                     <div className="flex-1 flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border">
                       <span className="font-medium text-sm">{plan.monthlyPrice}</span>
                       <Button size="sm" variant="secondary" onClick={() => handlePurchase(plan.monthlyId)} disabled={loading === plan.monthlyId} className="rounded-lg">
                         {loading === plan.monthlyId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Monthly"}
                       </Button>
                     </div>
-                    {/* Annual Button */}
                     <div className="flex-1 flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/30 relative">
                       <div className="absolute -top-2.5 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
                         {plan.annualSavings}
@@ -275,7 +258,6 @@ async function handlePromoCode(e) {
             ))}
           </div>
 
-          {/* Footer note updated for compliance & vibe */}
           <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
             Payments are securely processed. Purchases are tied to your RAYMA account. <br />
             Prices may vary automatically based on your local currency to ensure fair access globally. <br />
