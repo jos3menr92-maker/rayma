@@ -31,19 +31,16 @@ export default function Auth() {
         await checkAppState();
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         navigate("/");
-      } else {
-        // Attempting Base44's custom wrapper method for sign up
-        await base44.auth.registerViaEmailPassword(formData.email, formData.password);
+    } else {
+        // FIXED: Using the exact method and object syntax from Register.jsx
+        await base44.auth.register({ 
+          email: formData.email, 
+          password: formData.password 
+        });
         
         await checkAppState();
         navigate("/onboarding");
       }
-    } catch (err) {
-      setError(err.message || "Authentication failed. Check your console for the method name!");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleProviderSignIn = async (provider) => {
     setActiveProvider(provider);
