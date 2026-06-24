@@ -11,9 +11,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
  *   - Preserve any tokens accumulated from purchases/promos
  * 
  * Logic:
- *   1. Fetch all non-premium users (no active annual_pass_expires_at in future)
- *   2. Check their ai_tokens_reset_date against today's date
- *   3. If reset hasn't happened today, set ai_tokens = 10 and update reset_date
+ *   1. Fetch all users in batches
+ *   2. Skip premium users (annual pass + monthly premium subscriptions)
+ *   3. Skip users already reset today OR with enough tokens already
+ *   4. Reset only users below daily free token limit
  */
 
 const DAILY_FREE_TOKENS = 10; // Daily energy bar allowance for free users
@@ -58,18 +59,26 @@ Deno.serve(async (req) => {
         try {
           usersProcessed++;
 
-          // Skip premium users (active annual pass or power_lithium/power_generator subscriptions)
-          if (user.annual_pass_expires_at) {
-            const expiryDate = new Date(user.annual_pass_expires_at + 'T00:00:00');
-            const todayDate = new Date(today + 'T00:00:00');
-            if (expiryDate >= todayDate) {
-              skippedPremium++;
-              continue;
-            }
+          const todayDate = new Date(today + 'T00:00:00');
+          const annualPassActive =
+            !!user.annual_pass_expires_at &&
+            new Date(user.annual_pass_expires_at + 'T00:00:00') >= todayDate;
+          const monthlyPremiumActive =
+            user.subscription_type === 'power_lithium' ||
+            user.subscription_type === 'power_generator';
+
+          // Skip paid users to avoid downgrading premium capacity.
+          const isPremium = annualPassActive || monthlyPremiumActive;
+          if (isPremium) {
+            skippedPremium++;
+            continue;
           }
 
-          // Check if reset already happened today
-          if (user.ai_tokens_reset_date === today) {
+          const hasEnoughTokens = (user.ai_tokens ?? 0) >= DAILY_FREE_TOKENS;
+          const alreadyResetToday = user.ai_tokens_reset_date === today;
+
+          // Protect purchased/promotional tokens and avoid multiple resets per day.
+          if (alreadyResetToday || hasEnoughTokens) {
             skippedAlreadyReset++;
             continue;
           }
