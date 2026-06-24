@@ -56,25 +56,34 @@ export default function Auth() {
   };
 
   // --- INJECTED: Premium Provider Login Handler ---
-  const handleProviderSignIn = async (provider) => {
-    setActiveProvider(provider);
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
     setError("");
+
+    // 🕵️‍♂️ RECON: Print all available Base44 Auth methods to the console just in case
+    console.log("AVAILABLE BASE44 AUTH METHODS:", Object.keys(base44.auth));
+
     try {
-      if (provider === "passkey") {
-        // Trigger device Biometrics (FaceID / Fingerprint / Windows Hello)
-        await base44.auth.signInWithPasskey(); 
+      if (isLogin) {
+        // Using Base44's custom wrapper method for login
+        await base44.auth.loginViaEmailPassword(formData.email, formData.password);
+        
+        await checkAppState();
+        try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
+        navigate("/");
       } else {
-        // Trigger Apple or Google OAuth
-        await base44.auth.signInWithOAuth({ provider });
+        // Attempting Base44's custom wrapper method for sign up
+        await base44.auth.registerViaEmailPassword(formData.email, formData.password);
+        
+        await checkAppState();
+        navigate("/onboarding");
       }
-      
-      await checkAppState();
-      try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
-      navigate("/");
     } catch (err) {
-      setError(err.message || `${provider} authentication is not fully configured yet.`);
+      // If it still crashes, we catch it securely
+      setError(err.message || "Authentication failed. Check your console for the method name!");
     } finally {
-      setActiveProvider(null);
+      setLoading(false);
     }
   };
 
