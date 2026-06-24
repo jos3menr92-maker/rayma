@@ -20,7 +20,7 @@ export default function Auth() {
     setLoading(true);
     setError("");
 
-try {
+    try {
       if (isLogin) {
         // FIXED: Supabase v2 syntax for Sign In
         const { error } = await base44.auth.signInWithPassword({ 
@@ -46,7 +46,14 @@ try {
         await checkAppState();
         navigate("/onboarding");
       }
+    } catch (err) {
+      // 🛡️ RESTORED CATCH BLOCK
+      setError(err.message || "Authentication failed. Please check your credentials.");
+    } finally {
+      // 🛡️ RESTORED FINALLY BLOCK
+      setLoading(false);
     }
+  };
 
   // --- INJECTED: Premium Provider Login Handler ---
   const handleProviderSignIn = async (provider) => {
