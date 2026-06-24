@@ -4,6 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Mail, Lock, User, Loader2, ArrowRight, Chrome, Fingerprint } from "lucide-react";
 import { Link } from "react-router-dom";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,6 +14,10 @@ export default function Auth() {
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "", fullName: "" });
   
+  // --- NEW: OTP Verification States ---
+  const [showOtp, setShowOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+
   const navigate = useNavigate();
   const { checkAppState } = useAuth();
 
@@ -22,27 +28,61 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        // Using Base44's custom wrapper method for login
         await base44.auth.loginViaEmailPassword(formData.email, formData.password);
         
         await checkAppState();
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         navigate("/");
       } else {
-        // FIXED: Using the exact method and object syntax from Register.jsx
         await base44.auth.register({ 
           email: formData.email, 
           password: formData.password 
         });
-        
-        await checkAppState();
-        navigate("/onboarding");
+        // Registration success: Show the OTP screen
+        setShowOtp(true);
       }
     } catch (err) {
-      // 🛡️ RESTORED MISSING BLOCKS
-      setError(err.message || "Authentication failed. Please check your credentials.");
+      // Catch unverified emails on Login and show the OTP screen instead of crashing
+      const errMsg = err.message?.toLowerCase() || "";
+      if (errMsg.includes("verify") || errMsg.includes("not confirmed") || errMsg.includes("verification")) {
+        setShowOtp(true);
+      } else {
+        setError(err.message || "Authentication failed. Please check your credentials.");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- NEW: Handle OTP Submission ---
+  const handleVerify = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const result = await base44.auth.verifyOtp({ email: formData.email, otpCode });
+      if (result?.access_token) {
+        base44.auth.setToken(result.access_token);
+      }
+      await checkAppState();
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Invalid verification code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- NEW: Resend OTP Code ---
+  const handleResend = async () => {
+    setError("");
+    try {
+      await base44.auth.resendOtp(formData.email);
+      toast({
+        title: "Code sent",
+        description: "Check your email for the new code.",
+      });
+    } catch (err) {
+      setError(err.message || "Failed to resend code");
     }
   };
 
@@ -53,7 +93,6 @@ export default function Auth() {
       if (provider === "passkey") {
         await base44.auth.signInWithPasskey(); 
       } else {
-        // FIXED: Using Base44 wrapper for OAuth
         await base44.auth.loginWithProvider(provider, "/");
       }
     } catch (err) {
@@ -63,10 +102,57 @@ export default function Auth() {
     }
   };
 
+  // --- NEW: The OTP UI View ---
+  if (showOtp) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8">
+        <div className="w-full max-w-sm space-y-8 bg-card p-8 rounded-2xl border border-border shadow-sm">
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+              <Mail className="w-6 h-6 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold font-heading text-foreground mb-2">Verify your email</h1>
+            <p className="text-muted-foreground text-sm">We sent a 6-digit code to {formData.email}</p>
+          </div>
+
+          {error && <p className="text-sm text-destructive text-center bg-destructive/10 py-2 rounded-lg">{error}</p>}
+
+          <div className="flex justify-center mb-6">
+            <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode} autoFocus autoComplete="one-time-code">
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          <button
+            onClick={handleVerify}
+            disabled={loading || otpCode.length < 6}
+            className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify Code"}
+          </button>
+
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Didn't receive the code?{" "}
+            <button type="button" onClick={handleResend} className="text-primary font-medium hover:underline">
+              Resend
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- ORIGINAL: The Main Login/SignUp UI View ---
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm space-y-8">
-        {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold font-heading text-foreground mb-2">
             {isLogin ? "Welcome Back" : "Create Account"}
@@ -76,7 +162,6 @@ export default function Auth() {
           </p>
         </div>
 
-        {/* Email/Pass Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div className="relative">
@@ -91,7 +176,6 @@ export default function Auth() {
               />
             </div>
           )}
-
           <div className="relative">
             <Mail className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
             <input
@@ -103,7 +187,6 @@ export default function Auth() {
               disabled={loading || activeProvider}
             />
           </div>
-
           <div className="relative">
             <Lock className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
             <input
@@ -127,13 +210,11 @@ export default function Auth() {
           </button>
         </form>
 
-        {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
           <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or continue with</span></div>
         </div>
 
-        {/* --- UPGRADED: Apple, Google, and Fingerprint Buttons --- */}
         <div className="space-y-3">
           <button 
             type="button" 
@@ -171,7 +252,6 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Toggle & Legal */}
         <div className="text-center space-y-4">
           <button
             onClick={() => setIsLogin(!isLogin)}
