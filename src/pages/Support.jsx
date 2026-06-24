@@ -120,22 +120,36 @@ export default function Support() {
     }
   }
 
-  async function handlePromoCode(e) {
+async function handlePromoCode(e) {
     e.preventDefault();
     if (!promoCode.trim()) return;
+    
     setPromoLoading(true);
     setError("");
     setPromoSuccess(null);
-    const res = await base44.functions.invoke("redeemPromoCode", {
-      code: promoCode.trim(),
-    });
-    setPromoLoading(false);
-    if (res.data?.success) {
-      setPromoSuccess(res.data.message);
-      setPromoCode("");
-      setTimeout(() => setPromoSuccess(null), 5000);
-    } else {
-      setError(res.data?.error || "Invalid promo code.");
+    
+    try {
+      const res = await base44.functions.invoke("redeemPromoCode", {
+        code: promoCode.trim(),
+      });
+      
+      // If the function returns an error object (Supabase style)
+      if (res.error) throw res.error;
+      
+      if (res.data?.success) {
+        setPromoSuccess(res.data.message);
+        setPromoCode("");
+        setTimeout(() => setPromoSuccess(null), 5000);
+      } else {
+        setError(res.data?.error || "Invalid promo code.");
+      }
+    } catch (err) {
+      console.error("Promo redemption failed:", err);
+      // Catch hard crashes (like network failures or undeployed functions)
+      setError(err.message || "Failed to connect to the server. Is the Edge Function deployed?");
+    } finally {
+      // 🛡️ The Ultimate Safety Net: Always stop the spinner
+      setPromoLoading(false);
     }
   }
 
