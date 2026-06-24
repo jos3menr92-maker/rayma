@@ -20,9 +20,6 @@ export default function Auth() {
     setLoading(true);
     setError("");
 
-    // 🕵️‍♂️ RECON: Print available Base44 Auth methods to the console
-    console.log("AVAILABLE BASE44 AUTH METHODS:", Object.keys(base44.auth));
-
     try {
       if (isLogin) {
         // Using Base44's custom wrapper method for login
@@ -31,7 +28,7 @@ export default function Auth() {
         await checkAppState();
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         navigate("/");
-    } else {
+      } else {
         // FIXED: Using the exact method and object syntax from Register.jsx
         await base44.auth.register({ 
           email: formData.email, 
@@ -41,6 +38,13 @@ export default function Auth() {
         await checkAppState();
         navigate("/onboarding");
       }
+    } catch (err) {
+      // 🛡️ RESTORED MISSING BLOCKS
+      setError(err.message || "Authentication failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProviderSignIn = async (provider) => {
     setActiveProvider(provider);
