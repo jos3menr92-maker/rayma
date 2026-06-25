@@ -117,21 +117,6 @@ export default function Layout() {
 
       <PushNotificationPrompt />
       
-      {/* ✨ THE BIG BRAIN CONNECTION */}
-      <RaymaChat
-        autoOpen={raymaAutoOpen}
-        forceOpen={raymaOpen}
-        onClose={() => setRaymaOpen(false)}
-        loans={loans}
-        bills={bills}
-        incomes={incomes}
-        payments={payments}         // <-- NEW: Transaction History
-        assets={assets}             // <-- NEW: Net Worth Tracking
-        savingsGoals={savingsGoals} // <-- NEW: Savings Vault
-        userProfile={userProfile} 
-        currentPage={location.pathname} // <-- NEW: Page Awareness / Context
-      />
-      
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
           <Link to="/" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
@@ -163,6 +148,21 @@ export default function Layout() {
           </button>
         </div>
       </nav>
+
+      {/* ✨ THE BIG BRAIN CONNECTION — rendered after nav for z-index supremacy */}
+      <RaymaChat
+        autoOpen={raymaAutoOpen}
+        forceOpen={raymaOpen}
+        onClose={() => setRaymaOpen(false)}
+        loans={loans}
+        bills={bills}
+        incomes={incomes}
+        payments={payments}         // <-- NEW: Transaction History
+        assets={assets}             // <-- NEW: Net Worth Tracking
+        savingsGoals={savingsGoals} // <-- NEW: Savings Vault
+        userProfile={userProfile} 
+        currentPage={location.pathname} // <-- NEW: Page Awareness / Context
+      />
     </div>
   );
 }

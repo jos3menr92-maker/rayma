@@ -18,31 +18,33 @@ export default function MonthlyRecap() {
   const monthName = MONTH_NAMES[currentMonth];
 
   // This month's income
-  const thisMonthIncomes = incomes.filter(i => {
+  const thisMonthIncomes = useMemo(() => incomes.filter(i => {
     if (!i.week_start) return false;
     const d = new Date(i.week_start + "T00:00:00");
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  });
-  const totalIncome = thisMonthIncomes.reduce((s, i) => s + (i.amount || 0), 0);
+  }), [incomes, currentMonth, currentYear]);
+  const totalIncome = useMemo(() => thisMonthIncomes.reduce((s, i) => s + (i.amount || 0), 0), [thisMonthIncomes]);
 
   // This month's payments
-  const thisMonthPayments = payments.filter(p => {
+  const thisMonthPayments = useMemo(() => (payments || []).filter(p => {
     if (!p.payment_date) return false;
     const d = new Date(p.payment_date + "T00:00:00");
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  });
-  const totalPaid = thisMonthPayments.reduce((s, p) => s + (p.amount || 0), 0);
-  const billsPaid = thisMonthPayments.filter(p => p.payment_type === "bill").length;
-  const loansPaid = thisMonthPayments.filter(p => p.payment_type === "loan").length;
+  }), [payments, currentMonth, currentYear]);
+  const totalPaid = useMemo(() => thisMonthPayments.reduce((s, p) => s + (p.amount || 0), 0), [thisMonthPayments]);
+  const billsPaid = useMemo(() => thisMonthPayments.filter(p => p.payment_type === "bill").length, [thisMonthPayments]);
+  const loansPaid = useMemo(() => thisMonthPayments.filter(p => p.payment_type === "loan").length, [thisMonthPayments]);
 
   // Monthly fixed expenses
-  const activeBills = bills.filter(x => x.is_active !== false);
-  const activeLoans = loans.filter(x => x.status !== "paid_off");
-  const monthlyExpenses = activeBills.reduce((s, b) => s + (b.amount || 0), 0) + activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
-  const cashFlow = totalIncome - monthlyExpenses;
+  const activeBills = useMemo(() => bills.filter(x => x.is_active !== false), [bills]);
+  const activeLoans = useMemo(() => loans.filter(x => x.status !== "paid_off"), [loans]);
+  const monthlyExpenses = useMemo(() =>
+    activeBills.reduce((s, b) => s + (b.amount || 0), 0) + activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0),
+  [activeBills, activeLoans]);
+  const cashFlow = useMemo(() => totalIncome - monthlyExpenses, [totalIncome, monthlyExpenses]);
 
   // Last 6 months chart data
-  const last6 = Array.from({ length: 6 }, (_, i) => {
+  const last6 = useMemo(() => Array.from({ length: 6 }, (_, i) => {
     const d = new Date(currentYear, currentMonth - (5 - i), 1);
     const m = d.getMonth();
     const y = d.getFullYear();
@@ -51,18 +53,25 @@ export default function MonthlyRecap() {
       const id = new Date(inc.week_start + "T00:00:00");
       return id.getMonth() === m && id.getFullYear() === y;
     });
+    const monthPayments = (payments || []).filter(p => {
+      if (!p.payment_date) return false;
+      const pd = new Date(p.payment_date + "T00:00:00");
+      return pd.getMonth() === m && pd.getFullYear() === y;
+    });
     return {
       month: MONTH_NAMES[m],
       income: monthIncomes.reduce((s, x) => s + (x.amount || 0), 0),
-      expenses: monthlyExpenses,
+      expenses: monthPayments.length > 0
+        ? monthPayments.reduce((s, x) => s + (x.amount || 0), 0)
+        : (m === currentMonth && y === currentYear ? monthlyExpenses : 0),
     };
-  });
+  }), [incomes, payments, currentMonth, currentYear, monthlyExpenses]);
 
-  const billPieData = Object.entries(activeBills.reduce((acc, b) => {
+  const billPieData = useMemo(() => Object.entries(activeBills.reduce((acc, b) => {
     const key = b.category || "other";
     acc[key] = (acc[key] || 0) + (b.amount || 0);
     return acc;
-  }, {})).map(([name, value]) => ({ name, value }));
+  }, {})).map(([name, value]) => ({ name, value })), [activeBills]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -91,34 +100,50 @@ export default function MonthlyRecap() {
             <p className="text-xl font-bold font-heading text-destructive">{fmt(monthlyExpenses)}</p>
             <p className="text-xs text-muted-foreground mt-0.5">bills + loans</p>
           </div>
-          <div className={`rounded-2xl p-4 border ${cashFlow >= 0 ? "bg-primary/10 border-primary/20" : "bg-destructive/10 border-destructive/20"}`}>
+          <div className={`rounded-2xl p-4 border ${totalIncome === 0 && monthlyExpenses === 0 ? "bg-card border-border" : cashFlow >= 0 ? "bg-primary/10 border-primary/20" : "bg-destructive/10 border-destructive/20"}`}>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Net Cash Flow</p>
-            <div className="flex items-center gap-1">
-              {cashFlow >= 0 ? <TrendingUp className="w-4 h-4 text-primary" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
-              <p className={`text-xl font-bold font-heading ${cashFlow >= 0 ? "text-primary" : "text-destructive"}`}>{fmt(cashFlow)}</p>
-            </div>
+            {totalIncome === 0 && monthlyExpenses === 0 ? (
+              <div className="flex items-center gap-1">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <p className="text-xl font-bold font-heading text-muted-foreground">$0</p>
+              </div>
+            ) : cashFlow >= 0 ? (
+              <div className="flex items-center gap-1">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <p className="text-xl font-bold font-heading text-primary">{fmt(cashFlow)}</p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <TrendingDown className="w-4 h-4 text-destructive" />
+                <p className="text-xl font-bold font-heading text-destructive">{fmt(cashFlow)}</p>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-0.5">income − expenses</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-4">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Payments Made</p>
             <p className="text-xl font-bold font-heading text-foreground">{fmt(totalPaid)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{loansPaid} loan · {billsPaid} bill</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {loansPaid} {loansPaid === 1 ? "loan" : "loans"} · {billsPaid} {billsPaid === 1 ? "bill" : "bills"}
+            </p>
           </div>
         </div>
 
         {/* Highlights */}
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-2">
           <h2 className="text-sm font-semibold font-heading text-foreground mb-3">Month Highlights</h2>
-          {cashFlow >= 0 ? (
-            <div className="flex items-center gap-2 text-sm text-primary">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>You came out <strong>{fmt(cashFlow)} ahead</strong> this month.</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-sm text-destructive">
-              <TrendingDown className="w-4 h-4 shrink-0" />
-              <span>Expenses exceeded income by <strong>{fmt(Math.abs(cashFlow))}</strong>.</span>
-            </div>
+          {(totalIncome > 0 || monthlyExpenses > 0) && (
+            cashFlow >= 0 ? (
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>You came out <strong>{fmt(cashFlow)} ahead</strong> this month.</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <TrendingDown className="w-4 h-4 shrink-0" />
+                <span>Expenses exceeded income by <strong>{fmt(Math.abs(cashFlow))}</strong>.</span>
+              </div>
+            )
           )}
           {thisMonthPayments.length > 0 && (
             <div className="flex items-center gap-2 text-sm text-foreground">
@@ -164,7 +189,7 @@ export default function MonthlyRecap() {
                 <div key={item.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="text-sm text-foreground capitalize">{item.name.replace("_", " ")}</span>
+                    <span className="text-sm text-foreground capitalize">{item.name.replace(/_/g, " ")}</span>
                   </div>
                   <span className="text-sm font-semibold text-foreground">{fmt(item.value)}</span>
                 </div>
@@ -172,6 +197,16 @@ export default function MonthlyRecap() {
             </div>
           </div>
         )}
+
+        {/* ⚠️ COMPLIANCE: Financial Disclaimer — required by Apple/Google (CODING_RULES Rule 2) */}
+        <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-2xl">
+          <p className="text-xs font-semibold text-destructive mb-1">⚠️ Financial Disclaimer</p>
+          <p className="text-xs text-muted-foreground">
+            RAYMA provides tools for personal finance tracking only. Not financial advice.
+            Consult a qualified financial professional before making financial decisions.
+            See <a href="/privacy" className="underline text-primary">Privacy Policy</a> for full terms.
+          </p>
+        </div>
       </motion.div>
     </div>
   );
