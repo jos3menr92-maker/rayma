@@ -8,6 +8,7 @@ export function FinancialDataProvider({ children }) {
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
   const [incomes, setIncomes] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +24,7 @@ export function FinancialDataProvider({ children }) {
         setLoans([]);
         setBills([]);
         setIncomes([]);
+        setPayments([]);
         setLoading(false);
         return;
       }
@@ -30,33 +32,38 @@ export function FinancialDataProvider({ children }) {
       // 2. 🚀 THE REAL BACKEND: Fetch this user's data from Supabase
       // NOTE: user_id filter removed — Base44 me.id does not match the
       // user_id stored in existing Supabase rows (ID mismatch from migration).
-      const [loansRes, billsRes, incomesRes] = await Promise.all([
+      const [loansRes, billsRes, incomesRes, paymentsRes] = await Promise.all([
         supabase.from('loans').select('*').order('created_at', { ascending: false }),
         supabase.from('bills').select('*').order('created_at', { ascending: false }),
-        supabase.from('incomes').select('*').order('created_at', { ascending: false })
+        supabase.from('incomes').select('*').order('created_at', { ascending: false }),
+        supabase.from('payments').select('*').order('payment_date', { ascending: false })
       ]);
 
       if (loansRes.error) console.error("Supabase Loans Error:", loansRes.error);
       if (billsRes.error) console.error("Supabase Bills Error:", billsRes.error);
       if (incomesRes.error) console.error("Supabase Incomes Error:", incomesRes.error);
+      if (paymentsRes.error) console.error("Supabase Payments Error:", paymentsRes.error);
 
       // 3. Save the real database rows into the app's state
       console.log("Supabase Data Received:", { 
         loans: loansRes.data, 
         bills: billsRes.data, 
-        incomes: incomesRes.data 
+        incomes: incomesRes.data,
+        payments: paymentsRes.data
       });
 
       // 🚀 THE MISSING LINK: Actually saving the data to React!
       setLoans(loansRes.data || []);
       setBills(billsRes.data || []);
       setIncomes(incomesRes.data || []);
+      setPayments(paymentsRes.data || []);
 
     } catch (e) {
       console.error("Failed to load financial data from Supabase:", e);
       setLoans([]);
       setBills([]);
       setIncomes([]);
+      setPayments([]);
       setUserProfile(null);
     } finally {
       setLoading(false);
@@ -80,7 +87,7 @@ export function FinancialDataProvider({ children }) {
   }, []);
 
   return (
-    <FinancialDataContext.Provider value={{ loans, bills, incomes, userProfile, loading, reload: loadAll, refreshUserProfile }}>
+    <FinancialDataContext.Provider value={{ loans, bills, incomes, payments, userProfile, loading, reload: loadAll, refreshUserProfile }}>
       {children}
     </FinancialDataContext.Provider>
   );
