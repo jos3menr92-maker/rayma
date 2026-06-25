@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient"; // 🚀 ADDED: Supabase import
 import { motion } from "framer-motion";
 import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -124,22 +125,24 @@ export default function Store() {
     setPromoSuccess(null);
     
     try {
-      const res = await base44.functions.invoke("redeemPromoCode", {
-        code: promoCode.trim(),
+      // 🚀 FIXED: Re-routed to Supabase and wrapped payload in 'body'
+      const { data, error } = await supabase.functions.invoke("redeemPromoCode", {
+        body: { code: promoCode.trim() },
       });
       
-      if (res.error) throw res.error;
+      if (error) throw error;
       
-      if (res.data?.success) {
-        setPromoSuccess(res.data.message);
+      if (data?.success) {
+        setPromoSuccess(data.message);
         setPromoCode("");
         setTimeout(() => setPromoSuccess(null), 5000);
       } else {
-        setError(res.data?.error || "Invalid promo code.");
+        setError(data?.error || "Invalid promo code.");
       }
     } catch (err) {
       console.error("Promo redemption failed:", err);
-      setError(err.message || "Failed to connect to the server. Is the Edge Function deployed?");
+      // Supabase Edge Function errors often land directly in err.message
+      setError(err.message || err.error || "Failed to connect to the server.");
     } finally {
       setPromoLoading(false);
     }
