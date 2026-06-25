@@ -1,19 +1,78 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Pause, Play } from 'lucide-react'; // Added icons for the pause button
+import { Pause, Play } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
+import { getHighestArcadeScore, saveArcadeScore, deductUserTokens, getUserTokenBalance } from '@/api/arcadeScoresApi';
 
-export default function RetroSnake({ onUpdateScore }) {
+const ENTRY_FEE_TOKENS = 10;
+
+export default function RetroSnake({ onUpdateScore, userId }) {
+  const { user } = useAuth();
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); // ✨ NEW: Pause State
+  const [isPaused, setIsPaused] = useState(false);
   const [score, setScore] = useState(0);
-  const [bestScore, setBestScore] = useState(0); // ✨ NEW: Best Score State
+  const [bestScore, setBestScore] = useState(0);
+  const [isLoadingScore, setIsLoadingScore] = useState(true);
+  const [userTokens, setUserTokens] = useState(0);
+  const [showInsufficientTokens, setShowInsufficientTokens] = useState(false);
+  const [isSavingScore, setIsSavingScore] = useState(false);
   const canvasRef = useRef(null);
 
-  // Load best score on mount
+  // Load best score from database on mount
   useEffect(() => {
-    const saved = localStorage.getItem('snakeBestScore');
-    if (saved) setBestScore(parseInt(saved, 10));
-  }, []);
+    async function loadHighScore() {
+      const currentUserId = userId || user?.id;
+      if (!currentUserId) {
+        setIsLoadingScore(false);
+        return;
+      }
+
+      try {
+        const highScore = await getHighestArcadeScore(currentUserId, 'retrosnake');
+        const tokens = await getUserTokenBalance(currentUserId);
+        setBestScore(highScore);
+        setUserTokens(tokens);
+      } catch (err) {
+        console.error('[RetroSnake] Error loading scores:', err);
+      } finally {
+        setIsLoadingScore(false);
+      }
+    }
+
+    loadHighScore();
+  }, [userId, user?.id]);
+
+  const handleStartGame = async () => {
+    const currentUserId = userId || user?.id;
+    
+    // Check if user has enough tokens
+    if (currentUserId && userTokens < ENTRY_FEE_TOKENS) {
+      setShowInsufficientTokens(true);
+      setTimeout(() => setShowInsufficientTokens(false), 3000);
+      return;
+    }
+
+    // Deduct tokens for playing
+    if (currentUserId) {
+      const deducted = await deductUserTokens(currentUserId, ENTRY_FEE_TOKENS);
+      if (deducted) {
+        setUserTokens(prev => prev - ENTRY_FEE_TOKENS);
+        setGameOver(false);
+        setScore(0);
+        setIsPaused(false);
+        setIsGameRunning(true);
+      } else {
+        setShowInsufficientTokens(true);
+        setTimeout(() => setShowInsufficientTokens(false), 3000);
+      }
+    } else {
+      // If no user, just start the game (for testing)
+      setGameOver(false);
+      setScore(0);
+      setIsPaused(false);
+      setIsGameRunning(true);
+    }
+  };
 
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
@@ -45,11 +104,22 @@ export default function RetroSnake({ onUpdateScore }) {
 
     const endGame = (finalScore) => {
       setGameOver(true);
-      // ✨ Update Best Score
-      if (finalScore > bestScore) {
-        setBestScore(finalScore);
-        localStorage.setItem('snakeBestScore', finalScore.toString());
+      
+      // Save score to database if it's a new high score
+      const currentUserId = userId || user?.id;
+      if (currentUserId && finalScore > bestScore) {
+        setIsSavingScore(true);
+        saveArcadeScore(currentUserId, 'retrosnake', finalScore)
+          .then((wasSaved) => {
+            if (wasSaved) {
+              setBestScore(finalScore);
+              console.log('[RetroSnake] High score saved successfully');
+            }
+          })
+          .catch((err) => console.error('[RetroSnake] Error saving score:', err))
+          .finally(() => setIsSavingScore(false));
       }
+      
       latestScoreUpdate.current && latestScoreUpdate.current('retro_snake', finalScore);
       window.cancelAnimationFrame(animationFrameId);
     };
@@ -105,7 +175,25 @@ export default function RetroSnake({ onUpdateScore }) {
         <>
           <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">Retro Snake</h3>
           <div className="text-slate-400 font-mono mb-2">High Score: {bestScore}</div>
-          <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); setIsGameRunning(true); }} className="px-8 py-4 bg-lime-500 text-black font-black uppercase rounded shadow-[0_0_15px_rgba(132,204,22,0.5)]">Insert Coin</button>
+          {!isLoadingScore && (
+            <>
+              <div className="text-yellow-400 font-mono mb-4 text-sm">Tokens Available: {userTokens} | Entry Fee: {ENTRY_FEE_TOKENS}</div>
+              {showInsufficientTokens && (
+                <div className="text-red-400 font-mono mb-4 text-sm animate-pulse">⚠️ Insufficient tokens! Need {ENTRY_FEE_TOKENS}</div>
+              )}
+            </>
+          )}
+          <button 
+            onClick={handleStartGame}
+            disabled={isLoadingScore || (userTokens < ENTRY_FEE_TOKENS && !isLoadingScore)}
+            className={`px-8 py-4 font-black uppercase rounded shadow-[0_0_15px_rgba(132,204,22,0.5)] transition-opacity ${
+              isLoadingScore || (userTokens < ENTRY_FEE_TOKENS && !isLoadingScore) 
+                ? 'bg-slate-600 text-slate-400 cursor-not-allowed opacity-50' 
+                : 'bg-lime-500 text-black hover:bg-lime-400'
+            }`}
+          >
+            {isLoadingScore ? 'Loading...' : userTokens < ENTRY_FEE_TOKENS ? 'Insufficient Tokens' : 'Insert Coin'}
+          </button>
         </>
       ) : (
         <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center overscroll-none touch-none">
@@ -132,8 +220,16 @@ export default function RetroSnake({ onUpdateScore }) {
           {gameOver && (
              <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center">
                 <div className="text-red-500 font-black text-6xl mb-2 animate-pulse">GAME OVER</div>
-                <div className="text-white font-mono text-2xl mb-12">SCORE: {score} | BEST: {bestScore}</div>
-                <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl">Play Again</button>
+                <div className="text-white font-mono text-2xl mb-4">SCORE: {score} | BEST: {bestScore}</div>
+                {isSavingScore && <div className="text-green-400 font-mono text-sm mb-4 animate-pulse">Saving score...</div>}
+                {score > bestScore && !isSavingScore && <div className="text-green-400 font-mono text-sm mb-4">🎉 New High Score!</div>}
+                <button 
+                  onClick={handleStartGame}
+                  disabled={isSavingScore}
+                  className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl hover:bg-lime-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingScore ? 'Saving...' : 'Play Again'}
+                </button>
              </div>
           )}
         </div>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift } from "lucide-react";
+import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isNativeApp, getNativeAppFallbackMessage } from "@/lib/nativeAppDetector";
 
 // 🔋 THE NEW GAMIFIED POWER TIERS (MERGED BOXES)
 const PLANS = [
@@ -55,23 +56,20 @@ export default function Store() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoSuccess, setPromoSuccess] = useState(null);
 
-  // --- 📱 MOBILE WRAPPER DETECTION & LISTENER ---
-  const [isNativeApp, setIsNativeApp] = useState(false);
+  // 📱 APPLE APP STORE DIRECTIVE 3.1.1 COMPLIANCE
+  // Detect if running in native iOS/Android wrapper to hide external payment methods
+  const [isNative, setIsNative] = useState(false);
 
   useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const isIOS = /iPhone|iPad|iPod/.test(userAgent) && !/Safari|Chrome/.test(userAgent);
-    const isAndroid = /Android/.test(userAgent) && /wv/.test(userAgent);
-    
-    if (isIOS || isAndroid) {
-        setIsNativeApp(true);
-    }
+    // Check if app is running in native wrapper using the detection utility
+    setIsNative(isNativeApp());
 
+    // Listen for native payment success messages from React Native layer
     const handleNativeMessage = (event) => {
       const data = event.detail;
       if (data && data.action === 'PAYMENT_SUCCESS') {
-        setLoading(null); 
-        setPromoSuccess(`Native Purchase Simulated for: ${data.productId}`); 
+        setLoading(null);
+        setPromoSuccess(`Native Purchase Simulated for: ${data.productId}`);
       }
     };
 
@@ -87,7 +85,7 @@ export default function Store() {
     setLoading(planId);
     setError("");
 
-    if (isNativeApp) {
+    if (isNative) {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({
           action: 'TRIGGER_NATIVE_PAYMENT',
@@ -185,6 +183,20 @@ export default function Store() {
         )}
 
         <div className="stripe-checkout-ui">
+          {/* 🛡️ APPLE APP STORE COMPLIANCE NOTICE */}
+          {isNative && (
+            <div className="mb-6 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">📱 App Store Compliant</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                  {getNativeAppFallbackMessage()}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Promo Code Section - ALWAYS VISIBLE */}
           <div className="mb-6 bg-primary/5 border border-primary/30 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Gift className="w-5 h-5 text-primary" />
@@ -209,54 +221,58 @@ export default function Store() {
             </form>
           </div>
 
-          <div className="space-y-4">
-            {PLANS.map((plan) => (
-              <div key={plan.id} className={`relative bg-card border-2 rounded-2xl p-5 ${plan.color}`}>
-                {plan.badge && (
-                  <div className={`absolute -top-3 left-5 text-[10px] font-bold px-3 py-0.5 rounded-full ${plan.color === 'border-primary' ? 'bg-primary text-primary-foreground' : 'bg-blue-500 text-white'}`}>
-                    {plan.badge}
+          {/* Payment Plans - CONDITIONAL RENDERING BASED ON NATIVE STATUS */}
+          {!isNative ? (
+            // 🌐 WEB BROWSER: Show Stripe payment options
+            <div className="space-y-4">
+              {PLANS.map((plan) => (
+                <div key={plan.id} className={`relative bg-card border-2 rounded-2xl p-5 ${plan.color}`}>
+                  {plan.badge && (
+                    <div className={`absolute -top-3 left-5 text-[10px] font-bold px-3 py-0.5 rounded-full ${plan.color === 'border-primary' ? 'bg-primary text-primary-foreground' : 'bg-blue-500 text-white'}`}>
+                      {plan.badge}
+                    </div>
+                  )}
+                  
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+                      {plan.icon}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground text-base">{plan.label}</p>
+                      <p className="text-sm text-muted-foreground">{plan.desc}</p>
+                    </div>
                   </div>
-                )}
-                
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                    {plan.icon}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground text-base">{plan.label}</p>
-                    <p className="text-sm text-muted-foreground">{plan.desc}</p>
-                  </div>
-                </div>
 
-                {plan.isSubscription ? (
-                  <div className="flex flex-col sm:flex-row gap-3 mt-4 pt-4 border-t border-border/50">
-                    <div className="flex-1 flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border">
-                      <span className="font-medium text-sm">{plan.monthlyPrice}</span>
-                      <Button size="sm" variant="secondary" onClick={() => handlePurchase(plan.monthlyId)} disabled={loading === plan.monthlyId} className="rounded-lg">
-                        {loading === plan.monthlyId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Monthly"}
-                      </Button>
-                    </div>
-                    <div className="flex-1 flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/30 relative">
-                      <div className="absolute -top-2.5 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
-                        {plan.annualSavings}
+                  {plan.isSubscription ? (
+                    <div className="flex flex-col sm:flex-row gap-3 mt-4 pt-4 border-t border-border/50">
+                      <div className="flex-1 flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border">
+                        <span className="font-medium text-sm">{plan.monthlyPrice}</span>
+                        <Button size="sm" variant="secondary" onClick={() => handlePurchase(plan.monthlyId)} disabled={loading === plan.monthlyId} className="rounded-lg">
+                          {loading === plan.monthlyId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Monthly"}
+                        </Button>
                       </div>
-                      <span className="font-bold text-sm text-primary">{plan.annualPrice}</span>
-                      <Button size="sm" onClick={() => handlePurchase(plan.annualId)} disabled={loading === plan.annualId} className="rounded-lg shadow-sm">
-                        {loading === plan.annualId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Yearly"}
+                      <div className="flex-1 flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/30 relative">
+                        <div className="absolute -top-2.5 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
+                          {plan.annualSavings}
+                        </div>
+                        <span className="font-bold text-sm text-primary">{plan.annualPrice}</span>
+                        <Button size="sm" onClick={() => handlePurchase(plan.annualId)} disabled={loading === plan.annualId} className="rounded-lg shadow-sm">
+                          {loading === plan.annualId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Yearly"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
+                      <span className="text-xl font-bold font-heading text-foreground">{plan.price}</span>
+                      <Button onClick={() => handlePurchase(plan.purchaseId)} disabled={loading === plan.purchaseId} className="rounded-xl w-32">
+                        {loading === plan.purchaseId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Buy Now"}
                       </Button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-                    <span className="text-xl font-bold font-heading text-foreground">{plan.price}</span>
-                    <Button onClick={() => handlePurchase(plan.purchaseId)} disabled={loading === plan.purchaseId} className="rounded-xl w-32">
-                      {loading === plan.purchaseId ? <Loader2 className="w-4 h-4 animate-spin" /> : "Buy Now"}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
 
           <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
             Payments are securely processed. Purchases are tied to your RAYMA account. <br />
