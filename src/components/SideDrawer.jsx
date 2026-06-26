@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getInitialsColor } from "@/components/AvatarPicker";
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
+import { useLanguage } from "@/lib/LanguageContext";
+import { t, getDir } from "@/lib/i18n";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -20,14 +22,15 @@ const HUMAN_AVATARS = [
 export default function SideDrawer({ open, onClose }) {
   const navigate = useNavigate();
   const { userProfile: user } = useFinancialData(); 
+  const { lang } = useLanguage();
 
   function go(path) { onClose(); navigate(path); }
 
   const tokenDisplay = () => {
     if (!user) return null;
-    if (user.annual_pass_expires_at && new Date(user.annual_pass_expires_at) > new Date()) return "∞ Annual Pass";
+    if (user.annual_pass_expires_at && new Date(user.annual_pass_expires_at) > new Date()) return `∞ ${t(lang, 'annualPassActive')}`;
     const tokens = user.ai_tokens_remaining ?? 5;
-    return `${tokens} AI token${tokens !== 1 ? "s" : ""} left`;
+    return `${tokens} AI token${tokens !== 1 ? "s" : ""} ${t(lang, 'remaining')}`;
   };
 
   async function handleLogout() {
@@ -43,7 +46,7 @@ export default function SideDrawer({ open, onClose }) {
       {open && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={onClose} />
-          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 280 }} className="fixed top-0 right-0 h-full w-80 bg-card border-l border-border shadow-2xl z-50 flex flex-col overflow-hidden">
+          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 280 }} className="fixed top-0 right-0 h-full w-80 bg-card border-l border-border shadow-2xl z-50 flex flex-col overflow-hidden" dir={getDir(lang)}>
             <div className="bg-primary/10 border-b border-border px-5 pb-5" style={{ paddingTop: "max(3rem, calc(1.25rem + env(safe-area-inset-top)))" }}>
               <div className="flex items-start justify-between mb-4">
                 <div className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center font-bold text-white text-base" style={{ backgroundColor: user?.avatar_id ? getInitialsColor(user?.preferred_name || user?.full_name, user?.avatar_id) : "#ccc" }}>
@@ -57,50 +60,50 @@ export default function SideDrawer({ open, onClose }) {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              <Section title="Account">
-                <DrawerRow icon={User} label="Full Name" value={user?.full_name} />
-                <DrawerRow icon={Mail} label="Email" value={user?.email} />
-                <DrawerRow icon={User} label="Profile Settings" chevron onClick={() => go("/profile")} />
+              <Section title={t(lang, 'accountSection')}>
+                <DrawerRow icon={User} label={t(lang, 'fullName')} value={user?.full_name} />
+                <DrawerRow icon={Mail} label={t(lang, 'email')} value={user?.email} />
+                <DrawerRow icon={User} label={t(lang, 'profileSettings')} chevron onClick={() => go("/profile")} />
               </Section>
 
               {user && (
-                <Section title="RAYMA AI">
-                  <DrawerRow icon={Zap} label="AI Consultations" value={tokenDisplay()} chevron onClick={() => go("/store")} />
+                <Section title={t(lang, 'raymaAISection')}>
+                  <DrawerRow icon={Zap} label={t(lang, 'aiConsultations')} value={tokenDisplay()} chevron onClick={() => go("/store")} />
                 </Section>
               )}
 
-              <Section title="Navigate">
-                <DrawerRow icon={LayoutDashboard} label="Dashboard" chevron onClick={() => go("/")} />
-                <DrawerRow icon={TrendingUp} label="Income & Cash Flow" chevron onClick={() => go("/finance")} />
-                <DrawerRow icon={PiggyBank} label="Savings Vault" chevron onClick={() => go("/budget-dashboard")} />
-                <DrawerRow icon={BarChart2} label="Assets & Net Worth" chevron onClick={() => go("/assets")} />
-                <DrawerRow icon={Folder} label="Document Vault" chevron onClick={() => go("/documents")} />
+              <Section title={t(lang, 'navigateSection')}>
+                <DrawerRow icon={LayoutDashboard} label={t(lang, 'dashboard')} chevron onClick={() => go("/")} />
+                <DrawerRow icon={TrendingUp} label={t(lang, 'incomeAndCashFlow')} chevron onClick={() => go("/finance")} />
+                <DrawerRow icon={PiggyBank} label={t(lang, 'savingsVault')} chevron onClick={() => go("/budget-dashboard")} />
+                <DrawerRow icon={BarChart2} label={t(lang, 'assetsAndNetWorth')} chevron onClick={() => go("/assets")} />
+                <DrawerRow icon={Folder} label={t(lang, 'documentVault')} chevron onClick={() => go("/documents")} />
               </Section>
 
-              <Section title="Tools">
-                <DrawerRow icon={FileText} label="Tax Summary" value="Annual report" chevron onClick={() => go("/tax-summary")} />
+              <Section title={t(lang, 'toolsSection')}>
+                <DrawerRow icon={FileText} label={t(lang, 'taxSummary')} value={t(lang, 'annualReport')} chevron onClick={() => go("/tax-summary")} />
                 {/* 🛡️ ROUTED TO VAULT */}
-                <DrawerRow icon={Download} label="Export My Data" value="Go to Security Vault" chevron onClick={() => go("/profile")} />
+                <DrawerRow icon={Download} label={t(lang, 'exportMyData')} value={t(lang, 'goToSecurityVault')} chevron onClick={() => go("/profile")} />
               </Section>
 
-              <Section title="About RAYMA">
-                <DrawerRow icon={Info} label="RAYMA" value="v2.0.0" />
-                <DrawerRow icon={Mail} label="Support Email" value="rayma.app2026@gmail.com" />
+              <Section title={t(lang, 'aboutRAYMASection')}>
+                <DrawerRow icon={Info} label={t(lang, 'raymaVersion')} value={t(lang, 'raymaVersionNumber')} />
+                <DrawerRow icon={Mail} label={t(lang, 'supportEmailLabel')} value={t(lang, 'raymaAppEmail')} />
               </Section>
 
-              <Section title="Privacy & Legal">
-                <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => go("/privacy")} />
-                <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => go("/terms")} />
-                <DrawerRow icon={Lock} label="Security" value="All data encrypted" small />
+              <Section title={t(lang, 'privacyLegalSection')}>
+                <DrawerRow icon={Shield} label={t(lang, 'privacyPolicy')} chevron onClick={() => go("/privacy")} />
+                <DrawerRow icon={FileText} label={t(lang, 'termsOfService')} chevron onClick={() => go("/terms")} />
+                <DrawerRow icon={Lock} label={t(lang, 'securityLabel')} value={t(lang, 'allDataEncrypted')} small />
                 {/* 🛡️ ROUTED TO VAULT */}
-                <DrawerRow icon={Trash2} label="Delete Account" value="Go to Security Vault" chevron onClick={() => go("/profile")} destructive />
+                <DrawerRow icon={Trash2} label={t(lang, 'deleteAccountLabel')} value={t(lang, 'goToSecurityVault')} chevron onClick={() => go("/profile")} destructive />
               </Section>
             </div>
 
             {/* ✨ ADDED pb-28 HERE: Lifts the button above the bottom navigation bar */}
             <div className="border-t border-border p-4 pb-28">
               <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                <LogOut className="w-4 h-4 mr-2" /> {t(lang, 'signOutButton')}
               </Button>
             </div>
           </motion.div>
