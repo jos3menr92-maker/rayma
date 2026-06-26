@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from "react"; 
+import { useEffect, useState, useRef, useMemo } from "react"; 
 import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT
+import { base44 } from "@/api/base44Client"; // 🧠 Base44 entity operations
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
 import { motion } from "framer-motion"; 
 import { 
@@ -14,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { useLanguage } from "@/lib/LanguageContext"; 
-import { t } from "@/lib/i18n";
+import { t, LANGUAGES } from "@/lib/i18n";
+import { useAuth } from "@/lib/AuthContext";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -51,11 +53,22 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
   const navigate = useNavigate(); 
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+  // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
+  const T = useMemo(() => 
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
   const fileInputRef = useRef(null);
+  const { user: authUser } = useAuth();
   
   // 🧠 SECURE: Read and reload from the Brain directly
-  const { userProfile, reload, loading: contextLoading } = useFinancialData();
+  const { userProfile, reload, refreshUserProfile, loading: contextLoading } = useFinancialData();
+  
+  // Use userProfile from FinancialDataContext, fallback to user from AuthContext
+  const effectiveUser = userProfile || authUser;
   
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
@@ -66,7 +79,9 @@ export default function Profile() {
   
   const [form, setForm] = useState({ 
     preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
-    preferred_currency: "USD", preferred_language: "en", 
+    preferred_currency: "USD", 
+    // 🌍 Initialize language from localStorage on first load
+    preferred_language: localStorage.getItem("rayma_lang") || "en", 
     pay_frequency: "", pay_day: "", compact_mode: false,
     smart_alerts: true, auto_insights: true
   });
@@ -85,6 +100,8 @@ export default function Profile() {
         avatar_emoji: userProfile.avatar_emoji || "", 
         avatar_photo_url: userProfile.avatar_photo_url || "", 
         preferred_currency: userProfile.preferred_currency || "USD", 
+        // 🌍 Use saved language from userProfile (database), not the current lang
+        // This shows what was last saved, not what was temporarily selected
         preferred_language: userProfile.preferred_language || "en", 
         pay_frequency: userProfile.pay_frequency || "", 
         pay_day: userProfile.pay_day || "", 
@@ -92,6 +109,10 @@ export default function Profile() {
         smart_alerts: userProfile.smart_alerts !== false,
         auto_insights: userProfile.auto_insights !== false,
       });
+    } else {
+      // 🌍 If userProfile is null, at least load language from localStorage
+      const savedLang = localStorage.getItem("rayma_lang") || "en";
+      setForm(prev => ({ ...prev, preferred_language: savedLang }));
     }
   }, [userProfile]); 
 
@@ -118,19 +139,65 @@ export default function Profile() {
 
   async function handleSave(e) { 
     e.preventDefault(); 
-    if (!userProfile) return;
+    
     setSaving(true); 
     
     try {
-      await supabase.auth.updateUser({ data: form });
-      await supabase.from('profiles').update(form).eq('id', userProfile.id);
-      await reload();
+      // Build payload with only valid User entity fields
+      const payload = {
+        preferred_name: form.preferred_name,
+        avatar_id: form.avatar_id,
+        avatar_emoji: form.avatar_emoji,
+        avatar_photo_url: form.avatar_photo_url,
+        preferred_currency: form.preferred_currency,
+        preferred_language: form.preferred_language,
+        pay_frequency: form.pay_frequency,
+        pay_day: form.pay_day,
+        compact_mode: form.compact_mode,
+      };
+
+      // 🌍 CRITICAL: Update localStorage immediately
+      localStorage.setItem("rayma_lang", form.preferred_language);
       
-      if (form.preferred_language) setLang(form.preferred_language); 
+      // Try to get user ID and save to Supabase in the background
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.id) {
+        console.log("✅ Found user ID:", user.id);
+        
+        // Try to update Supabase
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(payload)
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.warn("⚠️ Could not save to Supabase:", updateError);
+        } else {
+          console.log("✅ Profile saved to DB, new language:", form.preferred_language);
+        }
+      } else {
+        console.log("⚠️ No Supabase user ID available, but saved to localStorage");
+      }
+      
+      // Apply language immediately 
+      setLang(form.preferred_language);
       setSaved(true); 
-      setTimeout(() => setSaved(false), 2500); 
+      
+      // Reload page after 1 second so all components use the new language
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (err) { 
-      console.error(err); 
+      console.error("❌ Error during save:", err);
+      // Still update localStorage and reload even if Supabase fails
+      localStorage.setItem("rayma_lang", form.preferred_language);
+      setLang(form.preferred_language);
+      setSaved(true);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } finally { 
       setSaving(false); 
     }
@@ -195,7 +262,7 @@ export default function Profile() {
           
           {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a professional avatar to represent you" />
+            <SectionHeader icon={Fingerprint} title={T("identityAndStyle", "Identity & Style")} subtitle="Choose a professional avatar to represent you" />
             
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
@@ -211,28 +278,28 @@ export default function Profile() {
             </div>
             
             <div className="mt-6">
-              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Display Name</Label>
+              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("displayName", "Display Name")}</Label>
               <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder="How should we call you?" />
             </div>
           </div>
 
           {/* Theme & Focus */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Monitor} title="Theme & Focus" subtitle="Customize your dashboard experience" />
+            <SectionHeader icon={Monitor} title={T("themeAndFocus", "Theme & Focus")} subtitle="Customize your dashboard experience" />
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 p-1 bg-muted/50 rounded-xl border border-border/50">
                 <button type="button" onClick={() => setTheme("light")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "light" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Sun className="w-4 h-4" /> Light Mode
+                  <Sun className="w-4 h-4" /> {T("lightMode", "Light Mode")}
                 </button>
                 <button type="button" onClick={() => setTheme("dark")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "dark" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Moon className="w-4 h-4" /> Dark Mode
+                  <Moon className="w-4 h-4" /> {T("darkMode", "Dark Mode")}
                 </button>
               </div>
 
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
                 <div>
-                  <p className="text-sm font-medium">Focus Mode</p>
+                  <p className="text-sm font-medium">{T("focusMode", "Focus Mode")}</p>
                   <p className="text-xs text-muted-foreground">Hides dashboard accent colors for a distraction-free view</p>
                 </div>
                 <button 
@@ -248,7 +315,7 @@ export default function Profile() {
 
           {/* AI Smart Notifications */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Bell} title="Smart Notifications" subtitle="Let RAYMA handle the heavy lifting" />
+            <SectionHeader icon={Bell} title={T("smartNotifications", "Smart Notifications")} subtitle="Let RAYMA handle the heavy lifting" />
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3">
                 <div className="flex gap-3">
@@ -279,21 +346,30 @@ export default function Profile() {
 
           {/* Localization & Region */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Globe} title="Localization & Region" subtitle="Set your primary language and currency" />
+            <SectionHeader icon={Globe} title={T("localizationAndRegion", "Localization & Region")} subtitle="Set your primary language and currency" />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Language</Label>
-                <Select value={form.preferred_language} onValueChange={v => setForm({...form, preferred_language: v})}>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("language", "Language")}</Label>
+                <Select
+                  value={form.preferred_language}
+                  onValueChange={v => {
+                    // 🌍 Only update form, don't change language yet
+                    // Language will change only after Save button is pressed
+                    setForm(prev => ({ ...prev, preferred_language: v }));
+                  }}
+                >
                   <SelectTrigger><SelectValue placeholder="Select Language" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
+                    {LANGUAGES.map(langItem => (
+                      <SelectItem key={langItem.code} value={langItem.code}>
+                        {langItem.flag} {langItem.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Currency</Label>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("currency", "Currency")}</Label>
                 <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
                   <SelectTrigger><SelectValue placeholder="Select Currency" /></SelectTrigger>
                   <SelectContent>
@@ -309,10 +385,10 @@ export default function Profile() {
 
           {/* Pay Schedule */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps RAYMA calculate your cash flow" />
+            <SectionHeader icon={Calendar} title={T("paySchedule", "Pay Schedule")} subtitle={T("payScheduleDesc", "Helps RAYMA calculate your cash flow")} />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Frequency</Label>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("frequency", "Frequency")}</Label>
                 <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
                   <SelectTrigger><SelectValue placeholder="Frequency" /></SelectTrigger>
                   <SelectContent>
@@ -323,7 +399,7 @@ export default function Profile() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Primary Payday</Label>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("primaryPayday", "Primary Payday")}</Label>
                 <Input placeholder="e.g., 1st & 15th" value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="rounded-xl" />
               </div>
             </div>
@@ -331,7 +407,7 @@ export default function Profile() {
 
           {/* Privacy & Legal - App Store Required */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Shield} title="Privacy & Legal" />
+            <SectionHeader icon={Shield} title={T("privacyLegal", "Privacy & Legal")} />
             <div className="space-y-1">
                <Link to="/privacy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
                   Privacy Policy <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -347,7 +423,7 @@ export default function Profile() {
           </div>
 
           <Button type="submit" className="w-full h-12 rounded-2xl font-bold shadow-sm hover:shadow-md transition-all">
-            {saving ? "Saving..." : saved ? "✓ Preferences Saved" : "Save All Changes"}
+            {saving ? T("saving", "Saving...") : saved ? "✓ " + T("saved", "Saved!") : T("saveChanges", "Save All Changes")}
           </Button>
 
           {/* The 80s Easter Egg Trigger */}

@@ -6,28 +6,42 @@ const LanguageContext = createContext({ lang: "en", setLang: () => {} });
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {
-    return localStorage.getItem("rayma_lang") || detectBrowserLanguage();
+    // 🌍 First, try localStorage (user's most recent choice)
+    const stored = localStorage.getItem("rayma_lang");
+    if (stored) return stored;
+    // If nothing in storage, try browser language
+    return detectBrowserLanguage();
   });
 
-  // Apply RTL direction when language changes
+  // Apply RTL direction and persist to localStorage when language changes
   useEffect(() => {
     const dir = getDir(lang);
     document.documentElement.setAttribute("dir", dir);
     document.documentElement.setAttribute("lang", lang);
+    document.documentElement.classList.toggle("rtl", dir === "rtl");
+    // 🌍 Always persist to localStorage so it survives page reloads
     localStorage.setItem("rayma_lang", lang);
   }, [lang]);
 
-  // Sync with user's saved preference on mount
+  // 🌍 Only sync from base44 on FIRST visit (no localStorage value yet)
+  // If localStorage has a value, that always wins — this prevents reload resets
   useEffect(() => {
+    const storedLang = localStorage.getItem("rayma_lang");
+    if (storedLang) return; // localStorage takes priority — never override it
     base44.auth.isAuthenticated().then(async (authed) => {
       if (authed) {
-        const me = await base44.auth.me();
-        if (me?.preferred_language) {
-          setLangState(me.preferred_language);
+        try {
+          const me = await base44.auth.me();
+          if (me?.preferred_language && me.preferred_language !== lang) {
+            // Only update if different from current
+            setLangState(me.preferred_language);
+          }
+        } catch (err) {
+          console.debug("Language sync skipped", err?.message);
         }
       }
     });
-  }, []);
+  }, []); // Empty dependency - only run once on mount
 
   function setLang(newLang) {
     setLangState(newLang);

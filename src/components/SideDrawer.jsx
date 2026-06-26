@@ -4,7 +4,9 @@ import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getInitialsColor } from "@/components/AvatarPicker";
-import { useFinancialData } from "@/lib/FinancialDataContext"; 
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n"; 
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -19,7 +21,8 @@ const HUMAN_AVATARS = [
 
 export default function SideDrawer({ open, onClose }) {
   const navigate = useNavigate();
-  const { userProfile: user } = useFinancialData(); 
+  const { userProfile: user } = useFinancialData();
+  const { lang } = useLanguage(); 
 
   function go(path) { onClose(); navigate(path); }
 
@@ -57,48 +60,48 @@ export default function SideDrawer({ open, onClose }) {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              <Section title="Account">
-                <DrawerRow icon={User} label="Full Name" value={user?.full_name} />
+              <Section title={t(lang, 'account')}>
+                <DrawerRow icon={User} label={t(lang, 'displayName')} value={user?.full_name} />
                 <DrawerRow icon={Mail} label="Email" value={user?.email} />
-                <DrawerRow icon={User} label="Profile Settings" chevron onClick={() => go("/profile")} />
+                <DrawerRow icon={User} label={t(lang, 'profileSettings')} chevron onClick={() => go("/profile")} />
               </Section>
 
               {user && (
-                <Section title="RAYMA AI">
-                  <DrawerRow icon={Zap} label="AI Consultations" value={tokenDisplay()} chevron onClick={() => go("/support")} />
+                <Section title={t(lang, 'aiAdvisor')}>
+                  <DrawerRow icon={Zap} label={t(lang, 'support')} value={tokenDisplay()} chevron onClick={() => go("/support")} />
                 </Section>
               )}
 
-              <Section title="Navigate">
-                <DrawerRow icon={LayoutDashboard} label="Dashboard" chevron onClick={() => go("/")} />
-                <DrawerRow icon={TrendingUp} label="Income & Cash Flow" chevron onClick={() => go("/finance")} />
-                <DrawerRow icon={PiggyBank} label="Savings Vault" chevron onClick={() => go("/budget-dashboard")} />
-                <DrawerRow icon={BarChart2} label="Assets & Net Worth" chevron onClick={() => go("/assets")} />
-                <DrawerRow icon={Folder} label="Document Vault" chevron onClick={() => go("/documents")} />
+              <Section title={t(lang, 'navigate')}>
+                <DrawerRow icon={LayoutDashboard} label={t(lang, 'dashboard')} chevron onClick={() => go("/")} />
+                <DrawerRow icon={TrendingUp} label={t(lang, 'incomeAndCashFlow')} chevron onClick={() => go("/finance")} />
+                <DrawerRow icon={PiggyBank} label={t(lang, 'savingsVault')} chevron onClick={() => go("/budget-dashboard")} />
+                <DrawerRow icon={BarChart2} label={t(lang, 'assetsNetWorth')} chevron onClick={() => go("/assets")} />
+                <DrawerRow icon={Folder} label={t(lang, 'documentVault')} chevron onClick={() => go("/documents")} />
               </Section>
 
-              <Section title="Tools">
-                <DrawerRow icon={FileText} label="Tax Summary" value="Annual report" chevron onClick={() => go("/tax-summary")} />
-                <DrawerRow icon={Download} label="Export My Data" value="GDPR compliant" chevron onClick={() => go("/data-export")} />
+              <Section title={t(lang, 'tools')}>
+                <DrawerRow icon={FileText} label="Tax Summary" value={t(lang, 'annualReport')} chevron onClick={() => go("/tax-summary")} />
+                <DrawerRow icon={Download} label={t(lang, 'exportData')} value={t(lang, 'gdprCompliant')} chevron onClick={() => go("/data-export")} />
               </Section>
 
-              <Section title="About RAYMA">
+              <Section title={t(lang, 'aboutRayma')}>
                 <DrawerRow icon={Info} label="RAYMA" value="v2.0.0" />
-                <DrawerRow icon={Mail} label="Support Email" value="rayma.app2026@gmail.com" />
+                <DrawerRow icon={Mail} label={t(lang, 'supportEmail')} value="rayma.app2026@gmail.com" />
               </Section>
 
-              <Section title="Privacy & Legal">
-                <DrawerRow icon={Shield} label="Privacy Policy" chevron onClick={() => go("/privacy")} />
-                <DrawerRow icon={FileText} label="Terms of Service" chevron onClick={() => go("/terms")} />
-                <DrawerRow icon={Lock} label="Security" value="All data encrypted" small />
-                <DrawerRow icon={Trash2} label="Delete Account" chevron onClick={() => go("/delete-account")} destructive />
+              <Section title={t(lang, 'privacyLegal')}>
+                <DrawerRow icon={Shield} label={t(lang, 'privacyPolicy')} chevron onClick={() => go("/privacy")} />
+                <DrawerRow icon={FileText} label={t(lang, 'termsOfService')} chevron onClick={() => go("/terms")} />
+                <DrawerRow icon={Lock} label={t(lang, 'security')} value={t(lang, 'allDataEncrypted')} small />
+                <DrawerRow icon={Trash2} label={t(lang, 'deleteAccount')} chevron onClick={() => go("/delete-account")} destructive />
               </Section>
             </div>
 
             {/* ✨ ADDED pb-28 HERE: Lifts the button above the bottom navigation bar */}
             <div className="border-t border-border p-4 pb-28">
               <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                <LogOut className="w-4 h-4 mr-2" /> {t(lang, 'signOut')}
               </Button>
             </div>
           </motion.div>

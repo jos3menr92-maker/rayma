@@ -2,37 +2,41 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
 import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard,} from "lucide-react";
 
-const moreItems = [
-    { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" },
-  { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
-  { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" }, // 🐷 KEPT YOUR SAVINGS VAULT!
-  { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", desc: "Advanced category tracking" }, // ✨ RECOVERED!
-  { path: "/debt-simulator", icon: TrendingDown, label: "Debt Simulator", desc: "Plan your payoff strategy" },
-  { path: "/documents", icon: FolderOpen, label: "Document Vault", desc: "Store & scan financial docs" },
-  { path: "/monthly-recap", icon: CalendarDays, label: "Monthly Recap", desc: "Income & spending summary" },
-  { path: "/assets", icon: BarChart2, label: "Assets & Net Worth", desc: "Track what you own" },
-  { path: "/data-export", icon: Download, label: "Export Data", desc: "Download your RAYMA records" }, // ✨ ADDED!
-  { path: "/trend", icon: TrendingUp, label: "Monthly Trend", desc: "Spending trends over time" },
-  { path: "/tax-summary", icon: FileText, label: "Tax Summary", desc: "Annual report & deductibles" },
-  { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
-  { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
-  { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
-  { path: "/support", icon: Heart, label: "Support RAYMA", desc: "Get Annual Pass or AI token packs", highlight: true },
-  { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
-  { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
-  { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", desc: "Report bugs or suggest features" },
-  { path: "/delete-account", icon: Trash2, label: "Delete Account", desc: "Permanently erase your data & profile", isDelete: true }
-];
-
 export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
   const { userProfile } = useFinancialData(); // 🔒 Safe fetch from Supabase Context
+  const { lang } = useLanguage();
   const isAdmin = userProfile?.role === "admin";
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Create moreItems dynamically to use translations
+  const moreItems = [
+    { path: "/loans", icon: CreditCard, label: t(lang, 'loans'), desc: "Manage your active loans" },
+    { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
+    { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" },
+    { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", desc: "Advanced category tracking" },
+    { path: "/debt-simulator", icon: TrendingDown, label: "Debt Simulator", desc: "Plan your payoff strategy" },
+    { path: "/documents", icon: FolderOpen, label: "Document Vault", desc: "Store & scan financial docs" },
+    { path: "/monthly-recap", icon: CalendarDays, label: t(lang, 'monthlyRecap'), desc: t(lang, 'summary') },
+    { path: "/assets", icon: BarChart2, label: t(lang, 'assets'), desc: "Track what you own" },
+    { path: "/data-export", icon: Download, label: "Export Data", desc: "Download your RAYMA records" },
+    { path: "/trend", icon: TrendingUp, label: "Monthly Trend", desc: "Spending trends over time" },
+    { path: "/tax-summary", icon: FileText, label: "Tax Summary", desc: "Annual report & deductibles" },
+    { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
+    { path: "/profile", icon: User, label: t(lang, 'profile'), desc: t(lang, 'preferences') },
+    { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
+    { path: "/support", icon: Heart, label: t(lang, 'support'), desc: "Get Annual Pass or AI token packs", highlight: true },
+    { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
+    { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
+    { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", desc: "Report bugs or suggest features" },
+    { path: "/delete-account", icon: Trash2, label: t(lang, 'deleteAccount'), desc: t(lang, 'deleteWarning'), isDelete: true }
+  ];
 
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
 
@@ -59,7 +63,7 @@ export default function MoreMenu({ open, onClose }) {
           <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border shadow-2xl max-h-[80vh] flex flex-col">
             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-muted-foreground/30" /></div>
             <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-              <h2 className="text-base font-bold font-heading text-foreground">All Features</h2>
+              <h2 className="text-base font-bold font-heading text-foreground">{t(lang, 'more')}</h2>
               <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
             </div>
             <div className="overflow-y-auto flex-1 p-4 pb-28">
