@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
-import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard,} from "lucide-react";
+import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard } from "lucide-react";
 
 const moreItems = [
   { path: "/loans", icon: CreditCard, label: "Loans & Debt", labelKey: "loansDebt", desc: "Manage your active loans" },
@@ -35,8 +35,8 @@ export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
   const { userProfile } = useFinancialData();
   const { lang } = useLanguage();
+  
   const isAdmin = userProfile?.role === "admin";
-
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
 
   // 🧹 CLEANED: Removed the rogue popup logic. It just routes smoothly now.
