@@ -287,7 +287,7 @@ export default function Profile() {
                   <div className="mt-0.5"><Sparkles className="w-4 h-4 text-primary" /></div>
                   <div>
                     <p className="text-sm font-medium">{T("autoCashFlowInsights", "Automated Cash Flow Insights")}</p>
-                    <p className="text-xs text-muted-foreground">{T("autoCashFlowDesc", "RAYMA analyzes your weekly spending automatically")}</p>
+                     <p className="text-xs text-muted-foreground">{T("autoCashFlowDesc", "RAYMA analyzes your weekly spending automatically")}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, auto_insights: !form.auto_insights})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.auto_insights ? 'bg-primary' : 'bg-muted-foreground/30'}`}>

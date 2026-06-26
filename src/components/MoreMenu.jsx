@@ -1,40 +1,42 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFinancialData } from "@/lib/FinancialDataContext"; 
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
-import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard,} from "lucide-react";
+import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard } from "lucide-react";
+
+const moreItems = [
+  { path: "/loans", icon: CreditCard, label: "Loans & Debt", labelKey: "loansDebt", desc: "Manage your active loans" },
+  { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", labelKey: "bankAccounts", desc: "Manage accounts & transactions" },
+  { path: "/budget", icon: PiggyBank, label: "Savings Vault", labelKey: "savingsVault", desc: "Track and grow your savings" }, 
+  { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", labelKey: "budgetDashboard", desc: "Advanced category tracking" }, 
+  { path: "/debt-simulator", icon: TrendingDown, label: "Debt Simulator", labelKey: "debtSimulator", desc: "Plan your payoff strategy" },
+  { path: "/documents", icon: FolderOpen, label: "Document Vault", labelKey: "documentVault", desc: "Store & scan financial docs" },
+  { path: "/monthly-recap", icon: CalendarDays, label: "Monthly Recap", labelKey: "monthlyRecap", desc: "Income & spending summary" },
+  { path: "/assets", icon: BarChart2, label: "Assets & Net Worth", labelKey: "assetsAndNetWorth", desc: "Track what you own" },
+  // 🛡️ ROUTED TO VAULT
+  { path: "/profile", icon: Download, label: "Export Data", labelKey: "exportData", desc: "Go to Security Vault" }, 
+  { path: "/trend", icon: TrendingUp, label: "Monthly Trend", labelKey: "monthlyTrend", desc: "Spending trends over time" },
+  { path: "/tax-summary", icon: FileText, label: "Tax Summary", labelKey: "taxSummary", desc: "Annual report & deductibles" },
+  { path: "/reminders", icon: Bell, label: "Reminders", labelKey: "reminders", desc: "Payment reminders" },
+  { path: "/profile", icon: User, label: "Profile", labelKey: "profile", desc: "Settings & preferences" },
+  { path: "/security", icon: ShieldCheck, label: "Security Audit", labelKey: "securityAudit", desc: "Verify data safety & defenses" },
+  { path: "/store", icon: Heart, label: "Store", labelKey: "store", desc: "Get Annual Pass or AI token packs", highlight: true },
+  { path: "/admin", icon: ShieldCheck, label: "Admin Panel", labelKey: "adminPanel", desc: "App oversight & metrics", adminOnly: true },
+  { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", labelKey: "remoteAssistance", desc: "Generate a secure pin for developer support" },
+  { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", labelKey: "submitFeedback", desc: "Report bugs or suggest features" },
+  // 🛡️ ROUTED TO VAULT
+  { path: "/profile", icon: Trash2, label: "Delete Account", labelKey: "deleteAccount", desc: "Go to Security Vault", isDelete: true }
+];
 
 export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
+  const { userProfile } = useFinancialData();
   const { lang } = useLanguage();
-  const { userProfile } = useFinancialData(); 
+  
   const isAdmin = userProfile?.role === "admin";
-
-  const moreItems = [
-    { path: "/loans", icon: CreditCard, labelKey: "loansDebt", label: "Loans & Debt", desc: "Manage your active loans" },
-    { path: "/bank-accounts", icon: Landmark, labelKey: "bankAccounts", label: "Bank Accounts", desc: "Manage accounts & transactions" },
-    { path: "/budget", icon: PiggyBank, labelKey: "savingsVault", label: "Savings Vault", desc: "Track and grow your savings" }, 
-    { path: "/budget-dashboard", icon: PieChart, labelKey: "budgetDashboard", label: "Budget Dashboard", desc: "Advanced category tracking" }, 
-    { path: "/debt-simulator", icon: TrendingDown, labelKey: "debtSimulator", label: "Debt Simulator", desc: "Plan your payoff strategy" },
-    { path: "/documents", icon: FolderOpen, labelKey: "documentVault", label: "Document Vault", desc: "Store & scan financial docs" },
-    { path: "/monthly-recap", icon: CalendarDays, labelKey: "monthlyRecap", label: "Monthly Recap", desc: "Income & spending summary" },
-    { path: "/assets", icon: BarChart2, labelKey: "assetsAndNetWorth", label: "Assets & Net Worth", desc: "Track what you own" },
-    { path: "/profile", icon: Download, labelKey: "exportMyData", label: "Export Data", desc: "Go to Security Vault" }, 
-    { path: "/trend", icon: TrendingUp, labelKey: "monthlyTrend", label: "Monthly Trend", desc: "Spending trends over time" },
-    { path: "/tax-summary", icon: FileText, labelKey: "taxSummary", label: "Tax Summary", desc: "Annual report & deductibles" },
-    { path: "/reminders", icon: Bell, labelKey: "reminders", label: "Reminders", desc: "Payment reminders" },
-    { path: "/profile", icon: User, labelKey: "profile", label: "Profile", desc: "Settings & preferences" },
-    { path: "/security", icon: ShieldCheck, labelKey: "securityAudit", label: "Security Audit", desc: "Verify data safety & defenses" },
-    { path: "/store", icon: Heart, labelKey: "store", label: "Store", desc: "Get Annual Pass or AI token packs", highlight: true },
-    { path: "/admin", icon: ShieldCheck, labelKey: "adminPanel", label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
-    { path: "/remote-support", icon: Headset, labelKey: "remoteAssistance", label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
-    { path: "/feedback", icon: MessageSquare, labelKey: "submitFeedback", label: "Submit Feedback", desc: "Report bugs or suggest features" },
-    { path: "/profile", icon: Trash2, labelKey: "deleteAccount", label: "Delete Account", desc: "Go to Security Vault", isDelete: true }
-  ];
-
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
 
   // 🧹 CLEANED: Removed the rogue popup logic. It just routes smoothly now.
