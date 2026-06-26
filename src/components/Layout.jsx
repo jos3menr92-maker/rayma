@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
+import { LayoutDashboard, Plus, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
@@ -9,6 +9,8 @@ import MoreMenu from "./MoreMenu";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { getInitialsColor } from "@/components/AvatarPicker";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -22,6 +24,8 @@ const HUMAN_AVATARS = [
 ];
 
 export default function Layout() {
+  const { lang } = useLanguage();
+  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -121,11 +125,11 @@ export default function Layout() {
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
           <Link to="/" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Home</span>
+            <span className="text-[10px] font-medium">{T("dashboard", "Home")}</span>
           </Link>
           <Link to="/finance" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/finance" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <TrendingUp className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Finance</span>
+            <span className="text-[10px] font-medium">{T("finance", "Finance")}</span>
           </Link>
 
           <div className="relative -top-5 flex justify-center w-16">
@@ -140,11 +144,11 @@ export default function Layout() {
 
           <Link to="/bills" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/bills" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <Receipt className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Bills</span>
+            <span className="text-[10px] font-medium">{T("bills", "Bills")}</span>
           </Link>
           <button onClick={() => setMoreOpen(true)} className="flex flex-col items-center gap-0.5 w-12 text-muted-foreground hover:text-foreground">
             <MoreHorizontal className="w-5 h-5" />
-            <span className="text-[10px] font-medium">More</span>
+            <span className="text-[10px] font-medium">{T("more", "More")}</span>
           </button>
         </div>
       </nav>

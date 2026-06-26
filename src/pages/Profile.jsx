@@ -3,9 +3,9 @@ import { supabase } from "@/lib/supabaseClient";
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
 import { motion } from "framer-motion"; 
 import { 
-  User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
-  FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor, 
-  AlertCircle, Download, LifeBuoy, Fingerprint, Lock, Loader2,
+  Shield, Globe, Calendar, Camera, 
+  Trash2, ChevronRight, Sun, Moon, Monitor, 
+  AlertCircle, Download, Fingerprint, Lock, Loader2,
   Bell, Sparkles, Gamepad2, ShieldAlert
 } from "lucide-react"; 
 import { Link, useNavigate } from "react-router-dom"; 
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { useLanguage } from "@/lib/LanguageContext"; 
-import { t } from "@/lib/i18n";
+import { LANGUAGES, t } from "@/lib/i18n";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -89,7 +89,7 @@ export default function Profile() {
         avatar_emoji: userProfile.avatar_emoji || "", 
         avatar_photo_url: userProfile.avatar_photo_url || "", 
         preferred_currency: userProfile.preferred_currency || "USD", 
-        preferred_language: userProfile.preferred_language || "en", 
+        preferred_language: userProfile.preferred_language || lang || "en", 
         pay_frequency: userProfile.pay_frequency || "", 
         pay_day: userProfile.pay_day || "", 
         compact_mode: userProfile.compact_mode || false, 
@@ -98,6 +98,11 @@ export default function Profile() {
       });
     }
   }, [userProfile]); 
+
+  useEffect(() => {
+    if (!lang) return;
+    setForm((prev) => prev.preferred_language === lang ? prev : { ...prev, preferred_language: lang });
+  }, [lang]);
 
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
@@ -137,6 +142,11 @@ export default function Profile() {
       console.error(err); 
     } finally { 
       setSaving(false); 
+    }
+
+    function handleLanguageChange(value) {
+      setForm({ ...form, preferred_language: value });
+      setLang(value);
     }
   }
 
@@ -311,23 +321,23 @@ export default function Profile() {
 
           {/* Localization & Region */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Globe} title="Localization & Region" subtitle="Set your primary language and currency" />
+            <SectionHeader icon={Globe} title={T("localizationRegion", "Localization & Region")} subtitle={T("setLanguageCurrency", "Set your primary language and currency")} />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Language</Label>
-                <Select value={form.preferred_language} onValueChange={v => setForm({...form, preferred_language: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select Language" /></SelectTrigger>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("language", "Language")}</Label>
+                <Select value={form.preferred_language || lang || "en"} onValueChange={handleLanguageChange}>
+                  <SelectTrigger><SelectValue placeholder={T("selectLanguage", "Select Language")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
+                    {LANGUAGES.map(({ code, flag, label }) => (
+                      <SelectItem key={code} value={code}>{`${flag} ${label}`}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Currency</Label>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("preferredCurrency", "Currency")}</Label>
                 <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select Currency" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={T("selectCurrency", "Select Currency")} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USD">USD ($)</SelectItem>
                     <SelectItem value="EUR">EUR (€)</SelectItem>
@@ -355,7 +365,7 @@ export default function Profile() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Primary Payday</Label>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("primaryPayday", "Primary Payday")}</Label>
                 <Input placeholder="e.g., 1st & 15th" value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="rounded-xl" />
               </div>
             </div>
@@ -367,26 +377,26 @@ export default function Profile() {
             
             <div className="space-y-3 mt-4">
                <Link to="/privacy" className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted rounded-xl text-sm transition-colors border border-border/50">
-                  Privacy Policy <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                 {T("privacyPolicy", "Privacy Policy")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
                <Link to="/terms" className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted rounded-xl text-sm transition-colors border border-border/50">
-                  Terms of Service & EULA <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                 {T("termsOfService", "Terms of Service")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
                
                <button type="button" onClick={() => triggerSecurityCheck('export')} className="w-full flex items-center justify-between p-3 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm transition-colors">
-                  <span className="flex items-center gap-2"><Download className="w-4 h-4" /> Export Data</span>
+                 <span className="flex items-center gap-2"><Download className="w-4 h-4" /> {T("exportMyData", "Export Data")}</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                </button>
 
                <button type="button" onClick={() => triggerSecurityCheck('delete')} className="w-full flex items-center justify-between p-3 bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-sm transition-colors">
-                  <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete Account & Data</span>
+                 <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> {T("deleteAccountLabel", "Delete Account")} & {T("deleteData", "Data")}</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                </button>
             </div>
           </div>
 
           <Button type="submit" className="w-full h-12 rounded-2xl font-bold shadow-sm hover:shadow-md transition-all">
-            {saving ? "Saving..." : saved ? "✓ Preferences Saved" : "Save All Changes"}
+            {saving ? T("saving", "Saving...") : saved ? `✓ ${T("saved", "Preferences Saved")}` : T("saveAllChanges", "Save All Changes")}
           </Button>
 
           {/* The 80s Easter Egg Trigger */}
