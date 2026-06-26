@@ -54,7 +54,6 @@ export default function Profile() {
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const fileInputRef = useRef(null);
   
-  // 🧠 SECURE: Now pulling ALL data so we can export it!
   const { userProfile, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
   
   const [saving, setSaving] = useState(false); 
@@ -62,9 +61,12 @@ export default function Profile() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
   
-  // 🔒 Security Vault State
+  // 🔒 Security Vault State - NOW FULLY WIRED
   const [showPasswordLock, setShowPasswordLock] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); 
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
   
@@ -97,12 +99,7 @@ export default function Profile() {
         auto_insights: userProfile.auto_insights !== false,
       });
     }
-  }, [userProfile]); 
-
-  useEffect(() => {
-    if (!lang) return;
-    setForm((prev) => prev.preferred_language === lang ? prev : { ...prev, preferred_language: lang });
-  }, [lang]);
+  }, [userProfile, lang]); 
 
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
@@ -119,7 +116,7 @@ export default function Profile() {
       setForm(f => ({ ...f, avatar_photo_url: publicUrl, avatar_emoji: "", avatar_id: "" }));
     } catch (err) { 
       console.error(err); 
-      alert("Failed to upload photo. Make sure your 'avatars' bucket is public in Supabase!");
+      alert("Failed to upload photo.");
     } finally { 
       setUploadingPhoto(false); 
     }
@@ -150,50 +147,84 @@ export default function Profile() {
     setLang(value);
   }
 
-  // 🔒 UNIFIED SECURITY LOGIC
+  // ---------------------------------------------------------
+  // 🛡️ SECURE ACTION HANDLERS
+  // ---------------------------------------------------------
+
   const triggerSecurityCheck = (action) => {
     setPendingAction(action);
+    setPassword("");
+    setAuthError("");
     setShowPasswordLock(true);
   };
 
-  const executeSecurityAction = async () => {
-    setShowPasswordLock(false);
-    
-    // 🚀 STOLEN ENGINE: The Export Download Logic!
-    if (pendingAction === 'export') {
-      const exportData = {
-        profile: userProfile,
-        incomes,
-        bills,
-        loans,
-        exported_at: new Date().toISOString()
-      };
+  const verifyAndExecute = async () => {
+    setAuthError("");
+    setIsVerifying(true);
 
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `rayma-data-export-${new Date().toISOString().split("T")[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+    try {
+      // 1. Get current user's email securely from session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("Could not verify user identity.");
+
+      // 2. Actually re-authenticate against Supabase using the provided password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: password,
+      });
+
+      if (signInError) throw signInError;
+
+      // 3. Password is valid! Close modal and route to correct hardened handler
+      setShowPasswordLock(false);
       
-      alert("✅ Data Exported! Check your downloads folder.");
-    } 
-    
-    if (pendingAction === 'delete') {
-      alert("⚠️ ALARM: Account Deletion Initiated. Your data will be wiped in 30 days.");
-      setDeleting(true);
-      try {
-        await supabase.from('profiles').update({ 
-          deleted_at: new Date().toISOString() 
-        }).eq('id', userProfile.id);
-        
-        await supabase.auth.signOut();
-        window.location.href = "/auth";
-      } catch (err) { 
-        console.error(err);
-        setDeleting(false);
+      if (pendingAction === 'export') {
+        await handleExport();
+      } else if (pendingAction === 'delete') {
+        await handleDelete();
       }
+      
+    } catch (err) {
+      setAuthError(err.message || "Invalid password. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleExport = async () => {
+    const exportData = {
+      profile: userProfile,
+      incomes,
+      bills,
+      loans,
+      exported_at: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rayma-data-export-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    alert("✅ Data Exported! Check your downloads folder.");
+  };
+
+  const handleDelete = async () => {
+    alert("⚠️ ALARM: Account Deletion Initiated. Your data will be wiped in 30 days.");
+    setDeleting(true);
+    try {
+      // Future upgrade: Call a Supabase Edge Function here to hard-delete from Auth
+      await supabase.from('profiles').update({ 
+        deleted_at: new Date().toISOString() 
+      }).eq('id', userProfile.id);
+      
+      await supabase.auth.signOut();
+      window.location.href = "/auth";
+    } catch (err) { 
+      console.error(err);
+      setDeleting(false);
     }
   };
 
@@ -413,7 +444,7 @@ export default function Profile() {
         </form>
       </motion.div>
 
-      {/* 🔐 THE PASSWORD MODAL */}
+      {/* 🔐 THE PASSWORD MODAL - NOW FULLY FUNCTIONAL */}
       {showPasswordLock && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
@@ -425,18 +456,33 @@ export default function Profile() {
               Please enter your password to confirm you want to {pendingAction === 'export' ? "export your data" : "permanently delete your account"}.
             </p>
             
-            <Input 
-              type="password" 
-              placeholder="Enter Password..." 
-              className="w-full bg-muted border rounded-xl p-3 text-sm focus:outline-primary"
-            />
+            <div className="space-y-1">
+              <Input 
+                type="password" 
+                placeholder="Enter Password..." 
+                className="w-full bg-muted border rounded-xl p-3 text-sm focus:outline-primary"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isVerifying}
+              />
+              {authError && (
+                <p className="text-xs text-destructive ml-1">{authError}</p>
+              )}
+            </div>
             
             <div className="flex gap-3 pt-2">
-              <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>
+              <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)} disabled={isVerifying}>
                 Cancel
               </Button>
-              <Button type="button" variant={pendingAction === 'delete' ? 'destructive' : 'default'} className="flex-1" onClick={executeSecurityAction}>
-                <Lock className="w-4 h-4 mr-2" /> Confirm
+              <Button 
+                type="button" 
+                variant={pendingAction === 'delete' ? 'destructive' : 'default'} 
+                className="flex-1" 
+                onClick={verifyAndExecute}
+                disabled={!password || isVerifying}
+              >
+                {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+                Confirm
               </Button>
             </div>
           </motion.div>
