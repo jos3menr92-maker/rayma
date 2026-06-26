@@ -47,7 +47,16 @@ export const translations = {
     incomeAndCashFlow: "Income & Cash Flow", savingsVault: "Savings Vault", assetsAndNetWorth: "Assets & Net Worth", documentVault: "Document Vault",
     taxSummary: "Tax Summary", annualReport: "Annual report", exportMyData: "Export My Data", goToSecurityVault: "Go to Security Vault",
     raymaVersion: "RAYMA", raymaVersionNumber: "v2.0.0", supportEmailLabel: "Support Email", raymaAppEmail: "rayma.app2026@gmail.com",
-    securityLabel: "Security", allDataEncrypted: "All data encrypted", deleteAccountLabel: "Delete Account", signOutButton: "Sign Out"
+    securityLabel: "Security", allDataEncrypted: "All data encrypted", deleteAccountLabel: "Delete Account", signOutButton: "Sign Out",
+    allFeatures: "All Features", bankAccounts: "Bank Accounts", manageActiveLoans: "Manage your active loans", manageAccountsTransactions: "Manage accounts & transactions",
+    trackGrowSavings: "Track and grow your savings", budgetDashboard: "Budget Dashboard", advancedCategoryTracking: "Advanced category tracking", debtSimulator: "Debt Simulator",
+    planPayoffStrategy: "Plan your payoff strategy", storeScanFinancialDocs: "Store & scan financial docs", trackWhatYouOwn: "Track what you own", monthlyTrend: "Monthly Trend",
+    spendingTrendsOverTime: "Spending trends over time", annualReportDeductibles: "Annual report & deductibles", reminders: "Reminders", paymentReminders: "Payment reminders",
+    settingsPreferences: "Settings & preferences", securityAudit: "Security Audit", verifyDataSafetyDefenses: "Verify data safety & defenses", store: "Store",
+    annualPassOrTokens: "Get Annual Pass or AI token packs", adminPanel: "Admin Panel", appOversightMetrics: "App oversight & metrics", liveRemoteAssistance: "Live Remote Assistance",
+    securePinSupport: "Generate a secure pin for developer support", submitFeedback: "Submit Feedback", reportBugsSuggestFeatures: "Report bugs or suggest features",
+    localizationRegion: "Localization & Region", setLanguageCurrency: "Set your primary language and currency", language: "Language", selectLanguage: "Select Language",
+    selectCurrency: "Select Currency", primaryPayday: "Primary Payday", saveAllChanges: "Save All Changes", deleteData: "Data"
   },
   zh: {
     appName: "债务与账单", dashboard: "仪表板", loans: "贷款", bills: "账单", finance: "财务", more: "更多", signIn: "登录", signOut: "退出登录", getStartedFree: "免费开始",
