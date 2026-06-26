@@ -2,6 +2,8 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { LayoutDashboard, Plus, List, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
@@ -23,6 +25,7 @@ const HUMAN_AVATARS = [
 
 export default function Layout() {
   const location = useLocation();
+  const { lang } = useLanguage();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -121,11 +124,11 @@ export default function Layout() {
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
           <Link to="/" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Home</span>
+            <span className="text-[10px] font-medium">{t(lang, "home")}</span>
           </Link>
           <Link to="/finance" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/finance" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <TrendingUp className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Finance</span>
+            <span className="text-[10px] font-medium">{t(lang, "finance")}</span>
           </Link>
 
           <div className="relative -top-5 flex justify-center w-16">
@@ -140,11 +143,11 @@ export default function Layout() {
 
           <Link to="/bills" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/bills" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <Receipt className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Bills</span>
+            <span className="text-[10px] font-medium">{t(lang, "bills")}</span>
           </Link>
           <button onClick={() => setMoreOpen(true)} className="flex flex-col items-center gap-0.5 w-12 text-muted-foreground hover:text-foreground">
             <MoreHorizontal className="w-5 h-5" />
-            <span className="text-[10px] font-medium">More</span>
+            <span className="text-[10px] font-medium">{t(lang, "more")}</span>
           </button>
         </div>
       </nav>

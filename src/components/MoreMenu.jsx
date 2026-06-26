@@ -1,37 +1,40 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFinancialData } from "@/lib/FinancialDataContext"; 
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
 import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, AlertTriangle, Download, MessageSquare, CreditCard,} from "lucide-react";
 
 const moreItems = [
-  { path: "/loans", icon: CreditCard, label: "Loans & Debt", desc: "Manage your active loans" },
-  { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", desc: "Manage accounts & transactions" },
-  { path: "/budget", icon: PiggyBank, label: "Savings Vault", desc: "Track and grow your savings" }, 
-  { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", desc: "Advanced category tracking" }, 
-  { path: "/debt-simulator", icon: TrendingDown, label: "Debt Simulator", desc: "Plan your payoff strategy" },
-  { path: "/documents", icon: FolderOpen, label: "Document Vault", desc: "Store & scan financial docs" },
-  { path: "/monthly-recap", icon: CalendarDays, label: "Monthly Recap", desc: "Income & spending summary" },
-  { path: "/assets", icon: BarChart2, label: "Assets & Net Worth", desc: "Track what you own" },
+  { path: "/loans", icon: CreditCard, label: "Loans & Debt", labelKey: "loansDebt", desc: "Manage your active loans" },
+  { path: "/bank-accounts", icon: Landmark, label: "Bank Accounts", labelKey: "bankAccounts", desc: "Manage accounts & transactions" },
+  { path: "/budget", icon: PiggyBank, label: "Savings Vault", labelKey: "savingsVault", desc: "Track and grow your savings" }, 
+  { path: "/budget-dashboard", icon: PieChart, label: "Budget Dashboard", labelKey: "budgetDashboard", desc: "Advanced category tracking" }, 
+  { path: "/debt-simulator", icon: TrendingDown, label: "Debt Simulator", labelKey: "debtSimulator", desc: "Plan your payoff strategy" },
+  { path: "/documents", icon: FolderOpen, label: "Document Vault", labelKey: "documentVault", desc: "Store & scan financial docs" },
+  { path: "/monthly-recap", icon: CalendarDays, label: "Monthly Recap", labelKey: "monthlyRecap", desc: "Income & spending summary" },
+  { path: "/assets", icon: BarChart2, label: "Assets & Net Worth", labelKey: "assetsAndNetWorth", desc: "Track what you own" },
   // 🛡️ ROUTED TO VAULT
-  { path: "/profile", icon: Download, label: "Export Data", desc: "Go to Security Vault" }, 
-  { path: "/trend", icon: TrendingUp, label: "Monthly Trend", desc: "Spending trends over time" },
-  { path: "/tax-summary", icon: FileText, label: "Tax Summary", desc: "Annual report & deductibles" },
-  { path: "/reminders", icon: Bell, label: "Reminders", desc: "Payment reminders" },
-  { path: "/profile", icon: User, label: "Profile", desc: "Settings & preferences" },
-  { path: "/security", icon: ShieldCheck, label: "Security Audit", desc: "Verify data safety & defenses" },
-  { path: "/store", icon: Heart, label: "Store", desc: "Get Annual Pass or AI token packs", highlight: true },
-  { path: "/admin", icon: ShieldCheck, label: "Admin Panel", desc: "App oversight & metrics", adminOnly: true },
-  { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", desc: "Generate a secure pin for developer support" },
-  { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", desc: "Report bugs or suggest features" },
+  { path: "/profile", icon: Download, label: "Export Data", labelKey: "exportData", desc: "Go to Security Vault" }, 
+  { path: "/trend", icon: TrendingUp, label: "Monthly Trend", labelKey: "monthlyTrend", desc: "Spending trends over time" },
+  { path: "/tax-summary", icon: FileText, label: "Tax Summary", labelKey: "taxSummary", desc: "Annual report & deductibles" },
+  { path: "/reminders", icon: Bell, label: "Reminders", labelKey: "reminders", desc: "Payment reminders" },
+  { path: "/profile", icon: User, label: "Profile", labelKey: "profile", desc: "Settings & preferences" },
+  { path: "/security", icon: ShieldCheck, label: "Security Audit", labelKey: "securityAudit", desc: "Verify data safety & defenses" },
+  { path: "/store", icon: Heart, label: "Store", labelKey: "store", desc: "Get Annual Pass or AI token packs", highlight: true },
+  { path: "/admin", icon: ShieldCheck, label: "Admin Panel", labelKey: "adminPanel", desc: "App oversight & metrics", adminOnly: true },
+  { path: "/remote-support", icon: Headset, label: "Live Remote Assistance", labelKey: "remoteAssistance", desc: "Generate a secure pin for developer support" },
+  { path: "/feedback", icon: MessageSquare, label: "Submit Feedback", labelKey: "submitFeedback", desc: "Report bugs or suggest features" },
   // 🛡️ ROUTED TO VAULT
-  { path: "/profile", icon: Trash2, label: "Delete Account", desc: "Go to Security Vault", isDelete: true }
+  { path: "/profile", icon: Trash2, label: "Delete Account", labelKey: "deleteAccount", desc: "Go to Security Vault", isDelete: true }
 ];
 
 export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
-  const { userProfile } = useFinancialData(); 
+  const { userProfile } = useFinancialData();
+  const { lang } = useLanguage();
   const isAdmin = userProfile?.role === "admin";
 
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
@@ -63,7 +66,7 @@ export default function MoreMenu({ open, onClose }) {
                         <Icon className={`w-4 h-4 ${item.isDelete ? "text-destructive" : "text-primary"}`} />
                       </div>
                       <div className="min-w-0">
-                        <p className={`text-sm font-semibold leading-tight ${item.isDelete ? "text-destructive" : "text-foreground"}`}>{item.label}</p>
+                        <p className={`text-sm font-semibold leading-tight ${item.isDelete ? "text-destructive" : "text-foreground"}`}>{t(lang, item.labelKey) !== item.labelKey ? t(lang, item.labelKey) : item.label}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{item.desc}</p>
                       </div>
                     </button>
