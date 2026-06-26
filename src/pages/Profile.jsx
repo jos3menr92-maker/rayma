@@ -143,11 +143,11 @@ export default function Profile() {
     } finally { 
       setSaving(false); 
     }
+  }
 
-    function handleLanguageChange(value) {
-      setForm({ ...form, preferred_language: value });
-      setLang(value);
-    }
+  function handleLanguageChange(value) {
+    setForm({ ...form, preferred_language: value });
+    setLang(value);
   }
 
   // 🔒 UNIFIED SECURITY LOGIC
