@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +24,15 @@ const CATEGORY_COLORS = {
 const emptyForm = { name: "", category_key: "other", monthly_limit: "" };
 
 export default function BudgetDashboard() {
+  const { lang } = useLanguage();
+
+  const T = useMemo(() =>
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [bills, setBills] = useState([]);

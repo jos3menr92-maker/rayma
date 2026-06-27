@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
+import { useEffect, useState, useMemo } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, TrendingUp, PieChart as PieIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +26,16 @@ const TYPE_COLORS = {
 const emptyForm = { name: "", amount: "", type: "cash", notes: "" };
 
 export default function AssetDashboard() {
-  const { loans, userProfile, loading: contextLoading } = useFinancialData(); // 🧠 Using Brain for liabilities!
+  const { loans, userProfile, loading: contextLoading } = useFinancialData();
+  const { lang } = useLanguage();
+
+  const T = useMemo(() =>
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
   const [assets, setAssets] = useState([]);
   const [localLoading, setLocalLoading] = useState(true);
   
