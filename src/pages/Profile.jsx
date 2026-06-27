@@ -262,7 +262,7 @@ export default function Profile() {
           
           {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Fingerprint} title={T("identityAndStyle", "Identity & Style")} subtitle="Choose a professional avatar to represent you" />
+            <SectionHeader icon={Fingerprint} title={T("identityAndStyle", "Identity & Style")} subtitle={T("chooseAvatarSubtitle", "Choose a professional avatar to represent you")} />
             
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
@@ -279,13 +279,13 @@ export default function Profile() {
             
             <div className="mt-6">
               <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("displayName", "Display Name")}</Label>
-              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder="How should we call you?" />
+              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder={T("howShouldWeCallYou", "How should we call you?")} />
             </div>
           </div>
 
           {/* Theme & Focus */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Monitor} title={T("themeAndFocus", "Theme & Focus")} subtitle="Customize your dashboard experience" />
+            <SectionHeader icon={Monitor} title={T("themeAndFocus", "Theme & Focus")} subtitle={T("customizeDashboard", "Customize your dashboard experience")} />
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 p-1 bg-muted/50 rounded-xl border border-border/50">
@@ -300,7 +300,7 @@ export default function Profile() {
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
                 <div>
                   <p className="text-sm font-medium">{T("focusMode", "Focus Mode")}</p>
-                  <p className="text-xs text-muted-foreground">Hides dashboard accent colors for a distraction-free view</p>
+                  <p className="text-xs text-muted-foreground">{T("focusModeDesc", "Hides dashboard accent colors for a distraction-free view")}</p>
                 </div>
                 <button 
                   type="button"
@@ -315,14 +315,14 @@ export default function Profile() {
 
           {/* AI Smart Notifications */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Bell} title={T("smartNotifications", "Smart Notifications")} subtitle="Let RAYMA handle the heavy lifting" />
+            <SectionHeader icon={Bell} title={T("smartNotifications", "Smart Notifications")} subtitle={T("heavyLifting", "Let RAYMA handle the heavy lifting")} />
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3">
                 <div className="flex gap-3">
                   <div className="mt-0.5"><Sparkles className="w-4 h-4 text-primary" /></div>
                   <div>
-                    <p className="text-sm font-medium">Automated Cash Flow Insights</p>
-                    <p className="text-xs text-muted-foreground">RAYMA analyzes your weekly spending automatically</p>
+                    <p className="text-sm font-medium">{T("automatedCashFlowInsights", "Automated Cash Flow Insights")}</p>
+                    <p className="text-xs text-muted-foreground">{T("raymaAnalyzesWeekly", "RAYMA analyzes your weekly spending automatically")}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, auto_insights: !form.auto_insights})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.auto_insights ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
@@ -333,8 +333,8 @@ export default function Profile() {
                 <div className="flex gap-3">
                   <div className="mt-0.5"><AlertCircle className="w-4 h-4 text-muted-foreground" /></div>
                   <div>
-                    <p className="text-sm font-medium">Smart Bill Alerts</p>
-                    <p className="text-xs text-muted-foreground">Get notified only when upcoming obligations need attention</p>
+                    <p className="text-sm font-medium">{T("smartBillAlerts", "Smart Bill Alerts")}</p>
+                    <p className="text-xs text-muted-foreground">{T("notifiedOnlyWhen", "Get notified only when upcoming obligations need attention")}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, smart_alerts: !form.smart_alerts})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.smart_alerts ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
