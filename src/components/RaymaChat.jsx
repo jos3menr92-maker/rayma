@@ -274,7 +274,7 @@ export default function RaymaChat({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          className="fixed bottom-24 right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] max-h-[75vh] z-40"
+          className="fixed bottom-24 right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] max-h-[75vh] z-[60]"
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
             <div>

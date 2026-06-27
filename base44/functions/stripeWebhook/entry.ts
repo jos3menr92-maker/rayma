@@ -1,29 +1,51 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@14.21.0';
 
-// One-time token packs: purchase_type → tokens to add
-const TOKEN_GRANTS: Record<string, number> = {
+/**
+ * Stripe Webhook Handler
+ * ======================
+ * Listens for checkout.session.completed events and updates user profiles.
+ * 
+ * Supported purchase types:
+ *   - Token packs: token_pack_10, token_pack_50, token_pack_100 (one-time, add to balance)
+ *   - Annual pass: annual_pass (one-time, set expiry 1 year)
+ *   - Monthly subscriptions: power_lithium_monthly, power_generator_monthly (recurring, set subscription type)
+ *   - Single purchase power tiers: power_insert_coin (one-time instant boost)
+ */
+
+const TOKEN_GRANTS = {
   token_pack_10: 10,
   token_pack_50: 50,
   token_pack_100: 100,
 };
 
-// Subscription tiers: purchase_type → { tier name, subscription duration in months }
-const SUBSCRIPTION_TIERS: Record<string, { tier: string; months: number }> = {
-  power_lithium_monthly:   { tier: 'power_lithium',   months: 1  },
-  power_lithium_annual:    { tier: 'power_lithium',   months: 12 },
-  power_generator_monthly: { tier: 'power_generator', months: 1  },
-  power_generator_annual:  { tier: 'power_generator', months: 12 },
+// Power tier subscription configurations: daily energy bar capacity
+const POWER_TIER_CONFIG = {
+  power_lithium_monthly: {
+    subscription_type: 'power_lithium',
+    daily_limit: 50,
+  },
+  power_lithium_annual: {
+    subscription_type: 'power_lithium',
+    daily_limit: 50,
+  },
+  power_generator_monthly: {
+    subscription_type: 'power_generator',
+    daily_limit: 200,
+  },
+  power_generator_annual: {
+    subscription_type: 'power_generator',
+    daily_limit: 200,
+  },
 };
 
-// Energy bars added by each subscription tier daily (also used for UI reference)
-const DAILY_ENERGY_BY_TIER: Record<string, number> = {
-  power_lithium:   50,
-  power_generator: 200,
+// Single purchase that boosts energy immediately
+const INSTANT_BOOST_CONFIG = {
+  power_insert_coin: {
+    boost_tokens: 100,
+    description: 'Instant energy boost',
+  },
 };
-
-// One-time "Insert Coin" energy restore — fills up 100 bars immediately
-const INSERT_COIN_ENERGY = 100;
 
 Deno.serve(async (req) => {
   try {
@@ -38,12 +60,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Verify webhook signature for security
     const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     console.log(`Stripe webhook event: ${event.type}`);
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const userId      = session.metadata?.user_id;
+      const userId = session.metadata?.user_id;
       const purchaseType = session.metadata?.purchase_type;
 
       if (!userId) {
@@ -53,78 +76,29 @@ Deno.serve(async (req) => {
 
       const base44 = createClientFromRequest(req);
 
-      // ── 1. TOKEN PACKS ─────────────────────────────────────────────────────
+      // ===== CASE 1: Token Packs (one-time, add to balance) =====
       if (TOKEN_GRANTS[purchaseType]) {
         const tokensToAdd = TOKEN_GRANTS[purchaseType];
-        const users   = await base44.asServiceRole.entities.User.filter({ id: userId });
+        const users = await base44.asServiceRole.entities.User.filter({ id: userId });
         const userData = users[0];
-
-        // Add tokens on top of existing balance (never overwrite)
         const currentTokens = userData?.ai_tokens || 0;
-        const newTokens     = currentTokens + tokensToAdd;
+        const newTokens = currentTokens + tokensToAdd;
 
         await base44.asServiceRole.entities.User.update(userId, {
           ai_tokens: newTokens,
         });
 
-        console.log(`Token pack (${purchaseType}) applied for user ${userId}: +${tokensToAdd} → total ${newTokens}`);
+        console.log(`Token pack (${purchaseType}) applied for user ${userId}: +${tokensToAdd} tokens → total ${newTokens}`);
 
-      // ── 2. POWER INSERT COIN (one-time energy restore) ─────────────────────
-      } else if (purchaseType === 'power_insert_coin') {
-        const users    = await base44.asServiceRole.entities.User.filter({ id: userId });
-        const userData = users[0];
-
-        // Add INSERT_COIN_ENERGY on top of current bars so we don't discard existing energy
-        const currentEnergy = userData?.energy_bars || 0;
-        const newEnergy     = currentEnergy + INSERT_COIN_ENERGY;
-
-        await base44.asServiceRole.entities.User.update(userId, {
-          energy_bars: newEnergy,
-        });
-
-        console.log(`Insert Coin applied for user ${userId}: +${INSERT_COIN_ENERGY} bars → total ${newEnergy}`);
-
-      // ── 3. SUBSCRIPTION TIERS (power_lithium / power_generator) ────────────
-      } else if (SUBSCRIPTION_TIERS[purchaseType]) {
-        const { tier, months } = SUBSCRIPTION_TIERS[purchaseType];
-
-        // Calculate expiry: extend from today (or from current expiry if still active)
-        const users    = await base44.asServiceRole.entities.User.filter({ id: userId });
-        const userData = users[0];
-
-        let baseDate = new Date();
-        if (userData?.subscription_expires_at) {
-          const currentExpiry = new Date(userData.subscription_expires_at + 'T00:00:00Z');
-          // If their current sub is still active, stack the new period on top
-          if (currentExpiry > baseDate) baseDate = currentExpiry;
-        }
-        baseDate.setMonth(baseDate.getMonth() + months);
-        const expiresStr = baseDate.toISOString().split('T')[0];
-
-        // Grant them their daily energy immediately on purchase
-        const dailyEnergy   = DAILY_ENERGY_BY_TIER[tier] || 10;
-        const currentEnergy = userData?.energy_bars || 0;
-        const newEnergy     = Math.max(currentEnergy, dailyEnergy);
-
-        await base44.asServiceRole.entities.User.update(userId, {
-          subscription_tier:       tier,
-          subscription_expires_at: expiresStr,
-          energy_bars:             newEnergy,
-        });
-
-        console.log(
-          `Subscription (${purchaseType}) granted for user ${userId}: ` +
-          `tier=${tier}, expires=${expiresStr}, energy=${newEnergy}`
-        );
-
-      // ── 4. ANNUAL PASS (legacy / one-year unlimited) ────────────────────────
+      // ===== CASE 2: Annual Pass (one-time, set 1-year expiry) =====
       } else if (purchaseType === 'annual_pass') {
-        const users    = await base44.asServiceRole.entities.User.filter({ id: userId });
+        const users = await base44.asServiceRole.entities.User.filter({ id: userId });
         const userData = users[0];
-
         let baseDate = new Date();
+        
+        // If annual pass is already active, extend from current expiry; otherwise from today
         if (userData?.annual_pass_expires_at) {
-          const currentExpiry = new Date(userData.annual_pass_expires_at + 'T00:00:00Z');
+          const currentExpiry = new Date(userData.annual_pass_expires_at + 'T00:00:00');
           if (currentExpiry > baseDate) baseDate = currentExpiry;
         }
         baseDate.setFullYear(baseDate.getFullYear() + 1);
@@ -136,8 +110,31 @@ Deno.serve(async (req) => {
 
         console.log(`Annual pass granted for user ${userId} until ${expiresStr}`);
 
-      } else {
-        console.warn(`Unknown purchase_type "${purchaseType}" for user ${userId} — no action taken.`);
+      // ===== CASE 3: Power Tier Monthly/Annual Subscriptions (recurring, update subscription type + daily limit) =====
+      } else if (POWER_TIER_CONFIG[purchaseType]) {
+        const tierConfig = POWER_TIER_CONFIG[purchaseType];
+        
+        await base44.asServiceRole.entities.User.update(userId, {
+          subscription_type: tierConfig.subscription_type,
+          ai_tokens_daily_limit: tierConfig.daily_limit,
+          subscription_start_date: new Date().toISOString().split('T')[0],
+        });
+
+        console.log(`Power tier subscription (${purchaseType}) activated for user ${userId}: daily limit set to ${tierConfig.daily_limit} energy bars`);
+
+      // ===== CASE 4: Instant Boost (one-time, add immediate energy) =====
+      } else if (INSTANT_BOOST_CONFIG[purchaseType]) {
+        const boostConfig = INSTANT_BOOST_CONFIG[purchaseType];
+        const users = await base44.asServiceRole.entities.User.filter({ id: userId });
+        const userData = users[0];
+        const currentTokens = userData?.ai_tokens || 0;
+        const newTokens = currentTokens + boostConfig.boost_tokens;
+
+        await base44.asServiceRole.entities.User.update(userId, {
+          ai_tokens: newTokens,
+        });
+
+        console.log(`Instant boost (${purchaseType}) applied for user ${userId}: +${boostConfig.boost_tokens} tokens → total ${newTokens}`);
       }
     }
 

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-// RAYMA's secure connection to the database
+// We pull your URL and Key from your environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 

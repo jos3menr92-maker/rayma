@@ -1,10 +1,13 @@
-import { useNavigate } from "react-router-dom";
 import { AlertTriangle, XCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 /**
- * Logic:
- * - No rayma_expires_at AND within 6 months of created_date → free trial, no banner (or warn in last 30 days)
- * - rayma_expires_at set (donated) → use that date, warn in last 30 days
+ * RAYMA expiry banner logic:
+ * - If annual_pass_expires_at exists, use it
+ * - Else fallback to rayma_expires_at
+ * - Else fallback to created_date + 6 months trial
+ * - Show nothing if >30 days left
+ * - <=30 days left → warning banner
  * - Expired → show renewal banner
  */
 function getEffectiveExpiry(user) {
@@ -46,7 +49,7 @@ export default function RAYMAExpiryBanner({ user }) {
           </p>
         </div>
         <button
-          onClick={() => navigate("/support")}
+          onClick={() => navigate("/store")}
           className="shrink-0 text-[11px] font-semibold bg-destructive hover:bg-destructive/90 text-white px-3 py-1.5 rounded-xl transition-colors"
         >
           Upgrade
@@ -67,7 +70,7 @@ export default function RAYMAExpiryBanner({ user }) {
           </p>
           </div>
           <button
-          onClick={() => navigate("/support")}
+          onClick={() => navigate("/store")}
           className="shrink-0 text-[11px] font-semibold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition-colors"
           >
           Upgrade

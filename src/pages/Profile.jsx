@@ -1,13 +1,12 @@
-import { useEffect, useState, useRef, useMemo } from "react"; 
-import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT
-import { base44 } from "@/api/base44Client"; // 🧠 Base44 entity operations
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useEffect, useState, useRef } from "react"; 
+import { supabase } from "@/lib/supabaseClient"; 
+import { useFinancialData } from "@/lib/FinancialDataContext"; 
 import { motion } from "framer-motion"; 
 import { 
-  User, Save, LogOut, Shield, Globe, Calendar, Mail, Camera, X, 
-  FileText, Trash2, ChevronRight, Palette, Sun, Moon, Monitor, 
-  AlertCircle, Download, LifeBuoy, Fingerprint, Lock, Loader2,
-  Bell, Sparkles, Gamepad2
+  Shield, Globe, Calendar, Camera, 
+  Trash2, ChevronRight, Sun, Moon, Monitor, 
+  AlertCircle, Download, Fingerprint, Lock, Loader2,
+  Bell, Sparkles, Gamepad2, ShieldAlert
 } from "lucide-react"; 
 import { Link, useNavigate } from "react-router-dom"; 
 import { Button } from "@/components/ui/button"; 
@@ -15,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { useLanguage } from "@/lib/LanguageContext"; 
-import { t, LANGUAGES } from "@/lib/i18n";
-import { useAuth } from "@/lib/AuthContext";
+import { LANGUAGES, t } from "@/lib/i18n";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -50,38 +48,31 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
   ); 
 } 
 
-export default function Profile() {
-  const { lang, setLang, locale, setLocale } = useLanguage(); 
+export default function Profile() { 
+  const { lang, setLang } = useLanguage(); 
   const navigate = useNavigate(); 
-  // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
-  const T = useMemo(() => 
-    (key, fallback) => {
-      const translated = t(lang, key);
-      return translated !== key ? translated : fallback;
-    },
-    [lang]
-  );
+  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const fileInputRef = useRef(null);
-  const { user: authUser } = useAuth();
   
-  // 🧠 SECURE: Read and reload from the Brain directly
-  const { userProfile, reload, refreshUserProfile, loading: contextLoading } = useFinancialData();
-  
-  // Use userProfile from FinancialDataContext, fallback to user from AuthContext
-  const effectiveUser = userProfile || authUser;
+  const { userProfile, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
   
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
   
+  // 🔒 Security Vault State - NOW FULLY WIRED
+  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); 
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
   
-  const [form, setForm] = useState({
-    preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "",
-    preferred_currency: "USD",
-    preferred_language: localStorage.getItem("rayma_lang") || "en",
-    preferred_locale: localStorage.getItem("rayma_locale") || "en-US",
+  const [form, setForm] = useState({ 
+    preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
+    preferred_currency: "USD", preferred_language: "en", 
     pay_frequency: "", pay_day: "", compact_mode: false,
     smart_alerts: true, auto_insights: true
   });
@@ -92,28 +83,23 @@ export default function Profile() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (userProfile) {
-      setForm({
-        preferred_name: userProfile.preferred_name || userProfile.full_name || "",
-        avatar_id: userProfile.avatar_id || "",
-        avatar_emoji: userProfile.avatar_emoji || "",
-        avatar_photo_url: userProfile.avatar_photo_url || "",
-        preferred_currency: userProfile.preferred_currency || "USD",
-        preferred_language: userProfile.preferred_language || "en",
-        preferred_locale: userProfile.preferred_locale || localStorage.getItem("rayma_locale") || "en-US",
-        pay_frequency: userProfile.pay_frequency || "",
-        pay_day: userProfile.pay_day || "",
-        compact_mode: userProfile.compact_mode || false,
+      setForm({ 
+        preferred_name: userProfile.preferred_name || userProfile.full_name || "", 
+        avatar_id: userProfile.avatar_id || "", 
+        avatar_emoji: userProfile.avatar_emoji || "", 
+        avatar_photo_url: userProfile.avatar_photo_url || "", 
+        preferred_currency: userProfile.preferred_currency || "USD", 
+        preferred_language: userProfile.preferred_language || lang || "en", 
+        pay_frequency: userProfile.pay_frequency || "", 
+        pay_day: userProfile.pay_day || "", 
+        compact_mode: userProfile.compact_mode || false, 
         smart_alerts: userProfile.smart_alerts !== false,
         auto_insights: userProfile.auto_insights !== false,
       });
-    } else {
-      const savedLang = localStorage.getItem("rayma_lang") || "en";
-      const savedLocale = localStorage.getItem("rayma_locale") || "en-US";
-      setForm(prev => ({ ...prev, preferred_language: savedLang, preferred_locale: savedLocale }));
     }
-  }, [userProfile]); 
+  }, [userProfile, lang]); 
 
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
@@ -130,86 +116,106 @@ export default function Profile() {
       setForm(f => ({ ...f, avatar_photo_url: publicUrl, avatar_emoji: "", avatar_id: "" }));
     } catch (err) { 
       console.error(err); 
-      alert("Failed to upload photo. Make sure your 'avatars' bucket is public in Supabase!");
+      alert("Failed to upload photo.");
     } finally { 
       setUploadingPhoto(false); 
     }
   }
 
-  async function handleSave(e) {
-    e.preventDefault();
-
-    setSaving(true);
-
+  async function handleSave(e) { 
+    e.preventDefault(); 
+    if (!userProfile) return;
+    setSaving(true); 
+    
     try {
-      const payload = {
-        preferred_name: form.preferred_name,
-        avatar_id: form.avatar_id,
-        avatar_emoji: form.avatar_emoji,
-        avatar_photo_url: form.avatar_photo_url,
-        preferred_currency: form.preferred_currency,
-        preferred_language: form.preferred_language,
-        preferred_locale: form.preferred_locale,
-        pay_frequency: form.pay_frequency,
-        pay_day: form.pay_day,
-        compact_mode: form.compact_mode,
-      };
-
-      // 🌍 Update localStorage immediately for both language and locale
-      localStorage.setItem("rayma_lang", form.preferred_language);
-      localStorage.setItem("rayma_locale", form.preferred_locale);
-
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user?.id) {
-        console.log("✅ Found user ID:", user.id);
-
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update(payload)
-          .eq('id', user.id);
-
-        if (updateError) {
-          console.warn("⚠️ Could not save to Supabase:", updateError);
-        } else {
-          console.log("✅ Profile saved to DB, new language:", form.preferred_language, "new locale:", form.preferred_locale);
-        }
-      } else {
-        console.log("⚠️ No Supabase user ID available, but saved to localStorage");
-      }
-
-      // Apply language and locale immediately
-      setLang(form.preferred_language);
-      setLocale(form.preferred_locale);
-      setSaved(true);
-
-      // Reload page after 1 second so all components use the new language and locale
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-
-    } catch (err) {
-      console.error("❌ Error during save:", err);
-      // Still update localStorage and reload even if Supabase fails
-      localStorage.setItem("rayma_lang", form.preferred_language);
-      localStorage.setItem("rayma_locale", form.preferred_locale);
-      setLang(form.preferred_language);
-      setLocale(form.preferred_locale);
-      setSaved(true);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } finally {
-      setSaving(false);
+      await supabase.auth.updateUser({ data: form });
+      await supabase.from('profiles').update(form).eq('id', userProfile.id);
+      await reload();
+      
+      if (form.preferred_language) setLang(form.preferred_language); 
+      setSaved(true); 
+      setTimeout(() => setSaved(false), 2500); 
+    } catch (err) { 
+      console.error(err); 
+    } finally { 
+      setSaving(false); 
     }
   }
 
-  // 🚀 UPGRADED: 30-Day Soft Deletion Strategy
-  async function executeAccountDeletion() {
-    if (!window.confirm("Your account will be deactivated and permanently deleted in 30 days. Proceed?")) return;
+  function handleLanguageChange(value) {
+    setForm({ ...form, preferred_language: value });
+    setLang(value);
+  }
+
+  // ---------------------------------------------------------
+  // 🛡️ SECURE ACTION HANDLERS
+  // ---------------------------------------------------------
+
+  const triggerSecurityCheck = (action) => {
+    setPendingAction(action);
+    setPassword("");
+    setAuthError("");
+    setShowPasswordLock(true);
+  };
+
+  const verifyAndExecute = async () => {
+    setAuthError("");
+    setIsVerifying(true);
+
+    try {
+      // 1. Get current user's email securely from session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("Could not verify user identity.");
+
+      // 2. Actually re-authenticate against Supabase using the provided password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: password,
+      });
+
+      if (signInError) throw signInError;
+
+      // 3. Password is valid! Close modal and route to correct hardened handler
+      setShowPasswordLock(false);
+      
+      if (pendingAction === 'export') {
+        await handleExport();
+      } else if (pendingAction === 'delete') {
+        await handleDelete();
+      }
+      
+    } catch (err) {
+      setAuthError(err.message || "Invalid password. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleExport = async () => {
+    const exportData = {
+      profile: userProfile,
+      incomes,
+      bills,
+      loans,
+      exported_at: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rayma-data-export-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    alert("✅ Data Exported! Check your downloads folder.");
+  };
+
+  const handleDelete = async () => {
+    alert("⚠️ ALARM: Account Deletion Initiated. Your data will be wiped in 30 days.");
     setDeleting(true);
     try {
-      // Tags the profile for deletion instead of wiping it immediately
+      // Future upgrade: Call a Supabase Edge Function here to hard-delete from Auth
       await supabase.from('profiles').update({ 
         deleted_at: new Date().toISOString() 
       }).eq('id', userProfile.id);
@@ -220,7 +226,7 @@ export default function Profile() {
       console.error(err);
       setDeleting(false);
     }
-  }
+  };
 
   if (contextLoading || deleting) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
@@ -243,7 +249,6 @@ export default function Profile() {
               <Camera className="w-5 h-5" />
             </button>
 
-            {/* ✨ NEW: The Erase Picture Button */}
             {form.avatar_photo_url && (
               <button 
                 onClick={() => setForm(f => ({ ...f, avatar_photo_url: "" }))} 
@@ -263,7 +268,7 @@ export default function Profile() {
           
           {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Fingerprint} title={T("identityAndStyle", "Identity & Style")} subtitle={T("chooseAvatarSubtitle", "Choose a professional avatar to represent you")} />
+            <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a professional avatar to represent you" />
             
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
@@ -279,29 +284,29 @@ export default function Profile() {
             </div>
             
             <div className="mt-6">
-              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("displayName", "Display Name")}</Label>
-              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder={T("howShouldWeCallYou", "How should we call you?")} />
+              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Display Name</Label>
+              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder="How should we call you?" />
             </div>
           </div>
 
           {/* Theme & Focus */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Monitor} title={T("themeAndFocus", "Theme & Focus")} subtitle={T("customizeDashboard", "Customize your dashboard experience")} />
+            <SectionHeader icon={Monitor} title="Theme & Focus" subtitle="Customize your dashboard experience" />
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 p-1 bg-muted/50 rounded-xl border border-border/50">
                 <button type="button" onClick={() => setTheme("light")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "light" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Sun className="w-4 h-4" /> {T("lightMode", "Light Mode")}
+                  <Sun className="w-4 h-4" /> Light Mode
                 </button>
                 <button type="button" onClick={() => setTheme("dark")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "dark" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Moon className="w-4 h-4" /> {T("darkMode", "Dark Mode")}
+                  <Moon className="w-4 h-4" /> Dark Mode
                 </button>
               </div>
 
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
                 <div>
-                  <p className="text-sm font-medium">{T("focusMode", "Focus Mode")}</p>
-                  <p className="text-xs text-muted-foreground">{T("focusModeDesc", "Hides dashboard accent colors for a distraction-free view")}</p>
+                  <p className="text-sm font-medium">Focus Mode</p>
+                  <p className="text-xs text-muted-foreground">Hides dashboard accent colors for a distraction-free view</p>
                 </div>
                 <button 
                   type="button"
@@ -316,14 +321,14 @@ export default function Profile() {
 
           {/* AI Smart Notifications */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Bell} title={T("smartNotifications", "Smart Notifications")} subtitle={T("heavyLifting", "Let RAYMA handle the heavy lifting")} />
+            <SectionHeader icon={Bell} title="Smart Notifications" subtitle="Let RAYMA handle the heavy lifting" />
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3">
                 <div className="flex gap-3">
                   <div className="mt-0.5"><Sparkles className="w-4 h-4 text-primary" /></div>
                   <div>
-                    <p className="text-sm font-medium">{T("automatedCashFlowInsights", "Automated Cash Flow Insights")}</p>
-                    <p className="text-xs text-muted-foreground">{T("raymaAnalyzesWeekly", "RAYMA analyzes your weekly spending automatically")}</p>
+                    <p className="text-sm font-medium">Automated Cash Flow Insights</p>
+                    <p className="text-xs text-muted-foreground">RAYMA analyzes your weekly spending automatically</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, auto_insights: !form.auto_insights})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.auto_insights ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
@@ -334,8 +339,8 @@ export default function Profile() {
                 <div className="flex gap-3">
                   <div className="mt-0.5"><AlertCircle className="w-4 h-4 text-muted-foreground" /></div>
                   <div>
-                    <p className="text-sm font-medium">{T("smartBillAlerts", "Smart Bill Alerts")}</p>
-                    <p className="text-xs text-muted-foreground">{T("notifiedOnlyWhen", "Get notified only when upcoming obligations need attention")}</p>
+                    <p className="text-sm font-medium">Smart Bill Alerts</p>
+                    <p className="text-xs text-muted-foreground">Get notified only when upcoming obligations need attention</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, smart_alerts: !form.smart_alerts})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.smart_alerts ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
@@ -347,81 +352,42 @@ export default function Profile() {
 
           {/* Localization & Region */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Globe} title={T("localizationAndRegion", "Localization & Region")} subtitle={T("localizationSubtitle", "Set your primary language, region, and currency")} />
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <SectionHeader icon={Globe} title={T("localizationRegion", "Localization & Region")} subtitle={T("setLanguageCurrency", "Set your primary language and currency")} />
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("language", "Language")}</Label>
-                <Select
-                  value={form.preferred_language}
-                  onValueChange={v => {
-                    setForm(prev => ({ ...prev, preferred_language: v }));
-                  }}
-                >
+                <Select value={form.preferred_language || lang || "en"} onValueChange={handleLanguageChange}>
                   <SelectTrigger><SelectValue placeholder={T("selectLanguage", "Select Language")} /></SelectTrigger>
                   <SelectContent>
-                    {LANGUAGES.map(langItem => (
-                      <SelectItem key={langItem.code} value={langItem.code}>
-                        {langItem.flag} {langItem.label}
-                      </SelectItem>
+                    {LANGUAGES.map(({ code, flag, label }) => (
+                      <SelectItem key={code} value={code}>{`${flag} ${label}`}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("region", "Region")}</Label>
-                <Select value={form.preferred_locale} onValueChange={v => setForm({...form, preferred_locale: v})}>
-                  <SelectTrigger><SelectValue placeholder={T("selectRegion", "Select Region")} /></SelectTrigger>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("preferredCurrency", "Currency")}</Label>
+                <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
+                  <SelectTrigger><SelectValue placeholder={T("selectCurrency", "Select Currency")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="es-CO">🇨🇴 Colombia (COP)</SelectItem>
-                    <SelectItem value="es-AR">🇦🇷 Argentina (ARS)</SelectItem>
-                    <SelectItem value="pt-BR">🇧🇷 Brasil (BRL)</SelectItem>
-                    <SelectItem value="es-PE">🇵🇪 Perú (PEN)</SelectItem>
-                    <SelectItem value="en-US">🇺🇸 United States (USD)</SelectItem>
-                    <SelectItem value="en-GB">🇬🇧 United Kingdom (GBP)</SelectItem>
-                    <SelectItem value="fr-FR">🇫🇷 France (EUR)</SelectItem>
-                    <SelectItem value="de-DE">🇩🇪 Germany (EUR)</SelectItem>
-                    <SelectItem value="es-ES">🇪🇸 Spain (EUR)</SelectItem>
-                    <SelectItem value="it-IT">🇮🇹 Italy (EUR)</SelectItem>
-                    <SelectItem value="ja-JP">🇯🇵 Japan (JPY)</SelectItem>
-                    <SelectItem value="zh-CN">🇨🇳 China (CNY)</SelectItem>
-                    <SelectItem value="hi-IN">🇮🇳 India (INR)</SelectItem>
-                    <SelectItem value="ar-AE">🇦🇪 UAE (AED)</SelectItem>
-                    <SelectItem value="bn-BD">🇧🇩 Bangladesh (BDT)</SelectItem>
-                    <SelectItem value="pt-PT">🇵🇹 Portugal (EUR)</SelectItem>
-                    <SelectItem value="ru-RU">🇷🇺 Russia (RUB)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="MXN">MXN ($)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("currency", "Currency")}</Label>
-              <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
-                <SelectTrigger><SelectValue placeholder={T("selectCurrency", "Select Currency")} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="COP">COP ($)</SelectItem>
-                  <SelectItem value="ARS">ARS ($)</SelectItem>
-                  <SelectItem value="BRL">BRL (R$)</SelectItem>
-                  <SelectItem value="PEN">PEN (S/)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                  <SelectItem value="JPY">JPY (¥)</SelectItem>
-                  <SelectItem value="INR">INR (₹)</SelectItem>
-                  <SelectItem value="CNY">CNY (¥)</SelectItem>
-                  <SelectItem value="MXN">MXN ($)</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
           {/* Pay Schedule */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Calendar} title={T("paySchedule", "Pay Schedule")} subtitle={T("payScheduleDesc", "Used for income reminders and cash flow accuracy")} />
+            <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps RAYMA calculate your cash flow" />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("frequency", "Frequency")}</Label>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Frequency</Label>
                 <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
-                  <SelectTrigger><SelectValue placeholder={T("frequency", "Frequency")} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Frequency" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="biweekly">Bi-weekly</SelectItem>
@@ -436,25 +402,32 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Privacy & Legal - App Store Required */}
+          {/* 🛡️ THE SECURITY VAULT */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Shield} title={T("privacyLegal", "Privacy & Legal")} />
-            <div className="space-y-1">
-               <Link to="/privacy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
-                  {T("privacyPolicy", "Privacy Policy")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <SectionHeader icon={Shield} title="Privacy & Legal" subtitle="Manage your data and account security." />
+            
+            <div className="space-y-3 mt-4">
+               <Link to="/privacy" className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted rounded-xl text-sm transition-colors border border-border/50">
+                 {T("privacyPolicy", "Privacy Policy")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
-               <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
-                  {T("termsOfService", "Terms of Service & EULA")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
+               <Link to="/terms" className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted rounded-xl text-sm transition-colors border border-border/50">
+                 {T("termsOfService", "Terms of Service")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
-               <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center justify-between p-3 hover:bg-red-500/10 text-red-500 rounded-xl text-sm transition-colors">
-                  <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> {T("deleteAccountData", "Delete Account & Data")}</span>
+               
+               <button type="button" onClick={() => triggerSecurityCheck('export')} className="w-full flex items-center justify-between p-3 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-xl text-sm transition-colors">
+                 <span className="flex items-center gap-2"><Download className="w-4 h-4" /> {T("exportMyData", "Export Data")}</span>
+                  <ChevronRight className="w-4 h-4 opacity-50" />
+               </button>
+
+               <button type="button" onClick={() => triggerSecurityCheck('delete')} className="w-full flex items-center justify-between p-3 bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/20 rounded-xl text-sm transition-colors">
+                 <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> {T("deleteAccountLabel", "Delete Account")} & {T("deleteData", "Data")}</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                </button>
             </div>
           </div>
 
           <Button type="submit" className="w-full h-12 rounded-2xl font-bold shadow-sm hover:shadow-md transition-all">
-            {saving ? T("saving", "Saving...") : saved ? "✓ " + T("saved", "Saved!") : T("saveChanges", "Save All Changes")}
+            {saving ? T("saving", "Saving...") : saved ? `✓ ${T("saved", "Preferences Saved")}` : T("saveAllChanges", "Save All Changes")}
           </Button>
 
           {/* The 80s Easter Egg Trigger */}
@@ -470,6 +443,51 @@ export default function Profile() {
           </div>
         </form>
       </motion.div>
+
+      {/* 🔐 THE PASSWORD MODAL - NOW FULLY FUNCTIONAL */}
+      {showPasswordLock && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-amber-500">
+              <ShieldAlert className="w-6 h-6" />
+              <h3 className="font-bold text-lg text-foreground">Security Verification</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Please enter your password to confirm you want to {pendingAction === 'export' ? "export your data" : "permanently delete your account"}.
+            </p>
+            
+            <div className="space-y-1">
+              <Input 
+                type="password" 
+                placeholder="Enter Password..." 
+                className="w-full bg-muted border rounded-xl p-3 text-sm focus:outline-primary"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isVerifying}
+              />
+              {authError && (
+                <p className="text-xs text-destructive ml-1">{authError}</p>
+              )}
+            </div>
+            
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)} disabled={isVerifying}>
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                variant={pendingAction === 'delete' ? 'destructive' : 'default'} 
+                className="flex-1" 
+                onClick={verifyAndExecute}
+                disabled={!password || isVerifying}
+              >
+                {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+                Confirm
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
