@@ -112,23 +112,23 @@ export default function AssetDashboard() {
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-bold font-heading text-foreground">Assets</h1>
-          <Button size="sm" className="rounded-xl" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> Add</Button>
+          <h1 className="text-2xl font-bold font-heading text-foreground">{T("assets", "Assets")}</h1>
+          <Button size="sm" className="rounded-xl" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> {T("add", "Add")}</Button>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">Track what you own</p>
+        <p className="text-sm text-muted-foreground mb-6">{T("trackOwnedAssets", "Track what you own")}</p>
 
         {/* Net Worth Summary */}
         <div className="bg-card border border-border rounded-3xl p-5 mb-6 text-center">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Net Worth</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{T("netWorth", "Net Worth")}</p>
           <p className={`text-3xl font-bold font-heading mb-1 ${netWorth >= 0 ? "text-primary" : "text-destructive"}`}>{fmt(netWorth)}</p>
           <div className="flex justify-center gap-6 mt-3">
             <div>
-              <p className="text-xs text-muted-foreground">Assets</p>
+              <p className="text-xs text-muted-foreground">{T("assets2", "Assets")}</p>
               <p className="text-sm font-semibold text-foreground">{fmt(totalAssets)}</p>
             </div>
             <div className="w-px bg-border" />
             <div>
-              <p className="text-xs text-muted-foreground">Liabilities</p>
+              <p className="text-xs text-muted-foreground">{T("liabilities", "Liabilities")}</p>
               <p className="text-sm font-semibold text-destructive">{fmt(totalLiabilities)}</p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function AssetDashboard() {
         {/* Pie Chart */}
         {assets.length > 0 && (
           <div className="bg-card border border-border rounded-3xl p-4 mb-6">
-            <h2 className="text-sm font-semibold font-heading text-foreground mb-2">Asset Breakdown</h2>
+            <h2 className="text-sm font-semibold font-heading text-foreground mb-2">{T("assetBreakdown", "Asset Breakdown")}</h2>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
@@ -195,7 +195,7 @@ export default function AssetDashboard() {
           {assets.length === 0 && (
             <div className="text-center py-12">
               <TrendingUp className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">No assets yet. Add your cash, investments, and property.</p>
+              <p className="text-sm text-muted-foreground">{T("noAssets", "No assets yet. Add your cash, investments, and property.")}</p>
             </div>
           )}
         </div>

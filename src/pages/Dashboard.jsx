@@ -48,13 +48,13 @@ const iconMap = {
   health: "🏥", mortgage: "🏠", auto: "🚗", student: "🎓", personal: "💰", credit_card: "💳", medical: "🏥", other: "📋"
 };
 
-function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency }) {
+function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency, noDataText = "No data" }) {
   const fmt = formatCurrency || ((v) => `$${Math.round(v || 0).toLocaleString()}`);
   return (
     <div className="flex flex-col items-center">
       {data.length === 0 ? (
         <div style={{ height }} className="flex items-center justify-center">
-          <p className="text-xs text-muted-foreground">No data</p>
+          <p className="text-xs text-muted-foreground">{noDataText}</p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={height}>
@@ -244,8 +244,8 @@ export default function Dashboard() {
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
         <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("expenseBreakdown", "Expense Breakdown")}</h2>
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <MiniPie title={T("totalMonthly", "Total Monthly")} data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
-          <MiniPie title={T("loanBalances", "Loan Balances")} data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
+          <MiniPie title={T("totalMonthly", "Total Monthly")} data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} noDataText={T("noData", "No data")} />
+          <MiniPie title={T("loanBalances", "Loan Balances")} data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} noDataText={T("noData", "No data")} />
         </div>
       </div>
 

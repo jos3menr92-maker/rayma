@@ -199,7 +199,7 @@ export default function BankAccounts() {
           </h2>
           <div className="flex gap-2">
             <button onClick={exportCSV} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <Download className="w-3.5 h-3.5" /> CSV
+              <Download className="w-3.5 h-3.5" /> {T("csv", "CSV")}
             </button>
             <Button size="sm" variant="outline" onClick={() => setShowTxDialog(true)}>
               <Plus className="w-3.5 h-3.5 mr-1" /> {T("log", "Log")}
