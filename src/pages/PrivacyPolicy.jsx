@@ -92,8 +92,8 @@ export default function PrivacyPolicy() {
             <li><strong>{T("recurringPayment", "Recurring Payment Detection:")}}</strong> {T("useRecurring", "Identify recurring transactions and suggest bills for your approval")}</li>
             <li><strong>{T("accountSecurity", "Account Security:")})</strong> {T("useSecurity", "Prevent fraud, enforce our Terms of Service")}</li>
             <li><strong>{T("serviceImprovement", "Service Improvement:")})</strong> {T("useImprovement", "Analyze usage to fix bugs and improve features")}</li>
-            <li><strong>{T("legalCompliance", "Legal Compliance:")})</strong> {{T("useCompliance", "Comply with tax, financial, and data protection laws")}</li>
-            <li><strong>{T("communication", "Communication:")})</strong> {{T("useCommunication", "Send you service updates, password resets, support responses (no marketing without consent)")}</li>
+            <li><strong>{T("legalCompliance", "Legal Compliance:")})</strong> {T("useCompliance", "Comply with tax, financial, and data protection laws")}</li>
+            <li><strong>{T("communication", "Communication:")})</strong> {T("useCommunication", "Send you service updates, password resets, support responses (no marketing without consent)")}</li>
           </ul>
           <p className="mt-4">
             <strong>{T("weDoNot", "We do NOT:")}}</strong> {T("notSell", "Sell personal data to advertisers or data brokers. Share financial data with third parties (except as required by law or for service delivery via Plaid/Stripe).")}
@@ -103,11 +103,11 @@ export default function PrivacyPolicy() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("dataRetention", "4. Data Retention & Deletion")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li><strong>{T("activeAccounts", "Active Accounts:")}}</strong> {{T("activeRetention", "Data is retained as long as your account is active.")}}</li>
-            <li><strong>{T("deletedAccounts", "Deleted Accounts:")})</strong> {{T("deletedRetention", "Upon account deletion, all personal, financial, and transactional data is permanently removed within 30 days.")}}</li>
-            <li><strong>{T("backups", "Backups:")})</strong> {{T("backupRetention", "Deleted data may persist in encrypted backups for up to 90 days for disaster recovery, then permanently destroyed.")}}</li>
-            <li><strong>{T("gdprErasure", "GDPR Right to Erasure:")})</strong> {{T("gdprErasureDesc", "EU residents can request data deletion at any time. Use the \"Delete My Account\" feature in Settings or email support.")}}</li>
-            <li><strong>{T("ccpaDeletion", "CCPA Right to Deletion:")})</strong> {{T("ccpaDeletionDesc", "California residents can request deletion via the app. We will confirm deletion within 45 days.")}}</li>
+            <li><strong>{T("activeAccounts", "Active Accounts:")}}</strong> {T("activeRetention", "Data is retained as long as your account is active.")}}</li>
+            <li><strong>{T("deletedAccounts", "Deleted Accounts:")})</strong> {T("deletedRetention", "Upon account deletion, all personal, financial, and transactional data is permanently removed within 30 days.")}}</li>
+            <li><strong>{T("backups", "Backups:")})</strong> {T("backupRetention", "Deleted data may persist in encrypted backups for up to 90 days for disaster recovery, then permanently destroyed.")}}</li>
+            <li><strong>{T("gdprErasure", "GDPR Right to Erasure:")})</strong> {T("gdprErasureDesc", "EU residents can request data deletion at any time. Use the \"Delete My Account\" feature in Settings or email support.")}}</li>
+            <li><strong>{T("ccpaDeletion", "CCPA Right to Deletion:")})</strong> {T("ccpaDeletionDesc", "California residents can request deletion via the app. We will confirm deletion within 45 days.")}}</li>
           </ul>
         </section>
 
@@ -153,7 +153,7 @@ export default function PrivacyPolicy() {
             <li>{T("securityBreach", "If a breach occurs, affected users will be notified within 30 days")}</li>
           </ul>
           <p className="mt-4">
-            <strong>{T("noSystem100", "No system is 100% secure.")}</strong> {{T("securityNote", "While we use industry-standard protections, we cannot guarantee absolute security. Use a strong password and enable two-factor authentication if available.")}}</p>
+            <strong>{T("noSystem100", "No system is 100% secure.")}</strong> {T("securityNote", "While we use industry-standard protections, we cannot guarantee absolute security. Use a strong password and enable two-factor authentication if available.")}}</p>
         </section>
 
         <section>
@@ -162,10 +162,10 @@ export default function PrivacyPolicy() {
             {T("thirdPartyDesc", "We may share data with trusted partners to provide the Service:")}
           </p>
           <ul className="list-disc list-inside space-y-2 mt-3">
-            <li><strong>{T("plaidService", "Plaid (Bank Linking):")}}</strong> {{T("plaidServiceDesc", "Retrieves account/transaction data.")}} <a href="https://plaid.com/privacy" className="text-primary underline">{T("privacyPolicy2", "Plaid Privacy Policy")}</a></li>
-            <li><strong>{T("stripeService", "Stripe (Payments):")}}</strong> {{T("stripeServiceDesc", "Processes token purchases.")}} <a href="https://stripe.com/en-us/privacy" className="text-primary underline">{T("stripePrivacyPolicy", "Stripe Privacy Policy")}</a></li>
-            <li><strong>{T("base44Service", "Base44 (Backend Infrastructure):")}}</strong> {{T("base44Desc", "Hosts our database and authentication. Base44 complies with GDPR and uses encrypted storage.")}}</li>
-            <li><strong>{T("analyticsService", "Analytics (Optional):")})</strong> {{T("analyticsServiceDesc", "We use aggregated, non-personal analytics to understand usage patterns.")}}</li>
+            <li><strong>{T("plaidService", "Plaid (Bank Linking):")}}</strong> {T("plaidServiceDesc", "Retrieves account/transaction data.")}} <a href="https://plaid.com/privacy" className="text-primary underline">{T("privacyPolicy2", "Plaid Privacy Policy")}</a></li>
+            <li><strong>{T("stripeService", "Stripe (Payments):")}}</strong> {T("stripeServiceDesc", "Processes token purchases.")}} <a href="https://stripe.com/en-us/privacy" className="text-primary underline">{T("stripePrivacyPolicy", "Stripe Privacy Policy")}</a></li>
+            <li><strong>{T("base44Service", "Base44 (Backend Infrastructure):")}}</strong> {T("base44Desc", "Hosts our database and authentication. Base44 complies with GDPR and uses encrypted storage.")}}</li>
+            <li><strong>{T("analyticsService", "Analytics (Optional):")})</strong> {T("analyticsServiceDesc", "We use aggregated, non-personal analytics to understand usage patterns.")}}</li>
           </ul>
           <p className="mt-3">
             {T("noSellData", "We do not sell, trade, or rent your personal information to any third party for marketing purposes.")}
@@ -204,11 +204,11 @@ export default function PrivacyPolicy() {
           <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
             <p className="font-semibold text-destructive mb-2">⚠️ {T("importantLegal", "Important Legal Notice")}</p>
             <p>
-              <strong>{T("notFinancialAdvisor", "RAYMA is NOT a financial advisor, accountant, tax professional, or legal advisor.")}</strong> {{T("educationalPurposes", "All information provided by RAYMA is for educational and informational purposes only and should not be considered as financial advice.")}}</p>
+              <strong>{T("notFinancialAdvisor", "RAYMA is NOT a financial advisor, accountant, tax professional, or legal advisor.")}</strong> {T("educationalPurposes", "All information provided by RAYMA is for educational and informational purposes only and should not be considered as financial advice.")}}</p>
             <p className="mt-3">
-              <strong>{T("consultProfessionals", "Consult qualified professionals before:")}}</strong> {{T("beforeActions", "Making investment decisions, taking out loans, filing taxes, entering debt settlement agreements, or making major financial changes.")}}</p>
+              <strong>{T("consultProfessionals", "Consult qualified professionals before:")}}</strong> {T("beforeActions", "Making investment decisions, taking out loans, filing taxes, entering debt settlement agreements, or making major financial changes.")}}</p>
             <p className="mt-3">
-              <strong>{T("useAtOwnRisk", "Use at your own risk:")}}</strong> {{T("noGuarantees", "RAYMA makes no guarantees about calculation accuracy, interest rate calculations, or financial outcomes. We are not responsible for errors, missed payments, or financial losses.")}}</p>
+              <strong>{T("useAtOwnRisk", "Use at your own risk:")}}</strong> {T("noGuarantees", "RAYMA makes no guarantees about calculation accuracy, interest rate calculations, or financial outcomes. We are not responsible for errors, missed payments, or financial losses.")}}</p>
           </div>
         </section>
       </div>
