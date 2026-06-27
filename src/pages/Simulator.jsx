@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Play, TrendingDown, TrendingUp, DollarSign, Zap, RefreshCw } from "lucide-react";
@@ -8,11 +9,9 @@ import { Button } from "@/components/ui/button";
 import SimulationResults from "../components/simulator/SimulationResults";
 import SimulationControls from "../components/simulator/SimulationControls";
 
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
-
 export default function Simulator() {
   const { lang } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);

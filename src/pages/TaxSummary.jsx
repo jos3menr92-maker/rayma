@@ -1,29 +1,13 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useCurrency } from "@/hooks/useCurrency";
 import { FileText, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
-
 const DEDUCTIBLE = ["health", "insurance", "loan_payment", "utilities"];
 
-const CATEGORY_LABELS = {
-  income: "Income",
-  food: "Food & Dining",
-  transport: "Transport",
-  utilities: "Utilities",
-  subscriptions: "Subscriptions",
-  health: "Health",
-  insurance: "Insurance",
-  rent: "Rent",
-  loan_payment: "Loan Payments",
-  savings: "Savings",
-  entertainment: "Entertainment",
-  shopping: "Shopping",
-  other: "Other",
-};
-
 export default function TaxSummary() {
+  const { formatCurrency: fmt } = useCurrency();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [transactions, setTransactions] = useState([]);
