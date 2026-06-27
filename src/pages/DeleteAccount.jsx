@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Trash2, ArrowLeft, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
 
 export default function DeleteAccount() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [step, setStep] = useState("confirm"); // confirm | deleting | done
   const [confirmText, setConfirmText] = useState("");
   const [error, setError] = useState("");
 
   const handleDelete = async () => {
     if (confirmText.toLowerCase() !== "delete my account") {
-      setError('Please type "delete my account" to confirm.');
+      setError(T("pleaseTypeConfirm", 'Please type "delete my account" to confirm.'));
       return;
     }
     setError("");
@@ -62,7 +66,7 @@ export default function DeleteAccount() {
       setTimeout(() => base44.auth.logout(), 3000);
     } catch (err) {
       setStep("confirm");
-      setError("Something went wrong. Please try again or contact support@raymaapp.com");
+      setError(T("deleteError", "Something went wrong. Please try again or contact support@raymaapp.com"));
     }
   };
 
@@ -73,9 +77,9 @@ export default function DeleteAccount() {
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-xl font-bold font-heading mb-2">Account Deleted</h1>
+          <h1 className="text-xl font-bold font-heading mb-2">{T("accountDeleted", "Account Deleted")}</h1>
           <p className="text-sm text-muted-foreground">
-            All your data has been removed. You will be signed out shortly.
+            {T("allDataRemoved", "All your data has been removed. You will be signed out shortly.")}
           </p>
         </motion.div>
       </div>
@@ -86,7 +90,7 @@ export default function DeleteAccount() {
     return (
       <div className="max-w-lg mx-auto px-4 pt-16 pb-24 flex flex-col items-center text-center">
         <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
-        <p className="text-sm text-muted-foreground">Deleting your data...</p>
+        <p className="text-sm text-muted-foreground">{T("deletingData", "Deleting your data...")}</p>
       </div>
     );
   }
@@ -96,7 +100,7 @@ export default function DeleteAccount() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
 
         <Link to="/profile" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 w-fit">
-          <ArrowLeft className="w-4 h-4" /> Back to Profile
+          <ArrowLeft className="w-4 h-4" /> {T("backToProfile", "Back to Profile")}
         </Link>
 
         <div className="flex items-center gap-3 mb-6">
@@ -104,31 +108,31 @@ export default function DeleteAccount() {
             <Trash2 className="w-5 h-5 text-destructive" />
           </div>
           <div>
-            <h1 className="text-xl font-bold font-heading text-foreground">Delete Account</h1>
-            <p className="text-xs text-muted-foreground">This action is permanent and cannot be undone</p>
+            <h1 className="text-xl font-bold font-heading text-foreground">{T("deleteAccount", "Delete Account")}</h1>
+            <p className="text-xs text-muted-foreground">{T("permanentAction", "This action is permanent and cannot be undone")}</p>
           </div>
         </div>
 
         <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4 mb-6 flex gap-3">
           <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed space-y-1">
-            <p className="font-semibold text-foreground">The following data will be permanently deleted:</p>
+            <p className="font-semibold text-foreground">{T("dataWillBeDeleted", "The following data will be permanently deleted:")}</p>
             <ul className="list-disc list-inside space-y-0.5">
-              <li>All loans and payment history</li>
-              <li>All bills and recurring expenses</li>
-              <li>All transactions and bank accounts</li>
-              <li>Budget categories and savings goals</li>
-              <li>Documents and scanned files</li>
-              <li>RAYMA AI memory and preferences</li>
+              <li>{T("allLoans", "All loans and payment history")}</li>
+              <li>{T("allBills", "All bills and recurring expenses")}</li>
+              <li>{T("allTransactions", "All transactions and bank accounts")}</li>
+              <li>{T("budgetAndGoals", "Budget categories and savings goals")}</li>
+              <li>{T("documentsFiles", "Documents and scanned files")}</li>
+              <li>{T("aiMemory", "RAYMA AI memory and preferences")}</li>
             </ul>
-            <p className="mt-2">Your account login will be deactivated and all data removed within 30 days.</p>
+            <p className="mt-2">{T("accountDeactivated", "Your account login will be deactivated and all data removed within 30 days.")}</p>
           </div>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
           <div>
             <p className="text-sm font-medium text-foreground mb-2">
-              Type <span className="font-bold text-destructive">delete my account</span> to confirm:
+              {T("typeToConfirm", "Type")} <span className="font-bold text-destructive">delete my account</span> {T("toConfirm", "to confirm:")}
             </p>
             <Input
               value={confirmText}
@@ -146,12 +150,12 @@ export default function DeleteAccount() {
             disabled={confirmText.toLowerCase() !== "delete my account"}
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Permanently Delete My Account
+            {T("permanentlyDelete", "Permanently Delete My Account")}
           </Button>
 
           <Link to="/profile">
             <Button variant="outline" className="w-full rounded-xl h-11">
-              Cancel — Keep My Account
+              {T("cancelKeepAccount", "Cancel — Keep My Account")}
             </Button>
           </Link>
         </div>
