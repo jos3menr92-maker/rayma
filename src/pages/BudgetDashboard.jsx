@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, AlertTriangle, CheckCircle2, TrendingDown } from "lucide-react";
 import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
-
 const CATEGORY_COLORS = {
   food: "#f59e0b", transport: "#3b82f6", utilities: "#8b5cf6", subscriptions: "#ec4899",
   health: "#10b981", insurance: "#6366f1", rent: "#f97316", loan_payment: "#ef4444",
@@ -24,7 +23,8 @@ const CATEGORY_COLORS = {
 const emptyForm = { name: "", category_key: "other", monthly_limit: "" };
 
 export default function BudgetDashboard() {
-  const { lang } = useLanguage();
+  const { lang, locale } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
 
   const T = useMemo(() =>
     (key, fallback) => {

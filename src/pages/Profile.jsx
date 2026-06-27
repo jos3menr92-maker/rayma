@@ -50,8 +50,8 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
   ); 
 } 
 
-export default function Profile() { 
-  const { lang, setLang } = useLanguage(); 
+export default function Profile() {
+  const { lang, setLang, locale, setLocale } = useLanguage(); 
   const navigate = useNavigate(); 
   // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
   const T = useMemo(() => 
@@ -77,11 +77,11 @@ export default function Profile() {
   
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark"); 
   
-  const [form, setForm] = useState({ 
-    preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
-    preferred_currency: "USD", 
-    // 🌍 Initialize language from localStorage on first load
-    preferred_language: localStorage.getItem("rayma_lang") || "en", 
+  const [form, setForm] = useState({
+    preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "",
+    preferred_currency: "USD",
+    preferred_language: localStorage.getItem("rayma_lang") || "en",
+    preferred_locale: localStorage.getItem("rayma_locale") || "en-US",
     pay_frequency: "", pay_day: "", compact_mode: false,
     smart_alerts: true, auto_insights: true
   });
@@ -92,27 +92,26 @@ export default function Profile() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (userProfile) {
-      setForm({ 
-        preferred_name: userProfile.preferred_name || userProfile.full_name || "", 
-        avatar_id: userProfile.avatar_id || "", 
-        avatar_emoji: userProfile.avatar_emoji || "", 
-        avatar_photo_url: userProfile.avatar_photo_url || "", 
-        preferred_currency: userProfile.preferred_currency || "USD", 
-        // 🌍 Use saved language from userProfile (database), not the current lang
-        // This shows what was last saved, not what was temporarily selected
-        preferred_language: userProfile.preferred_language || "en", 
-        pay_frequency: userProfile.pay_frequency || "", 
-        pay_day: userProfile.pay_day || "", 
-        compact_mode: userProfile.compact_mode || false, 
+      setForm({
+        preferred_name: userProfile.preferred_name || userProfile.full_name || "",
+        avatar_id: userProfile.avatar_id || "",
+        avatar_emoji: userProfile.avatar_emoji || "",
+        avatar_photo_url: userProfile.avatar_photo_url || "",
+        preferred_currency: userProfile.preferred_currency || "USD",
+        preferred_language: userProfile.preferred_language || "en",
+        preferred_locale: userProfile.preferred_locale || localStorage.getItem("rayma_locale") || "en-US",
+        pay_frequency: userProfile.pay_frequency || "",
+        pay_day: userProfile.pay_day || "",
+        compact_mode: userProfile.compact_mode || false,
         smart_alerts: userProfile.smart_alerts !== false,
         auto_insights: userProfile.auto_insights !== false,
       });
     } else {
-      // 🌍 If userProfile is null, at least load language from localStorage
       const savedLang = localStorage.getItem("rayma_lang") || "en";
-      setForm(prev => ({ ...prev, preferred_language: savedLang }));
+      const savedLocale = localStorage.getItem("rayma_locale") || "en-US";
+      setForm(prev => ({ ...prev, preferred_language: savedLang, preferred_locale: savedLocale }));
     }
   }, [userProfile]); 
 
@@ -137,13 +136,12 @@ export default function Profile() {
     }
   }
 
-  async function handleSave(e) { 
-    e.preventDefault(); 
-    
-    setSaving(true); 
-    
+  async function handleSave(e) {
+    e.preventDefault();
+
+    setSaving(true);
+
     try {
-      // Build payload with only valid User entity fields
       const payload = {
         preferred_name: form.preferred_name,
         avatar_id: form.avatar_id,
@@ -151,21 +149,21 @@ export default function Profile() {
         avatar_photo_url: form.avatar_photo_url,
         preferred_currency: form.preferred_currency,
         preferred_language: form.preferred_language,
+        preferred_locale: form.preferred_locale,
         pay_frequency: form.pay_frequency,
         pay_day: form.pay_day,
         compact_mode: form.compact_mode,
       };
 
-      // 🌍 CRITICAL: Update localStorage immediately
+      // 🌍 Update localStorage immediately for both language and locale
       localStorage.setItem("rayma_lang", form.preferred_language);
-      
-      // Try to get user ID and save to Supabase in the background
+      localStorage.setItem("rayma_locale", form.preferred_locale);
+
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user?.id) {
         console.log("✅ Found user ID:", user.id);
-        
-        // Try to update Supabase
+
         const { error: updateError } = await supabase
           .from('profiles')
           .update(payload)
@@ -174,32 +172,35 @@ export default function Profile() {
         if (updateError) {
           console.warn("⚠️ Could not save to Supabase:", updateError);
         } else {
-          console.log("✅ Profile saved to DB, new language:", form.preferred_language);
+          console.log("✅ Profile saved to DB, new language:", form.preferred_language, "new locale:", form.preferred_locale);
         }
       } else {
         console.log("⚠️ No Supabase user ID available, but saved to localStorage");
       }
-      
-      // Apply language immediately 
+
+      // Apply language and locale immediately
       setLang(form.preferred_language);
-      setSaved(true); 
-      
-      // Reload page after 1 second so all components use the new language
+      setLocale(form.preferred_locale);
+      setSaved(true);
+
+      // Reload page after 1 second so all components use the new language and locale
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-      
-    } catch (err) { 
+
+    } catch (err) {
       console.error("❌ Error during save:", err);
       // Still update localStorage and reload even if Supabase fails
       localStorage.setItem("rayma_lang", form.preferred_language);
+      localStorage.setItem("rayma_locale", form.preferred_locale);
       setLang(form.preferred_language);
+      setLocale(form.preferred_locale);
       setSaved(true);
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-    } finally { 
-      setSaving(false); 
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -346,15 +347,13 @@ export default function Profile() {
 
           {/* Localization & Region */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Globe} title={T("localizationAndRegion", "Localization & Region")} subtitle={T("localizationSubtitle", "Set your primary language and currency")} />
-            <div className="grid grid-cols-2 gap-4">
+            <SectionHeader icon={Globe} title={T("localizationAndRegion", "Localization & Region")} subtitle={T("localizationSubtitle", "Set your primary language, region, and currency")} />
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("language", "Language")}</Label>
                 <Select
                   value={form.preferred_language}
                   onValueChange={v => {
-                    // 🌍 Only update form, don't change language yet
-                    // Language will change only after Save button is pressed
                     setForm(prev => ({ ...prev, preferred_language: v }));
                   }}
                 >
@@ -369,17 +368,49 @@ export default function Profile() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("currency", "Currency")}</Label>
-                <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
-                  <SelectTrigger><SelectValue placeholder={T("selectCurrency", "Select Currency")} /></SelectTrigger>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("region", "Region")}</Label>
+                <Select value={form.preferred_locale} onValueChange={v => setForm({...form, preferred_locale: v})}>
+                  <SelectTrigger><SelectValue placeholder={T("selectRegion", "Select Region")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                    <SelectItem value="MXN">MXN ($)</SelectItem>
+                    <SelectItem value="es-CO">🇨🇴 Colombia (COP)</SelectItem>
+                    <SelectItem value="es-AR">🇦🇷 Argentina (ARS)</SelectItem>
+                    <SelectItem value="pt-BR">🇧🇷 Brasil (BRL)</SelectItem>
+                    <SelectItem value="es-PE">🇵🇪 Perú (PEN)</SelectItem>
+                    <SelectItem value="en-US">🇺🇸 United States (USD)</SelectItem>
+                    <SelectItem value="en-GB">🇬🇧 United Kingdom (GBP)</SelectItem>
+                    <SelectItem value="fr-FR">🇫🇷 France (EUR)</SelectItem>
+                    <SelectItem value="de-DE">🇩🇪 Germany (EUR)</SelectItem>
+                    <SelectItem value="es-ES">🇪🇸 Spain (EUR)</SelectItem>
+                    <SelectItem value="it-IT">🇮🇹 Italy (EUR)</SelectItem>
+                    <SelectItem value="ja-JP">🇯🇵 Japan (JPY)</SelectItem>
+                    <SelectItem value="zh-CN">🇨🇳 China (CNY)</SelectItem>
+                    <SelectItem value="hi-IN">🇮🇳 India (INR)</SelectItem>
+                    <SelectItem value="ar-AE">🇦🇪 UAE (AED)</SelectItem>
+                    <SelectItem value="bn-BD">🇧🇩 Bangladesh (BDT)</SelectItem>
+                    <SelectItem value="pt-PT">🇵🇹 Portugal (EUR)</SelectItem>
+                    <SelectItem value="ru-RU">🇷🇺 Russia (RUB)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("currency", "Currency")}</Label>
+              <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
+                <SelectTrigger><SelectValue placeholder={T("selectCurrency", "Select Currency")} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD ($)</SelectItem>
+                  <SelectItem value="COP">COP ($)</SelectItem>
+                  <SelectItem value="ARS">ARS ($)</SelectItem>
+                  <SelectItem value="BRL">BRL (R$)</SelectItem>
+                  <SelectItem value="PEN">PEN (S/)</SelectItem>
+                  <SelectItem value="EUR">EUR (€)</SelectItem>
+                  <SelectItem value="GBP">GBP (£)</SelectItem>
+                  <SelectItem value="JPY">JPY (¥)</SelectItem>
+                  <SelectItem value="INR">INR (₹)</SelectItem>
+                  <SelectItem value="CNY">CNY (¥)</SelectItem>
+                  <SelectItem value="MXN">MXN ($)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

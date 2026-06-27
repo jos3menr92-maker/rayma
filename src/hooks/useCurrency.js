@@ -1,15 +1,17 @@
 /**
  * useCurrency hook
- * Returns a formatCurrency function that respects the user's preferred_currency setting.
- * Reads from localStorage cache first to avoid redundant API calls.
- * Falls back to USD if not set.
+ * Returns a formatCurrency function that respects the user's locale and preferred_currency
+ * Uses Intl API for proper regional formatting (separators, symbols, etc.)
  */
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { formatCurrency, formatCurrencyNoDecimals } from "@/utils/formatLocalized";
 
 const CACHE_KEY = "rayma_preferred_currency";
 
 export function useCurrency() {
+  const { locale } = useLanguage();
   const [currency, setCurrency] = useState(() => {
     return localStorage.getItem(CACHE_KEY) || "USD";
   });
@@ -22,14 +24,17 @@ export function useCurrency() {
     }).catch(() => {});
   }, []);
 
-  const formatCurrency = useCallback((amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount || 0);
-  }, [currency]);
+  const fmt = useCallback((amount) => {
+    return formatCurrency(amount, locale, currency);
+  }, [locale, currency]);
 
-  return { formatCurrency, currency };
+  const formatCurrencyValue = useCallback((amount) => {
+    return formatCurrency(amount, locale, currency);
+  }, [locale, currency]);
+
+  const formatCurrencyNoDecimal = useCallback((amount) => {
+    return formatCurrencyNoDecimals(amount, locale, currency);
+  }, [locale, currency]);
+
+  return { formatCurrency: fmt, currency, formatCurrencyValue, formatCurrencyNoDecimal };
 }

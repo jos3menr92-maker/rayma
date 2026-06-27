@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CashFlowForecast from "../components/CashFlowForecast";
+import { getWeekdayNames } from "@/utils/formatLocalized";
 
 function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
@@ -26,10 +27,10 @@ function startOfWeek(date = new Date()) {
 
 export default function Finance() {
   const { formatCurrency: fmt } = useCurrency();
-  const { lang } = useLanguage();
+  const { lang, locale } = useLanguage();
   const { bills, loans, incomes, userProfile, reload, loading } = useFinancialData();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
-  
+
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "" });
@@ -41,11 +42,11 @@ export default function Finance() {
   const monthlyBills = activeBills.reduce((s, b) => s + (b.amount || 0), 0);
   const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
   const monthlyExpenses = monthlyBills + monthlyLoans;
-  
-  const payFreq = userProfile?.pay_frequency || "weekly"; 
+
+  const payFreq = userProfile?.pay_frequency || "weekly";
   const totalIncomeLogged = incomes.reduce((s, i) => s + (i.amount || 0), 0);
   const avgIncome = incomes.length > 0 ? totalIncomeLogged / incomes.length : 0;
-  
+
   let monthlyIncome = avgIncome;
   if (payFreq === "weekly") monthlyIncome = avgIncome * 4.33;
   else if (payFreq === "biweekly") monthlyIncome = avgIncome * 2.16;
@@ -54,7 +55,8 @@ export default function Finance() {
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
 
   const today = new Date();
-  const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][today.getDay()];
+  const dayNames = useMemo(() => getWeekdayNames(locale, "long"), [locale]);
+  const todayName = dayNames[today.getDay()];
   const isPayday = payFreq && userProfile?.pay_day && todayName === userProfile.pay_day;
 
   async function handleSaveIncome(e) {
