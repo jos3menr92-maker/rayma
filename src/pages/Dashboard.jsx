@@ -137,8 +137,17 @@ export default function Dashboard() {
   // Render the loading spinner if data is still fetching
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
-  // 🚨 SECOND BOUNCER: Prevent the UI from rendering (and crashing) if there is no user profile
-  if (!userProfile) return null;
+// 🚨 SECOND BOUNCER: Show a graceful loading state if the profile is missing or reconnecting
+  if (!userProfile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-background">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-medium text-muted-foreground animate-pulse">
+          {T("loadingProfile", "Loading your profile...")}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-4 pb-24" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
