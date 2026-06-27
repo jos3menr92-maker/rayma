@@ -88,7 +88,7 @@ export default function Layout() {
           </div>
           <div className="flex items-center">
             <button onClick={() => setDrawerOpen(true)} aria-label="Open Menu" className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0">
-              <Menu className="w-6 h-6" />
+              <Menu className="w-8 h-8" />
             </button>
           </div>
         </div>
