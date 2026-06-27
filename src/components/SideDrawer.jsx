@@ -32,12 +32,16 @@ export default function SideDrawer({ open, onClose }) {
     const tokens = user.ai_tokens_remaining ?? 5;
     return `${tokens} AI token${tokens !== 1 ? "s" : ""} ${t(lang, 'remaining')}`;
   };
-
-  async function handleLogout() {
-    await supabase.auth.signOut(); 
-    window.location.href = "/auth";
+  
+async function handleLogout() {
+    try {
+      await base44.auth.logout(); 
+      window.location.href = "/auth";
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   }
-
+  
   const presetAvatar = HUMAN_AVATARS.find(a => a.id === user?.avatar_id);
   const imageToShow = user?.avatar_photo_url || presetAvatar?.url;
 
