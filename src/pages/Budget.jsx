@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, PiggyBank, CheckCircle2 } from "lucide-react";
@@ -9,10 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
-
 export default function Budget() {
   const { lang } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);

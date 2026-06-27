@@ -1,24 +1,25 @@
 import { useMemo } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp, TrendingDown, CheckCircle2, DollarSign, Calendar } from "lucide-react";
+import { getMonthName } from "@/utils/formatLocalized";
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))", "#34d399", "#f97316", "#a78bfa"];
-const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 export default function MonthlyRecap() {
-  const { lang } = useLanguage();
+  const { lang, locale } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const { incomes, payments, bills, loans, loading } = useFinancialData();
 
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
-  const monthName = MONTH_NAMES[currentMonth];
+  const monthName = getMonthName(currentMonth, locale, "long");
 
   // This month's income
   const thisMonthIncomes = incomes.filter(i => {
@@ -55,7 +56,7 @@ export default function MonthlyRecap() {
       return id.getMonth() === m && id.getFullYear() === y;
     });
     return {
-      month: MONTH_NAMES[m],
+      month: getMonthName(m, locale, "short"),
       income: monthIncomes.reduce((s, x) => s + (x.amount || 0), 0),
       expenses: monthlyExpenses,
     };

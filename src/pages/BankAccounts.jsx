@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
 
 const typeConfig = {
   checking: { label: "Checking", icon: Wallet, color: "text-blue-400", bg: "bg-blue-400/10" },
@@ -26,6 +25,7 @@ const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), d
 
 export default function BankAccounts() {
   const { lang } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
 
   // 🌍 FIXED: Recreate T() when lang changes
   const T = useMemo(() =>

@@ -2,26 +2,23 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { getMonthName } from "@/utils/formatLocalized";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
 
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
-
-const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
 function getMonthKey(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
-function monthLabel(key) {
+function monthLabel(key, locale) {
   const [y, m] = key.split("-");
-  return `${MONTH_NAMES[parseInt(m) - 1]} ${y.slice(2)}`;
+  return `${getMonthName(parseInt(m) - 1, locale, "short")} ${y.slice(2)}`;
 }
 
 const TYPE_CONFIG = {
@@ -32,7 +29,8 @@ const TYPE_CONFIG = {
 };
 
 export default function MonthlyTrend() {
-  const { lang } = useLanguage();
+  const { lang, locale } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
@@ -96,7 +94,7 @@ export default function MonthlyTrend() {
       const monthlyLoanPayments = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.monthly_payment || 0), 0);
 
       return {
-        month: monthLabel(key),
+        month: monthLabel(key, locale),
         totalDebt: originalDebt,
         remaining: type === "remaining" ? approxRemaining : undefined,
         totalPaid: cumulativePaid,

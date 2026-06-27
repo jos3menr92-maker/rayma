@@ -1,15 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { Bell, Send, Loader2, CheckCircle2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
 
 const categoryIcons = {
   mortgage: "🏠", auto: "🚗", student: "🎓", personal: "💰",
@@ -20,6 +18,7 @@ const categoryIcons = {
 
 export default function Reminders() {
   const { lang } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);

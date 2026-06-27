@@ -3,18 +3,13 @@ import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
-
-const getMonthName = (date, locale) => new Intl.DateTimeFormat(locale, { month: "long" }).format(date);
-const getWeekdayAbbreviations = (locale) => {
-  const sunday = new Date(Date.UTC(2021, 0, 3));
-  return Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(locale, { weekday: "narrow" }).format(new Date(sunday.getTime() + index * 86400000)));
-};
+import { getMonthName, getWeekdayNames } from "@/utils/formatLocalized";
 
 export default function MiniCalendar({ bills, loans, userProfile }) {
-  const { lang } = useLanguage();
+  const { lang, locale } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const [current, setCurrent] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
@@ -24,8 +19,8 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
-  const monthName = useMemo(() => getMonthName(new Date(year, month, 1), lang), [year, month, lang]);
-  const dayHeaders = useMemo(() => getWeekdayAbbreviations(lang), [lang]);
+  const monthName = useMemo(() => getMonthName(month, locale, "long"), [year, month, locale]);
+  const dayHeaders = useMemo(() => getWeekdayNames(locale, "narrow"), [locale]);
 
   // 🧠 RAYMA HELPER: Safely extracts the day number from "YYYY-MM-DD" without timezone bugs
   const extractDay = (dateStr) => {
@@ -58,7 +53,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
     const d = parseInt(userProfile.pay_day);
     if (d >= 1 && d <= daysInMonth) payDays.push(d);
   } else if ((userProfile?.pay_frequency === "weekly" || userProfile?.pay_frequency === "biweekly") && userProfile?.pay_day) {
-    const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const dayNames = getWeekdayNames(locale, "long");
     const targetDow = dayNames.indexOf(userProfile.pay_day);
     if (targetDow !== -1) {
       const step = userProfile.pay_frequency === "weekly" ? 7 : 14;

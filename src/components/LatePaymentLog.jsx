@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useCurrency } from '@/hooks/useCurrency';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 
-const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(Math.abs(n || 0));
-
 export default function LatePaymentLog({ loan, onLoanUpdated }) {
+  const { formatCurrency: fmt } = useCurrency();
   const [adjustments, setAdjustments] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);

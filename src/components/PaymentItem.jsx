@@ -1,16 +1,10 @@
 import { motion } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
-
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(amount || 0);
-}
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function PaymentItem({ payment, index = 0, onDelete }) {
+  const { formatCurrency } = useCurrency();
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}

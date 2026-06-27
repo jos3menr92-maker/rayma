@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, TrendingUp, PieChart as PieIcon } from "lucide-react";
@@ -11,8 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
 
 const TYPE_ICONS = { cash: "💵", investment: "📈", property: "🏠", savings: "🏦", other: "📦" };
 const TYPE_COLORS = {
@@ -28,6 +27,7 @@ const emptyForm = { name: "", amount: "", type: "cash", notes: "" };
 export default function AssetDashboard() {
   const { loans, userProfile, loading: contextLoading } = useFinancialData();
   const { lang } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
 
   const T = useMemo(() =>
     (key, fallback) => {
