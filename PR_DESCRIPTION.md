@@ -70,7 +70,82 @@ This pull request completes the comprehensive internationalization (i18n) implem
 - MoreMenu component
 - Various utility components
 
-## 🔧 Technical Changes
+## 🌍 Localization for South America - NEW FEATURE
+
+### South American Regional Support (4 Countries)
+- ✅ **Colombia (es-CO)**: Spanish, COP currency, DD/MM/YYYY dates, 1.234,56 format
+- ✅ **Argentina (es-AR)**: Spanish, ARS currency, DD/MM/YYYY dates, 1.234,56 format
+- ✅ **Brazil (pt-BR)**: Portuguese, BRL currency, DD/MM/YYYY dates, 1.234,56 format
+- ✅ **Peru (es-PE)**: Spanish, PEN currency, DD/MM/YYYY dates, 1,234.56 format (unique separators)
+
+### New Features in Profile
+- **Region Selector**: New dropdown in "Localization & Region" section with 17 countries
+- **Dynamic Locale**: Stores `preferred_locale` in user profile and localStorage
+- **Auto-Detection**: Spanish users default to Colombia, Portuguese users default to Brazil
+
+### Core Infrastructure (Phase 1)
+- **LanguageContext.jsx**: Extended with `locale` state + LOCALE_REGION_MAP with 17 global regions
+- **formatLocalized.js** (NEW): Centralized utility library with 8 functions:
+  - `formatDate()` - Locale-aware date formatting (DD/MM/YYYY for South America)
+  - `formatCurrency()` - Currency formatting with correct symbols & separators
+  - `formatCurrencyNoDecimals()` - Alternative format for whole numbers
+  - `formatNumber()` - Pure number formatting with locale separators
+  - `getMonthName()` - Month names in any language
+  - `getWeekdayNames()` - Weekday names in any language
+  - `formatDateLong()` / `formatDateShort()` - Alternative date formats
+- **useCurrency.js**: Updated to accept and use locale from LanguageContext
+
+### Views Updated (38+ files across 4 phases)
+**Phase 2 - Critical Views (5 files):**
+- BillCalendar.jsx, Dashboard.jsx, Finance.jsx, BudgetDashboard.jsx, Profile.jsx
+
+**Phase 3 - Secondary Views (10 files):**
+- MonthlyRecap.jsx, MonthlyTrend.jsx, Reminders.jsx, IncomeLogGrouped.jsx
+- LatePaymentLog.jsx, PaymentItem.jsx, MiniCalendar.jsx
+- BankAccounts.jsx, Budget.jsx, AssetDashboard.jsx
+
+**Phase 4 - Systematic Updates (8 files):**
+- TaxSummary.jsx, DebtPayoffSimulator.jsx, Simulator.jsx
+- DueSoonAlert.jsx, BillPriceAlert.jsx, CashFlowForecast.jsx
+- SimulationResults.jsx, SimulationControls.jsx
+
+**Bug Fixes (2 files):**
+- TermsOfService.jsx, PrivacyPolicy.jsx (syntax corrections)
+
+### Technical Details
+- **Intl API**: Uses native browser Intl.DateTimeFormat and Intl.NumberFormat (no new dependencies)
+- **Centralization**: Single formatLocalized.js file is source of truth (57+ formatting locations consolidated)
+- **Architecture**: Locale stored in LanguageContext, accessible via useLanguage() hook
+- **Persistence**: Both `rayma_lang` and `rayma_locale` stored in localStorage & database
+- **Zero Breaking Changes**: Existing users default to en-US, new users auto-detect region
+
+### Testing Documentation
+- **New File**: LOCALIZATION_TESTING_CHECKLIST.md (380 lines)
+- Comprehensive testing guide for all 4 South American regions
+- Verification checklist for dates, currencies, and separators
+- Cross-locale switching tests and edge cases
+
+### Global Locales Supported (17 Total)
+| Locale | Language | Currency | Date Format | Thousand | Decimal |
+|--------|----------|----------|-------------|----------|---------|
+| es-CO | Spanish | COP | DD/MM/YYYY | . | , |
+| es-AR | Spanish | ARS | DD/MM/YYYY | . | , |
+| pt-BR | Portuguese | BRL | DD/MM/YYYY | . | , |
+| es-PE | Spanish | PEN | DD/MM/YYYY | , | . |
+| en-US | English | USD | MM/DD/YYYY | , | . |
+| en-GB | English | GBP | DD/MM/YYYY | , | . |
+| fr-FR | French | EUR | DD/MM/YYYY | . | , |
+| de-DE | German | EUR | DD/MM/YYYY | . | , |
+| it-IT | Italian | EUR | DD/MM/YYYY | . | , |
+| ja-JP | Japanese | JPY | DD/MM/YYYY | , | . |
+| zh-CN | Chinese | CNY | DD/MM/YYYY | , | . |
+| hi-IN | Hindi | INR | DD/MM/YYYY | , | . |
+| ar-AE | Arabic | AED | DD/MM/YYYY | , | . |
+| bn-BD | Bengali | BDT | DD/MM/YYYY | , | . |
+| pt-PT | Portuguese | EUR | DD/MM/YYYY | . | , |
+| ru-RU | Russian | RUB | DD/MM/YYYY | . | , |
+
+
 
 ### Core i18n Implementation
 - **File:** `src/lib/i18n.js`
