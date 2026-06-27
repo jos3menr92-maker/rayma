@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, PiggyBank, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
 
 export default function Budget() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [goalOpen, setGoalOpen] = useState(false);
@@ -73,14 +77,14 @@ export default function Budget() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Savings Vault</h1>
-        <p className="text-sm text-muted-foreground mb-6">Track your goals and level up your net worth</p>
+        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">{T("savingsVault", "Savings Vault")}</h1>
+        <p className="text-sm text-muted-foreground mb-6">{T("trackGoalsSubtitle", "Track your goals and level up your net worth")}</p>
 
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <PiggyBank className="w-4 h-4 text-primary" /> Active Goals
+            <PiggyBank className="w-4 h-4 text-primary" /> {T("activeGoals", "Active Goals")}
           </h2>
-          <Button size="sm" className="rounded-xl" onClick={openAddGoal}><Plus className="w-4 h-4 mr-1" /> Add Goal</Button>
+          <Button size="sm" className="rounded-xl" onClick={openAddGoal}><Plus className="w-4 h-4 mr-1" /> {T("addGoal", "Add Goal")}</Button>
         </div>
 
         <div className="space-y-4">
@@ -102,7 +106,7 @@ export default function Budget() {
                   <div className="w-full h-3 bg-muted rounded-full overflow-hidden mb-2">
                     <motion.div className={`h-full ${getProgressColor(progress)}`} initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
                   </div>
-                  <p className="text-xs font-bold text-primary">{progress.toFixed(0)}% reached</p>
+                  <p className="text-xs font-bold text-primary">{progress.toFixed(0)}% {T("reached", "reached")}</p>
                 </motion.div>
               );
             })}
@@ -112,14 +116,14 @@ export default function Budget() {
 
       <Dialog open={goalOpen} onOpenChange={setGoalOpen}>
         <DialogContent className="max-w-sm rounded-3xl">
-          <DialogHeader><DialogTitle>{editingGoal ? "Edit Goal" : "New Savings Goal"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingGoal ? T("editGoal", "Edit Goal") : T("newSavingsGoal", "New Savings Goal")}</DialogTitle></DialogHeader>
           <form onSubmit={handleSaveGoal} className="space-y-4 mt-2">
-            <div><Label>Goal Name</Label><Input value={goalForm.name} onChange={e => setGoalForm(f => ({...f, name: e.target.value}))} required className="rounded-xl" /></div>
+            <div><Label>{T("goalName", "Goal Name")}</Label><Input value={goalForm.name} onChange={e => setGoalForm(f => ({...f, name: e.target.value}))} required className="rounded-xl" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Target Amount</Label><Input type="number" value={goalForm.target_amount} onChange={e => setGoalForm(f => ({...f, target_amount: e.target.value}))} required className="rounded-xl" /></div>
-              <div><Label>Saved So Far</Label><Input type="number" value={goalForm.current_saved} onChange={e => setGoalForm(f => ({...f, current_saved: e.target.value}))} className="rounded-xl" /></div>
+              <div><Label>{T("targetAmount", "Target Amount")}</Label><Input type="number" value={goalForm.target_amount} onChange={e => setGoalForm(f => ({...f, target_amount: e.target.value}))} required className="rounded-xl" /></div>
+              <div><Label>{T("savedSoFar", "Saved So Far")}</Label><Input type="number" value={goalForm.current_saved} onChange={e => setGoalForm(f => ({...f, current_saved: e.target.value}))} className="rounded-xl" /></div>
             </div>
-            <Button type="submit" disabled={savingGoal} className="w-full rounded-xl">{savingGoal ? "Saving..." : "Save Goal"}</Button>
+            <Button type="submit" disabled={savingGoal} className="w-full rounded-xl">{savingGoal ? T("saving", "Saving...") : T("saveGoal", "Save Goal")}</Button>
           </form>
         </DialogContent>
       </Dialog>

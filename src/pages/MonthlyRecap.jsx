@@ -1,5 +1,7 @@
 import { useMemo } from "react";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp, TrendingDown, CheckCircle2, DollarSign, Calendar } from "lucide-react";
@@ -9,7 +11,8 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 export default function MonthlyRecap() {
-  // 🚀 SECURE: Pulls everything instantly from your Supabase Brain
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const { incomes, payments, bills, loans, loading } = useFinancialData();
 
   const now = new Date();
@@ -75,61 +78,61 @@ export default function MonthlyRecap() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center gap-2 mb-1">
           <Calendar className="w-5 h-5 text-primary" />
-          <h1 className="text-2xl font-bold font-heading text-foreground">{monthName} Recap</h1>
+          <h1 className="text-2xl font-bold font-heading text-foreground">{monthName} {T("recap", "Recap")}</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">Your financial summary for this month</p>
+        <p className="text-sm text-muted-foreground mb-6">{T("monthlyRecapSubtitle", "Your financial summary for this month")}</p>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-card border border-border rounded-2xl p-4">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Income Logged</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("incomeLogged", "Income Logged")}</p>
             <p className="text-xl font-bold font-heading text-primary">{fmt(totalIncome)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{thisMonthIncomes.length} entries</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{thisMonthIncomes.length} {T("entries", "entries")}</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-4">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Fixed Expenses</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("fixedExpenses", "Fixed Expenses")}</p>
             <p className="text-xl font-bold font-heading text-destructive">{fmt(monthlyExpenses)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">bills + loans</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{T("billsLoans", "bills + loans")}</p>
           </div>
           <div className={`rounded-2xl p-4 border ${cashFlow >= 0 ? "bg-primary/10 border-primary/20" : "bg-destructive/10 border-destructive/20"}`}>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Net Cash Flow</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("netCashFlow", "Net Cash Flow")}</p>
             <div className="flex items-center gap-1">
               {cashFlow >= 0 ? <TrendingUp className="w-4 h-4 text-primary" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
               <p className={`text-xl font-bold font-heading ${cashFlow >= 0 ? "text-primary" : "text-destructive"}`}>{fmt(cashFlow)}</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">income − expenses</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{T("incomeMinusExpenses", "income − expenses")}</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-4">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Payments Made</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("paymentsMade", "Payments Made")}</p>
             <p className="text-xl font-bold font-heading text-foreground">{fmt(totalPaid)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{loansPaid} loan · {billsPaid} bill</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{loansPaid} {T("loan", "loan")} · {billsPaid} {T("bill", "bill")}</p>
           </div>
         </div>
 
         {/* Highlights */}
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-2">
-          <h2 className="text-sm font-semibold font-heading text-foreground mb-3">Month Highlights</h2>
+          <h2 className="text-sm font-semibold font-heading text-foreground mb-3">{T("monthHighlights", "Month Highlights")}</h2>
           {cashFlow >= 0 ? (
             <div className="flex items-center gap-2 text-sm text-primary">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>You came out <strong>{fmt(cashFlow)} ahead</strong> this month.</span>
+              <span>{T("cashFlowPositive", "You came out")} <strong>{fmt(cashFlow)} {T("ahead", "ahead")}</strong> {T("thisMonth", "this month")}.</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-sm text-destructive">
               <TrendingDown className="w-4 h-4 shrink-0" />
-              <span>Expenses exceeded income by <strong>{fmt(Math.abs(cashFlow))}</strong>.</span>
+              <span>{T("expensesExceeded", "Expenses exceeded income by")} <strong>{fmt(Math.abs(cashFlow))}</strong>.</span>
             </div>
           )}
           {thisMonthPayments.length > 0 && (
             <div className="flex items-center gap-2 text-sm text-foreground">
               <DollarSign className="w-4 h-4 shrink-0 text-muted-foreground" />
-              <span>Made <strong>{thisMonthPayments.length} payments</strong> totaling <strong>{fmt(totalPaid)}</strong>.</span>
+              <span>{T("paymentsMadeText", "Made")} <strong>{thisMonthPayments.length} {T("payments", "payments")}</strong> {T("totalizing", "totaling")} <strong>{fmt(totalPaid)}</strong>.</span>
             </div>
           )}
           {totalIncome === 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="w-4 h-4 shrink-0" />
-              <span>No income logged yet for {monthName}. Log your income to see your cash flow.</span>
+              <span>{T("noIncomeLogged", "No income logged yet for")} {monthName}. {T("logIncomeMessage", "Log your income to see your cash flow")}.</span>
             </div>
           )}
         </div>
@@ -137,20 +140,20 @@ export default function MonthlyRecap() {
         {/* Last 6 Months Chart */}
         {last6.some(d => d.income > 0) && (
           <div className="bg-card border border-border rounded-3xl p-4 mb-6">
-            <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Income vs Expenses (6 months)</h2>
+            <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("incomeVsExpenses", "Income vs Expenses")} (6 {T("months", "months")})</h2>
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={last6} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} width={36} />
-                <Tooltip formatter={(v, n) => [fmt(v), n === "income" ? "Income" : "Expenses"]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                <Tooltip formatter={(v, n) => [fmt(v), n === "income" ? T("income", "Income") : T("expenses", "Expenses")]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
                 <Bar dataKey="income" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
                 <Bar dataKey="expenses" fill="hsl(var(--destructive))" opacity={0.6} radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex gap-4 justify-center mt-2">
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><div className="w-2 h-2 rounded-sm bg-primary" /> Income</div>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><div className="w-2 h-2 rounded-sm bg-destructive opacity-60" /> Expenses</div>
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><div className="w-2 h-2 rounded-sm bg-primary" /> {T("income", "Income")}</div>
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><div className="w-2 h-2 rounded-sm bg-destructive opacity-60" /> {T("expenses", "Expenses")}</div>
             </div>
           </div>
         )}
@@ -158,7 +161,7 @@ export default function MonthlyRecap() {
         {/* Bills Breakdown */}
         {billPieData.length > 0 && (
           <div className="bg-card border border-border rounded-3xl p-4 mb-6">
-            <h2 className="text-sm font-semibold font-heading text-foreground mb-3">Bills by Category</h2>
+            <h2 className="text-sm font-semibold font-heading text-foreground mb-3">{T("billsByCategory", "Bills by Category")}</h2>
             <div className="space-y-2">
               {billPieData.sort((a,b) => b.value - a.value).map((item, i) => (
                 <div key={item.name} className="flex items-center justify-between">

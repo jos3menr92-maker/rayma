@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +47,8 @@ function calcSnowball(loans) {
 }
 
 export default function DebtPayoffSimulator() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [loans, setLoans] = useState([]);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [extraPayment, setExtraPayment] = useState(0);
@@ -80,24 +84,24 @@ export default function DebtPayoffSimulator() {
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-heading font-bold text-foreground">Debt Payoff Simulator</h1>
-        <p className="text-sm text-muted-foreground">Visualize how extra payments accelerate your debt freedom</p>
+        <h1 className="text-2xl font-heading font-bold text-foreground">{T("debtPayoffSimulator", "Debt Payoff Simulator")}</h1>
+        <p className="text-sm text-muted-foreground">{T("simulatorSubtitle", "Visualize how extra payments accelerate your debt freedom")}</p>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-muted-foreground text-sm">Loading loans...</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">{T("loadingLoans", "Loading loans...")}</div>
       ) : loans.length === 0 ? (
         <Card className="bg-card border-border">
           <CardContent className="py-12 text-center">
             <TrendingDown className="w-8 h-8 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground text-sm">No active loans found. Add loans to use the simulator.</p>
+            <p className="text-muted-foreground text-sm">{T("noActiveLoans", "No active loans found. Add loans to use the simulator.")}</p>
           </CardContent>
         </Card>
       ) : (
         <Tabs defaultValue="single">
           <TabsList className="grid w-full grid-cols-2 bg-secondary">
-            <TabsTrigger value="single">Single Loan</TabsTrigger>
-            <TabsTrigger value="strategy">Payoff Strategy</TabsTrigger>
+            <TabsTrigger value="single">{T("singleLoan", "Single Loan")}</TabsTrigger>
+            <TabsTrigger value="strategy">{T("payoffStrategy", "Payoff Strategy")}</TabsTrigger>
           </TabsList>
 
           {/* Single Loan Simulator */}
@@ -105,7 +109,7 @@ export default function DebtPayoffSimulator() {
             <Card className="bg-card border-border">
               <CardContent className="p-4 space-y-4">
                 <div>
-                  <Label>Select Loan</Label>
+                  <Label>{T("selectLoan", "Select Loan")}</Label>
                   <Select value={selectedLoan} onValueChange={setSelectedLoan}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -115,13 +119,13 @@ export default function DebtPayoffSimulator() {
                 </div>
                 {loan && (
                   <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">Balance</p><p className="font-bold text-foreground">{fmt(loan.current_balance)}</p></div>
-                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">Rate</p><p className="font-bold text-foreground">{loan.interest_rate || 0}%</p></div>
-                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">Payment</p><p className="font-bold text-foreground">{fmt(loan.monthly_payment)}/mo</p></div>
+                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">{T("balance", "Balance")}</p><p className="font-bold text-foreground">{fmt(loan.current_balance)}</p></div>
+                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">{T("rate", "Rate")}</p><p className="font-bold text-foreground">{loan.interest_rate || 0}%</p></div>
+                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">{T("payment", "Payment")}</p><p className="font-bold text-foreground">{fmt(loan.monthly_payment)}/mo</p></div>
                   </div>
                 )}
                 <div>
-                  <Label>Extra Monthly Payment: <span className="text-primary font-bold">{fmt(extraPayment)}</span></Label>
+                  <Label>{T("extraMonthlyPayment", "Extra Monthly Payment")}: <span className="text-primary font-bold">{fmt(extraPayment)}</span></Label>
                   <Slider className="mt-2" min={0} max={1000} step={25} value={[extraPayment]} onValueChange={([v]) => setExtraPayment(v)} />
                   <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>$0</span><span>$1,000</span></div>
                 </div>
@@ -134,17 +138,17 @@ export default function DebtPayoffSimulator() {
                   <Card className="bg-card border-primary/30 border">
                     <CardContent className="p-4 text-center">
                       <Zap className="w-5 h-5 text-primary mx-auto mb-1" />
-                      <p className="text-xs text-muted-foreground">Months Saved</p>
+                      <p className="text-xs text-muted-foreground">{T("monthsSaved", "Months Saved")}</p>
                       <p className="text-2xl font-bold text-primary">{monthsSaved}</p>
-                      <p className="text-xs text-muted-foreground">months earlier</p>
+                      <p className="text-xs text-muted-foreground">{T("monthsEarlier", "months earlier")}</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-card border-green-500/30 border">
                     <CardContent className="p-4 text-center">
                       <DollarSign className="w-5 h-5 text-green-400 mx-auto mb-1" />
-                      <p className="text-xs text-muted-foreground">Interest Saved</p>
+                      <p className="text-xs text-muted-foreground">{T("interestSaved", "Interest Saved")}</p>
                       <p className="text-2xl font-bold text-green-400">{fmt(interestSaved)}</p>
-                      <p className="text-xs text-muted-foreground">total savings</p>
+                      <p className="text-xs text-muted-foreground">{T("totalSavings", "total savings")}</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -152,23 +156,23 @@ export default function DebtPayoffSimulator() {
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <Card className="bg-card border-border">
                     <CardContent className="p-3">
-                      <p className="text-xs text-muted-foreground mb-1">Without Extra Payment</p>
-                      <p className="font-semibold text-foreground">{base.months} months</p>
-                      <p className="text-muted-foreground text-xs">{fmt(base.totalInterest)} in interest</p>
+                      <p className="text-xs text-muted-foreground mb-1">{T("withoutExtraPayment", "Without Extra Payment")}</p>
+                      <p className="font-semibold text-foreground">{base.months} {T("months", "months")}</p>
+                      <p className="text-muted-foreground text-xs">{fmt(base.totalInterest)} {T("inInterest", "in interest")}</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-card border-primary/30 border">
                     <CardContent className="p-3">
-                      <p className="text-xs text-muted-foreground mb-1">With +{fmt(extraPayment)}/mo</p>
-                      <p className="font-semibold text-primary">{boosted.months} months</p>
-                      <p className="text-primary text-xs">{fmt(boosted.totalInterest)} in interest</p>
+                      <p className="text-xs text-muted-foreground mb-1">{T("withExtra", "With")} +{fmt(extraPayment)}/mo</p>
+                      <p className="font-semibold text-primary">{boosted.months} {T("months", "months")}</p>
+                      <p className="text-primary text-xs">{fmt(boosted.totalInterest)} {T("inInterest", "in interest")}</p>
                     </CardContent>
                   </Card>
                 </div>
 
                 {chartData.length > 1 && (
                   <Card className="bg-card border-border">
-                    <CardHeader className="pb-2 pt-4 px-4"><CardTitle className="text-sm text-muted-foreground">Balance Over Time</CardTitle></CardHeader>
+                    <CardHeader className="pb-2 pt-4 px-4"><CardTitle className="text-sm text-muted-foreground">{T("balanceOverTime", "Balance Over Time")}</CardTitle></CardHeader>
                     <CardContent className="px-2 pb-4">
                       <ResponsiveContainer width="100%" height={180}>
                         <LineChart data={chartData}>
@@ -192,19 +196,19 @@ export default function DebtPayoffSimulator() {
             <Card className="bg-card border-border">
               <CardContent className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-secondary rounded-lg p-3 text-center"><p className="text-xs text-muted-foreground">Total Debt</p><p className="font-bold text-foreground">{fmt(totalDebt)}</p></div>
-                  <div className="bg-secondary rounded-lg p-3 text-center"><p className="text-xs text-muted-foreground">Monthly Payments</p><p className="font-bold text-foreground">{fmt(totalMonthly)}</p></div>
+                  <div className="bg-secondary rounded-lg p-3 text-center"><p className="text-xs text-muted-foreground">{T("totalDebt", "Total Debt")}</p><p className="font-bold text-foreground">{fmt(totalDebt)}</p></div>
+                  <div className="bg-secondary rounded-lg p-3 text-center"><p className="text-xs text-muted-foreground">{T("monthlyPayments", "Monthly Payments")}</p><p className="font-bold text-foreground">{fmt(totalMonthly)}</p></div>
                 </div>
                 <div>
-                  <Label>Strategy</Label>
+                  <Label>{T("strategy", "Strategy")}</Label>
                   <div className="grid grid-cols-2 gap-2 mt-1">
                     <button onClick={() => setStrategy("avalanche")} className={`p-3 rounded-lg border text-left text-sm transition-colors ${strategy === "avalanche" ? "border-primary bg-primary/10" : "border-border bg-secondary"}`}>
-                      <p className="font-semibold text-foreground">Avalanche</p>
-                      <p className="text-xs text-muted-foreground">Pay highest interest first — saves most money</p>
+                      <p className="font-semibold text-foreground">{T("avalanche", "Avalanche")}</p>
+                      <p className="text-xs text-muted-foreground">{T("avalancheDesc", "Pay highest interest first — saves most money")}</p>
                     </button>
                     <button onClick={() => setStrategy("snowball")} className={`p-3 rounded-lg border text-left text-sm transition-colors ${strategy === "snowball" ? "border-primary bg-primary/10" : "border-border bg-secondary"}`}>
-                      <p className="font-semibold text-foreground">Snowball</p>
-                      <p className="text-xs text-muted-foreground">Pay smallest balance first — builds momentum</p>
+                      <p className="font-semibold text-foreground">{T("snowball", "Snowball")}</p>
+                      <p className="text-xs text-muted-foreground">{T("snowballDesc", "Pay smallest balance first — builds momentum")}</p>
                     </button>
                   </div>
                 </div>
@@ -212,7 +216,7 @@ export default function DebtPayoffSimulator() {
             </Card>
 
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recommended Order</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{T("recommendedOrder", "Recommended Order")}</h3>
               {orderedLoans.map((l, i) => {
                 const sim = simulateLoan(l.current_balance, l.interest_rate || 0, l.monthly_payment || 0);
                 return (
@@ -224,10 +228,10 @@ export default function DebtPayoffSimulator() {
                         <p className="text-xs text-muted-foreground">{fmt(l.current_balance)} · {l.interest_rate || 0}% APR · {sim.months}mo to payoff</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Interest</p>
+                        <p className="text-xs text-muted-foreground">{T("interest", "Interest")}</p>
                         <p className="text-sm font-semibold text-destructive">{fmt(sim.totalInterest)}</p>
                       </div>
-                      {i === 0 && <Badge className="bg-primary/20 text-primary border-0 text-xs">Focus Here</Badge>}
+                      {i === 0 && <Badge className="bg-primary/20 text-primary border-0 text-xs">{T("focusHere", "Focus Here")}</Badge>}
                     </CardContent>
                   </Card>
                 );
