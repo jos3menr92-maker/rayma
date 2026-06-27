@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Play, TrendingDown, TrendingUp, DollarSign, Zap, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,8 @@ const fmt = (n) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
 
 export default function Simulator() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
   const [incomes, setIncomes] = useState([]);
@@ -47,12 +51,12 @@ export default function Simulator() {
     const subscriptions = bills.filter(b => b.category === "subscriptions");
 
     const scenarioDescriptions = {
-      ai_optimize: "AI-optimized strategy: find cheaper bills, extra debt payments, and best payoff order",
-      extra_payment: `Adding $${extraPayment}/month extra to highest-interest loan`,
-      cut_bills: `Reducing all bills by ${billCutPercent}% (finding cheaper alternatives)`,
-      debt_avalanche: "Debt avalanche method: pay minimums on all, maximum extra on highest interest",
-      debt_snowball: "Debt snowball method: pay minimums on all, maximum extra on smallest balance",
-      income_boost: "Increasing income by 10% (side income / raise scenario)",
+      ai_optimize: T("aiOptimizeDesc", "AI-optimized strategy: find cheaper bills, extra debt payments, and best payoff order"),
+      extra_payment: T("extraPaymentDesc", `Adding $${extraPayment}/month extra to highest-interest loan`),
+      cut_bills: T("cutBillsDesc", `Reducing all bills by ${billCutPercent}% (finding cheaper alternatives)`),
+      debt_avalanche: T("avalancheDesc", "Debt avalanche method: pay minimums on all, maximum extra on highest interest"),
+      debt_snowball: T("snowballDesc", "Debt snowball method: pay minimums on all, maximum extra on smallest balance"),
+      income_boost: T("incomeBoostDesc", "Increasing income by 10% (side income / raise scenario)"),
     };
 
     const prompt = `You are a financial simulation engine. Analyze this user's finances and run the requested simulation scenario. Be specific with numbers.
@@ -144,9 +148,9 @@ Be specific, reference the user's actual loan names and bill names. Make it feel
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold font-heading text-foreground">Financial Simulator</h1>
+          <h1 className="text-2xl font-bold font-heading text-foreground">{T("financialSimulator", "Financial Simulator")}</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6 ml-12">See how different scenarios could change your future</p>
+        <p className="text-sm text-muted-foreground mb-6 ml-12">{T("simulatorSubtitle", "See how different scenarios could change your future")}</p>
 
         <SimulationControls
           scenario={scenario}
@@ -168,11 +172,11 @@ Be specific, reference the user's actual loan names and bill names. Make it feel
           {simulating ? (
             <span className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-              Running simulation...
+              {T("runningSimulation", "Running simulation...")}
             </span>
           ) : (
             <span className="flex items-center gap-2">
-              <Play className="w-4 h-4" /> Run Simulation
+              <Play className="w-4 h-4" /> {T("runSimulation", "Run Simulation")}
             </span>
           )}
         </Button>
@@ -182,8 +186,8 @@ Be specific, reference the user's actual loan names and bill names. Make it feel
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
               <Zap className="w-6 h-6 text-primary animate-pulse" />
             </div>
-            <p className="text-sm font-medium text-foreground">AI is analyzing your finances…</p>
-            <p className="text-xs text-muted-foreground mt-1">Calculating projections and recommendations</p>
+            <p className="text-sm font-medium text-foreground">{T("aiAnalyzing", "AI is analyzing your finances…")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{T("calculatingProjections", "Calculating projections and recommendations")}</p>
           </motion.div>
         )}
 
@@ -193,7 +197,7 @@ Be specific, reference the user's actual loan names and bill names. Make it feel
 
         {loans.length === 0 && (
           <div className="text-center py-8 bg-card border border-border rounded-2xl">
-            <p className="text-sm text-muted-foreground">Add some loans first to run simulations.</p>
+            <p className="text-sm text-muted-foreground">{T("addLoansFirst", "Add some loans first to run simulations.")}</p>
           </div>
         )}
       </motion.div>

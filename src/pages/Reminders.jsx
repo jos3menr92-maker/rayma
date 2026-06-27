@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { Bell, Send, Loader2, CheckCircle2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,8 @@ const categoryIcons = {
 };
 
 export default function Reminders() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,20 +83,20 @@ async function loadData() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Reminders</h1>
-        <p className="text-sm text-muted-foreground mb-5">Send payment reminders to your email</p>
+        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">{T("reminders", "Reminders")}</h1>
+        <p className="text-sm text-muted-foreground mb-5">{T("sendPaymentReminders", "Send payment reminders to your email")}</p>
 
         {/* Email field */}
         <div className="bg-card border border-border rounded-2xl p-4 mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Mail className="w-4 h-4 text-primary" />
-            <Label className="text-xs font-semibold text-foreground">Send reminders to</Label>
+            <Label className="text-xs font-semibold text-foreground">{T("sendRemindersTo", "Send reminders to")}</Label>
           </div>
           <Input
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            placeholder="your@email.com"
+            placeholder={T("emailPlaceholder", "your@email.com")}
             className="rounded-xl"
           />
         </div>
@@ -100,7 +104,7 @@ async function loadData() {
         {/* Loans */}
         {loans.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Loans</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{T("loans", "Loans")}</h2>
             <div className="space-y-3">
               {loans.map((loan, i) => {
                 const key = `loan-${loan.id}`;
@@ -131,8 +135,8 @@ async function loadData() {
                       onClick={() => sendReminder(loan, "loan")}
                     >
                       {sending[key] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
-                        sent[key] ? <><CheckCircle2 className="w-3.5 h-3.5 mr-1 text-primary" />Sent!</> :
-                        <><Send className="w-3.5 h-3.5 mr-1" />Remind</>}
+                        sent[key] ? <><CheckCircle2 className="w-3.5 h-3.5 mr-1 text-primary" />{T("sent", "Sent!")}</> :
+                        <><Send className="w-3.5 h-3.5 mr-1" />{T("remind", "Remind")}</>}
                     </Button>
                   </motion.div>
                 );
@@ -144,7 +148,7 @@ async function loadData() {
         {/* Bills */}
         {bills.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Bills</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{T("bills", "Bills")}</h2>
             <div className="space-y-3">
               {bills.map((bill, i) => {
                 const key = `bill-${bill.id}`;
@@ -175,8 +179,8 @@ async function loadData() {
                       onClick={() => sendReminder(bill, "bill")}
                     >
                       {sending[key] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
-                        sent[key] ? <><CheckCircle2 className="w-3.5 h-3.5 mr-1 text-primary" />Sent!</> :
-                        <><Send className="w-3.5 h-3.5 mr-1" />Remind</>}
+                        sent[key] ? <><CheckCircle2 className="w-3.5 h-3.5 mr-1 text-primary" />{T("sent", "Sent!")}</> :
+                        <><Send className="w-3.5 h-3.5 mr-1" />{T("remind", "Remind")}</>}
                     </Button>
                   </motion.div>
                 );
@@ -188,7 +192,7 @@ async function loadData() {
         {loans.length === 0 && bills.length === 0 && (
           <div className="text-center py-12">
             <Bell className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No active loans or bills to remind about.</p>
+            <p className="text-sm text-muted-foreground">{T("noActiveLoansOrBills", "No active loans or bills to remind about.")}</p>
           </div>
         )}
       </motion.div>

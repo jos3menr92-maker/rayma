@@ -1,22 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { FolderOpen, Sparkles, Clock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import DocumentUploader from "../components/documents/DocumentUploader";
 import DocumentCard from "../components/documents/DocumentCard";
 import DocumentReviewModal from "../components/documents/DocumentReviewModal";
 
-const FOLDERS = [
-  { id: "all", label: "All", emoji: "🗂️" },
-  { id: "pending_review", label: "Pending", emoji: "⏳", isStatus: true },
-  { id: "payments", label: "Payments", emoji: "💳" },
-  { id: "loans", label: "Loans", emoji: "🏦" },
-  { id: "bills", label: "Bills", emoji: "📄" },
-  { id: "tax", label: "Tax", emoji: "🧾" },
-  { id: "misc", label: "Misc", emoji: "📁" },
+const FOLDERS_STATIC = [
+  { id: "all", labelKey: "all", emoji: "🗂️" },
+  { id: "pending_review", labelKey: "pending", emoji: "⏳", isStatus: true },
+  { id: "payments", labelKey: "payments", emoji: "💳" },
+  { id: "loans", labelKey: "loans", emoji: "🏦" },
+  { id: "bills", labelKey: "bills", emoji: "📄" },
+  { id: "tax", labelKey: "tax", emoji: "🧾" },
+  { id: "misc", labelKey: "misc", emoji: "📁" },
 ];
 
 export default function DocumentVault() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [docs, setDocs] = useState([]);
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
@@ -24,6 +28,11 @@ export default function DocumentVault() {
   const [activeFolder, setActiveFolder] = useState("all");
   const [reviewingDoc, setReviewingDoc] = useState(null);
   const [reviewAnalysis, setReviewAnalysis] = useState(null);
+
+  const FOLDERS = FOLDERS_STATIC.map(f => ({
+    ...f,
+    label: T(f.labelKey, f.labelKey === "pending" ? "Pending" : f.labelKey.charAt(0).toUpperCase() + f.labelKey.slice(1))
+  }));
 
   useEffect(() => { loadData(); }, []);
 
@@ -83,15 +92,15 @@ export default function DocumentVault() {
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
             <FolderOpen className="w-5 h-5 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold font-heading text-foreground">Document Vault</h1>
+          <h1 className="text-2xl font-bold font-heading text-foreground">{T("documentVault", "Document Vault")}</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-5 ml-12">Scan receipts, bills & documents — RAYMA logs them for you</p>
+        <p className="text-sm text-muted-foreground mb-5 ml-12">{T("documentVaultSubtitle", "Scan receipts, bills & documents — RAYMA logs them for you")}</p>
 
         {/* RAYMA hint */}
         <div className="bg-primary/5 border border-primary/15 rounded-2xl p-3 mb-5 flex gap-2.5">
           <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-xs text-foreground leading-relaxed">
-            Upload any financial document and I'll analyze it, extract key data, and ask you to verify before logging it to your records. Tax forms and miscellaneous docs are saved for your reference.
+            {T("documentHint", "Upload any financial document and I'll analyze it, extract key data, and ask you to verify before logging it to your records. Tax forms and miscellaneous docs are saved for your reference.")}
           </p>
         </div>
 
@@ -126,15 +135,15 @@ export default function DocumentVault() {
         {filtered.length === 0 ? (
           <div className="text-center py-14">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 text-3xl">📂</div>
-            <p className="text-sm font-semibold text-foreground mb-1">No documents here yet</p>
-            <p className="text-xs text-muted-foreground">Upload a receipt or document above to get started</p>
+            <p className="text-sm font-semibold text-foreground mb-1">{T("noDocumentsYet", "No documents here yet")}</p>
+            <p className="text-xs text-muted-foreground">{T("uploadDocumentStart", "Upload a receipt or document above to get started")}</p>
           </div>
         ) : (
           <div className="space-y-3">
             {pendingCount > 0 && activeFolder === "all" && (
               <div className="flex items-center gap-2 text-xs text-amber-400 font-medium mb-1">
                 <Clock className="w-3.5 h-3.5" />
-                {pendingCount} document{pendingCount > 1 ? "s" : ""} awaiting your review
+                {pendingCount} {T("documentAwaiting", `document${pendingCount > 1 ? "s" : ""} awaiting your review`)}
               </div>
             )}
             {filtered.map((doc, i) => (
