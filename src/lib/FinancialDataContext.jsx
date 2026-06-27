@@ -64,7 +64,6 @@ export function FinancialDataProvider({ children }) {
       setBills([]);
       setIncomes([]);
       setPayments([]);
-      setUserProfile(null);
     } finally {
       setLoading(false);
     }
