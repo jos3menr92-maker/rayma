@@ -1,19 +1,3 @@
-/**
- * ==========================================
- * RAYMA CONFIDENTIAL & PROPRIETARY
- * ==========================================
- * Copyright (C) 2026 RAYMA. All Rights Reserved.
- *
- * NOTICE: All information contained herein is, and remains
- * the property of RAYMA. The intellectual and technical
- * concepts contained herein are proprietary to RAYMA and
- * are protected by trade secret and copyright law.
- * Dissemination of this information or reproduction of this
- * material is strictly forbidden unless prior written
- * permission is obtained from RAYMA Management.
- * ==========================================
- */
-
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -42,19 +26,18 @@ const HUMAN_AVATARS = [
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))"];
 
-// 🚀 ADDED: Unified icons for the mini-cards
 const iconMap = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️", rent: "🏠", food: "🍔", transport: "🚗", 
   health: "🏥", mortgage: "🏠", auto: "🚗", student: "🎓", personal: "💰", credit_card: "💳", medical: "🏥", other: "📋"
 };
 
-function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency, noDataText = "No data" }) {
+function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency }) {
   const fmt = formatCurrency || ((v) => `$${Math.round(v || 0).toLocaleString()}`);
   return (
     <div className="flex flex-col items-center">
       {data.length === 0 ? (
         <div style={{ height }} className="flex items-center justify-center">
-          <p className="text-xs text-muted-foreground">{noDataText}</p>
+          <p className="text-xs text-muted-foreground">No data</p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={height}>
@@ -85,8 +68,14 @@ export default function Dashboard() {
   const [pullDistance, setPullDistance] = useState(0);
 
   useEffect(() => {
-    if (userProfile && userProfile.onboarding_complete === false) navigate("/onboarding");
-  }, [userProfile, navigate]);
+    if (!loading && !userProfile) {
+      navigate("/auth", { replace: true });
+      return;
+    }
+    if (userProfile && userProfile.onboarding_complete === false) {
+      navigate("/onboarding");
+    }
+  }, [userProfile, loading, navigate]);
 
   const handleTouchStart = (e) => setPullStartY(e.touches[0].clientY);
   const handleTouchMove = (e) => {
@@ -129,10 +118,19 @@ export default function Dashboard() {
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
+  if (!userProfile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-background">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-medium text-muted-foreground animate-pulse">
+          {T("loadingProfile", "Loading your profile...")}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-lg mx-auto px-4 pt-4 pb-24" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      
-      {/* Invisible Scrollbar CSS */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -150,7 +148,7 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold font-heading text-foreground mb-0.5">
-            {T("hello", "Hi")}{userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0] ? `, ${userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0]}` : ''} 👋
+            {T("hello", "Hi")}, {userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0] || 'there'} 👋
           </h1>
           <p className="text-sm text-muted-foreground">{userProfile?.dashboard_greeting || T("stayOnTop", "Stay on top of your finances")}</p>
         </div>
@@ -175,7 +173,6 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* 🚀 NEW: Horizontal Mini-Cards for Bills */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBills", "Monthly Bills")}</h2>
@@ -191,13 +188,12 @@ export default function Dashboard() {
             </div>
           )) : (
             <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/bills")}>
-            <div className="text-xs text-muted-foreground">{T("noBillsYet", "No bills logged yet.")}</div>
+              <p className="text-xs text-muted-foreground">No bills logged yet.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* 🚀 NEW: Horizontal Mini-Cards for Loans */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("activeLoans", "Active Loans")}</h2>
@@ -216,7 +212,7 @@ export default function Dashboard() {
             </div>
           )) : (
             <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/loans")}>
-              <p className="text-xs text-muted-foreground">{T("noActiveLoans", "No active loans.")}</p>
+              <p className="text-xs text-muted-foreground">No active loans.</p>
             </div>
           )}
         </div>
@@ -244,8 +240,8 @@ export default function Dashboard() {
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
         <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("expenseBreakdown", "Expense Breakdown")}</h2>
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <MiniPie title={T("totalMonthly", "Total Monthly")} data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} noDataText={T("noData", "No data")} />
-          <MiniPie title={T("loanBalances", "Loan Balances")} data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} noDataText={T("noData", "No data")} />
+          <MiniPie title={T("totalMonthly", "Total Monthly")} data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
+          <MiniPie title={T("loanBalances", "Loan Balances")} data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
         </div>
       </div>
 
@@ -255,7 +251,6 @@ export default function Dashboard() {
         <div onClick={() => navigate("/trend?type=totalPaid")} className="cursor-pointer"><StatsCard label={T("totalPaid", "Total Paid")} value={formatCurrency(totalPaid)} icon={TrendingUp} color="primary" /></div>
         <div onClick={() => navigate("/trend?type=monthlyDue")} className="cursor-pointer"><StatsCard label={T("monthlyDue", "Monthly Due")} value={formatCurrency(monthlyTotal)} icon={CreditCard} color="muted" /></div>
       </div>
-
     </div>
   );
 }
