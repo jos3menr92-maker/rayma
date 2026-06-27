@@ -23,6 +23,7 @@ export default function Reminders() {
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState({});
   const [sent, setSent] = useState({});
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     loadData();
