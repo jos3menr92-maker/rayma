@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
 // RAYMA's secure connection to the database
-const supabaseUrl = 'https://vadbebezckuppusxukdx.supabase.co';
-const supabaseAnonKey = 'sb_publishable_yn9qklEphaMgMBr1bOC2sA_gQFoRno2';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "Missing Supabase environment variables. " +
+    "Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file."
+  );
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
