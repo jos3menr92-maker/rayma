@@ -150,7 +150,7 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold font-heading text-foreground mb-0.5">
-            {T("hello", "Hi")}, {userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0] || 'there'} 👋
+            {T("hello", "Hi")}{userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0] ? `, ${userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0]}` : ''} 👋
           </h1>
           <p className="text-sm text-muted-foreground">{userProfile?.dashboard_greeting || T("stayOnTop", "Stay on top of your finances")}</p>
         </div>
@@ -191,7 +191,7 @@ export default function Dashboard() {
             </div>
           )) : (
             <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/bills")}>
-              <p className="text-xs text-muted-foreground">No bills logged yet.</p>
+            <div className="text-xs text-muted-foreground">{T("noBillsYet", "No bills logged yet.")}</div>
             </div>
           )}
         </div>
@@ -216,7 +216,7 @@ export default function Dashboard() {
             </div>
           )) : (
             <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/loans")}>
-              <p className="text-xs text-muted-foreground">No active loans.</p>
+              <p className="text-xs text-muted-foreground">{T("noActiveLoans", "No active loans.")}</p>
             </div>
           )}
         </div>

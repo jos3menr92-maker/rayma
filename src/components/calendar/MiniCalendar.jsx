@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-
-const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
 
+const getMonthName = (date, locale) => new Intl.DateTimeFormat(locale, { month: "long" }).format(date);
+const getWeekdayAbbreviations = (locale) => {
+  const sunday = new Date(Date.UTC(2021, 0, 3));
+  return Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(locale, { weekday: "narrow" }).format(new Date(sunday.getTime() + index * 86400000)));
+};
+
 export default function MiniCalendar({ bills, loans, userProfile }) {
+  const { lang } = useLanguage();
+  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const [current, setCurrent] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
 
@@ -17,6 +24,8 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
+  const monthName = useMemo(() => getMonthName(new Date(year, month, 1), lang), [year, month, lang]);
+  const dayHeaders = useMemo(() => getWeekdayAbbreviations(lang), [lang]);
 
   // 🧠 RAYMA HELPER: Safely extracts the day number from "YYYY-MM-DD" without timezone bugs
   const extractDay = (dateStr) => {
@@ -82,7 +91,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold font-heading text-foreground flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-primary" />
-          Calendar
+          {T("calendarTitle", "Calendar")}
         </h2>
       </div>
 
@@ -91,7 +100,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
         <button onClick={() => setCurrent(new Date(year, month - 1, 1))} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
           <ChevronLeft className="w-4 h-4 text-muted-foreground" />
         </button>
-        <span className="text-xs font-bold text-foreground uppercase tracking-wider">{MONTHS[month]} {year}</span>
+        <span className="text-xs font-bold text-foreground uppercase tracking-wider">{monthName} {year}</span>
         <button onClick={() => setCurrent(new Date(year, month + 1, 1))} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
@@ -99,7 +108,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
 
       {/* Day headers */}
       <div className="grid grid-cols-7 mb-1">
-        {DAYS.map((d, i) => (
+        {dayHeaders.map((d, i) => (
           <div key={i} className="text-center text-[10px] font-bold text-muted-foreground py-0.5">{d}</div>
         ))}
       </div>
@@ -143,7 +152,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
       {selectedDay && (
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="border-t border-border pt-4 mb-4 space-y-2">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-bold text-foreground">{MONTHS[month]} {selectedDay}</p>
+            <p className="text-sm font-bold text-foreground">{monthName} {selectedDay}</p>
             {totalDue > 0 && <span className="text-xs font-bold px-2 py-1 bg-destructive/10 text-destructive rounded-lg">{fmt(totalDue)} due</span>}
           </div>
 
@@ -152,7 +161,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
               <div className="flex items-center gap-3">
                 <span className="text-xl">💰</span>
                 <div>
-                  <p className="text-sm font-bold text-foreground">Payday!</p>
+                  <p className="text-sm font-bold text-foreground">{T("paydayLabel", "Payday!")}</p>
                   <p className="text-[11px] font-medium text-muted-foreground capitalize">{userProfile?.pay_frequency} pay</p>
                 </div>
               </div>
@@ -161,7 +170,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
 
           {selectedItems.length === 0 && !isPayday && (
             <div className="text-center py-4 bg-muted/30 rounded-2xl border border-dashed border-border">
-              <p className="text-xs font-medium text-muted-foreground">Nothing due on this day</p>
+              <p className="text-xs font-medium text-muted-foreground">{T("nothingDue", "Nothing due on this day")}</p>
             </div>
           )}
 
@@ -173,7 +182,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-foreground">{item.name}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground capitalize">{item._type === "loan" ? "Loan payment" : item.category}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground capitalize">{item._type === "loan" ? T("loanPayment", "Loan payment") : item.category}</p>
                 </div>
               </div>
               <span className="text-sm font-bold text-destructive">{fmt(item._type === "bill" ? item.amount : item.monthly_payment)}</span>
@@ -187,7 +196,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
         to="/calendar" 
         className="mt-2 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary/10 text-primary font-bold hover:bg-primary/20 active:scale-[0.98] transition-all"
       >
-        Open Full Calendar <ChevronRight className="w-5 h-5" />
+        {T("openFullCalendar", "Open Full Calendar")} <ChevronRight className="w-5 h-5" />
       </Link>
     </div>
   );
