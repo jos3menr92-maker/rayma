@@ -1,17 +1,30 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { Mail, Lock, User, Loader2, ArrowRight, Chrome, Fingerprint } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Auth() {
+  const { lang } = useLanguage();
+
+  // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
+  const T = useMemo(() =>
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
+
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [activeProvider, setActiveProvider] = useState(null); // Tracks which social button is loading
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "", fullName: "" });
-  
+
   const navigate = useNavigate();
   const { checkAppState } = useAuth();
 
@@ -68,10 +81,10 @@ export default function Auth() {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold font-heading text-foreground mb-2">
-            {isLogin ? "Welcome Back" : "Create Account"}
+            {isLogin ? T("welcomeBack", "Welcome Back") : T("createAccount", "Create Account")}
           </h1>
           <p className="text-muted-foreground text-sm">
-            {isLogin ? "Sign in to continue to RAYMA" : "Join us to take control of your finances"}
+            {isLogin ? T("signInDesc", "Sign in to continue to RAYMA") : T("signUpDesc", "Join us to take control of your finances")}
           </p>
         </div>
 
@@ -82,7 +95,7 @@ export default function Auth() {
               <User className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Full Name"
+                placeholder={T("fullName", "Full Name")}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50"
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 required
@@ -95,7 +108,7 @@ export default function Auth() {
             <Mail className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
             <input
               type="email"
-              placeholder="Email address"
+              placeholder={T("emailAddress", "Email address")}
               className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50"
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
@@ -107,7 +120,7 @@ export default function Auth() {
             <Lock className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
             <input
               type="password"
-              placeholder="Password"
+              placeholder={T("password", "Password")}
               className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50"
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
@@ -122,40 +135,40 @@ export default function Auth() {
             disabled={loading || activeProvider}
             className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> {isLogin ? "Sign In" : "Sign Up"} <ArrowRight className="w-4 h-4" /></>}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> {isLogin ? T("signIn", "Sign In") : T("signUp", "Sign Up")} <ArrowRight className="w-4 h-4" /></>}
           </button>
         </form>
 
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or continue with</span></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">{T("orContinueWith", "Or continue with")}</span></div>
         </div>
 
         {/* --- UPGRADED: Apple, Google, and Fingerprint Buttons --- */}
         <div className="space-y-3">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => handleProviderSignIn("passkey")}
             disabled={loading || activeProvider}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
           >
             {activeProvider === "passkey" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-5 h-5" />}
-            Sign in with Passkey / Biometrics
+            {T("signInPasskey", "Sign in with Passkey / Biometrics")}
           </button>
 
           <div className="grid grid-cols-2 gap-3">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => handleProviderSignIn("google")}
               disabled={loading || activeProvider}
               className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50"
             >
-              {activeProvider === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />} 
+              {activeProvider === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />}
               Google
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => handleProviderSignIn("apple")}
               disabled={loading || activeProvider}
               className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50"
@@ -176,11 +189,11 @@ export default function Auth() {
             onClick={() => setIsLogin(!isLogin)}
             className="text-sm text-primary hover:underline font-medium"
           >
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            {isLogin ? T("noAccount", "Don't have an account? Sign up") : T("hasAccount", "Already have an account? Sign in")}
           </button>
-          
+
           <p className="text-[10px] text-muted-foreground">
-            By continuing, you agree to our <Link to="/terms" className="underline">Terms of Service</Link> and <Link to="/privacy" className="underline">Privacy Policy</Link>.
+            {T("agreeTerms", "By continuing, you agree to our")} <Link to="/terms" className="underline">{T("termsOfService", "Terms of Service")}</Link> {T("and", "and")} <Link to="/privacy" className="underline">{T("privacyPolicy", "Privacy Policy")}</Link>.
           </p>
         </div>
       </div>
