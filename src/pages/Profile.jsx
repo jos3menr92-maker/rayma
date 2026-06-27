@@ -346,7 +346,7 @@ export default function Profile() {
 
           {/* Localization & Region */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Globe} title={T("localizationAndRegion", "Localization & Region")} subtitle="Set your primary language and currency" />
+            <SectionHeader icon={Globe} title={T("localizationAndRegion", "Localization & Region")} subtitle={T("localizationSubtitle", "Set your primary language and currency")} />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("language", "Language")}</Label>
@@ -358,7 +358,7 @@ export default function Profile() {
                     setForm(prev => ({ ...prev, preferred_language: v }));
                   }}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select Language" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={T("selectLanguage", "Select Language")} /></SelectTrigger>
                   <SelectContent>
                     {LANGUAGES.map(langItem => (
                       <SelectItem key={langItem.code} value={langItem.code}>
@@ -371,7 +371,7 @@ export default function Profile() {
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("currency", "Currency")}</Label>
                 <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select Currency" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={T("selectCurrency", "Select Currency")} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USD">USD ($)</SelectItem>
                     <SelectItem value="EUR">EUR (€)</SelectItem>
@@ -385,12 +385,12 @@ export default function Profile() {
 
           {/* Pay Schedule */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Calendar} title={T("paySchedule", "Pay Schedule")} subtitle={T("payScheduleDesc", "Helps RAYMA calculate your cash flow")} />
+            <SectionHeader icon={Calendar} title={T("paySchedule", "Pay Schedule")} subtitle={T("payScheduleDesc", "Used for income reminders and cash flow accuracy")} />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("frequency", "Frequency")}</Label>
                 <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
-                  <SelectTrigger><SelectValue placeholder="Frequency" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={T("frequency", "Frequency")} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="biweekly">Bi-weekly</SelectItem>
@@ -410,13 +410,13 @@ export default function Profile() {
             <SectionHeader icon={Shield} title={T("privacyLegal", "Privacy & Legal")} />
             <div className="space-y-1">
                <Link to="/privacy" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
-                  Privacy Policy <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  {T("privacyPolicy", "Privacy Policy")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
                <Link to="/terms" className="flex items-center justify-between p-3 hover:bg-muted rounded-xl text-sm transition-colors">
-                  Terms of Service & EULA <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  {T("termsOfService", "Terms of Service & EULA")} <ChevronRight className="w-4 h-4 text-muted-foreground" />
                </Link>
                <button type="button" onClick={executeAccountDeletion} className="w-full flex items-center justify-between p-3 hover:bg-red-500/10 text-red-500 rounded-xl text-sm transition-colors">
-                  <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete Account & Data</span>
+                  <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> {T("deleteAccountData", "Delete Account & Data")}</span>
                   <ChevronRight className="w-4 h-4 opacity-50" />
                </button>
             </div>
