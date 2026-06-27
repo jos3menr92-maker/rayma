@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { useCurrency } from "@/hooks/useCurrency";
 import { motion } from "framer-motion";
 import { ArrowLeft, Edit3, Trash2, Plus, DollarSign, Calendar, Percent, Building } from "lucide-react";
@@ -24,7 +26,17 @@ export default function LoanDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { formatCurrency } = useCurrency();
-  const { reload } = useFinancialData(); // 🚀 Connects to Brain to refresh Dashboard
+  const { reload } = useFinancialData();
+  const { lang } = useLanguage();
+
+  // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
+  const T = useMemo(() =>
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
 
   const [loan, setLoan] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -119,9 +131,9 @@ export default function LoanDetail() {
   if (!loan) {
     return (
       <div className="max-w-lg mx-auto px-4 pt-6 text-center">
-        <p className="text-muted-foreground">Loan not found</p>
+        <p className="text-muted-foreground">{T("loanNotFound", "Loan not found")}</p>
         <Button variant="ghost" onClick={() => navigate("/loans")} className="mt-4">
-          Go back
+          {T("goBack", "Go back")}
         </Button>
       </div>
     );
@@ -137,7 +149,7 @@ export default function LoanDetail() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {T("back", "Back")}
           </button>
           <div className="flex gap-2">
             <button onClick={() => setEditOpen(true)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
@@ -151,15 +163,15 @@ export default function LoanDetail() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this loan?</AlertDialogTitle>
+                  <AlertDialogTitle>{T("deleteLoanTitle", "Delete this loan?")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete the loan and all payment records.
+                    {T("deleteLoanDesc", "This will permanently delete the loan and all payment records.")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{T("cancel", "Cancel")}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDeleteLoan} className="bg-destructive text-destructive-foreground">
-                    Delete
+                    {T("delete", "Delete")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -178,7 +190,7 @@ export default function LoanDetail() {
           </div>
           {loan.status === "paid_off" && (
             <span className="ml-auto px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-              Paid Off ✓
+              {T("paidOff", "Paid Off")} ✓
             </span>
           )}
         </div>
@@ -190,7 +202,7 @@ export default function LoanDetail() {
             <p className="text-2xl font-bold font-heading text-foreground">
               {formatCurrency(loan.current_balance)}
             </p>
-            <p className="text-sm text-muted-foreground">remaining balance</p>
+            <p className="text-sm text-muted-foreground">{T("remainingBalance", "remaining balance")}</p>
           </div>
         </div>
 
@@ -199,21 +211,21 @@ export default function LoanDetail() {
           <div className="bg-card rounded-xl p-3 border border-border">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Original</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{T("original", "Original")}</span>
             </div>
             <p className="text-sm font-semibold text-foreground">{formatCurrency(loan.original_amount)}</p>
           </div>
           <div className="bg-card rounded-xl p-3 border border-border">
             <div className="flex items-center gap-2 mb-1">
               <Percent className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Interest</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{T("interest", "Interest")}</span>
             </div>
             <p className="text-sm font-semibold text-foreground">{loan.interest_rate || 0}%</p>
           </div>
           <div className="bg-card rounded-xl p-3 border border-border">
             <div className="flex items-center gap-2 mb-1">
               <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Due</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{T("due", "Due")}</span>
             </div>
             <p className="text-sm font-semibold text-foreground">
               {loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly"
@@ -225,7 +237,7 @@ export default function LoanDetail() {
             <div className="flex items-center gap-2 mb-1">
               <Building className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {loan.payment_frequency === "weekly" ? "Weekly" : loan.payment_frequency === "biweekly" ? "Bi-weekly" : "Monthly"}
+                {loan.payment_frequency === "weekly" ? T("weekly", "Weekly") : loan.payment_frequency === "biweekly" ? T("biweekly", "Bi-weekly") : T("monthly", "Monthly")}
               </span>
             </div>
             <p className="text-sm font-semibold text-foreground">{formatCurrency(loan.monthly_payment)}</p>
@@ -236,28 +248,28 @@ export default function LoanDetail() {
         <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
           <DialogTrigger asChild>
             <Button className="w-full rounded-xl h-11 text-sm font-semibold mb-6">
-              <Plus className="w-4 h-4 mr-2" /> Record Payment
+              <Plus className="w-4 h-4 mr-2" /> {T("recordPayment", "Record Payment")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>Record Payment</DialogTitle>
+              <DialogTitle>{T("recordPayment", "Record Payment")}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleAddPayment} className="space-y-4 mt-2">
               <div>
-                <Label className="text-xs text-muted-foreground">Amount *</Label>
+                <Label className="text-xs text-muted-foreground">{T("amount", "Amount")} *</Label>
                 <Input type="number" step="0.01" placeholder="$0.00" value={payForm.amount} onChange={(e) => setPayForm((p) => ({ ...p, amount: e.target.value }))} required className="mt-1 rounded-xl" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Date *</Label>
+                <Label className="text-xs text-muted-foreground">{T("date", "Date")} *</Label>
                 <Input type="date" value={payForm.payment_date} onChange={(e) => setPayForm((p) => ({ ...p, payment_date: e.target.value }))} required className="mt-1 rounded-xl" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Note</Label>
-                <Input placeholder="Optional note" value={payForm.note} onChange={(e) => setPayForm((p) => ({ ...p, note: e.target.value }))} className="mt-1 rounded-xl" />
+                <Label className="text-xs text-muted-foreground">{T("note", "Note")}</Label>
+                <Input placeholder={T("optionalNote", "Optional note")} value={payForm.note} onChange={(e) => setPayForm((p) => ({ ...p, note: e.target.value }))} className="mt-1 rounded-xl" />
               </div>
               <Button type="submit" disabled={saving || !payForm.amount} className="w-full rounded-xl">
-                {saving ? "Saving..." : "Save Payment"}
+                {saving ? T("saving", "Saving...") : T("savePayment", "Save Payment")}
               </Button>
             </form>
           </DialogContent>
@@ -267,7 +279,7 @@ export default function LoanDetail() {
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Loan</DialogTitle>
+              <DialogTitle>{T("editLoan", "Edit Loan")}</DialogTitle>
             </DialogHeader>
             <EditLoanForm loan={loan} onSave={handleSaveEdit} />
           </DialogContent>
@@ -280,10 +292,10 @@ export default function LoanDetail() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold font-heading text-foreground">
-              Payment History
+              {T("paymentHistory", "Payment History")}
             </h2>
             <span className="text-xs text-muted-foreground">
-              {payments.length} payment{payments.length !== 1 ? "s" : ""} · {formatCurrency(totalPayments)}
+              {payments.length} {payments.length === 1 ? T("payment", "payment") : T("payments", "payments")} · {formatCurrency(totalPayments)}
             </span>
           </div>
           {payments.length > 0 ? (
@@ -294,7 +306,7 @@ export default function LoanDetail() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-sm text-muted-foreground">No payments recorded yet</p>
+              <p className="text-sm text-muted-foreground">{T("noPaymentsRecorded", "No payments recorded yet")}</p>
             </div>
           )}
         </div>
