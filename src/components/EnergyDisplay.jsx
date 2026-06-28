@@ -21,7 +21,7 @@ export default function EnergyDisplay({ userId, isPremium = false, onPurchaseCli
     useEnergyBars(userId);
 
   const [timeUntilReset, setTimeUntilReset] = useState(null);
-  const maxBars = isPremium ? total_energy : 10; // Free users max at 10 (excluding purchased)
+  const maxBars = isPremium ? total_energy : 10 + purchased_energy; // Free users max at 10 (+ purchased energy)
   const percentage = (energy_bars / maxBars) * 100;
 
   // Update countdown timer

@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2, Download, Zap, TrendingUp, LayoutDashboard, PiggyBank, Folder, BarChart2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
