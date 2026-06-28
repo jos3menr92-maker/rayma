@@ -1,5 +1,6 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { useFinancialData } from '@/lib/FinancialDataContext';
+import { getAllHighScores } from '@/api/arcadeGamesApi';
 
 const RetroSnake = lazy(() => import('./RetroSnake'));
 const SpaceInvaders = lazy(() => import('./SpaceInvaders'));
@@ -45,12 +46,23 @@ const Arcade = () => {
   const { userProfile } = useFinancialData();
   const [activeGame, setActiveGame] = useState('space_invaders');
 
-  // Track high scores locally (can be fetched from server if needed)
+  // Track high scores
   const [highScores, setHighScores] = useState({
     space_invaders: 0,
     retro_snake: 0,
     sky_striker: 0
   });
+
+  // ✨ NEW: Fetch actual high scores from the database when the Arcade loads!
+  useEffect(() => {
+    const fetchScores = async () => {
+      const dbScores = await getAllHighScores();
+      if (dbScores && Object.keys(dbScores).length > 0) {
+        setHighScores(prev => ({ ...prev, ...dbScores }));
+      }
+    };
+    fetchScores();
+  }, []);
 
   const handleUpdateScore = (gameId, newScore) => {
     if (newScore > (highScores[gameId] || 0)) {
