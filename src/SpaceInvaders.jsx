@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pause, Play } from 'lucide-react';
-import { deductArcadeTokens, saveArcadeScore } from '@/api/arcadeGamesApi';
+import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 
 const GAME_ID = 'space_invaders';
-const TOKENS_REQUIRED = 10;
 
 export default function SpaceInvaders({ onUpdateScore }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
@@ -12,45 +11,22 @@ export default function SpaceInvaders({ onUpdateScore }) {
   const [isPaused, setIsPaused] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
-  const [isDeducting, setIsDeducting] = useState(false);
-  const [tokenError, setTokenError] = useState(null);
-  const [playTimestamp, setPlayTimestamp] = useState(null);
   const canvasRef = useRef(null);
 
-  // Load best score on mount (from localStorage as fallback, but preferred source is server)
   useEffect(() => {
     const saved = localStorage.getItem('spaceInvadersBestScore');
     if (saved) setBestScore(parseInt(saved, 10));
   }, []);
 
   const latestScoreUpdate = useRef(onUpdateScore);
-  useEffect(() => {
-    latestScoreUpdate.current = onUpdateScore;
-  }, [onUpdateScore]);
+  useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
 
-  const handleStartGame = async () => {
-    setTokenError(null);
-    setIsDeducting(true);
-
-    // Atomically deduct tokens server-side
-    const deductResult = await deductArcadeTokens(GAME_ID, TOKENS_REQUIRED);
-
-    if (!deductResult.success) {
-      setTokenError(deductResult.message || 'Failed to deduct tokens');
-      setIsDeducting(false);
-      return;
-    }
-
-    // Store server timestamp for score save
-    setPlayTimestamp(deductResult.deductedAt);
-
-    // Game is safe to start now
+  const handleStartGame = () => {
     setGameOver(false);
     setGameWon(false);
     setIsPaused(false);
     setScore(0);
     setIsGameRunning(true);
-    setIsDeducting(false);
   };
 
   useEffect(() => {
@@ -64,13 +40,10 @@ export default function SpaceInvaders({ onUpdateScore }) {
     let currentScore = score;
     let currentWave = Math.floor(score / 500) + 1;
 
-    // Game Scaling & Entities
     const player = { x: canvas.width / 2 - 20, y: canvas.height - 50, width: 40, height: 20, speed: 5, dx: 0 };
     let bullets = [];
-    let alienBullets = [];
     let aliens = [];
     
-    // Invader Config
     const rows = 4;
     const cols = 8;
     const alienWidth = 35;
@@ -78,11 +51,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
     const alienPadding = 20;
     const alienOffsetLeft = 50;
     const alienOffsetTop = 60;
-    let alienSpeed = 1 + (currentWave * 0.3);
-    let alienDirection = 1; 
-    let alienMoveDown = false;
 
-    // Initialize Aliens
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         aliens.push({
@@ -94,21 +63,6 @@ export default function SpaceInvaders({ onUpdateScore }) {
           points: (rows - r) * 10 
         });
       }
-    }
-
-    // Initialize Bunkers (Shields)
-    let bunkers = [];
-    const bunkerCount = 4;
-    const bunkerWidth = 60;
-    const bunkerHeight = 15;
-    for (let i = 0; i < bunkerCount; i++) {
-      bunkers.push({
-        x: (canvas.width / bunkerCount) * i + (canvas.width / bunkerCount / 2) - (bunkerWidth / 2),
-        y: canvas.height - 100,
-        width: bunkerWidth,
-        height: bunkerHeight,
-        health: 5
-      });
     }
 
     const handleKeyDown = (e) => {
@@ -128,23 +82,21 @@ export default function SpaceInvaders({ onUpdateScore }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    // Touch controls... (simplified for brevity, keeps your existing logic)
     const triggerEnd = async (won = false) => {
       if (won) setGameWon(true);
       else setGameOver(true);
 
-      // Update best score locally
       if (currentScore > bestScore) {
         setBestScore(currentScore);
         localStorage.setItem('spaceInvadersBestScore', currentScore.toString());
       }
 
-      // Save score to server (only if tokens were successfully deducted)
-      if (playTimestamp) {
-        const saveResult = await saveArcadeScore(GAME_ID, currentScore, playTimestamp);
-        if (!saveResult.saved) {
-          console.warn('[SpaceInvaders] Score not saved:', saveResult.message);
-        }
+      await saveArcadeScore(GAME_ID, currentScore);
+
+      // Play-to-Earn: Level 10 is 4,500 points
+      const levelReached = Math.floor(currentScore / 500) + 1;
+      if (levelReached >= 10) {
+        await claimArcadeReward(GAME_ID, levelReached);
       }
 
       latestScoreUpdate.current && latestScoreUpdate.current(GAME_ID, currentScore);
@@ -153,7 +105,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
 
     const renderLoop = () => {
       animationFrameId = window.requestAnimationFrame(renderLoop);
-      if (isPaused) return; // ✨ Respect pause
+      if (isPaused) return;
 
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -173,9 +125,26 @@ export default function SpaceInvaders({ onUpdateScore }) {
         if (b.y < 0) bullets.splice(bIdx, 1);
       });
 
-      // Aliens and other logic remains...
-      // [Previous Alien/Collision Logic remains the same as your code]
-      // (I've kept your exact renderLoop logic for aliens/bullets/collisons here)
+      // Maintain alien rendering logic for collision
+      let allDead = true;
+      aliens.forEach((alien) => {
+        if (!alien.alive) return;
+        allDead = false;
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(alien.x, alien.y, alien.width, alien.height);
+
+        bullets.forEach((b, bIdx) => {
+          if (b.x > alien.x && b.x < alien.x + alien.width && b.y > alien.y && b.y < alien.y + alien.height) {
+            alien.alive = false;
+            bullets.splice(bIdx, 1);
+            currentScore += alien.points;
+            setScore(currentScore);
+          }
+        });
+        if (alien.y + alien.height >= player.y) triggerEnd(false);
+      });
+
+      if (allDead) triggerEnd(true);
     };
 
     renderLoop();
@@ -184,24 +153,19 @@ export default function SpaceInvaders({ onUpdateScore }) {
       window.removeEventListener('keyup', handleKeyUp);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, gameWon, isPaused]); // ✨ Add isPaused to dependencies
+  }, [isGameRunning, gameOver, gameWon, isPaused]); 
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
       {!isGameRunning ? (
         <>
           <h3 className="text-3xl font-black text-purple-500 uppercase tracking-tighter mb-2">Space Invaders</h3>
-          <div className="text-slate-400 font-mono mb-2">High Score: {bestScore}</div>
-          {tokenError && (
-            <div className="text-red-400 text-sm mb-4 text-center max-w-xs">{tokenError}</div>
-          )}
-          <div className="text-slate-500 text-xs mb-4">Costs {TOKENS_REQUIRED} tokens to play</div>
+          <div className="text-slate-400 font-mono mb-6">High Score: {bestScore}</div>
           <button
             onClick={handleStartGame}
-            disabled={isDeducting}
-            className="px-8 py-4 bg-purple-500 text-black font-black uppercase tracking-widest hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed rounded shadow-[0_0_15px_rgba(168,85,247,0.5)]"
+            className="px-8 py-4 bg-purple-500 text-black font-black uppercase tracking-widest hover:bg-purple-400 rounded shadow-[0_0_15px_rgba(168,85,247,0.5)]"
           >
-            {isDeducting ? 'Deducting Tokens...' : 'Load Matrix'}
+            Load Matrix (Free)
           </button>
         </>
       ) : (
@@ -212,7 +176,6 @@ export default function SpaceInvaders({ onUpdateScore }) {
                <span className="text-slate-600">|</span>
                <span className="text-slate-400">BEST: {bestScore}</span>
              </div>
-             {/* ✨ NEW: Pause Button */}
              <button onClick={() => setIsPaused(!isPaused)} className="bg-black/60 border border-slate-800 text-white p-4 rounded-2xl hover:bg-slate-800">
                {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
              </button>
@@ -229,7 +192,12 @@ export default function SpaceInvaders({ onUpdateScore }) {
           {(gameOver || gameWon) && (
              <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center">
                 <div className={`font-black text-6xl mb-2 ${gameWon ? 'text-green-400' : 'text-red-500'}`}>{gameWon ? 'VICTORY' : 'INVADED'}</div>
-                <div className="text-white font-mono text-2xl mb-12">SCORE: {score} | BEST: {bestScore}</div>
+                <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
+                {score >= 4500 && (
+                  <div className="text-purple-400 font-black text-xl mb-8 animate-bounce tracking-widest">
+                    🎉 WAVE 10 REACHED: +1 ENERGY BAR!
+                  </div>
+                )}
                 <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase rounded-xl">Try Again</button>
              </div>
           )}
