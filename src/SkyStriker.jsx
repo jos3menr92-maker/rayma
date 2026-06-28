@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pause, Play } from 'lucide-react';
-import { deductArcadeTokens, saveArcadeScore } from '@/api/arcadeGamesApi';
+import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 
 const GAME_ID = 'sky_striker';
-const TOKENS_REQUIRED = 10;
 
 export default function SkyStriker({ onUpdateScore }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
@@ -11,48 +10,25 @@ export default function SkyStriker({ onUpdateScore }) {
   const [isPaused, setIsPaused] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
-  const [isDeducting, setIsDeducting] = useState(false);
-  const [tokenError, setTokenError] = useState(null);
-  const [playTimestamp, setPlayTimestamp] = useState(null);
   const canvasRef = useRef(null);
 
-  // Load best score on mount (from localStorage as fallback)
   useEffect(() => {
     const saved = localStorage.getItem('skyStrikerBestScore');
     if (saved) setBestScore(parseInt(saved, 10));
   }, []);
 
   const latestScoreUpdate = useRef(onUpdateScore);
-  useEffect(() => {
-    latestScoreUpdate.current = onUpdateScore;
-  }, [onUpdateScore]);
+  useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
 
-  const handleStartGame = async () => {
-    setTokenError(null);
-    setIsDeducting(true);
-
-    // Atomically deduct tokens server-side
-    const deductResult = await deductArcadeTokens(GAME_ID, TOKENS_REQUIRED);
-
-    if (!deductResult.success) {
-      setTokenError(deductResult.message || 'Failed to deduct tokens');
-      setIsDeducting(false);
-      return;
-    }
-
-    // Store server timestamp for score save
-    setPlayTimestamp(deductResult.deductedAt);
-
-    // Game is safe to start now
+  const handleStartGame = () => {
     setGameOver(false);
     setScore(0);
     setIsPaused(false);
     setIsGameRunning(true);
-    setIsDeducting(false);
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || isPaused) return; // ✨ Respect pause
+    if (!isGameRunning || gameOver || isPaused) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -84,42 +60,19 @@ export default function SkyStriker({ onUpdateScore }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    const attachControls = (id, direction) => {
-      const el = document.getElementById(id);
-      if (!el) return () => {};
-      const start = (e) => { e.preventDefault(); player.dx = direction * player.speed; };
-      const stop = (e) => { e.preventDefault(); if (Math.sign(player.dx) === direction) player.dx = 0; };
-      el.addEventListener('touchstart', start, { passive: false });
-      el.addEventListener('mousedown', start);
-      el.addEventListener('touchend', stop);
-      el.addEventListener('mouseup', stop);
-      el.addEventListener('mouseleave', stop);
-      return () => {
-        el.removeEventListener('touchstart', start);
-        el.removeEventListener('mousedown', start);
-        el.removeEventListener('touchend', stop);
-        el.removeEventListener('mouseup', stop);
-        el.removeEventListener('mouseleave', stop);
-      };
-    };
-
-    const cleanupLeft = attachControls('btn-left', -1);
-    const cleanupRight = attachControls('btn-right', 1);
-
     const endGame = async () => {
       setGameOver(true);
-      // Update best score locally
       if (currentScore > bestScore) {
         setBestScore(currentScore);
         localStorage.setItem('skyStrikerBestScore', currentScore.toString());
       }
 
-      // Save score to server (only if tokens were successfully deducted)
-      if (playTimestamp) {
-        const saveResult = await saveArcadeScore(GAME_ID, currentScore, playTimestamp);
-        if (!saveResult.saved) {
-          console.warn('[SkyStriker] Score not saved:', saveResult.message);
-        }
+      await saveArcadeScore(GAME_ID, currentScore);
+
+      // Play-to-Earn: Level 10 is 1,350 points
+      const levelReached = Math.floor(currentScore / 150) + 1;
+      if (levelReached >= 10) {
+        await claimArcadeReward(GAME_ID, levelReached);
       }
 
       latestScoreUpdate.current && latestScoreUpdate.current(GAME_ID, currentScore);
@@ -128,7 +81,7 @@ export default function SkyStriker({ onUpdateScore }) {
 
     const render = () => {
       animationFrameId = window.requestAnimationFrame(render);
-      if (isPaused) return; // ✨ Respect pause
+      if (isPaused) return;
 
       frameCount++;
       ctx.fillStyle = '#0f172a';
@@ -203,7 +156,6 @@ export default function SkyStriker({ onUpdateScore }) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      cleanupLeft(); cleanupRight();
       window.cancelAnimationFrame(animationFrameId);
     };
   }, [isGameRunning, gameOver, isPaused, onUpdateScore]); 
@@ -213,17 +165,12 @@ export default function SkyStriker({ onUpdateScore }) {
       {!isGameRunning ? (
         <>
           <h3 className="text-3xl font-black text-cyan-400 uppercase tracking-tighter mb-2">Sky Striker</h3>
-          <div className="text-slate-400 font-mono mb-2">High Score: {bestScore}</div>
-          {tokenError && (
-            <div className="text-red-400 text-sm mb-4 text-center max-w-xs">{tokenError}</div>
-          )}
-          <div className="text-slate-500 text-xs mb-4">Costs {TOKENS_REQUIRED} tokens to play</div>
+          <div className="text-slate-400 font-mono mb-6">High Score: {bestScore}</div>
           <button
             onClick={handleStartGame}
-            disabled={isDeducting}
-            className="px-8 py-4 bg-cyan-500 text-black font-black uppercase tracking-widest hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed rounded shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+            className="px-8 py-4 bg-cyan-500 text-black font-black uppercase tracking-widest hover:bg-cyan-400 rounded shadow-[0_0_15px_rgba(6,182,212,0.5)]"
           >
-            {isDeducting ? 'Deducting Tokens...' : 'Launch Fighter'}
+            Launch Fighter (Free)
           </button>
         </>
       ) : (
@@ -234,7 +181,6 @@ export default function SkyStriker({ onUpdateScore }) {
                <span className="text-slate-600">|</span>
                <span className="text-slate-400">BEST: {bestScore}</span>
              </div>
-             {/* ✨ NEW: Pause Button */}
              <button onClick={() => setIsPaused(!isPaused)} className="bg-black/60 border border-slate-800 text-white p-4 rounded-2xl hover:bg-slate-800">
                {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
              </button>
@@ -251,7 +197,12 @@ export default function SkyStriker({ onUpdateScore }) {
           {gameOver && (
              <div className="absolute inset-0 z-[60] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-auto">
                 <div className="text-red-500 font-black text-6xl mb-2 animate-pulse">SHOT DOWN</div>
-                <div className="text-white font-mono text-2xl mb-12">SCORE: {score} | BEST: {bestScore}</div>
+                <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
+                {score >= 1350 && (
+                  <div className="text-cyan-400 font-black text-xl mb-8 animate-bounce tracking-widest">
+                    🎉 LEVEL 10 REACHED: +1 ENERGY BAR!
+                  </div>
+                )}
                 <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-cyan-500 text-black font-black text-xl uppercase rounded-xl">Fly Again</button>
              </div>
           )}
