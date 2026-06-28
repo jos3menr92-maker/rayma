@@ -14,9 +14,9 @@
  * ==========================================
  */
 {
-  "name": "RAYMA — Debt & Bills Tracker",
-  "short_name": "RAYMA",
-  "description": "Track loans, bills, budget, and net worth with an AI financial advisor. No bank login required.",
+  "name": "Rayma AI — Smart Debt & Bills Tracker",
+  "short_name": "Rayma AI",
+  "description": "Track loans, bills, budget, and net worth with intelligent AI-powered financial insights. No bank login required.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

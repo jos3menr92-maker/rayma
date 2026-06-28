@@ -1,13 +1,26 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { ChevronLeft, Save, AlertTriangle, Sparkles } from "lucide-react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function AddLoan() {
   const navigate = useNavigate();
-  const { userProfile, reload } = useFinancialData(); 
+  const { userProfile, reload } = useFinancialData();
+  const { lang } = useLanguage();
+
+  // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
+  const T = useMemo(() =>
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(""); 
 
@@ -86,7 +99,7 @@ export default function AddLoan() {
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-2xl font-bold font-heading text-foreground">Add New Loan</h1>
+        <h1 className="text-2xl font-bold font-heading text-foreground">{T("addNewLoan", "Add New Loan")}</h1>
       </motion.div>
 
       {errorMsg && (
@@ -98,39 +111,39 @@ export default function AddLoan() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground">Loan Name</label>
+          <label className="text-sm font-semibold text-foreground">{T("loanName", "Loan Name")}</label>
           {/* Removed required */}
-          <input 
+          <input
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="e.g. Chase Auto Loan" 
+            placeholder={T("loanNameEx", "e.g. Chase Auto Loan")}
             className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Original Amount</label>
-            <input 
+            <label className="text-sm font-semibold text-foreground">{T("originalAmount", "Original Amount")}</label>
+            <input
               type="number"
               step="0.01"
               name="original_amount"
               value={formData.original_amount}
               onChange={handleChange}
-              placeholder="$0.00" 
+              placeholder="$0.00"
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Current Amount Owed</label>
-            <input 
+            <label className="text-sm font-semibold text-foreground">{T("currentAmountOwed", "Current Amount Owed")}</label>
+            <input
               type="number"
               step="0.01"
               name="current_balance"
               value={formData.current_balance}
               onChange={handleChange}
-              placeholder="$0.00" 
+              placeholder="$0.00"
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
             />
           </div>
@@ -138,29 +151,29 @@ export default function AddLoan() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Payment Amount</label>
-            <input 
+            <label className="text-sm font-semibold text-foreground">{T("paymentAmount", "Payment Amount")}</label>
+            <input
               type="number"
               step="0.01"
               name="monthly_payment"
               value={formData.monthly_payment}
               onChange={handleChange}
-              placeholder="$0.00" 
+              placeholder="$0.00"
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
             />
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">Interest Rate (%)</label>
+              <label className="text-sm font-semibold text-foreground">{T("interestRate", "Interest Rate (%)")}</label>
               <Sparkles className="w-3 h-3 text-primary/50" />
             </div>
-            <input 
+            <input
               type="number"
               step="0.01"
               name="interest_rate"
               value={formData.interest_rate}
               onChange={handleChange}
-              placeholder="RAYMA will calculate" 
+              placeholder={T("raymaWillCalculate", "RAYMA will calculate")}
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-primary/40"
             />
           </div>
@@ -168,31 +181,31 @@ export default function AddLoan() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-foreground">Frequency</label>
-            <select 
+            <label className="text-sm font-semibold text-foreground">{T("frequency", "Frequency")}</label>
+            <select
               name="payment_frequency"
               value={formData.payment_frequency}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
             >
-              <option value="weekly">Weekly</option>
-              <option value="bi-weekly">Bi-Weekly</option>
-              <option value="semi-monthly">Semi-Monthly</option>
-              <option value="monthly">Monthly</option>
-              <option value="annually">Annually</option>
+              <option value="weekly">{T("weekly", "Weekly")}</option>
+              <option value="bi-weekly">{T("biweekly", "Bi-Weekly")}</option>
+              <option value="semi-monthly">{T("semiMonthly", "Semi-Monthly")}</option>
+              <option value="monthly">{T("monthly", "Monthly")}</option>
+              <option value="annually">{T("annually", "Annually")}</option>
             </select>
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">Total # of Payments</label>
+              <label className="text-sm font-semibold text-foreground">{T("totalPayments", "Total # of Payments")}</label>
               <Sparkles className="w-3 h-3 text-primary/50" />
             </div>
-            <input 
+            <input
               type="number"
               name="total_payments"
               value={formData.total_payments}
               onChange={handleChange}
-              placeholder="RAYMA will calculate" 
+              placeholder={T("raymaWillCalculate", "RAYMA will calculate")}
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-primary/40"
             />
           </div>
@@ -200,11 +213,11 @@ export default function AddLoan() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-semibold text-foreground">Next Due Date</label>
+            <label className="text-sm font-semibold text-foreground">{T("nextDueDate", "Next Due Date")}</label>
             <Sparkles className="w-3 h-3 text-primary/50" />
           </div>
           {/* Removed required so RAYMA can fill it */}
-          <input 
+          <input
             type="date"
             name="due_date"
             value={formData.due_date}
@@ -213,8 +226,8 @@ export default function AddLoan() {
           />
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={loading}
           className="w-full mt-6 flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50"
         >
@@ -222,7 +235,7 @@ export default function AddLoan() {
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <Save className="w-5 h-5" /> Save Loan
+              <Save className="w-5 h-5" /> {T("saveLoan", "Save Loan")}
             </>
           )}
         </button>

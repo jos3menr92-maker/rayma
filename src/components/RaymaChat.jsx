@@ -68,7 +68,7 @@ export default function RaymaChat({
       setConversation(conv);
       setMessages(conv.messages || []);
     } catch (err) {
-      console.error("Failed to start RAYMA:", err);
+      console.error("Failed to start Rayma AI:", err);
     } finally {
       setInitializing(false);
     }
@@ -278,7 +278,7 @@ export default function RaymaChat({
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
             <div>
-              <p className="font-semibold text-foreground text-sm">RAYMA</p>
+              <p className="font-semibold text-foreground text-sm">Rayma AI</p>
               <p className="text-xs text-muted-foreground">AI Financial Advisor</p>
             </div>
             <div className="flex items-center gap-1">
@@ -299,7 +299,7 @@ export default function RaymaChat({
             ) : messages.length === 0 ? (
               <div className="flex justify-start">
                 <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
-                  Hi! I'm RAYMA. I can read your balances, adjust your cash flow, or log a payment. How can I help you today?
+                  Hi! I'm Rayma AI, your personal financial advisor. I can read your balances, adjust your cash flow, or log a payment. How can I help you today?
                 </div>
               </div>
             ) : (

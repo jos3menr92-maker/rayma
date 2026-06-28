@@ -2,11 +2,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, X, CreditCard, Receipt } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function DueSoonAlert({ loans, bills, payments = [] }) {
+  const { formatCurrency: fmt } = useCurrency();
   const [dismissed, setDismissed] = useState(false);
   const navigate = useNavigate();
   const today = new Date().getDate();

@@ -1,9 +1,7 @@
 import { motion } from "framer-motion";
+import { useCurrency } from "@/hooks/useCurrency";
 import { TrendingUp, TrendingDown, Calendar, CheckCircle2, RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
 
 const riskColors = {
   low: "text-primary bg-primary/10",
@@ -18,6 +16,7 @@ const confidenceLabels = {
 };
 
 export default function SimulationResults({ result, onRerun }) {
+  const { formatCurrency: fmt } = useCurrency();
   const cashflowDiff = (result.new_monthly_cashflow || 0) - (result.current_monthly_cashflow || 0);
 
   return (

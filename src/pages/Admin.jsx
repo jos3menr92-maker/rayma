@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { Users, Zap, DollarSign, ShieldCheck, Gift, TrendingUp, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
   const [stats, setStats] = useState(null);
@@ -98,9 +102,9 @@ export default function Admin() {
   if (unauthorized) return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6 text-center">
       <ShieldCheck className="w-12 h-12 text-destructive" />
-      <h1 className="text-xl font-bold text-foreground">Admin Access Only</h1>
-      <p className="text-sm text-muted-foreground">You don't have permission to view this page.</p>
-      <Button onClick={() => navigate("/")} variant="outline">Go Home</Button>
+      <h1 className="text-xl font-bold text-foreground">{T("adminAccessOnly", "Admin Access Only")}</h1>
+      <p className="text-sm text-muted-foreground">{T("noPermission", "You don't have permission to view this page.")}</p>
+      <Button onClick={() => navigate("/")} variant="outline">{T("goHome", "Go Home")}</Button>
     </div>
   );
 
@@ -110,48 +114,48 @@ export default function Admin() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold font-heading text-foreground">Admin Panel</h1>
-            <p className="text-sm text-muted-foreground">RAYMA app oversight</p>
+            <h1 className="text-2xl font-bold font-heading text-foreground">{T("adminPanel", "Admin Panel")}</h1>
+            <p className="text-sm text-muted-foreground">{T("raymaAppOversight", "RAYMA app oversight")}</p>
           </div>
           <Button size="sm" variant="outline" onClick={loadData} className="rounded-xl gap-2">
             <RefreshCw className="w-3.5 h-3.5" />
-            Refresh
+            {T("refresh", "Refresh")}
           </Button>
         </div>
 
         {/* Sponsor Code Management Section - Mobile Optimized */}
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <h2 className="text-lg font-bold mb-4">Sponsor Code Management</h2>
+          <h2 className="text-lg font-bold mb-4">{T("sponsorCodeManagement", "Sponsor Code Management")}</h2>
           <div className="flex flex-col gap-3">
             <input
               type="text"
-              placeholder="Enter new sponsor code..."
+              placeholder={T("enterNewSponsorCode", "Enter new sponsor code...")}
               className="bg-background border border-border rounded-xl px-4 py-3 w-full"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
             />
             <Button onClick={handleCreateCode} className="w-full rounded-xl h-12 font-semibold">
-              Create Code
+              {T("createCode", "Create Code")}
             </Button>
           </div>
         </div>
 
         {/* Key Stats */}
-        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">Overview</h2>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">{T("overview", "Overview")}</h2>
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <StatCard icon={Users} label="Total Users" value={stats.totalUsers} color="primary" />
-          <StatCard icon={Activity} label="Active Subscriptions" value={stats.annualPassUsers} sub="Annual Pass holders" color="accent" />
-          <StatCard icon={Zap} label="Token Users" value={stats.tokenUsers} sub={`${stats.totalTokensSold} tokens held`} color="primary" />
-          <StatCard icon={TrendingUp} label="Avg App Rating" value={stats.avgRating} sub="From feedback submissions" color="accent" />
-          <StatCard icon={DollarSign} label="Total Loans" value={stats.totalLoans} color="primary" />
-          <StatCard icon={DollarSign} label="Total Bills" value={stats.totalBills} color="accent" />
+          <StatCard icon={Users} label={T("totalUsers", "Total Users")} value={stats.totalUsers} color="primary" />
+          <StatCard icon={Activity} label={T("activeSubscriptions", "Active Subscriptions")} value={stats.annualPassUsers} sub={T("annualPassHolders", "Annual Pass holders")} color="accent" />
+          <StatCard icon={Zap} label={T("tokenUsers", "Token Users")} value={stats.tokenUsers} sub={`${stats.totalTokensSold} ${T("tokensHeld", "tokens held")}`} color="primary" />
+          <StatCard icon={TrendingUp} label={T("avgAppRating", "Avg App Rating")} value={stats.avgRating} sub={T("fromFeedback", "From feedback submissions")} color="accent" />
+          <StatCard icon={DollarSign} label={T("totalLoans", "Total Loans")} value={stats.totalLoans} color="primary" />
+          <StatCard icon={DollarSign} label={T("totalBills", "Total Bills")} value={stats.totalBills} color="accent" />
         </div>
 
         {/* Promo Codes */}
-        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">Promo Codes</h2>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">{T("promoCodes", "Promo Codes")}</h2>
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-6">
           {promoCodes.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-4">No promo codes yet.</p>
+            <p className="text-sm text-muted-foreground p-4">{T("noPromoCodesYet", "No promo codes yet.")}</p>
           ) : promoCodes.map((code, i) => (
             <div key={code.id} className={`flex items-center justify-between px-4 py-3 ${i < promoCodes.length - 1 ? "border-b border-border" : ""}`}>
               <div className="flex items-center gap-3">
@@ -161,17 +165,17 @@ export default function Admin() {
                 </div>
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${code.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
-                {code.is_active ? "Active" : "Inactive"}
+                {code.is_active ? T("active", "Active") : T("inactive", "Inactive")}
               </span>
             </div>
           ))}
         </div>
 
         {/* Recent Feedback */}
-        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">Recent Feedback</h2>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">{T("recentFeedback", "Recent Feedback")}</h2>
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-6">
           {recentFeedback.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-4">No feedback yet.</p>
+            <p className="text-sm text-muted-foreground p-4">{T("noFeedbackYet", "No feedback yet.")}</p>
           ) : recentFeedback.map((fb, i) => (
             <div key={fb.id} className={`px-4 py-3 ${i < recentFeedback.length - 1 ? "border-b border-border" : ""}`}>
               <div className="flex items-center justify-between mb-1">
@@ -184,7 +188,7 @@ export default function Admin() {
         </div>
 
         {/* Users Table */}
-        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">Recent Users (top 20)</h2>
+        <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">{T("recentUsers", "Recent Users (top 20)")}</h2>
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-6">
           {users.map((u, i) => (
             <div key={u.id} className={`flex items-center justify-between px-4 py-3 ${i < users.length - 1 ? "border-b border-border" : ""}`}>

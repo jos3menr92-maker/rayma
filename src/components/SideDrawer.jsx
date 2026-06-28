@@ -1,11 +1,10 @@
-import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2, Download, Zap, TrendingUp, LayoutDashboard, PiggyBank, Folder, BarChart2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient"; 
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getInitialsColor } from "@/components/AvatarPicker";
-import { useFinancialData } from "@/lib/FinancialDataContext"; 
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t, getDir } from "@/lib/i18n";
 
@@ -22,7 +21,7 @@ const HUMAN_AVATARS = [
 
 export default function SideDrawer({ open, onClose }) {
   const navigate = useNavigate();
-  const { userProfile: user } = useFinancialData(); 
+  const { userProfile: user } = useFinancialData();
   const { lang } = useLanguage();
 
   function go(path) { onClose(); navigate(path); }
@@ -33,16 +32,16 @@ export default function SideDrawer({ open, onClose }) {
     const tokens = user.ai_tokens_remaining ?? 5;
     return `${tokens} AI token${tokens !== 1 ? "s" : ""} ${t(lang, 'remaining')}`;
   };
-  
-async function handleLogout() {
+
+  async function handleLogout() {
     try {
-      await base44.auth.logout(); 
+      await base44.auth.logout();
       window.location.href = "/auth";
     } catch (error) {
       console.error("Logout failed:", error);
     }
   }
-  
+
   const presetAvatar = HUMAN_AVATARS.find(a => a.id === user?.avatar_id);
   const imageToShow = user?.avatar_photo_url || presetAvatar?.url;
 
@@ -87,7 +86,6 @@ async function handleLogout() {
 
               <Section title={t(lang, 'toolsSection')}>
                 <DrawerRow icon={FileText} label={t(lang, 'taxSummary')} value={t(lang, 'annualReport')} chevron onClick={() => go("/tax-summary")} />
-                {/* 🛡️ ROUTED TO VAULT */}
                 <DrawerRow icon={Download} label={t(lang, 'exportMyData')} value={t(lang, 'goToSecurityVault')} chevron onClick={() => go("/profile")} />
               </Section>
 
@@ -100,12 +98,10 @@ async function handleLogout() {
                 <DrawerRow icon={Shield} label={t(lang, 'privacyPolicy')} chevron onClick={() => go("/privacy")} />
                 <DrawerRow icon={FileText} label={t(lang, 'termsOfService')} chevron onClick={() => go("/terms")} />
                 <DrawerRow icon={Lock} label={t(lang, 'securityLabel')} value={t(lang, 'allDataEncrypted')} small />
-                {/* 🛡️ ROUTED TO VAULT */}
                 <DrawerRow icon={Trash2} label={t(lang, 'deleteAccountLabel')} value={t(lang, 'goToSecurityVault')} chevron onClick={() => go("/profile")} destructive />
               </Section>
             </div>
 
-            {/* ✨ ADDED pb-28 HERE: Lifts the button above the bottom navigation bar */}
             <div className="border-t border-border p-4 pb-28">
               <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" /> {t(lang, 'signOutButton')}

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { ChevronRight, DollarSign, Receipt, CreditCard, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +22,17 @@ function ProgressDots({ step }) {
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+
+  // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
+  const T = useMemo(() =>
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
+
   const [step, setStep] = useState("welcome");
   const [loading, setLoading] = useState(false);
 
@@ -92,18 +105,18 @@ export default function Onboarding() {
               <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                 <span className="text-4xl">💸</span>
               </div>
-              <h1 className="text-3xl font-bold font-heading text-foreground mb-3">Welcome to RAYMA</h1>
+              <h1 className="text-3xl font-bold font-heading text-foreground mb-3">{T("welcomeRayma", "Welcome to RAYMA")}</h1>
               <p className="text-muted-foreground text-sm leading-relaxed mb-8">
-                Your personal finance tracker for loans, bills, and budgets. Let's get you set up in under a minute.
+                {T("onboardingDesc", "Your personal finance tracker for loans, bills, and budgets. Let's get you set up in under a minute.")}
               </p>
               <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4 mb-8 text-left">
-                <p className="text-xs font-semibold text-destructive mb-1">⚠️ Important</p>
-                <p className="text-xs text-muted-foreground">RAYMA is a personal tracking tool, not a financial advisor. Always consult a qualified professional before making major financial decisions.</p>
+                <p className="text-xs font-semibold text-destructive mb-1">⚠️ {T("importantLabel", "Important")}</p>
+                <p className="text-xs text-muted-foreground">{T("disclaimerOnboarding", "RAYMA is a personal tracking tool, not a financial advisor. Always consult a qualified professional before making major financial decisions.")}</p>
               </div>
               <Button className="w-full rounded-2xl h-12 text-base" onClick={() => setStep("income")}>
-                Get Started <ChevronRight className="w-4 h-4 ml-1" />
+                {T("getStarted", "Get Started")} <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
-              <button onClick={finish} className="text-xs text-muted-foreground mt-4 underline">Skip setup</button>
+              <button onClick={finish} className="text-xs text-muted-foreground mt-4 underline">{T("skipSetup", "Skip setup")}</button>
             </motion.div>
           )}
 
@@ -114,22 +127,22 @@ export default function Onboarding() {
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
                 <DollarSign className="w-7 h-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold font-heading text-foreground mb-2">How much do you earn weekly?</h2>
-              <p className="text-sm text-muted-foreground mb-6">This helps RAYMA calculate your monthly cash flow. You can update it anytime.</p>
+              <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("howMuchEarn", "How much do you earn weekly?")}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{T("incomeHelps", "This helps RAYMA calculate your monthly cash flow. You can update it anytime.")}</p>
               <div className="relative mb-6">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                 <Input
                   type="number"
-                  placeholder="e.g. 800"
+                  placeholder={T("exampleAmount", "e.g. 800")}
                   value={weeklyIncome}
                   onChange={e => setWeeklyIncome(e.target.value)}
                   className="pl-7 rounded-xl h-12 text-base"
                 />
               </div>
               <Button className="w-full rounded-2xl h-12" onClick={handleIncome} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
               </Button>
-              <button onClick={() => setStep("bill")} className="text-xs text-muted-foreground mt-4 underline w-full text-center">Skip for now</button>
+              <button onClick={() => setStep("bill")} className="text-xs text-muted-foreground mt-4 underline w-full text-center">{T("skipForNow", "Skip for now")}</button>
             </motion.div>
           )}
 
@@ -140,19 +153,19 @@ export default function Onboarding() {
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
                 <Receipt className="w-7 h-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold font-heading text-foreground mb-2">Add your first bill</h2>
-              <p className="text-sm text-muted-foreground mb-6">Rent, Netflix, electricity — anything you pay regularly.</p>
+              <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("addFirstBill", "Add your first bill")}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{T("billExamples", "Rent, Netflix, electricity — anything you pay regularly.")}</p>
               <div className="space-y-3 mb-6">
-                <Input placeholder="Bill name (e.g. Netflix)" value={billName} onChange={e => setBillName(e.target.value)} className="rounded-xl h-12" />
+                <Input placeholder={T("billNameEx", "Bill name (e.g. Netflix)")} value={billName} onChange={e => setBillName(e.target.value)} className="rounded-xl h-12" />
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
-                  <Input type="number" placeholder="Monthly amount" value={billAmount} onChange={e => setBillAmount(e.target.value)} className="pl-7 rounded-xl h-12" />
+                  <Input type="number" placeholder={T("monthlyAmount", "Monthly amount")} value={billAmount} onChange={e => setBillAmount(e.target.value)} className="pl-7 rounded-xl h-12" />
                 </div>
               </div>
               <Button className="w-full rounded-2xl h-12" onClick={handleBill} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
               </Button>
-              <button onClick={() => setStep("loan")} className="text-xs text-muted-foreground mt-4 underline w-full text-center">Skip for now</button>
+              <button onClick={() => setStep("loan")} className="text-xs text-muted-foreground mt-4 underline w-full text-center">{T("skipForNow", "Skip for now")}</button>
             </motion.div>
           )}
 
@@ -163,23 +176,23 @@ export default function Onboarding() {
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
                 <CreditCard className="w-7 h-7 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold font-heading text-foreground mb-2">Any loans or debt?</h2>
-              <p className="text-sm text-muted-foreground mb-6">Car loan, student debt, credit card — RAYMA tracks it all.</p>
+              <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("anyLoans", "Any loans or debt?")}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{T("loanExamples", "Car loan, student debt, credit card — RAYMA tracks it all.")}</p>
               <div className="space-y-3 mb-6">
-                <Input placeholder="Loan name (e.g. Car Loan)" value={loanName} onChange={e => setLoanName(e.target.value)} className="rounded-xl h-12" />
+                <Input placeholder={T("loanNameEx", "Loan name (e.g. Car Loan)")} value={loanName} onChange={e => setLoanName(e.target.value)} className="rounded-xl h-12" />
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
-                  <Input type="number" placeholder="Current balance" value={loanBalance} onChange={e => setLoanBalance(e.target.value)} className="pl-7 rounded-xl h-12" />
+                  <Input type="number" placeholder={T("currentBalance", "Current balance")} value={loanBalance} onChange={e => setLoanBalance(e.target.value)} className="pl-7 rounded-xl h-12" />
                 </div>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
-                  <Input type="number" placeholder="Monthly payment (optional)" value={loanPayment} onChange={e => setLoanPayment(e.target.value)} className="pl-7 rounded-xl h-12" />
+                  <Input type="number" placeholder={T("monthlyPaymentOpt", "Monthly payment (optional)")} value={loanPayment} onChange={e => setLoanPayment(e.target.value)} className="pl-7 rounded-xl h-12" />
                 </div>
               </div>
               <Button className="w-full rounded-2xl h-12" onClick={handleLoan} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
               </Button>
-              <button onClick={() => setStep("done")} className="text-xs text-muted-foreground mt-4 underline w-full text-center">Skip for now</button>
+              <button onClick={() => setStep("done")} className="text-xs text-muted-foreground mt-4 underline w-full text-center">{T("skipForNow", "Skip for now")}</button>
             </motion.div>
           )}
 
@@ -194,12 +207,12 @@ export default function Onboarding() {
               >
                 <CheckCircle2 className="w-10 h-10 text-green-600" />
               </motion.div>
-              <h2 className="text-2xl font-bold font-heading text-foreground mb-3">You're all set! 🎉</h2>
+              <h2 className="text-2xl font-bold font-heading text-foreground mb-3">{T("allSet", "You're all set! 🎉")}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-                RAYMA is ready to help you track your finances. You can always add more loans, bills, and income from the dashboard.
+                {T("readyHelp", "RAYMA is ready to help you track your finances. You can always add more loans, bills, and income from the dashboard.")}
               </p>
               <Button className="w-full rounded-2xl h-12 text-base" onClick={finish}>
-                Go to Dashboard
+                {T("goToDashboard", "Go to Dashboard")}
               </Button>
             </motion.div>
           )}

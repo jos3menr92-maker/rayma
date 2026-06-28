@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { ShieldCheck, ShieldAlert, ShieldX, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Lock, Eye, Database, CreditCard, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -155,6 +157,8 @@ const CHECKS = [
 const categoryOrder = ["Authentication", "Data Isolation", "Payments", "Privacy"];
 
 export default function SecurityAudit() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [results, setResults] = useState({});
   const [running, setRunning] = useState(false);
   const [ran, setRan] = useState(false);
@@ -204,8 +208,8 @@ export default function SecurityAudit() {
             <ShieldCheck className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-bold font-heading text-foreground">Security Audit</h1>
-            <p className="text-xs text-muted-foreground">Simulate threats · Verify data isolation · Check defenses</p>
+            <h1 className="text-xl font-bold font-heading text-foreground">{T("securityAudit", "Security Audit")}</h1>
+            <p className="text-xs text-muted-foreground">{T("auditSubtitle", "Simulate threats · Verify data isolation · Check defenses")}</p>
           </div>
         </div>
 
@@ -228,9 +232,9 @@ export default function SecurityAudit() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground">
-                {failed === 0 ? "All systems secure" : `${failed} issue${failed !== 1 ? "s" : ""} found`}
+                {failed === 0 ? T("allSystemsSecure", "All systems secure") : `${failed} ${T("issuePlural", `issue${failed !== 1 ? "s" : ""} found`)}`}
               </p>
-              <p className="text-xs text-muted-foreground">{passed} of {total} checks passed</p>
+              <p className="text-xs text-muted-foreground">{passed} {T("of", "of")} {total} {T("checksPassed", "checks passed")}</p>
             </div>
             {failed === 0
               ? <ShieldCheck className="w-8 h-8 text-primary" />
@@ -248,9 +252,9 @@ export default function SecurityAudit() {
           className="w-full rounded-2xl mb-6 font-semibold"
         >
           {running ? (
-            <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> Running simulation...</span>
+            <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 animate-spin" /> {T("runningSimulation", "Running simulation...")}</span>
           ) : (
-            <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> {ran ? "Re-run Security Audit" : "Run Security Simulation"}</span>
+            <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> {ran ? T("rerunAudit", "Re-run Security Audit") : T("runAudit", "Run Security Simulation")}</span>
           )}
         </Button>
 
@@ -297,12 +301,10 @@ export default function SecurityAudit() {
         {/* Info footer */}
         <div className="mt-4 bg-muted/40 rounded-2xl p-4">
           <p className="text-[11px] font-semibold text-muted-foreground mb-1 flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5" /> About this simulation
+            <AlertTriangle className="w-3.5 h-3.5" /> {T("aboutSimulation", "About this simulation")}
           </p>
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            This audit checks your app's live security posture: data isolation (RLS), authentication enforcement,
-            payment security (Stripe signature verification), and local data privacy. No data is modified.
-            Run this periodically or after major changes.
+            {T("simulationDescription", "This audit checks your app's live security posture: data isolation (RLS), authentication enforcement, payment security (Stripe signature verification), and local data privacy. No data is modified. Run this periodically or after major changes.")}
           </p>
         </div>
 

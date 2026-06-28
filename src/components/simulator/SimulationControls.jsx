@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useCurrency } from "@/hooks/useCurrency";
 import { Sliders } from "lucide-react";
 
 const SCENARIOS = [
@@ -10,15 +11,13 @@ const SCENARIOS = [
   { id: "income_boost", label: "Income Boost", emoji: "📈", desc: "Simulate a 10% income increase" },
 ];
 
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
-
 export default function SimulationControls({
   scenario, setScenario,
   extraPayment, setExtraPayment,
   billCutPercent, setBillCutPercent,
   loans, bills, incomes,
 }) {
+  const { formatCurrency: fmt } = useCurrency();
   const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
   const monthlyLoans = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
   const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length : 0;

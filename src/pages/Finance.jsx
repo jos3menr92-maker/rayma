@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CashFlowForecast from "../components/CashFlowForecast";
+import { getWeekdayNames } from "@/utils/formatLocalized";
 
-function getWeekLabel(dateStr) {
+function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString(lang, { month: "short", day: "numeric" });
 }
 
 function startOfWeek(date = new Date()) {
@@ -24,8 +27,10 @@ function startOfWeek(date = new Date()) {
 
 export default function Finance() {
   const { formatCurrency: fmt } = useCurrency();
+  const { lang, locale } = useLanguage();
   const { bills, loans, incomes, userProfile, reload, loading } = useFinancialData();
-  
+  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "" });
@@ -37,11 +42,11 @@ export default function Finance() {
   const monthlyBills = activeBills.reduce((s, b) => s + (b.amount || 0), 0);
   const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
   const monthlyExpenses = monthlyBills + monthlyLoans;
-  
-  const payFreq = userProfile?.pay_frequency || "weekly"; 
+
+  const payFreq = userProfile?.pay_frequency || "weekly";
   const totalIncomeLogged = incomes.reduce((s, i) => s + (i.amount || 0), 0);
   const avgIncome = incomes.length > 0 ? totalIncomeLogged / incomes.length : 0;
-  
+
   let monthlyIncome = avgIncome;
   if (payFreq === "weekly") monthlyIncome = avgIncome * 4.33;
   else if (payFreq === "biweekly") monthlyIncome = avgIncome * 2.16;
@@ -50,7 +55,8 @@ export default function Finance() {
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
 
   const today = new Date();
-  const todayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][today.getDay()];
+  const dayNames = useMemo(() => getWeekdayNames(locale, "long"), [locale]);
+  const todayName = dayNames[today.getDay()];
   const isPayday = payFreq && userProfile?.pay_day && todayName === userProfile.pay_day;
 
   async function handleSaveIncome(e) {
@@ -97,11 +103,11 @@ const payload = {
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Income & Cash Flow</h1>
-            <p className="text-sm text-muted-foreground">Track your incoming money & forecasts</p>
+            <h1 className="text-2xl font-bold font-heading text-foreground mb-1">{T("incomeAndCashFlow", "Income & Cash Flow")}</h1>
+            <p className="text-sm text-muted-foreground">{T("financePageDesc", "Track your incoming money & forecasts")}</p>
           </div>
           <Button size="sm" className="rounded-xl shadow-sm" onClick={openAdd}>
-            <Plus className="w-4 h-4 mr-1" /> Log
+            <Plus className="w-4 h-4 mr-1" /> {T("logButton", "Log")}
           </Button>
         </div>
 
@@ -109,8 +115,8 @@ const payload = {
           <div className="bg-primary/10 border border-primary/30 rounded-2xl p-3 mb-5 flex items-center gap-3">
             <span className="text-2xl">🎉</span>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">Payday!</p>
-              <p className="text-xs text-muted-foreground">Log your income to keep your records accurate.</p>
+              <p className="text-sm font-semibold text-foreground">{T("paydayLabel", "Payday!")}</p>
+              <p className="text-xs text-muted-foreground">{T("paydayDesc", "Log your income to keep your records accurate.")}</p>
             </div>
           </div>
         )}
@@ -120,7 +126,7 @@ const payload = {
           <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1 text-green-500">
               <TrendingUp className="w-3.5 h-3.5" />
-              <p className="text-[9px] uppercase tracking-wider font-bold">Income</p>
+              <p className="text-[9px] uppercase tracking-wider font-bold">{T("income", "Income")}</p>
             </div>
             <p className="text-sm font-bold text-foreground">{fmt(monthlyIncome)}</p>
           </div>
@@ -128,7 +134,7 @@ const payload = {
           <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1 text-orange-500">
               <TrendingDown className="w-3.5 h-3.5" />
-              <p className="text-[9px] uppercase tracking-wider font-bold">Expenses</p>
+              <p className="text-[9px] uppercase tracking-wider font-bold">{T("expenses", "Expenses")}</p>
             </div>
             <p className="text-sm font-bold text-foreground">{fmt(monthlyExpenses)}</p>
           </div>
@@ -136,7 +142,7 @@ const payload = {
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1 text-primary">
               <DollarSign className="w-3.5 h-3.5" />
-              <p className="text-[9px] uppercase tracking-wider font-bold">Cash Flow</p>
+              <p className="text-[9px] uppercase tracking-wider font-bold">{T("cashFlow", "Cash Flow")}</p>
             </div>
             <p className="text-sm font-bold text-foreground">{fmt(monthlyCashFlow)}</p>
           </div>
@@ -149,13 +155,13 @@ const payload = {
 
         {/* 🚀 RESTORED: Recent Income Logs UI */}
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">Recent Logs</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">{T("recentLogs", "Recent Logs")}</h2>
           <div className="space-y-3">
             {incomes.length === 0 ? (
               <div className="text-center py-10 bg-card border border-border rounded-2xl shadow-sm">
                 <Receipt className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No income logged yet.</p>
-                <button onClick={openAdd} className="text-xs text-primary font-semibold mt-1">Tap to log your first paycheck</button>
+                <p className="text-sm text-muted-foreground">{T("noIncomeYet", "No income logged yet.")}</p>
+                <button onClick={openAdd} className="text-xs text-primary font-semibold mt-1">{T("tapToLogFirstPaycheck", "Tap to log your first paycheck")}</button>
               </div>
             ) : (
               incomes.map((inc) => (
@@ -165,8 +171,8 @@ const payload = {
                       <DollarSign className="w-5 h-5 text-green-500" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-foreground">{inc.note || "Income Logged"}</p>
-                      <p className="text-xs text-muted-foreground">Week of {getWeekLabel(inc.week_start)}</p>
+                      <p className="font-semibold text-sm text-foreground">{inc.note || T("incomeLogged", "Income Logged")}</p>
+                      <p className="text-xs text-muted-foreground">{T("weekOf", "Week of")} {getWeekLabel(inc.week_start, locale)}</p>
                     </div>
                   </div>
                   <p className="font-bold text-foreground text-sm">{fmt(inc.amount)}</p>
@@ -181,32 +187,32 @@ const payload = {
       {/* Log Income Modal */}
       <Dialog open={incomeDialog} onOpenChange={setIncomeDialog}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editingIncome ? "Edit Income" : "Log Income"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingIncome ? T("editIncome", "Edit Income") : T("logIncome", "Log Income")}</DialogTitle></DialogHeader>
           <div className="mt-2 space-y-4">
             
             <div className="bg-accent/10 p-3 rounded-2xl border border-accent/20 flex gap-3">
               <MessageSquare className="w-5 h-5 text-accent shrink-0 mt-1" />
               <div className="text-xs">
-                <p className="font-semibold text-foreground">Ask RAYMA</p>
-                <p className="text-muted-foreground">"I just got paid $1200 today."</p>
+                <p className="font-semibold text-foreground">{T("askRayma", "Ask RAYMA")}</p>
+                <p className="text-muted-foreground">{T("askRaymaExample", '"I just got paid $1200 today."')}</p>
               </div>
             </div>
             
             <form onSubmit={handleSaveIncome} className="space-y-3">
               <div>
-                <Label className="text-xs text-muted-foreground ml-1">Amount</Label>
+                <Label className="text-xs text-muted-foreground ml-1">{T("amountLabel", "Amount")}</Label>
                 <Input type="number" step="0.01" value={incomeForm.amount} onChange={e => setIncomeForm(f => ({...f, amount: e.target.value}))} required className="rounded-xl" placeholder="0.00" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1">Note / Source</Label>
-                <Input type="text" value={incomeForm.note} onChange={e => setIncomeForm(f => ({...f, note: e.target.value}))} className="rounded-xl" placeholder="e.g. Weekly Paycheck" />
+                <Label className="text-xs text-muted-foreground ml-1">{T("noteSourceLabel", "Note / Source")}</Label>
+                <Input type="text" value={incomeForm.note} onChange={e => setIncomeForm(f => ({...f, note: e.target.value}))} className="rounded-xl" placeholder={T("weeklyPaycheckPlaceholder", "e.g. Weekly Paycheck")} />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground ml-1">Date</Label>
+                <Label className="text-xs text-muted-foreground ml-1">{T("dateLabel", "Date")}</Label>
                 <Input type="date" value={incomeForm.week_start} onChange={e => setIncomeForm(f => ({...f, week_start: e.target.value}))} required className="rounded-xl" />
               </div>
               <Button type="submit" disabled={saving} className="w-full rounded-xl shadow-lg mt-2">
-                {saving ? "Saving..." : "Save Income"}
+                {saving ? T("saving", "Saving...") : T("saveIncome", "Save Income")}
               </Button>
             </form>
           </div>

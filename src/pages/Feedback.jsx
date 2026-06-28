@@ -1,22 +1,34 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star, Send, ChevronLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 SECURE BRAIN
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 
-const CATEGORIES = [
-  { value: "compliment", label: "👍 Compliment" },
-  { value: "feature_request", label: "💡 Feature Request" },
-  { value: "bug", label: "🐛 Bug Report" },
-  { value: "general", label: "💬 General" },
+const CATEGORIES_STATIC = [
+  { value: "compliment", labelKey: "compliment" },
+  { value: "feature_request", labelKey: "featureRequest" },
+  { value: "bug", labelKey: "bugReport" },
+  { value: "general", labelKey: "general" },
 ];
 
 export default function Feedback() {
   const navigate = useNavigate();
   const location = useLocation();
   const { userProfile } = useFinancialData();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+
+  const CATEGORIES = CATEGORIES_STATIC.map(c => ({
+    ...c,
+    label: c.labelKey === "compliment" ? T("complimentLabel", "👍 Compliment") :
+           c.labelKey === "featureRequest" ? T("featureRequestLabel", "💡 Feature Request") :
+           c.labelKey === "bugReport" ? T("bugReportLabel", "🐛 Bug Report") :
+           T("generalLabel", "💬 General")
+  }));
 
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
@@ -43,7 +55,7 @@ export default function Feedback() {
       setTimeout(() => navigate(-1), 2000); // Auto-return to previous page
     } catch (err) {
       console.error(err);
-      alert("Failed to send. Check your Supabase 'feedback' table!");
+      alert(T("failedToSend", "Failed to send. Check your Supabase 'feedback' table!"));
     } finally {
       setSaving(false);
     }
@@ -54,24 +66,24 @@ export default function Feedback() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground mb-6 hover:text-foreground transition-colors">
-          <ChevronLeft className="w-4 h-4" /> Back
+          <ChevronLeft className="w-4 h-4" /> {T("back", "Back")}
         </button>
 
         {submitted ? (
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-12 bg-card border border-border rounded-3xl mt-10">
             <div className="text-5xl mb-4">🙏</div>
-            <h2 className="text-2xl font-bold font-heading text-foreground">Thank you!</h2>
-            <p className="text-sm text-muted-foreground mt-2">Your feedback helps us improve RAYMA.</p>
+            <h2 className="text-2xl font-bold font-heading text-foreground">{T("thankYou", "Thank you!")}</h2>
+            <p className="text-sm text-muted-foreground mt-2">{T("feedbackThankYou", "Your feedback helps us improve RAYMA.")}</p>
           </motion.div>
         ) : (
           <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
             <div className="mb-6">
-              <h2 className="text-xl font-bold font-heading text-foreground">Share Feedback</h2>
-              <p className="text-sm text-muted-foreground mt-1">Let us know how we can make the app better.</p>
+              <h2 className="text-xl font-bold font-heading text-foreground">{T("shareFeedback", "Share Feedback")}</h2>
+              <p className="text-sm text-muted-foreground mt-1">{T("shareFeedbackDesc", "Let us know how we can make the app better.")}</p>
             </div>
 
             {/* Star Rating (From your original code) */}
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-semibold">How do you like the app?</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-semibold">{T("howDoYouLike", "How do you like the app?")}</p>
             <div className="flex gap-2 mb-8">
               {[1, 2, 3, 4, 5].map((s) => (
                 <button
@@ -93,7 +105,7 @@ export default function Feedback() {
             </div>
 
             {/* Category Pills (From your original code) */}
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-semibold">Category</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-semibold">{T("category", "Category")}</p>
             <div className="flex flex-wrap gap-2 mb-8">
               {CATEGORIES.map((c) => (
                 <button
@@ -111,11 +123,11 @@ export default function Feedback() {
             </div>
 
             {/* Message Area */}
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-semibold">Message (optional)</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 font-semibold">{T("messageOptional", "Message (optional)")}</p>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Tell us what you think..."
+              placeholder={T("tellUsWhat", "Tell us what you think...")}
               rows={4}
               className="w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none mb-6 shadow-inner"
             />
@@ -125,9 +137,9 @@ export default function Feedback() {
               disabled={!rating || saving}
               className="w-full rounded-2xl h-12 text-base font-bold shadow-md"
             >
-              {saving ? "Sending..." : (
+              {saving ? T("sending", "Sending...") : (
                 <>
-                  <Send className="w-5 h-5 mr-2" /> Submit Feedback
+                  <Send className="w-5 h-5 mr-2" /> {T("submitFeedback", "Submit Feedback")}
                 </>
               )}
             </Button>

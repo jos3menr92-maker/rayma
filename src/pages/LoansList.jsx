@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import LoanCard from "../components/LoanCard";
 import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
 import { motion } from "framer-motion";
@@ -9,6 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function LoansList() {
   const navigate = useNavigate();
   const { loans, loading } = useFinancialData();
+  const { lang } = useLanguage();
+  const T = useMemo(
+    () => (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -53,13 +63,13 @@ export default function LoansList() {
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold font-heading text-primary">
-          My Loans
+          {T("myLoans", "My Loans")}
         </h1>
         <button
           onClick={() => navigate("/add-loan")}
           className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
         >
-          <Plus className="w-4 h-4" /> Add Loan
+          <Plus className="w-4 h-4" /> {T("addLoan", "Add Loan")}
         </button>
       </motion.div>
 
@@ -68,7 +78,7 @@ export default function LoansList() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search loans..."
+          placeholder={T("searchLoans", "Search loans...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
@@ -88,7 +98,7 @@ export default function LoansList() {
                   : "bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
               }`}
             >
-              {f === "all" ? "All" : f === "active" ? "Active" : "Paid Off"}
+              {f === "all" ? T("all", "All") : f === "active" ? T("active", "Active") : T("paidOff", "Paid Off")}
             </button>
           ))}
         </div>
@@ -119,13 +129,13 @@ export default function LoansList() {
           {loans.length === 0 ? (
             <>
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 text-3xl">💳</div>
-              <p className="text-base font-semibold text-foreground mb-1">No loans yet</p>
-              <p className="text-sm text-muted-foreground mb-5">Add your first loan to start tracking your debt</p>
+              <p className="text-base font-semibold text-foreground mb-1">{T("noLoansYet", "No loans yet")}</p>
+              <p className="text-sm text-muted-foreground mb-5">{T("addFirstLoanMsg", "Add your first loan to start tracking your debt")}</p>
               <button
                 onClick={() => navigate("/add-loan")}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
               >
-                <Plus className="w-4 h-4" /> Add Your First Loan
+                <Plus className="w-4 h-4" /> {T("addYourFirstLoan", "Add Your First Loan")}
               </button>
             </>
           ) : (

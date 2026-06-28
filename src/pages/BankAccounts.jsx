@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
+import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
 
 const typeConfig = {
   checking: { label: "Checking", icon: Wallet, color: "text-blue-400", bg: "bg-blue-400/10" },
@@ -23,6 +24,17 @@ const emptyForm = { name: "", institution: "", account_type: "checking", balance
 const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), description: "", amount: "", category: "other", type: "debit", notes: "" };
 
 export default function BankAccounts() {
+  const { lang } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
+
+  // 🌍 FIXED: Recreate T() when lang changes
+  const T = useMemo(() =>
+    (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -95,41 +107,41 @@ export default function BankAccounts() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-heading text-foreground">Bank Accounts</h1>
+          <h1 className="text-2xl font-bold font-heading text-foreground">{T("bankAccounts", "Bank Accounts")}</h1>
           <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-            <RefreshCw className="w-3 h-3" /> Manual balances — update anytime
+            <RefreshCw className="w-3 h-3" /> {T("manualBalances", "Manual balances — update anytime")}
           </p>
         </div>
         <Button size="sm" onClick={openAdd} className="shrink-0">
-          <Plus className="w-4 h-4 mr-1" /> Add Account
+          <Plus className="w-4 h-4 mr-1" /> {T("addAccount", "Add Account")}
         </Button>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-card border border-border rounded-2xl p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Assets</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("assets", "Assets")}</p>
           <p className="text-base font-bold text-primary">{fmt(totalAssets)}</p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Credit</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("credit", "Credit")}</p>
           <p className="text-base font-bold text-destructive">{fmt(totalCredit)}</p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Net</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("net", "Net")}</p>
           <p className={`text-base font-bold ${netBalance >= 0 ? "text-foreground" : "text-destructive"}`}>{fmt(netBalance)}</p>
         </div>
       </div>
 
       {/* Accounts List */}
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
+        <div className="text-center py-12 text-muted-foreground text-sm">{T("loading", "Loading...")}</div>
       ) : accounts.length === 0 ? (
         <div className="text-center py-16 bg-card border border-border rounded-3xl">
           <Landmark className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-          <p className="font-semibold text-foreground mb-1">No accounts yet</p>
-          <p className="text-sm text-muted-foreground mb-4">Add your checking, savings, or credit accounts</p>
-          <Button onClick={openAdd}><Plus className="w-4 h-4 mr-1" />Add Account</Button>
+          <p className="font-semibold text-foreground mb-1">{T("noAccountsYet", "No accounts yet")}</p>
+          <p className="text-sm text-muted-foreground mb-4">{T("addCheckingDesc", "Add your checking, savings, or credit accounts")}</p>
+          <Button onClick={openAdd}><Plus className="w-4 h-4 mr-1" />{T("addAccount", "Add Account")}</Button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -183,21 +195,21 @@ export default function BankAccounts() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground">
-            {selectedAccount ? "Account Transactions" : "Recent Transactions"}
+            {selectedAccount ? T("accountTransactions", "Account Transactions") : T("recentTransactions", "Recent Transactions")}
           </h2>
           <div className="flex gap-2">
             <button onClick={exportCSV} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <Download className="w-3.5 h-3.5" /> CSV
+              <Download className="w-3.5 h-3.5" /> {T("csv", "CSV")}
             </button>
             <Button size="sm" variant="outline" onClick={() => setShowTxDialog(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> Log
+              <Plus className="w-3.5 h-3.5 mr-1" /> {T("log", "Log")}
             </Button>
           </div>
         </div>
 
         {visibleTxs.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm bg-card border border-border rounded-2xl">
-            No transactions yet
+            {T("noTransactionsYet", "No transactions yet")}
           </div>
         ) : (
           <div className="space-y-1.5">
@@ -219,22 +231,22 @@ export default function BankAccounts() {
       {/* Add/Edit Account Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle>{editing ? "Edit Account" : "Add Account"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? T("editAccount", "Edit Account") : T("addAccount", "Add Account")}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>Account Name</Label><Input className="mt-1" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Chase Checking" /></div>
-            <div><Label>Institution</Label><Input className="mt-1" value={form.institution} onChange={e => setForm({ ...form, institution: e.target.value })} placeholder="e.g. Chase Bank" /></div>
-            <div><Label>Type</Label>
+            <div><Label>{T("accountName", "Account Name")}</Label><Input className="mt-1" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={T("chaseCheckingEx", "e.g. Chase Checking")} /></div>
+            <div><Label>{T("institution", "Institution")}</Label><Input className="mt-1" value={form.institution} onChange={e => setForm({ ...form, institution: e.target.value })} placeholder={T("chaseBankEx", "e.g. Chase Bank")} /></div>
+            <div><Label>{T("type", "Type")}</Label>
               <Select value={form.account_type} onValueChange={v => setForm({ ...form, account_type: v })}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(typeConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>Current Balance</Label><Input className="mt-1" type="number" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} placeholder="0.00" /></div>
-            <div><Label>Notes</Label><Input className="mt-1" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
+            <div><Label>{T("currentBalance", "Current Balance")}</Label><Input className="mt-1" type="number" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} placeholder="0.00" /></div>
+            <div><Label>{T("notes", "Notes")}</Label><Input className="mt-1" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-            <Button onClick={saveAccount}>Save</Button>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>{T("cancel", "Cancel")}</Button>
+            <Button onClick={saveAccount}>{T("save", "Save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -242,21 +254,21 @@ export default function BankAccounts() {
       {/* Log Transaction Dialog */}
       <Dialog open={showTxDialog} onOpenChange={setShowTxDialog}>
         <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle>Log Transaction</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{T("logTransaction", "Log Transaction")}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>Account</Label>
+            <div><Label>{T("account", "Account")}</Label>
               <Select value={txForm.bank_account_id} onValueChange={v => setTxForm({ ...txForm, bank_account_id: v })}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue placeholder={T("selectAccount", "Select account")} /></SelectTrigger>
                 <SelectContent>{accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>Description</Label><Input className="mt-1" value={txForm.description} onChange={e => setTxForm({ ...txForm, description: e.target.value })} /></div>
+            <div><Label>{T("description", "Description")}</Label><Input className="mt-1" value={txForm.description} onChange={e => setTxForm({ ...txForm, description: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-2">
-              <div><Label>Amount</Label><Input className="mt-1" type="number" value={txForm.amount} onChange={e => setTxForm({ ...txForm, amount: e.target.value })} placeholder="-50.00" /></div>
-              <div><Label>Date</Label><Input className="mt-1" type="date" value={txForm.date} onChange={e => setTxForm({ ...txForm, date: e.target.value })} /></div>
+              <div><Label>{T("amount", "Amount")}</Label><Input className="mt-1" type="number" value={txForm.amount} onChange={e => setTxForm({ ...txForm, amount: e.target.value })} placeholder="-50.00" /></div>
+              <div><Label>{T("date", "Date")}</Label><Input className="mt-1" type="date" value={txForm.date} onChange={e => setTxForm({ ...txForm, date: e.target.value })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div><Label>Category</Label>
+              <div><Label>{T("category", "Category")}</Label>
                 <Select value={txForm.category} onValueChange={v => setTxForm({ ...txForm, category: v })}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -266,20 +278,20 @@ export default function BankAccounts() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Type</Label>
+              <div><Label>{T("type", "Type")}</Label>
                 <Select value={txForm.type} onValueChange={v => setTxForm({ ...txForm, type: v })}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="debit">Debit</SelectItem>
-                    <SelectItem value="credit">Credit</SelectItem>
+                    <SelectItem value="debit">{T("debit", "Debit")}</SelectItem>
+                    <SelectItem value="credit">{T("creditLabel", "Credit")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTxDialog(false)}>Cancel</Button>
-            <Button onClick={saveTx}>Log Transaction</Button>
+            <Button variant="outline" onClick={() => setShowTxDialog(false)}>{T("cancel", "Cancel")}</Button>
+            <Button onClick={saveTx}>{T("logTransaction", "Log Transaction")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

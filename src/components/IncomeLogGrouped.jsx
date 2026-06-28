@@ -1,12 +1,13 @@
 import { useState } from "react";
+import { useLanguage } from "@/lib/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight, ArrowUpRight, ArrowDownLeft, Trash2, Pencil } from "lucide-react";
 
-function groupByMonth(incomes) {
+function groupByMonth(incomes, locale) {
   const groups = {};
   [...incomes].sort((a, b) => b.week_start.localeCompare(a.week_start)).forEach(inc => {
     const d = new Date(inc.week_start + "T00:00:00");
-    const key = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const key = d.toLocaleDateString(locale, { month: "long", year: "numeric" });
     if (!groups[key]) groups[key] = [];
     groups[key].push(inc);
   });
@@ -14,7 +15,8 @@ function groupByMonth(incomes) {
 }
 
 export default function IncomeLogGrouped({ incomes, weeklyExpenses, onEdit, onDelete, fmt, getWeekLabel }) {
-  const groups = groupByMonth(incomes);
+  const { locale } = useLanguage();
+  const groups = groupByMonth(incomes, locale);
   const [collapsed, setCollapsed] = useState(() => {
     // Collapse all except the first (most recent) group
     const set = new Set();

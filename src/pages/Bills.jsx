@@ -202,12 +202,12 @@ export default function Bills() {
           
           {/* ✨ RAYMA AI INTEGRATION BUTTON ✨ */}
           {!editing && (
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors border border-primary/20"
               onClick={() => alert("RAYMA OCR Scanner coming soon! 🤖")} // Placeholder for future logic
             >
-              <Sparkles className="w-4 h-4" /> Auto-fill with RAYMA
+              <Sparkles className="w-4 h-4" /> {T("autofillRAYMA", "Auto-fill with RAYMA")}
             </button>
           )}
 

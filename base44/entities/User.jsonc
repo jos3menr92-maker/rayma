@@ -71,6 +71,32 @@
       "type": "boolean",
       "default": false,
       "description": "Whether this user is a sponsor or employee (redeemed promo code)"
+    },
+    "energy_bars": {
+      "type": "number",
+      "default": 10,
+      "description": "Current AI energy bars. Free users reset to 10 daily at midnight. Premium users (annual_pass active) keep accumulated energy."
+    },
+    "purchased_energy": {
+      "type": "number",
+      "default": 0,
+      "description": "Energy bars purchased via in-app purchases. Never reset, only increases."
+    },
+    "last_energy_reset": {
+      "type": "string",
+      "format": "date",
+      "description": "Last date when daily energy was reset (for avoiding duplicate resets)"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": ["free", "power_lithium", "power_generator"],
+      "default": "free",
+      "description": "Active Stripe subscription tier. Set by the Stripe webhook on purchase. 'free' when no active subscription."
+    },
+    "subscription_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the current Stripe subscription period ends. Null if the user is on the free tier."
     }
   },
   "required": [

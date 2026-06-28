@@ -1,25 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
+import { t } from "@/lib/i18n";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { getMonthName } from "@/utils/formatLocalized";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
 
-const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
-
-const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
 function getMonthKey(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
-function monthLabel(key) {
+function monthLabel(key, locale) {
   const [y, m] = key.split("-");
-  return `${MONTH_NAMES[parseInt(m) - 1]} ${y.slice(2)}`;
+  return `${getMonthName(parseInt(m) - 1, locale, "short")} ${y.slice(2)}`;
 }
 
 const TYPE_CONFIG = {
@@ -30,6 +29,9 @@ const TYPE_CONFIG = {
 };
 
 export default function MonthlyTrend() {
+  const { lang, locale } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const type = urlParams.get("type") || "totalPaid";
@@ -92,7 +94,7 @@ export default function MonthlyTrend() {
       const monthlyLoanPayments = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.monthly_payment || 0), 0);
 
       return {
-        month: monthLabel(key),
+        month: monthLabel(key, locale),
         totalDebt: originalDebt,
         remaining: type === "remaining" ? approxRemaining : undefined,
         totalPaid: cumulativePaid,
@@ -134,7 +136,7 @@ export default function MonthlyTrend() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-sm text-muted-foreground mb-5 hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> {T("back", "Back")}
         </button>
 
         <h1 className="text-2xl font-bold font-heading text-foreground mb-1">{config.label}</h1>
@@ -142,21 +144,21 @@ export default function MonthlyTrend() {
 
         {/* Summary */}
         <div className="bg-card border border-border rounded-3xl p-5 mb-6">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Current</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{T("current", "Current")}</p>
           <p className="text-3xl font-bold font-heading text-foreground mb-1">{fmt(latest)}</p>
           {chartData.length >= 2 && (
             <p className={`text-sm font-medium ${delta >= 0 ? "text-primary" : "text-destructive"}`}>
-              {delta >= 0 ? "+" : ""}{fmt(delta)} vs last month
+              {delta >= 0 ? "+" : ""}{fmt(delta)} {T("vsLastMonth", "vs last month")}
             </p>
           )}
         </div>
 
         {/* Chart */}
         <div className="bg-card border border-border rounded-3xl p-4 mb-6">
-          <h2 className="text-sm font-semibold font-heading text-foreground mb-4">Monthly Trend</h2>
+          <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("monthlyTrend", "Monthly Trend")}</h2>
           {chartData.length < 2 ? (
             <div className="h-48 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">Not enough data yet — keep tracking!</p>
+              <p className="text-sm text-muted-foreground">{T("notEnoughData", "Not enough data yet — keep tracking!")}</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
@@ -191,7 +193,7 @@ export default function MonthlyTrend() {
         {chartData.length > 0 && (
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
-              <h2 className="text-sm font-semibold font-heading text-foreground">Monthly Breakdown</h2>
+              <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBreakdown", "Monthly Breakdown")}</h2>
             </div>
             <div className="divide-y divide-border">
               {[...chartData].reverse().map((d, i) => (

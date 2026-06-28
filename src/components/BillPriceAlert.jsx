@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 SECURE VAULT
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 BRAIN
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { AlertTriangle, X } from "lucide-react";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
 
 export default function BillPriceAlert() {
   const { bills, userProfile } = useFinancialData();
+  const { formatCurrency: fmt } = useCurrency();
   const [changes, setChanges] = useState([]);
   const [dismissed, setDismissed] = useState(() => {
     try { return JSON.parse(localStorage.getItem("dismissed_bill_changes") || "[]"); } catch { return []; }

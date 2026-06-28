@@ -1,13 +1,17 @@
 import { useMemo } from "react";
+import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
-
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n || 0);
-const DOW = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+import { getWeekdayNames } from "@/utils/formatLocalized";
 
 export default function CashFlowForecast({ loans, bills, incomes }) {
+  const { locale } = useLanguage();
+  const { formatCurrency: fmt } = useCurrency();
+
   const forecast = useMemo(() => {
     const today = new Date();
+    const dayNames = getWeekdayNames(locale, "short");
     const avgWeeklyIncome = incomes.length > 0
       ? incomes.slice(0, 8).reduce((s, i) => s + (i.amount || 0), 0) / Math.min(incomes.length, 8)
       : 0;
@@ -20,7 +24,7 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
       const date = new Date(today);
       date.setDate(today.getDate() + d);
       const dayOfMonth = date.getDate();
-      const dayOfWeek = DOW[date.getDay()];
+      const dayOfWeek = dayNames[date.getDay()];
       const label = `${date.getMonth() + 1}/${dayOfMonth}`;
 
       let dayIncome = 0;

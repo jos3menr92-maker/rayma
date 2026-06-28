@@ -1,4 +1,8 @@
 import { motion } from "framer-motion";
+import { useMemo } from "react";
+import { useLanguage } from "@/lib/LanguageContext";
+import { useCurrency } from "@/hooks/useCurrency";
+import { getWeekdayNames, formatCurrencyNoDecimals } from "@/utils/formatLocalized";
 
 const categoryColors = {
   utilities: "bg-blue-100 text-blue-700 border-blue-200",
@@ -25,6 +29,9 @@ function getFirstDayOfMonth(year, month) {
 }
 
 export default function BillCalendar({ bills }) {
+  const { locale } = useLanguage();
+  const { currency } = useCurrency();
+
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -40,8 +47,13 @@ export default function BillCalendar({ bills }) {
     billsByDay[day].push(bill);
   });
 
-  const monthName = now.toLocaleString("en-US", { month: "long", year: "numeric" });
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const monthName = useMemo(() => {
+    return now.toLocaleString(locale, { month: "long", year: "numeric" });
+  }, [locale]);
+
+  const weekDays = useMemo(() => {
+    return getWeekdayNames(locale, "short");
+  }, [locale]);
 
   const cells = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
@@ -107,7 +119,7 @@ export default function BillCalendar({ bills }) {
                   {bill.autopay && <span className="text-[9px] opacity-70 bg-white/50 px-1 rounded">AUTO</span>}
                 </div>
                 <div className="text-right">
-                  <span className="font-bold">${bill.amount?.toFixed(2)}</span>
+                  <span className="font-bold">{formatCurrencyNoDecimals(bill.amount, locale, currency)}</span>
                   <span className="opacity-60 ml-1">· {bill.due_day}th</span>
                 </div>
               </div>

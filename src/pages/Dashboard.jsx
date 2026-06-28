@@ -1,19 +1,3 @@
-/**
- * ==========================================
- * RAYMA CONFIDENTIAL & PROPRIETARY
- * ==========================================
- * Copyright (C) 2026 RAYMA. All Rights Reserved.
- *
- * NOTICE: All information contained herein is, and remains
- * the property of RAYMA. The intellectual and technical
- * concepts contained herein are proprietary to RAYMA and
- * are protected by trade secret and copyright law.
- * Dissemination of this information or reproduction of this
- * material is strictly forbidden unless prior written
- * permission is obtained from RAYMA Management.
- * ==========================================
- */
-
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -42,7 +26,6 @@ const HUMAN_AVATARS = [
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))"];
 
-// 🚀 ADDED: Unified icons for the mini-cards
 const iconMap = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️", rent: "🏠", food: "🍔", transport: "🚗", 
   health: "🏥", mortgage: "🏠", auto: "🚗", student: "🎓", personal: "💰", credit_card: "💳", medical: "🏥", other: "📋"
@@ -84,7 +67,6 @@ export default function Dashboard() {
   const [pullStartY, setPullStartY] = useState(null);
   const [pullDistance, setPullDistance] = useState(0);
 
-  // 🚨 THE BOUNCER: Kick unauthenticated users out to the login screen!
   useEffect(() => {
     if (!loading && !userProfile) {
       navigate("/auth", { replace: true });
@@ -134,10 +116,8 @@ export default function Dashboard() {
   const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
-  // Render the loading spinner if data is still fetching
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
-// 🚨 SECOND BOUNCER: Show a graceful loading state if the profile is missing or reconnecting
   if (!userProfile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-background">
@@ -151,8 +131,6 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-4 pb-24" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      
-      {/* Invisible Scrollbar CSS */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -195,7 +173,6 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Horizontal Mini-Cards for Bills */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBills", "Monthly Bills")}</h2>
@@ -217,7 +194,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Horizontal Mini-Cards for Loans */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("activeLoans", "Active Loans")}</h2>
@@ -275,7 +251,6 @@ export default function Dashboard() {
         <div onClick={() => navigate("/trend?type=totalPaid")} className="cursor-pointer"><StatsCard label={T("totalPaid", "Total Paid")} value={formatCurrency(totalPaid)} icon={TrendingUp} color="primary" /></div>
         <div onClick={() => navigate("/trend?type=monthlyDue")} className="cursor-pointer"><StatsCard label={T("monthlyDue", "Monthly Due")} value={formatCurrency(monthlyTotal)} icon={CreditCard} color="muted" /></div>
       </div>
-
     </div>
   );
 }
