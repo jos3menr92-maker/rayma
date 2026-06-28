@@ -172,7 +172,7 @@ const payload = {
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-foreground">{inc.note || T("incomeLogged", "Income Logged")}</p>
-                      <p className="text-xs text-muted-foreground">{T("weekOf", "Week of")} {getWeekLabel(inc.week_start, lang)}</p>
+                      <p className="text-xs text-muted-foreground">{T("weekOf", "Week of")} {getWeekLabel(inc.week_start, locale)}</p>
                     </div>
                   </div>
                   <p className="font-bold text-foreground text-sm">{fmt(inc.amount)}</p>

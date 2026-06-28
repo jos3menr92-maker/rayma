@@ -27,7 +27,8 @@ export function useEnergyBars(userId = null) {
       setEnergyData((prev) => ({ ...prev, isLoading: true, error: null }));
 
       // If no userId provided, fetch current user
-      const targetUserId = userId;
+      const targetUserId = userId ?? (await base44.auth.me())?.id;
+      if (!targetUserId) throw new Error('User not found');
 
       const users = await base44.entities.User.filter({ id: targetUserId });
       const user = users[0];
@@ -38,7 +39,7 @@ export function useEnergyBars(userId = null) {
 
       const currentEnergyBars = user.energy_bars || 10;
       const purchasedEnergy = user.purchased_energy || 0;
-      const totalEnergy = currentEnergyBars + purchasedEnergy;
+      const totalEnergy = currentEnergyBars;
 
       setEnergyData({
         energy_bars: currentEnergyBars,
@@ -177,18 +178,16 @@ export function formatEnergyDisplay(currentBars, isPremium = false) {
  * @param lastResetDate - last_energy_reset date (YYYY-MM-DD)
  * @returns { hoursUntilReset, minutesUntilReset, displayText }
  */
-export function calculateTimeUntilReset(lastResetDate) {
-  if (!lastResetDate) {
-    return { hoursUntilReset: 0, minutesUntilReset: 0, displayText: 'Resetting soon...' };
-  }
-
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-
+export function calculateTimeUntilReset() {
   const now = new Date();
-  const timeUntilReset = tomorrow - now;
+  const nextUtcMidnight = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0, 0, 0, 0
+  ));
+
+  const timeUntilReset = nextUtcMidnight.getTime() - now.getTime();
   const hoursUntilReset = Math.floor(timeUntilReset / (1000 * 60 * 60));
   const minutesUntilReset = Math.floor((timeUntilReset % (1000 * 60 * 60)) / (1000 * 60));
 

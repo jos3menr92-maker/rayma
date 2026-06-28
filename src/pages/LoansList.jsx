@@ -12,7 +12,13 @@ export default function LoansList() {
   const navigate = useNavigate();
   const { loans, loading } = useFinancialData();
   const { lang } = useLanguage();
-  const T = (key, fallback) => t(lang, key) || fallback;
+  const T = useMemo(
+    () => (key, fallback) => {
+      const translated = t(lang, key);
+      return translated !== key ? translated : fallback;
+    },
+    [lang]
+  );
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
