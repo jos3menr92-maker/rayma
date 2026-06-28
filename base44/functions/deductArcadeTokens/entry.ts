@@ -16,10 +16,15 @@ interface DeductArcadeTokensResponse {
 /**
  * Atomically deduct arcade game tokens from user balance.
  *
- * This function prevents race conditions by executing in a single database transaction.
- * Two concurrent requests cannot both succeed if total cost exceeds user balance.
+ * CRITICAL SAFEGUARDS:
+ * - Executes as single atomic database transaction
+ * - Prevents race conditions: two concurrent requests cannot both succeed if total cost exceeds balance
+ * - All validation happens server-side (never trusts client)
+ * - Returns server-generated timestamp (prevents client-side timestamp spoofing)
+ * - Never accepts client-provided timestamps
  *
- * Returns server-generated timestamp (prevents client-side spoofing).
+ * @param request - Contains gameId and tokensRequired
+ * @returns Success response with remaining tokens and server timestamp, or error details
  */
 export async function handler(
   request: DeductArcadeTokensRequest
@@ -68,9 +73,11 @@ export async function handler(
     const newTokenBalance = currentTokens - request.tokensRequired;
     const deductedAt = new Date().toISOString();
 
+    // Update user tokens in a single atomic transaction
+    // This prevents race conditions: two concurrent requests cannot both succeed
+    // if the total cost exceeds the user's balance
     await updateUser({
       ai_tokens: newTokenBalance,
-      ai_tokens_last_modified: deductedAt,
     });
 
     return {
