@@ -6,6 +6,22 @@ import { Button } from "@/components/ui/button";
 
 const DEDUCTIBLE = ["health", "insurance", "loan_payment", "utilities"];
 
+const CATEGORY_LABELS = {
+  income: "Income",
+  food: "Food & Dining",
+  transport: "Transportation",
+  utilities: "Utilities",
+  subscriptions: "Subscriptions",
+  health: "Health & Medical",
+  insurance: "Insurance",
+  rent: "Rent & Housing",
+  loan_payment: "Loan Payments",
+  savings: "Savings",
+  entertainment: "Entertainment",
+  shopping: "Shopping",
+  other: "Other",
+};
+
 export default function TaxSummary() {
   const { formatCurrency: fmt } = useCurrency();
   const currentYear = new Date().getFullYear();
