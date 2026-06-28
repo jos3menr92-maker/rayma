@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pause, Play } from 'lucide-react';
-import { deductArcadeTokens, saveArcadeScore } from '@/api/arcadeGamesApi';
+import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 
 const GAME_ID = 'retro_snake';
-const TOKENS_REQUIRED = 10;
 
 export default function RetroSnake({ onUpdateScore }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
@@ -11,12 +10,8 @@ export default function RetroSnake({ onUpdateScore }) {
   const [isPaused, setIsPaused] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
-  const [isDeducting, setIsDeducting] = useState(false);
-  const [tokenError, setTokenError] = useState(null);
-  const [playTimestamp, setPlayTimestamp] = useState(null);
   const canvasRef = useRef(null);
 
-  // Load best score on mount (from localStorage as fallback, but preferred source is server)
   useEffect(() => {
     const saved = localStorage.getItem('snakeBestScore');
     if (saved) setBestScore(parseInt(saved, 10));
@@ -25,32 +20,15 @@ export default function RetroSnake({ onUpdateScore }) {
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
 
-  const handleStartGame = async () => {
-    setTokenError(null);
-    setIsDeducting(true);
-
-    // Atomically deduct tokens server-side
-    const deductResult = await deductArcadeTokens(GAME_ID, TOKENS_REQUIRED);
-
-    if (!deductResult.success) {
-      setTokenError(deductResult.message || 'Failed to deduct tokens');
-      setIsDeducting(false);
-      return;
-    }
-
-    // Store server timestamp for score save
-    setPlayTimestamp(deductResult.deductedAt);
-
-    // Game is safe to start now
+  const handleStartGame = () => {
     setGameOver(false);
     setScore(0);
     setIsPaused(false);
     setIsGameRunning(true);
-    setIsDeducting(false);
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || isPaused) return; // ✨ Respect pause
+    if (!isGameRunning || gameOver || isPaused) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -76,18 +54,17 @@ export default function RetroSnake({ onUpdateScore }) {
 
     const endGame = async (finalScore) => {
       setGameOver(true);
-      // Update best score locally
       if (finalScore > bestScore) {
         setBestScore(finalScore);
         localStorage.setItem('snakeBestScore', finalScore.toString());
       }
 
-      // Save score to server (only if tokens were successfully deducted)
-      if (playTimestamp) {
-        const saveResult = await saveArcadeScore(GAME_ID, finalScore, playTimestamp);
-        if (!saveResult.saved) {
-          console.warn('[RetroSnake] Score not saved:', saveResult.message);
-        }
+      await saveArcadeScore(GAME_ID, finalScore);
+
+      // Play-to-Earn: Level 10 is 450 points
+      const levelReached = Math.floor(finalScore / 50) + 1;
+      if (levelReached >= 10) {
+        await claimArcadeReward(GAME_ID, levelReached);
       }
 
       latestScoreUpdate.current && latestScoreUpdate.current(GAME_ID, finalScore);
@@ -96,7 +73,7 @@ export default function RetroSnake({ onUpdateScore }) {
 
     const render = () => {
       animationFrameId = window.requestAnimationFrame(render);
-      if (isPaused) return; // ✨ Skip logic if paused
+      if (isPaused) return;
 
       const currentLevel = Math.floor(currentScore / 50) + 1;
       const dynamicSpeed = Math.max(3, 14 - (currentLevel * 2));
@@ -137,24 +114,19 @@ export default function RetroSnake({ onUpdateScore }) {
       window.removeEventListener('keydown', handleKeyDown);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, isPaused]); // ✨ Add isPaused to dependencies
+  }, [isGameRunning, gameOver, isPaused]); 
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
       {!isGameRunning ? (
         <>
           <h3 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">Retro Snake</h3>
-          <div className="text-slate-400 font-mono mb-2">High Score: {bestScore}</div>
-          {tokenError && (
-            <div className="text-red-400 text-sm mb-4 text-center max-w-xs">{tokenError}</div>
-          )}
-          <div className="text-slate-500 text-xs mb-4">Costs {TOKENS_REQUIRED} tokens to play</div>
+          <div className="text-slate-400 font-mono mb-6">High Score: {bestScore}</div>
           <button
             onClick={handleStartGame}
-            disabled={isDeducting}
-            className="px-8 py-4 bg-lime-500 text-black font-black uppercase disabled:opacity-50 disabled:cursor-not-allowed rounded shadow-[0_0_15px_rgba(132,204,22,0.5)]"
+            className="px-8 py-4 bg-lime-500 text-black font-black uppercase rounded shadow-[0_0_15px_rgba(132,204,22,0.5)]"
           >
-            {isDeducting ? 'Deducting Tokens...' : 'Insert Coin'}
+            Play Now (Free)
           </button>
         </>
       ) : (
@@ -165,7 +137,6 @@ export default function RetroSnake({ onUpdateScore }) {
                <span className="text-slate-600">|</span>
                <span className="text-slate-400">BEST: {bestScore}</span>
              </div>
-             {/* ✨ NEW: Pause Button */}
              <button onClick={() => setIsPaused(!isPaused)} className="bg-black/60 border border-slate-800 text-white p-4 rounded-2xl hover:bg-slate-800">
                {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
              </button>
@@ -182,7 +153,12 @@ export default function RetroSnake({ onUpdateScore }) {
           {gameOver && (
              <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center">
                 <div className="text-red-500 font-black text-6xl mb-2 animate-pulse">GAME OVER</div>
-                <div className="text-white font-mono text-2xl mb-12">SCORE: {score} | BEST: {bestScore}</div>
+                <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
+                {score >= 450 && (
+                  <div className="text-lime-400 font-black text-xl mb-8 animate-bounce tracking-widest">
+                    🎉 LEVEL 10 REACHED: +1 ENERGY BAR!
+                  </div>
+                )}
                 <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl">Play Again</button>
              </div>
           )}
