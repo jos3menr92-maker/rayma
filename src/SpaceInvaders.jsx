@@ -1,16 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Pause, Play } from 'lucide-react'; // Added icons
+import { Pause, Play } from 'lucide-react';
+import { deductArcadeTokens, saveArcadeScore } from '@/api/arcadeGamesApi';
+
+const GAME_ID = 'space_invaders';
+const TOKENS_REQUIRED = 10;
 
 export default function SpaceInvaders({ onUpdateScore }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); // ✨ NEW: Pause State
+  const [isPaused, setIsPaused] = useState(false);
   const [score, setScore] = useState(0);
-  const [bestScore, setBestScore] = useState(0); // ✨ NEW: Best Score State
+  const [bestScore, setBestScore] = useState(0);
+  const [isDeducting, setIsDeducting] = useState(false);
+  const [tokenError, setTokenError] = useState(null);
+  const [playTimestamp, setPlayTimestamp] = useState(null);
   const canvasRef = useRef(null);
-  
-  // Load best score on mount
+
+  // Load best score on mount (from localStorage as fallback, but preferred source is server)
   useEffect(() => {
     const saved = localStorage.getItem('spaceInvadersBestScore');
     if (saved) setBestScore(parseInt(saved, 10));
@@ -20,6 +27,31 @@ export default function SpaceInvaders({ onUpdateScore }) {
   useEffect(() => {
     latestScoreUpdate.current = onUpdateScore;
   }, [onUpdateScore]);
+
+  const handleStartGame = async () => {
+    setTokenError(null);
+    setIsDeducting(true);
+
+    // Atomically deduct tokens server-side
+    const deductResult = await deductArcadeTokens(GAME_ID, TOKENS_REQUIRED);
+
+    if (!deductResult.success) {
+      setTokenError(deductResult.message || 'Failed to deduct tokens');
+      setIsDeducting(false);
+      return;
+    }
+
+    // Store server timestamp for score save
+    setPlayTimestamp(deductResult.deductedAt);
+
+    // Game is safe to start now
+    setGameOver(false);
+    setGameWon(false);
+    setIsPaused(false);
+    setScore(0);
+    setIsGameRunning(true);
+    setIsDeducting(false);
+  };
 
   useEffect(() => {
     if (!isGameRunning || gameOver || gameWon || isPaused) return;
@@ -97,17 +129,25 @@ export default function SpaceInvaders({ onUpdateScore }) {
     window.addEventListener('keyup', handleKeyUp);
 
     // Touch controls... (simplified for brevity, keeps your existing logic)
-    const triggerEnd = (won = false) => {
+    const triggerEnd = async (won = false) => {
       if (won) setGameWon(true);
       else setGameOver(true);
-      
-      // ✨ Update Best Score
+
+      // Update best score locally
       if (currentScore > bestScore) {
         setBestScore(currentScore);
         localStorage.setItem('spaceInvadersBestScore', currentScore.toString());
       }
-      
-      latestScoreUpdate.current && latestScoreUpdate.current('space_invaders', currentScore);
+
+      // Save score to server (only if tokens were successfully deducted)
+      if (playTimestamp) {
+        const saveResult = await saveArcadeScore(GAME_ID, currentScore, playTimestamp);
+        if (!saveResult.saved) {
+          console.warn('[SpaceInvaders] Score not saved:', saveResult.message);
+        }
+      }
+
+      latestScoreUpdate.current && latestScoreUpdate.current(GAME_ID, currentScore);
       window.cancelAnimationFrame(animationFrameId);
     };
 
@@ -152,7 +192,17 @@ export default function SpaceInvaders({ onUpdateScore }) {
         <>
           <h3 className="text-3xl font-black text-purple-500 uppercase tracking-tighter mb-2">Space Invaders</h3>
           <div className="text-slate-400 font-mono mb-2">High Score: {bestScore}</div>
-          <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); setIsGameRunning(true); }} className="px-8 py-4 bg-purple-500 text-black font-black uppercase tracking-widest hover:bg-purple-400 rounded shadow-[0_0_15px_rgba(168,85,247,0.5)]">Load Matrix</button>
+          {tokenError && (
+            <div className="text-red-400 text-sm mb-4 text-center max-w-xs">{tokenError}</div>
+          )}
+          <div className="text-slate-500 text-xs mb-4">Costs {TOKENS_REQUIRED} tokens to play</div>
+          <button
+            onClick={handleStartGame}
+            disabled={isDeducting}
+            className="px-8 py-4 bg-purple-500 text-black font-black uppercase tracking-widest hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed rounded shadow-[0_0_15px_rgba(168,85,247,0.5)]"
+          >
+            {isDeducting ? 'Deducting Tokens...' : 'Load Matrix'}
+          </button>
         </>
       ) : (
         <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center overscroll-none touch-none">
