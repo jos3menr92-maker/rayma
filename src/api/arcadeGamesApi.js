@@ -1,46 +1,41 @@
 /**
- * Arcade Games API - Client-side interface for arcade token and score operations.
- *
- * All token deductions are atomic, server-side operations.
- * Prevents race conditions through database-level transaction handling.
- * All timestamps are server-generated (never from client).
+ * Arcade Games API - Client-side interface for arcade operations and Play-to-Earn rewards.
  */
 
 /**
- * Deduct arcade game tokens from user balance.
- * Atomic operation: both concurrent requests cannot succeed if total cost exceeds balance.
+ * Claim daily Play-to-Earn reward (Energy Bar) for reaching milestone levels.
+ * Server strictly enforces the "1 reward per game, per day" limit to prevent farming.
  *
  * @param {string} gameId - Game identifier (e.g., 'retro_snake', 'space_invaders')
- * @param {number} tokensRequired - Number of tokens to deduct
- * @returns {Promise<Object>} { success, remainingTokens, deductedAt, message, error }
+ * @param {number} level - The level reached by the user
+ * @returns {Promise<Object>} { success, message, rewardGranted }
  */
-export async function deductArcadeTokens(gameId, tokensRequired) {
+export async function claimArcadeReward(gameId, level) {
   try {
-    const response = await fetch('/api/base44/deductArcadeTokens', {
+    const response = await fetch('/api/base44/rewardArcadeTokens', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         gameId,
-        tokensRequired,
+        level,
       }),
     });
 
     if (!response.ok) {
       return {
         success: false,
-        message: 'Network error during token deduction',
+        message: 'Network error claiming reward',
         error: 'network_error',
       };
     }
 
     const data = await response.json();
-
     return data;
   } catch (err) {
-    console.error('[Arcade API] Error deducting tokens:', err);
+    console.error('[Arcade API] Error claiming reward:', err);
     return {
       success: false,
-      message: 'Failed to deduct tokens',
+      message: 'Failed to claim reward',
       error: 'client_error',
     };
   }
@@ -48,16 +43,13 @@ export async function deductArcadeTokens(gameId, tokensRequired) {
 
 /**
  * Save arcade game score to database.
- *
- * Score is only saved if game was started with successful token deduction.
- * Uses server-generated timestamp from deduction response (never client time).
+ * Removed the required playTimestamp to allow instant, frictionless free play.
  *
  * @param {string} gameId - Game identifier
  * @param {number} score - Final score value
- * @param {string} playTimestamp - Server timestamp from token deduction (ISO string)
  * @returns {Promise<Object>} { saved, newHighScore, message, error }
  */
-export async function saveArcadeScore(gameId, score, playTimestamp) {
+export async function saveArcadeScore(gameId, score) {
   try {
     // Validate score is valid number
     if (typeof score !== 'number' || score < 0) {
@@ -68,22 +60,12 @@ export async function saveArcadeScore(gameId, score, playTimestamp) {
       };
     }
 
-    // Validate timestamp exists (required to prevent client-side spoofing)
-    if (!playTimestamp || typeof playTimestamp !== 'string') {
-      return {
-        saved: false,
-        message: 'Missing server timestamp',
-        error: 'invalid_timestamp',
-      };
-    }
-
     const response = await fetch('/api/base44/saveArcadeScore', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         gameId,
         score,
-        playTimestamp,
       }),
     });
 
@@ -96,7 +78,6 @@ export async function saveArcadeScore(gameId, score, playTimestamp) {
     }
 
     const data = await response.json();
-
     return data;
   } catch (err) {
     console.error('[Arcade API] Error saving score:', err);
@@ -126,7 +107,6 @@ export async function getHighScore(gameId) {
     }
 
     const data = await response.json();
-
     return data.highScore || 0;
   } catch (err) {
     console.error('[Arcade API] Error fetching high score:', err);
@@ -151,7 +131,6 @@ export async function getAllHighScores() {
     }
 
     const data = await response.json();
-
     return data.scores || {};
   } catch (err) {
     console.error('[Arcade API] Error fetching all high scores:', err);
