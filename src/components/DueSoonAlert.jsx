@@ -1,11 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, X, CreditCard, Receipt } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function DueSoonAlert({ loans, bills, payments = [] }) {
   const { formatCurrency: fmt } = useCurrency();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [dismissed, setDismissed] = useState(false);
   const navigate = useNavigate();
   const today = new Date().getDate();
@@ -27,7 +31,6 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
     })
     .filter((b) => b.daysLeft <= 3);
 
-  // Flag active loans with no payment in the last 60 days
   const overdueLoans = loans
     .filter((l) => l.status !== "paid_off")
     .filter((l) => {
@@ -45,8 +48,6 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
 
   if ((all.length === 0 && overdueLoans.length === 0) || dismissed) return null;
 
-  const totalAlerts = all.length + overdueLoans.length;
-
   return (
     <AnimatePresence>
       <motion.div
@@ -60,10 +61,10 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
             <AlertTriangle className="w-4 h-4 text-destructive" />
             <span className="text-sm font-bold text-destructive">
               {all.length > 0 && overdueLoans.length > 0
-                ? `${all.length} due soon · ${overdueLoans.length} overdue`
+                ? T("dueSoonOverdue", "{n} due soon · {m} overdue").replace("{n}", all.length).replace("{m}", overdueLoans.length)
                 : all.length > 0
-                  ? `${all.length} payment${all.length > 1 ? "s" : ""} due soon!`
-                  : `${overdueLoans.length} loan${overdueLoans.length > 1 ? "s" : ""} with no recent payment`}
+                  ? T("paymentsDueSoon", "{n} payment(s) due soon!").replace("{n}", all.length)
+                  : T("loansNoRecentPayment", "{n} loan(s) with no recent payment").replace("{n}", overdueLoans.length)}
             </span>
           </div>
           <button onClick={() => setDismissed(true)} className="p-1 text-destructive/60 hover:text-destructive">
@@ -88,7 +89,7 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
                   <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
                     isToday ? "bg-destructive text-white" : "bg-destructive/10 text-destructive"
                   }`}>
-                    {isToday ? "Today!" : `${item.daysLeft}d`}
+                    {isToday ? T("todayLabel", "Today!") : `${item.daysLeft}d`}
                   </span>
                 </div>
                 <span className="text-sm font-bold text-foreground">{fmt(amount)}</span>
@@ -105,7 +106,7 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
                 <CreditCard className="w-3.5 h-3.5 text-amber-600" />
                 <span className="text-sm font-medium text-foreground">{item.name}</span>
                 <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold bg-amber-200 text-amber-800">
-                  No payment in 60d
+                  {T("noPaymentIn60d", "No payment in 60d")}
                 </span>
               </div>
               <span className="text-sm font-bold text-foreground">{fmt(item.monthly_payment)}</span>

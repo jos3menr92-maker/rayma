@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
+import { t } from "@/lib/i18n";
 import { getWeekdayNames, formatCurrencyNoDecimals } from "@/utils/formatLocalized";
 
 const categoryColors = {
@@ -29,8 +30,9 @@ function getFirstDayOfMonth(year, month) {
 }
 
 export default function BillCalendar({ bills }) {
-  const { locale } = useLanguage();
+  const { lang, locale } = useLanguage();
   const { currency } = useCurrency();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
   const now = new Date();
   const year = now.getFullYear();
@@ -89,7 +91,7 @@ export default function BillCalendar({ bills }) {
               {dayBills.slice(0, 2).map((bill, i) => (
                 <div
                   key={i}
-                  title={`${bill.name} – $${bill.amount}`}
+                  title={`${bill.name} – ${formatCurrencyNoDecimals(bill.amount, locale, currency)}`}
                   className="w-full text-center text-[8px] leading-tight px-0.5 py-0.5 rounded font-medium truncate border"
                   style={{ fontSize: "7px" }}
                 >
@@ -107,7 +109,7 @@ export default function BillCalendar({ bills }) {
       {/* Legend */}
       {bills.length > 0 && (
         <div className="mt-5 space-y-2">
-          <h3 className="text-xs font-semibold text-foreground">This Month</h3>
+          <h3 className="text-xs font-semibold text-foreground">{T("thisMonth", "This Month")}</h3>
           {bills
             .slice()
             .sort((a, b) => a.due_day - b.due_day)
@@ -116,11 +118,11 @@ export default function BillCalendar({ bills }) {
                 <div className="flex items-center gap-2">
                   <span>{categoryEmojis[bill.category] || "📋"}</span>
                   <span className="font-medium">{bill.name}</span>
-                  {bill.autopay && <span className="text-[9px] opacity-70 bg-white/50 px-1 rounded">AUTO</span>}
+                  {bill.autopay && <span className="text-[9px] opacity-70 bg-white/50 px-1 rounded">{T("autoPay", "AUTO")}</span>}
                 </div>
                 <div className="text-right">
                   <span className="font-bold">{formatCurrencyNoDecimals(bill.amount, locale, currency)}</span>
-                  <span className="opacity-60 ml-1">· {bill.due_day}th</span>
+                  <span className="opacity-60 ml-1">· {bill.due_day}{T("th", "th")}</span>
                 </div>
               </div>
             ))}

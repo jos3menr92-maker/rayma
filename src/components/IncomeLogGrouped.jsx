@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight, ArrowUpRight, ArrowDownLeft, Trash2, Pencil } from "lucide-react";
 
@@ -15,7 +16,8 @@ function groupByMonth(incomes, locale) {
 }
 
 export default function IncomeLogGrouped({ incomes, weeklyExpenses, onEdit, onDelete, fmt, getWeekLabel }) {
-  const { locale } = useLanguage();
+  const { lang, locale } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const groups = groupByMonth(incomes, locale);
   const [collapsed, setCollapsed] = useState(() => {
     // Collapse all except the first (most recent) group
@@ -49,12 +51,12 @@ export default function IncomeLogGrouped({ incomes, weeklyExpenses, onEdit, onDe
               <div className="flex items-center gap-2">
                 {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
                 <span className="text-sm font-semibold text-foreground">{month}</span>
-                <span className="text-xs text-muted-foreground">({items.length} week{items.length !== 1 ? "s" : ""})</span>
+                <span className="text-xs text-muted-foreground">({items.length} {items.length !== 1 ? T("weeksLabel", "weeks") : T("weekLabel", "week")})</span>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-foreground">{fmt(monthTotal)}</p>
                 <p className={`text-[10px] font-medium ${monthNet >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {monthNet >= 0 ? "+" : ""}{fmt(monthNet)} net
+                  {monthNet >= 0 ? "+" : ""}{fmt(monthNet)} {T("netLabel", "net")}
                 </p>
               </div>
             </button>
@@ -76,7 +78,7 @@ export default function IncomeLogGrouped({ incomes, weeklyExpenses, onEdit, onDe
                           <div>
                             <p className="text-sm font-semibold text-foreground">{fmt(inc.amount)}</p>
                             <p className="text-xs text-muted-foreground">
-                              Week of {getWeekLabel(inc.week_start)}{inc.note ? ` · ${inc.note}` : ""}
+                              {T("weekOfLabel", "Week of")} {getWeekLabel(inc.week_start)}{inc.note ? ` · ${inc.note}` : ""}
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
@@ -85,7 +87,7 @@ export default function IncomeLogGrouped({ incomes, weeklyExpenses, onEdit, onDe
                                 {weeklyNet >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
                                 {fmt(Math.abs(weeklyNet))}
                               </div>
-                              <p className="text-[10px] text-muted-foreground">after expenses</p>
+                              <p className="text-[10px] text-muted-foreground">{T("afterExpenses", "after expenses")}</p>
                             </div>
                             <button onClick={() => onEdit(inc)} className="p-1 text-muted-foreground hover:text-foreground">
                               <Pencil className="w-3.5 h-3.5" />

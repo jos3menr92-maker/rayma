@@ -138,9 +138,9 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
 
       {/* Legend */}
       <div className="flex justify-center gap-4 mb-4 text-[10px] font-semibold text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-destructive" /> Due</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> Payday</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-transparent border border-primary" /> Today</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-destructive" /> {T("dueLabel", "Due")}</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> {T("paydayLegend", "Payday")}</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-transparent border border-primary" /> {T("todayLegend", "Today")}</span>
       </div>
 
       {/* Selected day detail */}
@@ -148,7 +148,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="border-t border-border pt-4 mb-4 space-y-2">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-bold text-foreground">{monthName} {selectedDay}</p>
-            {totalDue > 0 && <span className="text-xs font-bold px-2 py-1 bg-destructive/10 text-destructive rounded-lg">{fmt(totalDue)} due</span>}
+            {totalDue > 0 && <span className="text-xs font-bold px-2 py-1 bg-destructive/10 text-destructive rounded-lg">{fmt(totalDue)} {T("dueAmount", "due")}</span>}
           </div>
 
           {isPayday && (
@@ -157,7 +157,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
                 <span className="text-xl">💰</span>
                 <div>
                   <p className="text-sm font-bold text-foreground">{T("paydayLabel", "Payday!")}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground capitalize">{userProfile?.pay_frequency} pay</p>
+                  <p className="text-[11px] font-medium text-muted-foreground capitalize">{userProfile?.pay_frequency} {T("payLabel", "pay")}</p>
                 </div>
               </div>
             </div>

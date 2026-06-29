@@ -1,25 +1,22 @@
-/**
- * Push Notification Permission Prompt
- * Shows a gentle nudge to enable push notifications for bill reminders.
- * Only shown if: browser supports notifications AND permission not yet granted/denied.
- */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function PushNotificationPrompt() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Only show if notifications supported and permission is default (not yet asked)
     if (!("Notification" in window)) return;
     if (Notification.permission !== "default") return;
     if (localStorage.getItem("push_prompt_dismissed")) return;
 
-    // Delay by 5s so it doesn't interrupt the first load
     const timer = setTimeout(() => setShow(true), 5000);
     return () => clearTimeout(timer);
   }, []);
@@ -27,7 +24,6 @@ export default function PushNotificationPrompt() {
   async function handleEnable() {
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      // Save to user profile so we know they opted in
       await base44.auth.updateMe({ push_notifications_enabled: true });
     }
     setShow(false);
@@ -58,16 +54,16 @@ export default function PushNotificationPrompt() {
               <Bell className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">Never miss a payment</p>
+              <p className="text-sm font-semibold text-foreground">{T("neverMissPayment", "Never miss a payment")}</p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                Get notified before bills and loan payments are due.
+                {T("getNotifiedBills", "Get notified before bills and loan payments are due.")}
               </p>
               <div className="flex gap-2 mt-3">
                 <Button size="sm" className="rounded-xl text-xs h-8" onClick={handleEnable}>
-                  Enable
+                  {T("enable", "Enable")}
                 </Button>
                 <Button size="sm" variant="ghost" className="rounded-xl text-xs h-8 text-muted-foreground" onClick={handleDismiss}>
-                  Not now
+                  {T("notNow", "Not now")}
                 </Button>
               </div>
             </div>

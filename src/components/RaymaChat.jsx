@@ -14,13 +14,15 @@
  * ==========================================
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
@@ -34,6 +36,8 @@ export default function RaymaChat({
   const [initializing, setInitializing] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [tourTriggered, setTourTriggered] = useState(false);
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
   const navigate = useNavigate();
@@ -166,7 +170,7 @@ export default function RaymaChat({
         const result = await runRemoteDiagnostic(input.trim(), mockLogs);
         setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
       } catch (err) {
-        setMessages(prev => [...prev, { role: "assistant", content: "Error loading diagnostic protocol. Try again later." }]);
+        setMessages(prev => [...prev, { role: "assistant", content: T("diagnosticError", "Error loading diagnostic protocol. Try again later.") }]);
       }
       setScanning(false);
       return; 
@@ -184,7 +188,7 @@ export default function RaymaChat({
     if (text === "log out" || text === "sign out") {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
-      setMessages(prev => [...prev, { role: "assistant", content: "Logging you out securely. See you next time!" }]);
+      setMessages(prev => [...prev, { role: "assistant", content: T("loggingOut", "Logging you out securely. See you next time!") }]);
       setTimeout(async () => { await base44.auth.logout(); window.location.href = "/login"; }, 1500);
       return;
     }
@@ -195,7 +199,7 @@ export default function RaymaChat({
       // Safely apply it locally without hitting the old Base44 database!
       document.documentElement.classList.add("focus-mode");
       localStorage.setItem("focus_mode", "true");
-      setMessages(prev => [...prev, { role: "assistant", content: "Focus Mode activated. UI muted." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: T("focusModeActivated", "Focus Mode activated. UI muted.") }]);
       return;
     }
 
@@ -223,7 +227,7 @@ export default function RaymaChat({
       if (text.includes("profile")) navigate("/profile");
       if (text.includes("loan")) navigate("/loans");
       if (text.includes("dashboard")) navigate("/");
-      setMessages(prev => [...prev, { role: "assistant", content: "Navigating now..." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: T("navigatingNow", "Navigating now...") }]);
       if (onClose) onClose();
       return;
     }
@@ -279,10 +283,10 @@ export default function RaymaChat({
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
             <div>
               <p className="font-semibold text-foreground text-sm">Rayma AI</p>
-              <p className="text-xs text-muted-foreground">AI Financial Advisor</p>
+              <p className="text-xs text-muted-foreground">{T("aiFinancialAdvisor", "AI Financial Advisor")}</p>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleClear} className="p-1.5 hover:bg-muted rounded-lg transition-colors" title="Clear conversation">
+              <button onClick={handleClear} className="p-1.5 hover:bg-muted rounded-lg transition-colors" title={T("clearConversation", "Clear conversation")}>
                 <Trash2 className="w-4 h-4 text-muted-foreground" />
               </button>
               <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
@@ -299,7 +303,7 @@ export default function RaymaChat({
             ) : messages.length === 0 ? (
               <div className="flex justify-start">
                 <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
-                  Hi! I'm Rayma AI, your personal financial advisor. I can read your balances, adjust your cash flow, or log a payment. How can I help you today?
+                  {T("raymaGreeting", "Hi! I'm Rayma AI, your personal financial advisor. I can read your balances, adjust your cash flow, or log a payment. How can I help you today?")}
                 </div>
               </div>
             ) : (
@@ -314,11 +318,11 @@ export default function RaymaChat({
                         {msg.actionCode && (
                           <button
                             onClick={() => {
-                              setMessages(prev => [...prev, { role: "assistant", content: "✅ Successfully refreshed the connection. Your sync is back to normal!" }]);
+                              setMessages(prev => [...prev, { role: "assistant", content: T("connectionRefreshed", "✅ Successfully refreshed the connection. Your sync is back to normal!") }]);
                             }}
                             className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors self-start shadow-sm"
-                          >
-                            Yes, securely fix this
+                            >
+                            {T("securelyFixThis", "Yes, securely fix this")}
                           </button>
                         )}
                       </div>
@@ -348,7 +352,7 @@ export default function RaymaChat({
               onClick={() => scanFileRef.current?.click()}
               disabled={loading || initializing || scanning}
               className="h-12 w-12 flex items-center justify-center bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
-              title="Scan & analyze a document"
+              title={T("scanAnalyzeDoc", "Scan & analyze a document")}
             >
               {scanning ? <Loader2 className="w-5 h-5 animate-spin" /> : <ScanLine className="w-5 h-5" />}
             </button>
@@ -357,7 +361,7 @@ export default function RaymaChat({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder="Type 'I paid $50 to Netflix'..."
+              placeholder={T("chatPlaceholder", "Type 'I paid $50 to Netflix'...")}
               className="flex-1 h-12 bg-muted border-0 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-1 focus:ring-primary min-w-0"
               disabled={loading || initializing}
             />

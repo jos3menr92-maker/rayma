@@ -2,9 +2,14 @@ import { motion } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
+import { useMemo } from "react";
 
 export default function PaymentItem({ payment, index = 0, onDelete }) {
   const { formatCurrency } = useCurrency();
+  const { lang, locale } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -21,7 +26,7 @@ export default function PaymentItem({ payment, index = 0, onDelete }) {
             {formatCurrency(payment.amount)}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            {payment.payment_date ? format(new Date(payment.payment_date), "MMM d, yyyy") : "No date"}
+            {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' }) : T("noDate", "No date")}
           </p>
           {payment.note && (
             <p className="text-[10px] text-muted-foreground mt-0.5">{payment.note}</p>

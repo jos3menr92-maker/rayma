@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sparkles, ChevronLeft, ChevronRight, X, 
   TrendingUp, AlertTriangle, CalendarClock, Settings
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const CACHE_KEY = "rayma_insights_cache";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -27,6 +29,8 @@ function saveCache(insights) {
 }
 
 export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [index, setIndex] = useState(0);
@@ -77,14 +81,14 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     const totalObligations = monthlyBills + monthlyLoans;
 
     if (monthlyIncome > 0 && (totalObligations / monthlyIncome) * 100 > 43) {
-      localAlerts.push({ type: 'warning', title: "Cash Flow Bottleneck", body: `Your obligations take up >43% of your income. Adding debt right now isn't recommended.`});
+      localAlerts.push({ type: 'warning', title: T("cashFlowBottleneck", "Cash Flow Bottleneck"), body: T("cashFlowBottleneckBody", "Your obligations take up >43% of your income. Adding debt right now isn't recommended.")});
     }
     if (userProfile?.pay_day && bills.length > 0) {
-      localAlerts.push({ type: 'opportunity', title: "Payday Collision Guard", body: `I'm tracking your bills against your ${userProfile.pay_day} payday to prevent overdrafts.`});
+      localAlerts.push({ type: 'opportunity', title: T("paydayCollisionGuard", "Payday Collision Guard"), body: T("paydayCollisionBody", "I'm tracking your bills against your {pay_day} payday to prevent overdrafts.").replace("{pay_day}", userProfile.pay_day)});
     }
     const loanMissingAPR = loans.find(l => !l.interest_rate && !l.apr);
     if (loanMissingAPR) {
-      localAlerts.push({ type: 'tip', title: "Missing Interest Data", body: `You left the interest blank on your ${loanMissingAPR.name || 'recent loan'}. I'm estimating it at 15% for now.`});
+      localAlerts.push({ type: 'tip', title: T("missingInterestData", "Missing Interest Data"), body: T("missingInterestBody", "You left the interest blank on your {name}. I'm estimating it at 15% for now.").replace("{name}", loanMissingAPR.name || 'recent loan')});
     }
 
     let result;
@@ -137,11 +141,11 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
         allowClose: false,
         popoverClass: 'driver-popover rayma-flat-theme', // Injects our flat design!
         steps: [
-          { popover: { title: 'Welcome to your Command Center! 🚀', description: "I'm Rayma AI. I don't just track your money—I help you manage it. Let me show you how to put me to work.", align: 'center' } },
-          { element: '#active-loans-section', popover: { title: 'Take Action on Debt 💳', description: "This is your active debt. See those PAY buttons? Use them to instantly log a payment.", side: "right", align: 'start' } },
-          { element: '#rayma-insights', popover: { title: 'Daily AI Insights 💡', description: "Swipe through these cards daily. I generate them based on your live data.", side: "bottom", align: 'start' } },
-          { element: '#financial-health-score', popover: { title: 'Your Financial Health 🏥', description: "Think of this as your high score. It recalculates dynamically.", side: "left", align: 'start' } },
-          { popover: { title: 'Your Control Panel 💬', description: "Click the floating teal bubble in the bottom right anytime to talk to me and command me!", align: 'center' } }
+          { popover: { title: T("tourWelcomeTitle", "Welcome to your Command Center! 🚀"), description: T("tourWelcomeDesc", "I'm Rayma AI. I don't just track your money—I help you manage it. Let me show you how to put me to work."), align: 'center' } },
+          { element: '#active-loans-section', popover: { title: T("tourDebtTitle", "Take Action on Debt 💳"), description: T("tourDebtDesc", "This is your active debt. See those PAY buttons? Use them to instantly log a payment."), side: "right", align: 'start' } },
+          { element: '#rayma-insights', popover: { title: T("tourInsightsTitle", "Daily AI Insights 💡"), description: T("tourInsightsDesc", "Swipe through these cards daily. I generate them based on your live data."), side: "bottom", align: 'start' } },
+          { element: '#financial-health-score', popover: { title: T("tourHealthTitle", "Your Financial Health 🏥"), description: T("tourHealthDesc", "Think of this as your high score. It recalculates dynamically."), side: "left", align: 'start' } },
+          { popover: { title: T("tourControlPanelTitle", "Your Control Panel 💬"), description: T("tourControlPanelDesc", "Click the floating teal bubble in the bottom right anytime to talk to me and command me!"), align: 'center' } }
         ],
         onDestroyStarted: () => {
           driverObj.destroy();
@@ -224,12 +228,12 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Hello, I'm Rayma AI</h2>
+              <h2 className="text-2xl font-bold mb-2">{T("helloRayma", "Hello, I'm Rayma AI")}</h2>
               <p className="text-muted-foreground mb-6 text-sm">
-                {isFirstTime ? "I'm your proactive financial co-pilot. Let's take a quick tour of your command center." : "Welcome back. I've analyzed your latest data. Let's get to work."}
+                {isFirstTime ? T("raymaCoPilotIntro", "I'm your proactive financial co-pilot. Let's take a quick tour of your command center.") : T("raymaWelcomeBack", "Welcome back. I've analyzed your latest data. Let's get to work.")}
               </p>
               <button onClick={handleGetStarted} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 transition-opacity">
-                {isFirstTime ? "Start Tour" : "View Dashboard"}
+                {isFirstTime ? T("startTour", "Start Tour") : T("viewDashboard", "View Dashboard")}
               </button>
             </div>
           </motion.div>

@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
+import { t } from '@/lib/i18n';
 
 const PaymentButton = ({ planId, amount, children }) => {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [showModal, setShowModal] = useState(false);
 
   const handleClick = () => {
@@ -16,7 +20,7 @@ const PaymentButton = ({ planId, amount, children }) => {
       <button onClick={handleClick}>{children}</button>
       {showModal && (
         <div className="payment-modal">
-          <p>Please process this payment through our official web portal to comply with store policies.</p>
+          <p>{T("processPaymentWebPortal", "Please process this payment through our official web portal to comply with store policies.")}</p>
           <a href="https://rayma.app/upgrade">https://rayma.app/upgrade</a>
         </div>
       )}

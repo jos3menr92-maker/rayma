@@ -1,4 +1,10 @@
+import { useMemo } from "react";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
+
 export default function ProgressRing({ percentage, size = 120, strokeWidth = 10 }) {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (Math.min(percentage, 100) / 100) * circumference;
@@ -31,7 +37,7 @@ export default function ProgressRing({ percentage, size = 120, strokeWidth = 10 
         <span className="text-2xl font-bold font-heading text-foreground">
           {Math.round(percentage)}%
         </span>
-        <span className="text-[10px] text-muted-foreground">paid off</span>
+        <span className="text-[10px] text-muted-foreground">{T("paidOff", "paid off")}</span>
       </div>
     </div>
   );
