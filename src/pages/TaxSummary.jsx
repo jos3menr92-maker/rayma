@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -29,23 +30,17 @@ export default function TaxSummary() {
     other: T("catOther", "Other"),
   };
 
+  const { loans, payments } = useFinancialData();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [transactions, setTransactions] = useState([]);
-  const [loans, setLoans] = useState([]);
-  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedCats, setExpandedCats] = useState({});
 
   useEffect(() => {
-    Promise.all([
-      base44.entities.Transaction.list("-date", 500),
-      base44.entities.Loan.list(),
-      base44.entities.Payment.list("-payment_date", 500),
-    ]).then(([txs, ls, pys]) => {
-      setTransactions(txs);
-      setLoans(ls);
-      setPayments(pys);
+    supabase.from('transactions').select('*').order('date', { ascending: false }).limit(500).then(({ data, error }) => {
+      if (error) console.error("Transactions error:", error);
+      setTransactions(data || []);
       setLoading(false);
     });
   }, []);

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -23,19 +24,14 @@ export default function Simulator() {
   const [extraPayment, setExtraPayment] = useState(100);
   const [billCutPercent, setBillCutPercent] = useState(20);
 
-  useEffect(() => { loadData(); }, []);
+  const { loans: ctxLoans, bills: ctxBills, incomes: ctxIncomes } = useFinancialData();
 
-  async function loadData() {
-    const [l, b, i] = await Promise.all([
-      base44.entities.Loan.list("-created_date", 100),
-      base44.entities.Bill.list("-created_date", 100),
-      base44.entities.WeeklyIncome.list("-week_start", 52),
-    ]);
-    setLoans(l.filter(x => x.status !== "paid_off"));
-    setBills(b.filter(x => x.is_active !== false));
-    setIncomes(i);
+  useEffect(() => {
+    setLoans(ctxLoans.filter(x => x.status !== "paid_off"));
+    setBills(ctxBills.filter(x => x.is_active !== false));
+    setIncomes(ctxIncomes);
     setLoading(false);
-  }
+  }, [ctxLoans, ctxBills, ctxIncomes]);
 
   async function runSimulation() {
     setSimulating(true);

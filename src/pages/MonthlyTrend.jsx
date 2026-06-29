@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -43,15 +43,14 @@ export default function MonthlyTrend() {
   const TYPE_CONFIG = useMemo(() => buildTypeConfig(T), [lang]);
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.totalPaid;
 
-  useEffect(() => { loadData(); }, [type]);
+  const { loans: ctxLoans, payments: ctxPayments, bills: ctxBills } = useFinancialData();
 
-  async function loadData() {
-    const [loans, payments, bills] = await Promise.all([
-      base44.entities.Loan.list("-created_date", 100),
-      base44.entities.Payment.list("-payment_date", 500),
-      base44.entities.Bill.list("-created_date", 100),
-    ]);
+  useEffect(() => {
+    if (!ctxLoans && !ctxPayments && !ctxBills) return;
+    loadData(ctxLoans, ctxPayments, ctxBills);
+  }, [ctxLoans, ctxPayments, ctxBills, type, locale]);
 
+  function loadData(loans, payments, bills) {
     const activeBills = bills.filter(b => b.is_active !== false);
     const monthlyBills = activeBills.reduce((s, b) => s + (b.amount || 0), 0);
 

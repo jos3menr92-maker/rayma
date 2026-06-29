@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
-import { useLanguage } from "@/lib/LanguageContext";
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { t } from "@/lib/i18n";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, AlertTriangle, CheckCircle2, TrendingDown } from "lucide-react";
+import { Plus, Pencil, TrendingDown } from "lucide-react";
 import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
 
 const CATEGORY_COLORS = {
@@ -23,20 +23,12 @@ const CATEGORY_COLORS = {
 const emptyForm = { name: "", category_key: "other", monthly_limit: "" };
 
 export default function BudgetDashboard() {
-  const { lang, locale } = useLanguage();
+  const T = useT();
   const { formatCurrency: fmt } = useCurrency();
+  const { bills, loans, userProfile, reload } = useFinancialData();
 
-  const T = useMemo(() =>
-    (key, fallback) => {
-      const translated = t(lang, key);
-      return translated !== key ? translated : fallback;
-    },
-    [lang]
-  );
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
-  const [bills, setBills] = useState([]);
-  const [loans, setLoans] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -50,26 +42,32 @@ export default function BudgetDashboard() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [b, tx, bills, loans] = await Promise.all([
-      base44.entities.BudgetCategory.list(),
-      base44.entities.Transaction.list("-date", 200),
-      base44.entities.Bill.filter({ is_active: true }),
-      base44.entities.Loan.filter({ status: "active" }),
+    const [budRes, txRes] = await Promise.all([
+      supabase.from('budget_categories').select('*').order('created_at', { ascending: false }),
+      supabase.from('transactions').select('*').order('date', { ascending: false }).limit(200),
     ]);
-    setBudgets(b);
-    setTransactions(tx);
-    setBills(bills);
-    setLoans(loans);
+    if (budRes.error) console.error("Budget categories error:", budRes.error);
+    if (txRes.error) console.error("Transactions error:", txRes.error);
+    setBudgets(budRes.data || []);
+    setTransactions(txRes.data || []);
     setLoading(false);
   };
 
   const openAdd = () => { setEditing(null); setForm(emptyForm); setShowDialog(true); };
-  const openEdit = (b) => { setEditing(b); setForm({ ...b, monthly_limit: String(b.monthly_limit) }); setShowDialog(true); };
+  const openEdit = (b) => { setEditing(b); setForm({ name: b.name, category_key: b.category_key, monthly_limit: String(b.monthly_limit) }); setShowDialog(true); };
 
   const save = async () => {
-    const data = { ...form, monthly_limit: parseFloat(form.monthly_limit) || 0, color: CATEGORY_COLORS[form.category_key] || "#64748b" };
-    if (editing) await base44.entities.BudgetCategory.update(editing.id, data);
-    else await base44.entities.BudgetCategory.create(data);
+    const data = {
+      name: form.name,
+      category_key: form.category_key,
+      monthly_limit: parseFloat(form.monthly_limit) || 0,
+      color: CATEGORY_COLORS[form.category_key] || "#64748b",
+    };
+    if (editing) {
+      await supabase.from('budget_categories').update(data).eq('id', editing.id);
+    } else {
+      await supabase.from('budget_categories').insert([{ ...data, user_id: userProfile?.id }]);
+    }
     setShowDialog(false);
     fetchAll();
   };
@@ -83,10 +81,12 @@ export default function BudgetDashboard() {
       .reduce((s, tx) => s + Math.abs(tx.amount || 0), 0);
   };
 
-  // Auto-calculate fixed expenses from bills and loans
+  const activeBills = useMemo(() => bills.filter(b => b.is_active !== false), [bills]);
+  const activeLoans = useMemo(() => loans.filter(l => l.status !== "paid_off"), [loans]);
+
   const fixedExpenses = [
-    ...bills.map(b => ({ name: b.name, amount: b.amount, category: b.category })),
-    ...loans.map(l => ({ name: l.name + " " + T("loanSuffix", "(loan)"), amount: l.monthly_payment, category: "loan_payment" })),
+    ...activeBills.map(b => ({ name: b.name, amount: b.amount, category: b.category })),
+    ...activeLoans.map(l => ({ name: l.name + " " + T("loanSuffix", "(loan)"), amount: l.monthly_payment, category: "loan_payment" })),
   ];
 
   const totalBudgeted = budgets.reduce((s, b) => s + (b.monthly_limit || 0), 0);
@@ -106,23 +106,23 @@ export default function BudgetDashboard() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">{T("budgeted", "Budgeted")}</p>
-            <p className="text-lg font-bold text-foreground">{fmt(totalBudgeted)}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <Card className="bg-card border-border overflow-hidden">
+          <CardContent className="p-3 sm:p-4 text-center min-w-0">
+            <p className="text-xs text-muted-foreground mb-1 truncate">{T("budgeted", "Budgeted")}</p>
+            <p className="text-base sm:text-lg font-bold text-foreground truncate">{fmt(totalBudgeted)}</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">{T("spent", "Spent")}</p>
-            <p className={`text-lg font-bold ${totalSpent > totalBudgeted ? "text-destructive" : "text-primary"}`}>{fmt(totalSpent)}</p>
+        <Card className="bg-card border-border overflow-hidden">
+          <CardContent className="p-3 sm:p-4 text-center min-w-0">
+            <p className="text-xs text-muted-foreground mb-1 truncate">{T("spent", "Spent")}</p>
+            <p className={`text-base sm:text-lg font-bold truncate ${totalSpent > totalBudgeted ? "text-destructive" : "text-primary"}`}>{fmt(totalSpent)}</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">{T("fixedBills", "Fixed Bills")}</p>
-            <p className="text-lg font-bold text-orange-400">{fmt(totalFixed)}</p>
+        <Card className="bg-card border-border overflow-hidden">
+          <CardContent className="p-3 sm:p-4 text-center min-w-0">
+            <p className="text-xs text-muted-foreground mb-1 truncate">{T("fixedBills", "Fixed Bills")}</p>
+            <p className="text-base sm:text-lg font-bold text-orange-400 truncate">{fmt(totalFixed)}</p>
           </CardContent>
         </Card>
       </div>
@@ -150,12 +150,12 @@ export default function BudgetDashboard() {
               <Card key={b.id} className="bg-card border-border">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-                      <span className="font-medium text-foreground text-sm">{b.name}</span>
-                      {over && <Badge variant="destructive" className="text-xs py-0">{T("overBudget", "Over Budget")}</Badge>}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                      <span className="font-medium text-foreground text-sm truncate">{b.name}</span>
+                      {over && <Badge variant="destructive" className="text-xs py-0 shrink-0">{T("overBudget", "Over Budget")}</Badge>}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-muted-foreground">{fmt(spent)} / {fmt(b.monthly_limit)}</span>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(b)}><Pencil className="w-3 h-3" /></Button>
                     </div>
@@ -178,12 +178,12 @@ export default function BudgetDashboard() {
           <div className="space-y-2">
             {fixedExpenses.map((e, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[e.category] || "#64748b" }} />
-                  <span className="text-sm text-foreground">{e.name}</span>
-                  <Badge variant="outline" className="text-xs py-0">{e.category}</Badge>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CATEGORY_COLORS[e.category] || "#64748b" }} />
+                  <span className="text-sm text-foreground truncate">{e.name}</span>
+                  <Badge variant="outline" className="text-xs py-0 shrink-0">{e.category}</Badge>
                 </div>
-                <span className="text-sm font-semibold text-destructive">{fmt(e.amount)}</span>
+                <span className="text-sm font-semibold text-destructive shrink-0 ml-2">{fmt(e.amount)}</span>
               </div>
             ))}
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -48,6 +48,7 @@ export default function DebtPayoffSimulator() {
   const { lang } = useLanguage();
   const { formatCurrency: fmt, formatCurrencyValue: fmtFull } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+  const { loans: allLoans } = useFinancialData();
   const [loans, setLoans] = useState([]);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [extraPayment, setExtraPayment] = useState(0);
@@ -55,12 +56,11 @@ export default function DebtPayoffSimulator() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Loan.filter({ status: "active" }).then(data => {
-      setLoans(data);
-      if (data.length > 0) setSelectedLoan(data[0].id);
-      setLoading(false);
-    });
-  }, []);
+    const active = allLoans.filter(l => l.status !== "paid_off");
+    setLoans(active);
+    if (active.length > 0) setSelectedLoan(active[0].id);
+    setLoading(false);
+  }, [allLoans]);
 
   const loan = loans.find(l => l.id === selectedLoan);
   const base = loan ? simulateLoan(loan.current_balance, loan.interest_rate || 0, loan.monthly_payment || 0, 0) : null;

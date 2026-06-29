@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), d
 export default function BankAccounts() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
+  const { userProfile } = useFinancialData();
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -42,12 +44,14 @@ export default function BankAccounts() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [accs, txs] = await Promise.all([
-      base44.entities.BankAccount.list("-updated_date"),
-      base44.entities.Transaction.list("-date", 100),
+    const [accsRes, txsRes] = await Promise.all([
+      supabase.from('bank_accounts').select('*').order('updated_at', { ascending: false }),
+      supabase.from('transactions').select('*').order('date', { ascending: false }).limit(100),
     ]);
-    setAccounts(accs);
-    setTransactions(txs);
+    if (accsRes.error) console.error("Bank accounts error:", accsRes.error);
+    if (txsRes.error) console.error("Transactions error:", txsRes.error);
+    setAccounts(accsRes.data || []);
+    setTransactions(txsRes.data || []);
     setLoading(false);
   };
 
@@ -56,21 +60,24 @@ export default function BankAccounts() {
 
   const saveAccount = async () => {
     const data = { ...form, balance: parseFloat(form.balance) || 0, last_synced: format(new Date(), "yyyy-MM-dd") };
-    if (editing) await base44.entities.BankAccount.update(editing.id, data);
-    else await base44.entities.BankAccount.create(data);
+    if (editing) {
+      await supabase.from('bank_accounts').update(data).eq('id', editing.id);
+    } else {
+      await supabase.from('bank_accounts').insert([{ ...data, user_id: userProfile?.id }]);
+    }
     setShowDialog(false);
     fetchAll();
   };
 
   const deleteAccount = async (id) => {
     if (!confirm(T("deleteAccountConfirm", "Delete this account?"))) return;
-    await base44.entities.BankAccount.delete(id);
+    await supabase.from('bank_accounts').delete().eq('id', id);
     fetchAll();
   };
 
   const saveTx = async () => {
     if (!txForm.bank_account_id) { alert(T("selectAccountPrompt", "Please select a bank account.")); return; }
-    await base44.entities.Transaction.create({ ...txForm, amount: parseFloat(txForm.amount) || 0 });
+    await supabase.from('transactions').insert([{ ...txForm, amount: parseFloat(txForm.amount) || 0, user_id: userProfile?.id }]);
     setShowTxDialog(false);
     setTxForm(emptyTx);
     fetchAll();
