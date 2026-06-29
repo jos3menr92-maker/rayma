@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/LanguageContext";
 import { isNativeMobileApp, getPlatform, triggerNativeIAP, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Store() {
   const T = useT();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState("");
@@ -101,6 +103,8 @@ export default function Store() {
     try {
       const res = await base44.functions.invoke("createCheckoutSession", {
         purchaseType: planId,
+        customerEmail: user?.email,
+        userId: user?.id,
         successUrl: `${window.location.origin}/store?success=true&type=${planId}`,
         cancelUrl: `${window.location.origin}/store?cancelled=true`,
       });
