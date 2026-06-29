@@ -42,9 +42,33 @@ export default function RaymaChat({
   const scanFileRef = useRef(null);
   const navigate = useNavigate();
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // 📱 Keyboard awareness — keep the chat input visible above the on-screen keyboard
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const handleResize = () => {
+      const kbHeight = window.innerHeight - viewport.height;
+      setKeyboardHeight(kbHeight > 50 ? kbHeight : 0);
+    };
+    viewport.addEventListener("resize", handleResize);
+    viewport.addEventListener("scroll", handleResize);
+    return () => {
+      viewport.removeEventListener("resize", handleResize);
+      viewport.removeEventListener("scroll", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (keyboardHeight > 0) {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, [keyboardHeight]);
 
   useEffect(() => {
     if ((forceOpen || autoOpen) && !conversation && !initializing) {
@@ -279,7 +303,8 @@ export default function RaymaChat({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          className="fixed bottom-24 right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] max-h-[75vh] z-[60]"
+          style={{ bottom: `calc(6rem + ${keyboardHeight}px)`, maxHeight: `calc(75vh - ${keyboardHeight}px)` }}
+          className="fixed right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] z-[60]"
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
             <div>
@@ -287,11 +312,11 @@ export default function RaymaChat({
               <p className="text-xs text-muted-foreground">{T("aiFinancialAdvisor", "AI Financial Advisor")}</p>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleClear} className="p-1.5 hover:bg-muted rounded-lg transition-colors" title={T("clearConversation", "Clear conversation")}>
-                <Trash2 className="w-4 h-4 text-muted-foreground" />
+              <button onClick={handleClear} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("clearConversation", "Clear conversation")}>
+                <Trash2 className="w-5 h-5 text-muted-foreground" />
               </button>
-              <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
-                <X className="w-4 h-4 text-muted-foreground" />
+              <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors">
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
           </div>

@@ -10,6 +10,7 @@ import PushNotificationPrompt from "./PushNotificationPrompt";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { getInitialsColor } from "@/components/AvatarPicker";
 import { useT } from "@/lib/LanguageContext";
+import { useBackHandler } from "@/hooks/useBackHandler";
 
 const HUMAN_AVATARS = [
 { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -33,6 +34,13 @@ export default function Layout() {
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
+
+  useBackHandler([
+    { isOpen: drawerOpen, onClose: () => setDrawerOpen(false) },
+    { isOpen: quickAddOpen, onClose: () => setQuickAddOpen(false) },
+    { isOpen: moreOpen, onClose: () => setMoreOpen(false) },
+    { isOpen: raymaOpen, onClose: () => setRaymaOpen(false) },
+  ]);
 
   // 🧠 SECURE: Pulling the ENTIRE vault for the God-View
   const {

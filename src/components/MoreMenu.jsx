@@ -61,7 +61,7 @@ export default function MoreMenu({ open, onClose }) {
             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-muted-foreground/30" /></div>
             <div className="flex items-center justify-between px-5 py-3 border-b border-border">
               <h2 className="text-base font-bold font-heading text-foreground">{T("allFeatures", "All Features")}</h2>
-              <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
+              <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="overflow-y-auto flex-1 p-4 pb-28">
               <div className="grid grid-cols-2 gap-3">

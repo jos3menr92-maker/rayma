@@ -64,7 +64,7 @@ export default function SideDrawer({ open, onClose }) {
                 <div className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center font-bold text-white text-base" style={{ backgroundColor: user?.avatar_id ? getInitialsColor(user?.preferred_name || user?.full_name, user?.avatar_id) : "#ccc" }}>
                    {imageToShow ? <img src={imageToShow} alt="avatar" className="w-full h-full object-cover" /> : ((user?.preferred_name || user?.full_name || "?").split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?")}
                 </div>
-                <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
+                <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"><X className="w-5 h-5" /></button>
               </div>
               <h2 className="text-lg font-bold font-heading text-foreground">{user?.preferred_name || user?.full_name || "My Account"}</h2>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
