@@ -93,10 +93,11 @@ export async function triggerNativeIAP(productId) {
  * These must match exactly what's configured in App Store Connect
  */
 export const APPLE_PRODUCT_IDS = {
-  token_pack_10: "com.rayma.tokens.10",
-  token_pack_50: "com.rayma.tokens.50",
-  token_pack_100: "com.rayma.tokens.100",
-  annual_pass: "com.rayma.annual_pass",
+  power_insert_coin: "com.rayma.power.insert_coin",
+  power_lithium_monthly: "com.rayma.power.lithium.monthly",
+  power_lithium_annual: "com.rayma.power.lithium.annual",
+  power_generator_monthly: "com.rayma.power.generator.monthly",
+  power_generator_annual: "com.rayma.power.generator.annual",
 };
 
 /**
@@ -104,8 +105,9 @@ export const APPLE_PRODUCT_IDS = {
  * These must match exactly what's configured in Google Play Console
  */
 export const GOOGLE_PRODUCT_IDS = {
-  token_pack_10: "rayma_tokens_10",
-  token_pack_50: "rayma_tokens_50",
-  token_pack_100: "rayma_tokens_100",
-  annual_pass: "rayma_annual_pass",
+  power_insert_coin: "rayma_power_insert_coin",
+  power_lithium_monthly: "rayma_power_lithium_monthly",
+  power_lithium_annual: "rayma_power_lithium_annual",
+  power_generator_monthly: "rayma_power_generator_monthly",
+  power_generator_annual: "rayma_power_generator_annual",
 };
