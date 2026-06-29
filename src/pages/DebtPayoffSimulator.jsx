@@ -76,8 +76,8 @@ export default function DebtPayoffSimulator() {
 
   const chartData = boosted?.schedule.map((s, i) => ({
     month: s.month,
-    "With Extra": s.balance,
-    "Baseline": base?.schedule[i]?.balance ?? s.balance,
+    [T("withExtraLabel", "With Extra")]: s.balance,
+    [T("baselineLabel", "Baseline")]: base?.schedule[i]?.balance ?? s.balance,
   })) || [];
 
   return (
@@ -176,7 +176,7 @@ export default function DebtPayoffSimulator() {
                       <ResponsiveContainer width="100%" height={180}>
                         <LineChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                          <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} label={{ value: "Months", position: "insideBottom", offset: -2, fontSize: 10 }} />
+                          <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} label={{ value: T("monthsAxisLabel", "Months"), position: "insideBottom", offset: -2, fontSize: 10 }} />
                           <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
                           <Tooltip formatter={(v) => fmt(v)} contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 12 }} />
                           <Line type="monotone" dataKey="Baseline" stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" dot={false} />
@@ -224,7 +224,7 @@ export default function DebtPayoffSimulator() {
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{i + 1}</div>
                       <div className="flex-1">
                         <p className="font-medium text-foreground text-sm">{l.name}</p>
-                        <p className="text-xs text-muted-foreground">{fmt(l.current_balance)} · {l.interest_rate || 0}% APR · {sim.months}mo to payoff</p>
+                        <p className="text-xs text-muted-foreground">{fmt(l.current_balance)} · {l.interest_rate || 0}% APR · {sim.months}{T("moToPayoff", "mo to payoff")}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">{T("interest", "Interest")}</p>

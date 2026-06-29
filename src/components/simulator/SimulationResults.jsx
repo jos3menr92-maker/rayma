@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { TrendingUp, TrendingDown, Calendar, CheckCircle2, RefreshCw, AlertTriangle } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
+import { TrendingUp, TrendingDown, Calendar, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const riskColors = {
@@ -9,15 +12,17 @@ const riskColors = {
   high: "text-destructive bg-destructive/10",
 };
 
-const confidenceLabels = {
-  high: "High confidence",
-  medium: "Moderate confidence",
-  low: "Rough estimate",
-};
-
 export default function SimulationResults({ result, onRerun }) {
   const { formatCurrency: fmt } = useCurrency();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const cashflowDiff = (result.new_monthly_cashflow || 0) - (result.current_monthly_cashflow || 0);
+
+  const confidenceLabels = {
+    high: T("highConfidence", "High confidence"),
+    medium: T("moderateConfidence", "Moderate confidence"),
+    low: T("roughEstimate", "Rough estimate"),
+  };
 
   return (
     <motion.div
@@ -30,12 +35,12 @@ export default function SimulationResults({ result, onRerun }) {
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4">
         <div className="flex items-start justify-between mb-2">
           <div>
-            <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">Simulation Result</p>
+            <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">{T("simulationResult", "Simulation Result")}</p>
             <h2 className="text-base font-bold font-heading text-foreground">{result.scenario_name}</h2>
           </div>
           <div className="flex gap-2">
             <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${riskColors[result.risk_level]}`}>
-              {result.risk_level} risk
+              {result.risk_level} {T("riskSuffix", "risk")}
             </span>
           </div>
         </div>
@@ -46,7 +51,7 @@ export default function SimulationResults({ result, onRerun }) {
       {/* Key Numbers */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">New Monthly Cash Flow</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("newMonthlyCashFlow", "New Monthly Cash Flow")}</p>
           <p className={`text-xl font-bold font-heading ${result.new_monthly_cashflow >= 0 ? "text-primary" : "text-destructive"}`}>
             {fmt(result.new_monthly_cashflow)}
           </p>
@@ -56,24 +61,24 @@ export default function SimulationResults({ result, onRerun }) {
           </div>
         </div>
         <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Interest Saved</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("interestSaved", "Interest Saved")}</p>
           <p className="text-xl font-bold font-heading text-primary">{fmt(result.total_interest_saved)}</p>
           {result.months_saved > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">{result.months_saved} months faster</p>
+            <p className="text-xs text-muted-foreground mt-1">{result.months_saved} {T("monthsFaster", "months faster")}</p>
           )}
         </div>
       </div>
 
       {/* Savings Projections */}
       <div className="bg-card border border-border rounded-2xl p-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Savings Projections</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{T("savingsProjections", "Savings Projections")}</p>
         <div className="grid grid-cols-3 gap-3 text-center">
           {[
-            { label: "Year 1", value: result.year1_savings },
-            { label: "Year 3", value: result.year3_savings },
-            { label: "Year 5", value: result.year5_savings },
-          ].map((item) => (
-            <div key={item.label}>
+            { label: T("year1", "Year 1"), value: result.year1_savings },
+            { label: T("year3", "Year 3"), value: result.year3_savings },
+            { label: T("year5", "Year 5"), value: result.year5_savings },
+          ].map((item, i) => (
+            <div key={i}>
               <p className="text-base font-bold font-heading text-primary">{fmt(item.value)}</p>
               <p className="text-[10px] text-muted-foreground">{item.label}</p>
             </div>
@@ -84,7 +89,7 @@ export default function SimulationResults({ result, onRerun }) {
       {/* Recommendations */}
       {result.recommendations?.length > 0 && (
         <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Action Steps</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{T("actionSteps", "Action Steps")}</p>
           <div className="space-y-3">
             {result.recommendations.map((rec, i) => (
               <motion.div
@@ -116,17 +121,17 @@ export default function SimulationResults({ result, onRerun }) {
       {result.timeline?.length > 0 && (
         <div className="bg-card border border-border rounded-2xl p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" /> Milestone Timeline
+            <Calendar className="w-3.5 h-3.5" /> {T("milestoneTimeline", "Milestone Timeline")}
           </p>
           <div className="relative pl-4">
             <div className="absolute left-1.5 top-0 bottom-0 w-px bg-border" />
             {result.timeline.map((item, i) => (
               <div key={i} className="relative mb-4 last:mb-0">
                 <div className="absolute -left-[11px] top-1 w-3 h-3 rounded-full bg-primary border-2 border-background" />
-                <p className="text-[10px] uppercase tracking-wider text-primary font-semibold">Month {item.month}</p>
+                <p className="text-[10px] uppercase tracking-wider text-primary font-semibold">{T("monthLabel", "Month")} {item.month}</p>
                 <p className="text-sm text-foreground font-medium">{item.milestone}</p>
                 {item.amount_saved > 0 && (
-                  <p className="text-xs text-muted-foreground">{fmt(item.amount_saved)} saved to date</p>
+                  <p className="text-xs text-muted-foreground">{fmt(item.amount_saved)} {T("savedToDate", "saved to date")}</p>
                 )}
               </div>
             ))}
@@ -135,7 +140,7 @@ export default function SimulationResults({ result, onRerun }) {
       )}
 
       <Button variant="outline" onClick={onRerun} className="w-full rounded-2xl gap-2">
-        <RefreshCw className="w-4 h-4" /> Run Again
+        <RefreshCw className="w-4 h-4" /> {T("runAgain", "Run Again")}
       </Button>
     </motion.div>
   );

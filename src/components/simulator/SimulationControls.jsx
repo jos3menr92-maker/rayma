@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { Sliders } from "lucide-react";
 
 const SCENARIOS = [
-  { id: "ai_optimize", label: "AI Optimize", emoji: "🤖", desc: "Let AI find the best strategy for you" },
-  { id: "extra_payment", label: "Extra Payment", emoji: "💸", desc: "Pay extra on your highest-interest loan" },
-  { id: "cut_bills", label: "Cut Bills", emoji: "✂️", desc: "Find cheaper alternatives for your bills" },
-  { id: "debt_avalanche", label: "Avalanche", emoji: "🏔️", desc: "Highest interest first — saves most money" },
-  { id: "debt_snowball", label: "Snowball", emoji: "⛄", desc: "Smallest balance first — fastest wins" },
-  { id: "income_boost", label: "Income Boost", emoji: "📈", desc: "Simulate a 10% income increase" },
+  { id: "ai_optimize", labelKey: "scenarioAiOptimize", emoji: "🤖", descKey: "aiOptimizeShort" },
+  { id: "extra_payment", labelKey: "scenarioExtraPayment", emoji: "💸", descKey: "extraPaymentShort" },
+  { id: "cut_bills", labelKey: "scenarioCutBills", emoji: "✂️", descKey: "cutBillsShort" },
+  { id: "debt_avalanche", labelKey: "avalanche", emoji: "🏔️", descKey: "avalancheShort" },
+  { id: "debt_snowball", labelKey: "snowball", emoji: "⛄", descKey: "snowballShort" },
+  { id: "income_boost", labelKey: "scenarioIncomeBoost", emoji: "📈", descKey: "incomeBoostShort" },
 ];
 
 export default function SimulationControls({
@@ -18,6 +21,8 @@ export default function SimulationControls({
   loans, bills, incomes,
 }) {
   const { formatCurrency: fmt } = useCurrency();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
   const monthlyLoans = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
   const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length : 0;
@@ -28,29 +33,29 @@ export default function SimulationControls({
       {/* Current Snapshot */}
       <div className="bg-card border border-border rounded-2xl p-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-          <Sliders className="w-3.5 h-3.5" /> Current Snapshot
+          <Sliders className="w-3.5 h-3.5" /> {T("currentSnapshot", "Current Snapshot")}
         </p>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
             <p className="text-base font-bold font-heading text-primary">{fmt(monthlyIncome)}</p>
-            <p className="text-[10px] text-muted-foreground">Monthly Income</p>
+            <p className="text-[10px] text-muted-foreground">{T("monthlyIncome", "Monthly Income")}</p>
           </div>
           <div>
             <p className="text-base font-bold font-heading text-destructive">{fmt(monthlyLoans + monthlyBills)}</p>
-            <p className="text-[10px] text-muted-foreground">Monthly Expenses</p>
+            <p className="text-[10px] text-muted-foreground">{T("monthlyExpensesLabel", "Monthly Expenses")}</p>
           </div>
           <div>
             <p className={`text-base font-bold font-heading ${monthlyIncome - monthlyLoans - monthlyBills >= 0 ? "text-primary" : "text-destructive"}`}>
               {fmt(monthlyIncome - monthlyLoans - monthlyBills)}
             </p>
-            <p className="text-[10px] text-muted-foreground">Cash Flow</p>
+            <p className="text-[10px] text-muted-foreground">{T("cashFlow", "Cash Flow")}</p>
           </div>
         </div>
       </div>
 
       {/* Scenario Selector */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Choose a Scenario</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{T("chooseScenario", "Choose a Scenario")}</p>
         <div className="grid grid-cols-2 gap-2">
           {SCENARIOS.map((s) => (
             <motion.button
@@ -64,8 +69,8 @@ export default function SimulationControls({
               }`}
             >
               <span className="text-lg block mb-1">{s.emoji}</span>
-              <p className="text-xs font-semibold leading-tight">{s.label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{s.desc}</p>
+              <p className="text-xs font-semibold leading-tight">{T(s.labelKey, s.labelKey)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{T(s.descKey, s.descKey)}</p>
             </motion.button>
           ))}
         </div>
@@ -75,7 +80,7 @@ export default function SimulationControls({
       {scenario === "extra_payment" && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-4">
           <div className="flex justify-between items-center mb-2">
-            <p className="text-xs font-semibold text-foreground">Extra Monthly Payment</p>
+            <p className="text-xs font-semibold text-foreground">{T("extraMonthlyPayment", "Extra Monthly Payment")}</p>
             <span className="text-sm font-bold text-primary">{fmt(extraPayment)}</span>
           </div>
           <input
@@ -94,7 +99,7 @@ export default function SimulationControls({
       {scenario === "cut_bills" && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-2xl p-4">
           <div className="flex justify-between items-center mb-2">
-            <p className="text-xs font-semibold text-foreground">Bill Reduction Target</p>
+            <p className="text-xs font-semibold text-foreground">{T("billReductionTarget", "Bill Reduction Target")}</p>
             <span className="text-sm font-bold text-primary">{billCutPercent}%</span>
           </div>
           <input
@@ -107,7 +112,7 @@ export default function SimulationControls({
             <span>5%</span><span>50%</span>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Potential monthly savings: <span className="text-primary font-semibold">{fmt(monthlyBills * billCutPercent / 100)}</span>
+            {T("potentialMonthlySavings", "Potential monthly savings:")} <span className="text-primary font-semibold">{fmt(monthlyBills * billCutPercent / 100)}</span>
           </p>
         </motion.div>
       )}

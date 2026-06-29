@@ -86,7 +86,7 @@ export default function BudgetDashboard() {
   // Auto-calculate fixed expenses from bills and loans
   const fixedExpenses = [
     ...bills.map(b => ({ name: b.name, amount: b.amount, category: b.category })),
-    ...loans.map(l => ({ name: l.name + " (loan)", amount: l.monthly_payment, category: "loan_payment" })),
+    ...loans.map(l => ({ name: l.name + " " + T("loanSuffix", "(loan)"), amount: l.monthly_payment, category: "loan_payment" })),
   ];
 
   const totalBudgeted = budgets.reduce((s, b) => s + (b.monthly_limit || 0), 0);

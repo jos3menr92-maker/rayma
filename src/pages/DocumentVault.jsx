@@ -94,7 +94,7 @@ export default function DocumentVault() {
           </div>
           <h1 className="text-2xl font-bold font-heading text-foreground">{T("documentVault", "Document Vault")}</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-5 ml-12">{T("documentVaultSubtitle", "Scan receipts, bills & documents — RAYMA logs them for you")}</p>
+        <p className="text-sm text-muted-foreground mb-5 ml-12">{T("documentVaultSubtitle", "Scan receipts, bills & documents — Rayma AI logs them for you")}</p>
 
         {/* RAYMA hint */}
         <div className="bg-primary/5 border border-primary/15 rounded-2xl p-3 mb-5 flex gap-2.5">
