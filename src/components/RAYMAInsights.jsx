@@ -150,7 +150,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
           { element: '#financial-health-score', popover: { title: T("tourHealthTitle", "Your Financial Health 🏥"), description: T("tourHealthDesc", "Think of this as your high score. It recalculates dynamically."), side: "left", align: 'start' } },
           { element: '#quick-add-button', popover: { title: T("tourQuickAddTitle", "Quick Add ➕"), description: T("tourQuickAddDesc", "This floating button lets you instantly add a loan, bill, income, or scan a document."), side: "right", align: 'center' } },
           { element: '#bottom-nav', popover: { title: T("tourNavTitle", "Navigation 🧭"), description: T("tourNavDesc", "Use this bar to jump between Home, Finance, Bills, and More features."), side: "top", align: 'center' } },
-          { popover: { title: T("tourControlPanelTitle", "Your AI Co-Pilot 💬"), description: T("tourControlPanelDesc", "Tap the glowing button in the bottom center anytime to chat with me and command your finances."), align: 'center' } }
+          { popover: { title: T("tourControlPanelTitle", "Your AI Co-Pilot 💬"), description: T("tourControlPanelDesc", "Tap the glowing button in the bottom center anytime to chat with me and command your finances. If you ever need another tour, just tell Rayma 'tour' and I'll walk you through the app again."), align: 'center' } }
         ],
         onDestroyStarted: () => {
           driverObj.destroy();
