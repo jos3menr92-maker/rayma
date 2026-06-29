@@ -3,7 +3,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, Receipt, CheckCircle2, Sparkles } from "lucide-react"; // Added Sparkles for RAYMA!
+import { Plus, Trash2, Edit3, Receipt, CheckCircle2, Sparkles, ShieldAlert, Loader2 } from "lucide-react";
 import BillPriceAlert from "../components/BillPriceAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,13 @@ export default function Bills() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [paidBillId, setPaidBillId] = useState(null);
+
+  // 🔐 Security Vault State
+  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [billToDelete, setBillToDelete] = useState(null);
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const openAdd = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
   
@@ -92,9 +99,36 @@ export default function Bills() {
     setDialogOpen(false);
   };
 
-  const handleDelete = async (id) => { 
-    await supabase.from('bills').delete().eq('id', id); 
-    reload(); 
+  // 🛡️ Vault-protected delete — requires password re-verification
+  const handleDelete = (bill) => {
+    setBillToDelete(bill);
+    setPassword("");
+    setAuthError("");
+    setShowPasswordLock(true);
+  };
+
+  const verifyAndExecute = async () => {
+    setAuthError("");
+    setIsVerifying(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("Could not verify user identity.");
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
+      if (signInError) throw signInError;
+      setShowPasswordLock(false);
+      await executeDeleteBill();
+    } catch (err) {
+      setAuthError(T("invalidPassword", "Invalid password. Please try again."));
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const executeDeleteBill = async () => {
+    if (!billToDelete) return;
+    await supabase.from('bills').delete().eq('id', billToDelete.id);
+    setBillToDelete(null);
+    reload();
   };
 
   const handleMarkPaid = async (bill) => {
@@ -178,7 +212,7 @@ export default function Bills() {
                     <CheckCircle2 className={`w-4 h-4 ${paidBillId === bill.id ? "text-primary animate-pulse" : ""}`} />
                   </button>
                   <button onClick={() => openEdit(bill)} className="p-2.5 text-muted-foreground hover:text-foreground transition-colors"><Edit3 className="w-4 h-4" /></button>
-                  <button onClick={() => handleDelete(bill.id)} className="p-2.5 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => handleDelete(bill)} className="p-2.5 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </motion.div>
             ))}
@@ -270,6 +304,27 @@ export default function Bills() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 🔐 SECURITY MODAL (The Vault) */}
+      {showPasswordLock && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-amber-500">
+              <ShieldAlert className="w-6 h-6" />
+              <h3 className="font-bold text-lg text-foreground">{T("verifyPassword", "Verify Password")}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">{T("deleteBillConfirm", "Enter your password to permanently delete this bill.")}</p>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={T("enterPassword", "Enter password...")} />
+            {authError && <p className="text-xs text-destructive">{authError}</p>}
+            <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>{T("cancel", "Cancel")}</Button>
+              <Button className="flex-1" onClick={verifyAndExecute} disabled={isVerifying || !password}>
+                {isVerifying ? <Loader2 className="animate-spin" /> : T("confirm", "Confirm")}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
