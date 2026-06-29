@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { ShieldCheck } from "lucide-react";
@@ -21,6 +22,7 @@ function ScorePillar({ label, score, max, color }) {
 
 export default function FinancialHealthScore() {
   const { lang } = useLanguage();
+  const { loans: ctxLoans, bills: ctxBills } = useFinancialData();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [data, setData] = useState(null);
 
@@ -36,13 +38,16 @@ export default function FinancialHealthScore() {
     async function compute() {
       const now = new Date();
       const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const [loans, bills, transactions, budgets, goals] = await Promise.all([
-        base44.entities.Loan.filter({ status: "active" }),
-        base44.entities.Bill.filter({ is_active: true }),
-        base44.entities.Transaction.list("-date", 200),
-        base44.entities.BudgetCategory.list(),
-        base44.entities.SavingsGoal.filter({ status: "active" }),
+      const [txRes, budRes, goalRes] = await Promise.all([
+        supabase.from('transactions').select('*').order('date', { ascending: false }).limit(200),
+        supabase.from('budget_categories').select('*'),
+        supabase.from('savings_goals').select('*'),
       ]);
+      const loans = ctxLoans.filter(l => l.status === "active");
+      const bills = ctxBills.filter(b => b.is_active !== false);
+      const transactions = txRes.data || [];
+      const budgets = budRes.data || [];
+      const goals = (goalRes.data || []).filter(g => g.status === "active");
 
       const monthTxs = transactions.filter(t => t.date?.startsWith(thisMonth));
       const income = monthTxs.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
@@ -98,7 +103,7 @@ export default function FinancialHealthScore() {
     }
     compute();
     return () => { cancelled = true; };
-  }, []);
+  }, [ctxLoans, ctxBills]);
 
   if (!data) return null;
 
