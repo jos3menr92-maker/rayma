@@ -98,17 +98,23 @@ Deno.serve(async (req) => {
     }
 
     // --- 🛡️ COMPLIANCE SAFETY INTERCEPTOR ---
+    // Blocks ALL native mobile wrappers so Stripe is never called from inside an app,
+    // keeping us compliant with Apple App Store §3.1.1 and Google Play billing policies.
     const userAgent = req.headers.get("user-agent") || "";
-    
-    // Detects requests from an iOS wrapper that aren't using a standard mobile browser
-    const isIOSNative = /iPhone|iPad|iPod/.test(userAgent) && !/Safari|Chrome/.test(userAgent);
-    // Detects requests from an Android wrapper ('wv' indicates Android WebView)
-    const isAndroidNative = /Android/.test(userAgent) && /wv/.test(userAgent);
 
-    if (isIOSNative || isAndroidNative) {
-      console.warn('Blocked Stripe checkout attempt from native mobile wrapper.');
+    // React Native injects this token into the WebView UA
+    const isReactNative = /ReactNativeWebView/.test(userAgent);
+    // Capacitor apps inject this token
+    const isCapacitor = /Capacitor/.test(userAgent);
+    // iOS WKWebView without a standard browser signature
+    const isIOSWebView = /iPhone|iPad|iPod/.test(userAgent) && !/Safari|Chrome/.test(userAgent);
+    // Android WebView ('wv' token)
+    const isAndroidWebView = /Android/.test(userAgent) && /wv/.test(userAgent);
+
+    if (isReactNative || isCapacitor || isIOSWebView || isAndroidWebView) {
+      console.warn(`Blocked Stripe checkout attempt from native mobile wrapper. UA: ${userAgent.substring(0, 120)}`);
       return Response.json({
-        error: 'In-app purchases must be made via the web browser to comply with App Store policies.'
+        error: 'In-app purchases must be made via the native App Store / Play Store to comply with store policies.'
       }, { status: 403 });
     }
     // ----------------------------------------
