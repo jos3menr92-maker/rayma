@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const exportBundle = {
       export_date: new Date().toISOString(),
       export_version: "1.0",
-      app: "RAYMA — Debt & Bills Tracker",
+      app: "Rayma AI — Debt & Bills Tracker",
       user: {
         id: user.id,
         email: user.email,
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         })),
         ai_memories: userMemories,
       },
-      notes: "This export contains all personal financial data stored by RAYMA for your account. To request permanent deletion, visit the Delete Account section in your profile.",
+      notes: "This export contains all personal financial data stored by Rayma AI for your account. To request permanent deletion, visit the Delete Account section in your profile.",
     };
 
     return new Response(JSON.stringify(exportBundle, null, 2), {

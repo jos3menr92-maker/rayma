@@ -321,14 +321,14 @@ export default function Profile() {
 
           {/* AI Smart Notifications */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Bell} title="Smart Notifications" subtitle="Let RAYMA handle the heavy lifting" />
+            <SectionHeader icon={Bell} title="Smart Notifications" subtitle="Let Rayma AI handle the heavy lifting" />
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3">
                 <div className="flex gap-3">
                   <div className="mt-0.5"><Sparkles className="w-4 h-4 text-primary" /></div>
                   <div>
                     <p className="text-sm font-medium">Automated Cash Flow Insights</p>
-                    <p className="text-xs text-muted-foreground">RAYMA analyzes your weekly spending automatically</p>
+                    <p className="text-xs text-muted-foreground">Rayma AI analyzes your weekly spending automatically</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, auto_insights: !form.auto_insights})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.auto_insights ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
@@ -382,7 +382,7 @@ export default function Profile() {
 
           {/* Pay Schedule */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps RAYMA calculate your cash flow" />
+            <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps Rayma AI calculate your cash flow" />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Frequency</Label>

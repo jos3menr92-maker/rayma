@@ -43,7 +43,7 @@ export default function RAYMAExpiryBanner({ user }) {
       <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-2xl p-3 mb-3">
         <XCircle className="w-4 h-4 text-destructive shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-foreground">RAYMA has stopped</p>
+          <p className="text-xs font-semibold text-foreground">Rayma AI has stopped</p>
           <p className="text-[11px] text-muted-foreground">
             {isDonated ? "Your Annual Pass has expired." : "Your free 6-month trial has ended."} Get an Annual Pass to restore AI features.
           </p>
@@ -63,7 +63,7 @@ export default function RAYMAExpiryBanner({ user }) {
       <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-foreground">
-          RAYMA {isDonated ? "expires" : "free trial ends"} in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+          Rayma AI {isDonated ? "expires" : "free trial ends"} in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
         </p>
         <p className="text-[11px] text-muted-foreground">
           Get the Annual Pass before it expires to keep AI features running.

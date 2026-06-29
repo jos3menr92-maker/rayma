@@ -73,7 +73,7 @@ export default function Feedback() {
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-12 bg-card border border-border rounded-3xl mt-10">
             <div className="text-5xl mb-4">🙏</div>
             <h2 className="text-2xl font-bold font-heading text-foreground">{T("thankYou", "Thank you!")}</h2>
-            <p className="text-sm text-muted-foreground mt-2">{T("feedbackThankYou", "Your feedback helps us improve RAYMA.")}</p>
+            <p className="text-sm text-muted-foreground mt-2">{T("feedbackThankYou", "Your feedback helps us improve Rayma AI.")}</p>
           </motion.div>
         ) : (
           <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">

@@ -105,13 +105,13 @@ export default function Onboarding() {
               <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                 <span className="text-4xl">💸</span>
               </div>
-              <h1 className="text-3xl font-bold font-heading text-foreground mb-3">{T("welcomeRayma", "Welcome to RAYMA")}</h1>
+              <h1 className="text-3xl font-bold font-heading text-foreground mb-3">{T("welcomeRayma", "Welcome to Rayma AI")}</h1>
               <p className="text-muted-foreground text-sm leading-relaxed mb-8">
                 {T("onboardingDesc", "Your personal finance tracker for loans, bills, and budgets. Let's get you set up in under a minute.")}
               </p>
               <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4 mb-8 text-left">
                 <p className="text-xs font-semibold text-destructive mb-1">⚠️ {T("importantLabel", "Important")}</p>
-                <p className="text-xs text-muted-foreground">{T("disclaimerOnboarding", "RAYMA is a personal tracking tool, not a financial advisor. Always consult a qualified professional before making major financial decisions.")}</p>
+                <p className="text-xs text-muted-foreground">{T("disclaimerOnboarding", "Rayma AI is a personal tracking tool, not a financial advisor. Always consult a qualified professional before making major financial decisions.")}</p>
               </div>
               <Button className="w-full rounded-2xl h-12 text-base" onClick={() => setStep("income")}>
                 {T("getStarted", "Get Started")} <ChevronRight className="w-4 h-4 ml-1" />
@@ -128,7 +128,7 @@ export default function Onboarding() {
                 <DollarSign className="w-7 h-7 text-primary" />
               </div>
               <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("howMuchEarn", "How much do you earn weekly?")}</h2>
-              <p className="text-sm text-muted-foreground mb-6">{T("incomeHelps", "This helps RAYMA calculate your monthly cash flow. You can update it anytime.")}</p>
+              <p className="text-sm text-muted-foreground mb-6">{T("incomeHelps", "This helps Rayma AI calculate your monthly cash flow. You can update it anytime.")}</p>
               <div className="relative mb-6">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                 <Input
@@ -177,7 +177,7 @@ export default function Onboarding() {
                 <CreditCard className="w-7 h-7 text-primary" />
               </div>
               <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("anyLoans", "Any loans or debt?")}</h2>
-              <p className="text-sm text-muted-foreground mb-6">{T("loanExamples", "Car loan, student debt, credit card — RAYMA tracks it all.")}</p>
+              <p className="text-sm text-muted-foreground mb-6">{T("loanExamples", "Car loan, student debt, credit card — Rayma AI tracks it all.")}</p>
               <div className="space-y-3 mb-6">
                 <Input placeholder={T("loanNameEx", "Loan name (e.g. Car Loan)")} value={loanName} onChange={e => setLoanName(e.target.value)} className="rounded-xl h-12" />
                 <div className="relative">
@@ -209,7 +209,7 @@ export default function Onboarding() {
               </motion.div>
               <h2 className="text-2xl font-bold font-heading text-foreground mb-3">{T("allSet", "You're all set! 🎉")}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-                {T("readyHelp", "RAYMA is ready to help you track your finances. You can always add more loans, bills, and income from the dashboard.")}
+                {T("readyHelp", "Rayma AI is ready to help you track your finances. You can always add more loans, bills, and income from the dashboard.")}
               </p>
               <Button className="w-full rounded-2xl h-12 text-base" onClick={finish}>
                 {T("goToDashboard", "Go to Dashboard")}

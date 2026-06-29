@@ -84,7 +84,7 @@ export default function Layout() {
                 </span>
               }
             </div>
-            <span className="text-sm font-semibold font-heading text-foreground tracking-wide">RAYMA</span>
+            <span className="text-sm font-semibold font-heading text-foreground tracking-wide">Rayma AI</span>
           </div>
           <div className="flex items-center">
             <button onClick={() => setDrawerOpen(true)} aria-label="Open Menu" className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0">

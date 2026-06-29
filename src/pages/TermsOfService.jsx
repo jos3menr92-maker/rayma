@@ -27,10 +27,10 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("agreementToTerms", "1. Agreement to Terms")}</h2>
           <p>
-            {T("agreementDesc", "By accessing and using the RAYMA app (the \"Service\"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.")}
+            {T("agreementDesc", "By accessing and using the Rayma AI app (the \"Service\"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.")}
           </p>
           <p className="mt-3">
-            {T("modifyTerms", "RAYMA reserves the right to modify these terms at any time. Continued use after changes constitutes acceptance.")}</p>
+            {T("modifyTerms", "Rayma AI reserves the right to modify these terms at any time. Continued use after changes constitutes acceptance.")}</p>
         </section>
 
         <section>
@@ -61,10 +61,10 @@ export default function TermsOfService() {
           <h2 className="text-lg font-semibold mb-3">{T("financialDisclaimer2", "4. Financial Information Disclaimer")}</h2>
           <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg space-y-3">
             <p>
-              <strong className="text-destructive">⚠️ {T("importantNotAdvisor", "IMPORTANT: RAYMA IS NOT A FINANCIAL ADVISOR, ACCOUNTANT, TAX PROFESSIONAL, OR INVESTMENT ADVISOR.")}</strong>
+              <strong className="text-destructive">⚠️ {T("importantNotAdvisor", "IMPORTANT: Rayma AI IS NOT A FINANCIAL ADVISOR, ACCOUNTANT, TAX PROFESSIONAL, OR INVESTMENT ADVISOR.")}</strong>
             </p>
             <p>
-              {T("allInfoEducational", "All information, calculations, and recommendations provided by RAYMA are for informational and educational purposes only. RAYMA does not provide financial, investment, tax, or legal advice.")}
+              {T("allInfoEducational", "All information, calculations, and recommendations provided by Rayma AI are for informational and educational purposes only. Rayma AI does not provide financial, investment, tax, or legal advice.")}
             </p>
             <p>
               <strong>{T("beforeYou", "Before you:")}</strong>
@@ -80,7 +80,7 @@ export default function TermsOfService() {
               <strong>{T("consultQualified", "Consult qualified professionals:")}</strong> {T("consultDesc", "A licensed financial advisor, CPA, tax professional, or attorney, depending on your situation.")}
             </p>
             <p>
-              <strong>{T("noGuarantees2", "RAYMA makes no guarantees:")}</strong> {T("noGuaranteesDesc", "We are not responsible for calculation errors, interest rate inaccuracies, missed payments, financial losses, or any other financial outcomes resulting from use of the Service.")}
+              <strong>{T("noGuarantees2", "Rayma AI makes no guarantees:")}</strong> {T("noGuaranteesDesc", "We are not responsible for calculation errors, interest rate inaccuracies, missed payments, financial losses, or any other financial outcomes resulting from use of the Service.")}
             </p>
             <p>
               <strong>{T("useAtOwnRisk2", "Use at your own risk.")}</strong> {T("yourResponsible", "You are solely responsible for all financial decisions.")}
@@ -91,9 +91,9 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("accuracyOfInfo", "5. Accuracy of Information")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>{T("responSibleAccuracy", "You are responsible for the accuracy of financial information you enter into RAYMA")}</li>
+            <li>{T("responSibleAccuracy", "You are responsible for the accuracy of financial information you enter into Rayma AI")}</li>
             <li>{T("plaidAsIs", "Plaid bank sync data is provided \"as-is\" from your financial institution and Plaid")}</li>
-            <li>{T("notResponsibleBankErrors", "RAYMA is not responsible for errors, delays, or inaccuracies in bank data")}</li>
+            <li>{T("notResponsibleBankErrors", "Rayma AI is not responsible for errors, delays, or inaccuracies in bank data")}</li>
             <li>{T("verifyBank", "Always verify your bank balance directly with your financial institution")}</li>
             <li>{T("interestApprox", "Interest rate calculations are approximations and may not reflect actual charges from lenders")}</li>
           </ul>
@@ -106,11 +106,11 @@ export default function TermsOfService() {
               <strong>{T("maximumExtent", "TO THE MAXIMUM EXTENT PERMITTED BY LAW:")}</strong>
             </p>
             <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>{T("asIs", "RAYMA provides the Service \"AS IS\" without warranties of any kind, expressed or implied")}</li>
-              <li>{T("notLiableIndirect", "RAYMA is not liable for indirect, incidental, special, consequential, or punitive damages")}</li>
-              <li>{T("notLiableLostProfit", "RAYMA is not liable for any lost profits, lost data, or financial losses resulting from Service use")}</li>
-              <li>{T("limitedTotal", "RAYMA's total liability for any claim shall not exceed the amount you paid for the Service in the past 12 months")}</li>
-              <li>{T("limitationApplies", "This limitation applies even if RAYMA has been advised of the possibility of such damages")}</li>
+              <li>{T("asIs", "Rayma AI provides the Service \"AS IS\" without warranties of any kind, expressed or implied")}</li>
+              <li>{T("notLiableIndirect", "Rayma AI is not liable for indirect, incidental, special, consequential, or punitive damages")}</li>
+              <li>{T("notLiableLostProfit", "Rayma AI is not liable for any lost profits, lost data, or financial losses resulting from Service use")}</li>
+              <li>{T("limitedTotal", "Rayma AI's total liability for any claim shall not exceed the amount you paid for the Service in the past 12 months")}</li>
+              <li>{T("limitationApplies", "This limitation applies even if Rayma AI has been advised of the possibility of such damages")}</li>
             </ul>
           </div>
         </section>
@@ -118,19 +118,19 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("thirdPartyServices2", "7. Third-Party Services")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li><strong>{T("plaidTOS", "Plaid:")}</strong> {T("plaidTOSDesc", "RAYMA uses Plaid for secure bank account linking. Read the")} <a href="https://plaid.com/privacy" className="text-primary underline">{T("plaidPrivacyPolicy2", "Plaid Privacy Policy")}</a> {T("and", "and")} <a href="https://plaid.com/legal" className="text-primary underline">{T("plaidLegal", "Plaid Legal Terms")}</a>.</li>
-            <li><strong>{T("stripeTOS", "Stripe:")}</strong> {T("stripeTOSDesc", "RAYMA uses Stripe for payment processing. Read")} <a href="https://stripe.com/legal" className="text-primary underline">{T("stripeLegal", "Stripe's Terms")}</a>.</li>
-            <li>{T("notResponsibleThirdParty", "RAYMA is not responsible for third-party service availability, outages, or errors")}</li>
-            <li>{T("notLiableThirdParty", "RAYMA is not liable for data loss or breaches at third-party providers")}</li>
+            <li><strong>{T("plaidTOS", "Plaid:")}</strong> {T("plaidTOSDesc", "Rayma AI uses Plaid for secure bank account linking. Read the")} <a href="https://plaid.com/privacy" className="text-primary underline">{T("plaidPrivacyPolicy2", "Plaid Privacy Policy")}</a> {T("and", "and")} <a href="https://plaid.com/legal" className="text-primary underline">{T("plaidLegal", "Plaid Legal Terms")}</a>.</li>
+            <li><strong>{T("stripeTOS", "Stripe:")}</strong> {T("stripeTOSDesc", "Rayma AI uses Stripe for payment processing. Read")} <a href="https://stripe.com/legal" className="text-primary underline">{T("stripeLegal", "Stripe's Terms")}</a>.</li>
+            <li>{T("notResponsibleThirdParty", "Rayma AI is not responsible for third-party service availability, outages, or errors")}</li>
+            <li>{T("notLiableThirdParty", "Rayma AI is not liable for data loss or breaches at third-party providers")}</li>
           </ul>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("serviceAvailability", "8. Service Availability")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>{T("noUninterrupted", "RAYMA does not guarantee uninterrupted service availability")}</li>
-            <li>{T("mayPerform", "RAYMA may perform maintenance, updates, or suspend the Service at any time")}</li>
-            <li>{T("notLiableDowntime", "RAYMA is not liable for Service downtime, data loss during outages, or any related damages")}</li>
+            <li>{T("noUninterrupted", "Rayma AI does not guarantee uninterrupted service availability")}</li>
+            <li>{T("mayPerform", "Rayma AI may perform maintenance, updates, or suspend the Service at any time")}</li>
+            <li>{T("notLiableDowntime", "Rayma AI is not liable for Service downtime, data loss during outages, or any related damages")}</li>
             <li>{T("backedUp", "Your data is backed up regularly, but no backup system is 100% reliable")}</li>
           </ul>
         </section>
@@ -141,10 +141,10 @@ export default function TermsOfService() {
             {T("seePrivacy", "See the")} <a href="/privacy" className="text-primary underline">{T("privacyPolicyLink", "Privacy Policy")}</a> {T("forComplete", "for complete details on how your data is collected, used, and protected.")}
           </p>
           <ul className="list-disc list-inside space-y-2 mt-3">
-            <li>{T("grantProcess", "You grant RAYMA permission to process your financial data to provide the Service")}</li>
+            <li>{T("grantProcess", "You grant Rayma AI permission to process your financial data to provide the Service")}</li>
             <li>{T("responsibleData", "You are responsible for all data you upload or enter")}</li>
-            <li>{T("mayAnonymize", "RAYMA may use anonymized, aggregated data to improve the Service")}</li>
-            <li>{T("neverStored", "Bank credentials and sensitive payment information are never stored by RAYMA")}</li>
+            <li>{T("mayAnonymize", "Rayma AI may use anonymized, aggregated data to improve the Service")}</li>
+            <li>{T("neverStored", "Bank credentials and sensitive payment information are never stored by Rayma AI")}</li>
           </ul>
         </section>
 
@@ -155,7 +155,7 @@ export default function TermsOfService() {
             <li>{T("violateLaw", "Violate any law, regulation, or third-party rights")}</li>
             <li>{T("falseMisleading", "Provide false, fraudulent, or misleading information")}</li>
             <li>{T("attemptGain", "Attempt to gain unauthorized access to systems")}</li>
-            <li>{T("harassThreat", "Harass, abuse, or threaten other users or RAYMA staff")}</li>
+            <li>{T("harassThreat", "Harass, abuse, or threaten other users or Rayma AI staff")}</li>
             <li>{T("engageFraud", "Engage in fraud, money laundering, or illegal financial activity")}</li>
             <li>{T("spamPhish", "Spam, phish, or send malicious code")}</li>
           </ul>
@@ -178,7 +178,7 @@ export default function TermsOfService() {
           <ul className="list-disc list-inside space-y-2">
             <li>{T("singleUse", "Promo codes are single-use per account unless otherwise stated")}</li>
             <li>{T("expire", "Promo codes expire on the stated date and cannot be extended")}</li>
-            <li>{T("raymaRevoke", "RAYMA reserves the right to revoke or modify promo codes at any time")}</li>
+            <li>{T("raymaRevoke", "Rayma AI reserves the right to revoke or modify promo codes at any time")}</li>
             <li>{T("promoNontransferable", "Promo code benefits (tokens, passes) are non-transferable")}</li>
           </ul>
         </section>
@@ -186,10 +186,10 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("intellectualProperty", "13. Intellectual Property")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>{T("raymaProperty", "RAYMA, its logo, and all content are the exclusive property of RAYMA")}</li>
-            <li>{T("notCopy", "You may not copy, reproduce, or distribute RAYMA's content without permission")}</li>
-            <li>{T("noOwnership", "Your use of the Service does not grant you ownership of RAYMA's intellectual property")}</li>
-            <li>{T("userContent", "User-generated content (loans, bills, transactions) remains your property, but you grant RAYMA a license to use it to provide the Service")}</li>
+            <li>{T("raymaProperty", "Rayma AI, its logo, and all content are the exclusive property of Rayma AI")}</li>
+            <li>{T("notCopy", "You may not copy, reproduce, or distribute Rayma AI's content without permission")}</li>
+            <li>{T("noOwnership", "Your use of the Service does not grant you ownership of Rayma AI's intellectual property")}</li>
+            <li>{T("userContent", "User-generated content (loans, bills, transactions) remains your property, but you grant Rayma AI a license to use it to provide the Service")}</li>
           </ul>
         </section>
 
@@ -197,7 +197,7 @@ export default function TermsOfService() {
           <h2 className="text-lg font-semibold mb-3">{T("termination", "14. Termination")}</h2>
           <ul className="list-disc list-inside space-y-2">
             <li>{T("canDelete", "You can delete your account anytime from Settings → Delete My Account")}</li>
-            <li>{T("raymaTerminate", "RAYMA may suspend or terminate your account if you violate these Terms or misuse the Service")}</li>
+            <li>{T("raymaTerminate", "Rayma AI may suspend or terminate your account if you violate these Terms or misuse the Service")}</li>
             <li>{T("permanentLoss", "Termination due to violation may result in permanent loss of access and data")}</li>
             <li>{T("dataDeletedPerPolicy", "Upon termination, your data will be deleted per the Privacy Policy")}</li>
           </ul>
@@ -206,7 +206,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("indemnification", "15. Indemnification")}</h2>
           <p>
-            {T("indemnifyAgreed", "You agree to indemnify and hold harmless RAYMA, its officers, employees, and agents from any claims, damages, or losses arising from your use of the Service, violation of these Terms, or infringement of any third-party rights.")}
+            {T("indemnifyAgreed", "You agree to indemnify and hold harmless Rayma AI, its officers, employees, and agents from any claims, damages, or losses arising from your use of the Service, violation of these Terms, or infringement of any third-party rights.")}
           </p>
         </section>
 
@@ -230,7 +230,7 @@ export default function TermsOfService() {
             {T("termsQuestions", "For questions about these Terms, contact:")}
           </p>
           <div className="mt-3 p-3 bg-muted rounded-lg text-xs">
-            <p className="font-semibold">{T("raymaLegalTeam", "RAYMA Legal Team")}</p>
+            <p className="font-semibold">{T("raymaLegalTeam", "Rayma AI Legal Team")}</p>
             <p>Email: legal@raymaapp.com</p>
             <p>{T("responseTime", "Response time: 30 days")}</p>
           </div>

@@ -8,24 +8,24 @@ const features = [
   { icon: TrendingDown, title: "Loan & Debt Tracker", desc: "Track every loan, see your balance drop, and know exactly when you'll be debt-free." },
   { icon: CalendarCheck, title: "Bill Calendar", desc: "Never miss a payment. See every due date on a calendar and get alerts before they hit." },
   { icon: BarChart2, title: "Net Worth Tracker", desc: "Connect your assets and liabilities to watch your net worth grow over time." },
-  { icon: Brain, title: "RAYMA AI Advisor", desc: "Your personal AI financial coach — analyzes your data and gives actionable, specific advice." },
+  { icon: Brain, title: "Rayma AI Advisor", desc: "Your personal AI financial coach — analyzes your data and gives actionable, specific advice." },
   { icon: FileText, title: "Tax Summary", desc: "Auto-generated annual report with deductible categories. Export to CSV in one tap." },
   { icon: ShieldCheck, title: "Bank-Level Security", desc: "All data is encrypted, privately scoped per user, and never sold to third parties." },
 ];
 
 const testimonials = [
-  { name: "Maria R.", text: "Having all my loans and bills in one place finally made my finances feel manageable. RAYMA keeps me focused on making progress.", stars: 5 },
+  { name: "Maria R.", text: "Having all my loans and bills in one place finally made my finances feel manageable. Rayma AI keeps me focused on making progress.", stars: 5 },
   { name: "James T.", text: "Finally an app that doesn't require connecting to my bank and still gives me the full picture. I control my data.", stars: 5 },
   { name: "Priya S.", text: "The AI advisor helped me see exactly where my money was going and gave me a clear plan for tackling debt. Love it.", stars: 5 },
 ];
 
 const faqs = [
-  { q: "Is RAYMA free?", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. RAYMA AI gives you 5 free consultations every month. Buy token packs if you need more, or get the Annual Pass for unlimited AI." },
-  { q: "Does RAYMA connect to my bank?", a: "No. RAYMA is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
+  { q: "Is Rayma AI free?", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. Rayma AI gives you 5 free consultations every month. Buy token packs if you need more, or get the Annual Pass for unlimited AI." },
+  { q: "Does Rayma AI connect to my bank?", a: "No. Rayma AI is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
   { q: "Is my data private?", a: "Absolutely. Every record is privately scoped to your account with row-level security. We never sell or share your data." },
-  { q: "What platforms does RAYMA work on?", a: "RAYMA works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
-  { q: "What currencies and languages are supported?", a: "RAYMA supports 25+ currencies and is available in 10 languages: English, Chinese, Hindi, Spanish, French, Arabic, Bengali, Portuguese, Russian, and Japanese. Set your preference in Profile settings." },
-  { q: "How do I get started?", a: "Sign up for free, add your first loan or bill in under 2 minutes, and RAYMA starts giving you insights immediately." },
+  { q: "What platforms does Rayma AI work on?", a: "Rayma AI works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
+  { q: "What currencies and languages are supported?", a: "Rayma AI supports 25+ currencies and is available in 10 languages: English, Chinese, Hindi, Spanish, French, Arabic, Bengali, Portuguese, Russian, and Japanese. Set your preference in Profile settings." },
+  { q: "How do I get started?", a: "Sign up for free, add your first loan or bill in under 2 minutes, and Rayma AI starts giving you insights immediately." },
 ];
 
 function Stars({ n }) {
@@ -51,26 +51,26 @@ export default function Landing() {
     { icon: TrendingDown, titleKey: "loanDebtTracker", title: "Loan & Debt Tracker", descKey: "loanDesc", desc: "Track every loan, see your balance drop, and know exactly when you'll be debt-free." },
     { icon: CalendarCheck, titleKey: "billCalendar", title: "Bill Calendar", descKey: "billCalendarDesc", desc: "Never miss a payment. See every due date on a calendar and get alerts before they hit." },
     { icon: BarChart2, titleKey: "netWorthTracker", title: "Net Worth Tracker", descKey: "netWorthDesc", desc: "Connect your assets and liabilities to watch your net worth grow over time." },
-    { icon: Brain, titleKey: "raymaAI", title: "RAYMA AI Advisor", descKey: "aiDesc", desc: "Your personal AI financial coach — analyzes your data and gives actionable, specific advice." },
+    { icon: Brain, titleKey: "raymaAI", title: "Rayma AI Advisor", descKey: "aiDesc", desc: "Your personal AI financial coach — analyzes your data and gives actionable, specific advice." },
     { icon: FileText, titleKey: "taxSummary", title: "Tax Summary", descKey: "taxDesc", desc: "Auto-generated annual report with deductible categories. Export to CSV in one tap." },
     { icon: ShieldCheck, titleKey: "bankSecurity", title: "Bank-Level Security", descKey: "securityDesc", desc: "All data is encrypted, privately scoped per user, and never sold to third parties." },
   ];
 
   // 🌍 MOVED: Testimonials with translation keys
   const testimonials = [
-    { nameKey: "testimonial1Name", name: "Maria R.", textKey: "testimonial1Text", text: "Having all my loans and bills in one place finally made my finances feel manageable. RAYMA keeps me focused on making progress.", stars: 5 },
+    { nameKey: "testimonial1Name", name: "Maria R.", textKey: "testimonial1Text", text: "Having all my loans and bills in one place finally made my finances feel manageable. Rayma AI keeps me focused on making progress.", stars: 5 },
     { nameKey: "testimonial2Name", name: "James T.", textKey: "testimonial2Text", text: "Finally an app that doesn't require connecting to my bank and still gives me the full picture. I control my data.", stars: 5 },
     { nameKey: "testimonial3Name", name: "Priya S.", textKey: "testimonial3Text", text: "The AI advisor helped me see exactly where my money was going and gave me a clear plan for tackling debt. Love it.", stars: 5 },
   ];
 
   // 🌍 MOVED: FAQs with translation keys
   const faqs = [
-    { qKey: "faq1Q", q: "Is RAYMA free?", aKey: "faq1A", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. RAYMA AI gives you 5 free consultations every month. Buy token packs if you need more, or get the Annual Pass for unlimited AI." },
-    { qKey: "faq2Q", q: "Does RAYMA connect to my bank?", aKey: "faq2A", a: "No. RAYMA is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
+    { qKey: "faq1Q", q: "Is Rayma AI free?", aKey: "faq1A", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. Rayma AI gives you 5 free consultations every month. Buy token packs if you need more, or get the Annual Pass for unlimited AI." },
+    { qKey: "faq2Q", q: "Does Rayma AI connect to my bank?", aKey: "faq2A", a: "No. Rayma AI is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
     { qKey: "faq3Q", q: "Is my data private?", aKey: "faq3A", a: "Absolutely. Every record is privately scoped to your account with row-level security. We never sell or share your data." },
-    { qKey: "faq4Q", q: "What platforms does RAYMA work on?", aKey: "faq4A", a: "RAYMA works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
-    { qKey: "faq5Q", q: "What currencies and languages are supported?", aKey: "faq5A", a: "RAYMA supports 25+ currencies and is available in 10 languages: English, Chinese, Hindi, Spanish, French, Arabic, Bengali, Portuguese, Russian, and Japanese. Set your preference in Profile settings." },
-    { qKey: "faq6Q", q: "How do I get started?", aKey: "faq6A", a: "Sign up for free, add your first loan or bill in under 2 minutes, and RAYMA starts giving you insights immediately." },
+    { qKey: "faq4Q", q: "What platforms does Rayma AI work on?", aKey: "faq4A", a: "Rayma AI works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
+    { qKey: "faq5Q", q: "What currencies and languages are supported?", aKey: "faq5A", a: "Rayma AI supports 25+ currencies and is available in 10 languages: English, Chinese, Hindi, Spanish, French, Arabic, Bengali, Portuguese, Russian, and Japanese. Set your preference in Profile settings." },
+    { qKey: "faq6Q", q: "How do I get started?", aKey: "faq6A", a: "Sign up for free, add your first loan or bill in under 2 minutes, and Rayma AI starts giving you insights immediately." },
   ];
 
   const handleLogin = () => base44.auth.redirectToLogin();
@@ -85,7 +85,7 @@ export default function Landing() {
             <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
               <TrendingDown className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-base font-bold font-heading text-foreground">RAYMA</span>
+            <span className="text-base font-bold font-heading text-foreground">Rayma AI</span>
           </div>
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
@@ -123,7 +123,7 @@ export default function Landing() {
       {/* Disclaimer Banner */}
       <div className="bg-muted/60 border-b border-border py-2 px-4 text-center">
         <p className="text-[11px] text-muted-foreground">
-          {T("disclaimerLanding", "RAYMA is a personal finance tracking tool — not a financial advisor. All information is for tracking purposes only.")} <a href="/terms" className="underline hover:text-foreground">{T("terms", "Terms")}</a> · <a href="/privacy" className="underline hover:text-foreground">{T("privacy", "Privacy")}</a>
+          {T("disclaimerLanding", "Rayma AI is a personal finance tracking tool — not a financial advisor. All information is for tracking purposes only.")} <a href="/terms" className="underline hover:text-foreground">{T("terms", "Terms")}</a> · <a href="/privacy" className="underline hover:text-foreground">{T("privacy", "Privacy")}</a>
         </p>
       </div>
 
@@ -137,7 +137,7 @@ export default function Landing() {
           <span className="text-primary">{T("debtBillsHero", "Debt & Bills")}</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-          {T("heroDescription", "RAYMA tracks your loans, bills, budget, and net worth — all in one place. Your AI financial coach tells you exactly what to do next.")}
+          {T("heroDescription", "Rayma AI tracks your loans, bills, budget, and net worth — all in one place. Your AI financial coach tells you exactly what to do next.")}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
           <button onClick={handleLogin} className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-2xl hover:bg-primary/90 transition-colors text-base">
@@ -304,7 +304,7 @@ export default function Landing() {
             <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
               <TrendingDown className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-foreground">RAYMA</span>
+            <span className="font-semibold text-foreground">Rayma AI</span>
             <span>· {T("debtBillsTracker", "Debt & Bills Tracker")}</span>
           </div>
           <div className="flex gap-5">
@@ -312,7 +312,7 @@ export default function Landing() {
             <a href="/terms" className="hover:text-foreground transition-colors">{T("termsOfService", "Terms of Service")}</a>
             <button onClick={handleLogin} className="hover:text-foreground transition-colors">{T("signIn", "Sign In")}</button>
           </div>
-          <p>© {new Date().getFullYear()} RAYMA. {T("allRightsReserved", "All rights reserved.")}</p>
+          <p>© {new Date().getFullYear()} Rayma AI. {T("allRightsReserved", "All rights reserved.")}</p>
         </div>
       </footer>
 

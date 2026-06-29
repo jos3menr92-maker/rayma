@@ -116,7 +116,7 @@ export default function RaymaChat({
     if (text.includes("what am i looking at") || text.includes("explain this page") || text.includes("help me with this")) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
-      let response = "You are currently viewing your RAYMA app.";
+      let response = "You are currently viewing your Rayma AI app.";
       if (currentPage.includes("tax-summary")) response = "You are looking at your **Tax Summary**. This page tracks your deductible expenses and organizes your financial data so you are ready for tax season.";
       if (currentPage.includes("debt-simulator")) response = "You are in the **Debt Simulator**. This tool lets you test out different payoff strategies. Enter an extra monthly payment amount, and I'll show you how much interest you'll save!";
       if (currentPage === "/") response = "You are on the **Main Dashboard**. This is your Command Center. You can see your cash flow, upcoming bills, and overall financial health score here.";
@@ -176,7 +176,7 @@ export default function RaymaChat({
     if (text === "help" || text === "what can you do" || text === "who are you") {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
-      const helpText = `I am RAYMA, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document"\n* **Learn:** "Start tour"\n* **Security:** "Log me out"`;
+      const helpText = `I am Rayma AI, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document"\n* **Learn:** "Start tour"\n* **Security:** "Log me out"`;
       setMessages(prev => [...prev, { role: "assistant", content: helpText }]);
       return;
     }

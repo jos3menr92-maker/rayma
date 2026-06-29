@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("privacyIntro", "1. Introduction")}</h2>
           <p>
-            {T("privacyIntroBody", "RAYMA (\"we,\" \"us,\" \"our,\" or \"Company\") operates the RAYMA app (the \"Service\"). This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.")}
+            {T("privacyIntroBody", "Rayma AI (\"we,\" \"us,\" \"our,\" or \"Company\") operates the Rayma AI app (the \"Service\"). This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.")}
           </p>
           <p className="mt-3">
             {T("privacyIntroAgreement", "By using the Service, you agree to this Privacy Policy. If you disagree, please do not use the Service.")}
@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-lg font-semibold mb-3">{T("howWeUse", "3. How We Use Your Data")}</h2>
           <ul className="list-disc list-inside space-y-2">
             <li><strong>{T("serviceDelivery", "Service Delivery:")}</strong> {T("useServiceDelivery", "Track loans, bills, income, and net worth")}</li>
-            <li><strong>{T("raymaAI", "RAYMA AI:")}</strong> {T("useRaymaAI", "Analyze your financial data to provide personalized insights and suggestions")}</li>
+            <li><strong>{T("raymaAI", "Rayma AI:")}</strong> {T("useRaymaAI", "Analyze your financial data to provide personalized insights and suggestions")}</li>
             <li><strong>{T("recurringPayment", "Recurring Payment Detection:")}</strong> {T("useRecurring", "Identify recurring transactions and suggest bills for your approval")}</li>
             <li><strong>{T("accountSecurity", "Account Security:")}</strong> {T("useSecurity", "Prevent fraud, enforce our Terms of Service")}</li>
             <li><strong>{T("serviceImprovement", "Service Improvement:")}</strong> {T("useImprovement", "Analyze usage to fix bugs and improve features")}</li>
@@ -175,7 +175,7 @@ export default function PrivacyPolicy() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("childrenPrivacy", "8. Children's Privacy")}</h2>
           <p>
-            {T("childrenPrivacyDesc", "RAYMA is not intended for users under 13 years old (COPPA) or under 16 in the EU. We do not knowingly collect data from children. If we discover we've collected data from a child, we will delete it immediately.")}
+            {T("childrenPrivacyDesc", "Rayma AI is not intended for users under 13 years old (COPPA) or under 16 in the EU. We do not knowingly collect data from children. If we discover we've collected data from a child, we will delete it immediately.")}
           </p>
         </section>
 
@@ -192,7 +192,7 @@ export default function PrivacyPolicy() {
             {T("privacyQuestions", "For privacy questions, data requests, or complaints, contact:")}
           </p>
           <div className="mt-3 p-3 bg-muted rounded-lg text-xs">
-            <p className="font-semibold">{T("raymaPrivacyTeam", "RAYMA Privacy Team")}</p>
+            <p className="font-semibold">{T("raymaPrivacyTeam", "Rayma AI Privacy Team")}</p>
             <p>Email: privacy@raymaapp.com</p>
             <p>{T("responseTime", "Response time: 30 days")}</p>
             <p className="mt-2 text-muted-foreground">{T("gdprComplaint", "For GDPR complaints, you also have the right to lodge a complaint with your local data protection authority.")}</p>
@@ -204,11 +204,11 @@ export default function PrivacyPolicy() {
           <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
             <p className="font-semibold text-destructive mb-2">⚠️ {T("importantLegal", "Important Legal Notice")}</p>
             <p>
-              <strong>{T("notFinancialAdvisor", "RAYMA is NOT a financial advisor, accountant, tax professional, or legal advisor.")}</strong> {T("educationalPurposes", "All information provided by RAYMA is for educational and informational purposes only and should not be considered as financial advice.")}</p>
+              <strong>{T("notFinancialAdvisor", "Rayma AI is NOT a financial advisor, accountant, tax professional, or legal advisor.")}</strong> {T("educationalPurposes", "All information provided by Rayma AI is for educational and informational purposes only and should not be considered as financial advice.")}</p>
             <p className="mt-3">
               <strong>{T("consultProfessionals", "Consult qualified professionals before:")}</strong> {T("beforeActions", "Making investment decisions, taking out loans, filing taxes, entering debt settlement agreements, or making major financial changes.")}</p>
             <p className="mt-3">
-              <strong>{T("useAtOwnRisk", "Use at your own risk:")}</strong> {T("noGuarantees", "RAYMA makes no guarantees about calculation accuracy, interest rate calculations, or financial outcomes. We are not responsible for errors, missed payments, or financial losses.")}</p>
+              <strong>{T("useAtOwnRisk", "Use at your own risk:")}</strong> {T("noGuarantees", "Rayma AI makes no guarantees about calculation accuracy, interest rate calculations, or financial outcomes. We are not responsible for errors, missed payments, or financial losses.")}</p>
           </div>
         </section>
       </div>

@@ -115,7 +115,7 @@ export default function Admin() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold font-heading text-foreground">{T("adminPanel", "Admin Panel")}</h1>
-            <p className="text-sm text-muted-foreground">{T("raymaAppOversight", "RAYMA app oversight")}</p>
+            <p className="text-sm text-muted-foreground">{T("raymaAppOversight", "Rayma AI app oversight")}</p>
           </div>
           <Button size="sm" variant="outline" onClick={loadData} className="rounded-xl gap-2">
             <RefreshCw className="w-3.5 h-3.5" />

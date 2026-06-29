@@ -90,7 +90,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
     let result;
     try {
       result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are RAYMA, a proactive personal finance AI. Based on the user's financial data below, generate exactly 4 short, personalized, actionable insights...`,
+        prompt: `You are Rayma AI, a proactive personal finance AI. Based on the user's financial data below, generate exactly 4 short, personalized, actionable insights...`,
         response_json_schema: { type: "object", properties: { insights: { type: "array", items: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, type: { type: "string" } } } } } }
       });
     } catch (e) {
@@ -137,7 +137,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
         allowClose: false,
         popoverClass: 'driver-popover rayma-flat-theme', // Injects our flat design!
         steps: [
-          { popover: { title: 'Welcome to your Command Center! 🚀', description: "I'm RAYMA. I don't just track your money—I help you manage it. Let me show you how to put me to work.", align: 'center' } },
+          { popover: { title: 'Welcome to your Command Center! 🚀', description: "I'm Rayma AI. I don't just track your money—I help you manage it. Let me show you how to put me to work.", align: 'center' } },
           { element: '#active-loans-section', popover: { title: 'Take Action on Debt 💳', description: "This is your active debt. See those PAY buttons? Use them to instantly log a payment.", side: "right", align: 'start' } },
           { element: '#rayma-insights', popover: { title: 'Daily AI Insights 💡', description: "Swipe through these cards daily. I generate them based on your live data.", side: "bottom", align: 'start' } },
           { element: '#financial-health-score', popover: { title: 'Your Financial Health 🏥', description: "Think of this as your high score. It recalculates dynamically.", side: "left", align: 'start' } },
@@ -224,7 +224,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Hello, I'm RAYMA</h2>
+              <h2 className="text-2xl font-bold mb-2">Hello, I'm Rayma AI</h2>
               <p className="text-muted-foreground mb-6 text-sm">
                 {isFirstTime ? "I'm your proactive financial co-pilot. Let's take a quick tour of your command center." : "Welcome back. I've analyzed your latest data. Let's get to work."}
               </p>

@@ -193,7 +193,7 @@ const payload = {
             <div className="bg-accent/10 p-3 rounded-2xl border border-accent/20 flex gap-3">
               <MessageSquare className="w-5 h-5 text-accent shrink-0 mt-1" />
               <div className="text-xs">
-                <p className="font-semibold text-foreground">{T("askRayma", "Ask RAYMA")}</p>
+                <p className="font-semibold text-foreground">{T("askRayma", "Ask Rayma AI")}</p>
                 <p className="text-muted-foreground">{T("askRaymaExample", '"I just got paid $1200 today."')}</p>
               </div>
             </div>

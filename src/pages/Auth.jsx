@@ -148,7 +148,7 @@ export default function Auth() {
             {isLogin ? "Welcome Back" : "Create Account"}
           </h1>
           <p className="text-muted-foreground text-sm">
-            {isLogin ? "Sign in to continue to RAYMA" : "Join us to take control of your finances"}
+            {isLogin ? "Sign in to continue to Rayma AI" : "Join us to take control of your finances"}
           </p>
         </div>
 
