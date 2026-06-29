@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function NetWorthChart() {
   const { formatCurrency: fmt } = useCurrency();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [snapshots, setSnapshots] = useState([]);
 
   useEffect(() => {
@@ -32,7 +36,7 @@ export default function NetWorthChart() {
   return (
     <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-sm font-semibold font-heading text-foreground">Net Worth Trend</h2>
+        <h2 className="text-sm font-semibold font-heading text-foreground">{T("netWorthTrend", "Net Worth Trend")}</h2>
         <div className={`flex items-center gap-1 text-xs font-semibold ${isUp ? "text-primary" : "text-destructive"}`}>
           {isUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
           {isUp ? "+" : ""}{fmt(change)}
@@ -45,7 +49,7 @@ export default function NetWorthChart() {
           <XAxis dataKey="label" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
           <YAxis hide />
           <Tooltip
-            formatter={(v) => [fmt(v), "Net Worth"]}
+            formatter={(v) => [fmt(v), T("netWorthLabel", "Net Worth")]}
             contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }}
             labelStyle={{ color: "hsl(var(--foreground))" }}
           />

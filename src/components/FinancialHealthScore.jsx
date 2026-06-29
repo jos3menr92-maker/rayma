@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { ShieldCheck } from "lucide-react";
 
 function ScorePillar({ label, score, max, color }) {
@@ -17,15 +19,17 @@ function ScorePillar({ label, score, max, color }) {
   );
 }
 
-function getColor(score) {
-  if (score >= 80) return { ring: "stroke-primary", text: "text-primary", label: "Excellent", bg: "bg-primary/10" };
-  if (score >= 60) return { ring: "stroke-amber-400", text: "text-amber-400", label: "Good", bg: "bg-amber-400/10" };
-  if (score >= 40) return { ring: "stroke-orange-400", text: "text-orange-400", label: "Fair", bg: "bg-orange-400/10" };
-  return { ring: "stroke-destructive", text: "text-destructive", label: "Needs Work", bg: "bg-destructive/10" };
-}
-
 export default function FinancialHealthScore() {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [data, setData] = useState(null);
+
+  function getColor(score) {
+    if (score >= 80) return { ring: "stroke-primary", text: "text-primary", label: T("excellent", "Excellent"), bg: "bg-primary/10" };
+    if (score >= 60) return { ring: "stroke-amber-400", text: "text-amber-400", label: T("good", "Good"), bg: "bg-amber-400/10" };
+    if (score >= 40) return { ring: "stroke-orange-400", text: "text-orange-400", label: T("fair", "Fair"), bg: "bg-orange-400/10" };
+    return { ring: "stroke-destructive", text: "text-destructive", label: T("needsWork", "Needs Work"), bg: "bg-destructive/10" };
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +52,6 @@ export default function FinancialHealthScore() {
       const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
       const totalObligation = monthlyDebt + monthlyBills;
 
-      // --- Pillar 1: Debt-to-Income ratio (0–30 pts) ---
       let debtScore = 30;
       if (income > 0) {
         const dti = totalObligation / income;
@@ -60,7 +63,6 @@ export default function FinancialHealthScore() {
         debtScore = totalDebt === 0 ? 30 : 5;
       }
 
-      // --- Pillar 2: Budget adherence (0–25 pts) ---
       let budgetScore = 25;
       if (budgets.length > 0 && expenses > 0) {
         const totalLimit = budgets.reduce((s, b) => s + (b.monthly_limit || 0), 0);
@@ -70,17 +72,14 @@ export default function FinancialHealthScore() {
         }
       }
 
-      // --- Pillar 3: Savings activity (0–25 pts) ---
       let savingsScore = 0;
       const savingsRate = income > 0 ? (income - expenses) / income : 0;
       if (savingsRate >= 0.2) savingsScore = 25;
       else if (savingsRate >= 0.1) savingsScore = 18;
       else if (savingsRate >= 0.05) savingsScore = 10;
       else if (savingsRate > 0) savingsScore = 5;
-      // Bonus for having active savings goals
       if (goals.length > 0) savingsScore = Math.min(savingsScore + 5, 25);
 
-      // --- Pillar 4: Upcoming obligations coverage (0–20 pts) ---
       let coverageScore = 20;
       if (income > 0 && totalObligation > income) coverageScore = 0;
       else if (income > 0 && totalObligation > income * 0.8) coverageScore = 8;
@@ -105,7 +104,6 @@ export default function FinancialHealthScore() {
 
   const { ring, text, label, bg } = getColor(data.total);
 
-  // SVG ring
   const r = 44, cx = 56, cy = 56;
   const circ = 2 * Math.PI * r;
   const offset = circ - (data.total / 100) * circ;
@@ -113,7 +111,6 @@ export default function FinancialHealthScore() {
   return (
     <div className={`rounded-2xl border border-border p-4 mb-5 ${bg}`}>
       <div className="flex items-center gap-4">
-        {/* Ring */}
         <div className="relative shrink-0">
           <svg width="80" height="80" viewBox="0 0 112 112">
             <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
@@ -133,18 +130,17 @@ export default function FinancialHealthScore() {
           </div>
         </div>
 
-        {/* Right side */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck className={`w-4 h-4 ${text}`} />
-            <span className="text-sm font-bold text-foreground">Financial Health</span>
+            <span className="text-sm font-bold text-foreground">{T("financialHealth", "Financial Health")}</span>
           </div>
           <p className={`text-xs font-semibold mb-3 ${text}`}>{label}</p>
           <div className="space-y-2">
-            <ScorePillar label="Debt-to-Income" score={data.debtScore} max={30} color={data.debtScore >= 20 ? "bg-primary" : data.debtScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
-            <ScorePillar label="Budget Adherence" score={data.budgetScore} max={25} color={data.budgetScore >= 18 ? "bg-primary" : data.budgetScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
-            <ScorePillar label="Savings Rate" score={data.savingsScore} max={25} color={data.savingsScore >= 18 ? "bg-primary" : data.savingsScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
-            <ScorePillar label="Bill Coverage" score={data.coverageScore} max={20} color={data.coverageScore >= 15 ? "bg-primary" : data.coverageScore >= 8 ? "bg-amber-400" : "bg-destructive"} />
+            <ScorePillar label={T("debtToIncome", "Debt-to-Income")} score={data.debtScore} max={30} color={data.debtScore >= 20 ? "bg-primary" : data.debtScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
+            <ScorePillar label={T("budgetAdherence", "Budget Adherence")} score={data.budgetScore} max={25} color={data.budgetScore >= 18 ? "bg-primary" : data.budgetScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
+            <ScorePillar label={T("savingsRate", "Savings Rate")} score={data.savingsScore} max={25} color={data.savingsScore >= 18 ? "bg-primary" : data.savingsScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
+            <ScorePillar label={T("billCoverage", "Bill Coverage")} score={data.coverageScore} max={20} color={data.coverageScore >= 15 ? "bg-primary" : data.coverageScore >= 8 ? "bg-amber-400" : "bg-destructive"} />
           </div>
         </div>
       </div>

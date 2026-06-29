@@ -1,29 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { FileText, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const DEDUCTIBLE = ["health", "insurance", "loan_payment", "utilities"];
 
-const CATEGORY_LABELS = {
-  income: "Income",
-  food: "Food & Dining",
-  transport: "Transportation",
-  utilities: "Utilities",
-  subscriptions: "Subscriptions",
-  health: "Health & Medical",
-  insurance: "Insurance",
-  rent: "Rent & Housing",
-  loan_payment: "Loan Payments",
-  savings: "Savings",
-  entertainment: "Entertainment",
-  shopping: "Shopping",
-  other: "Other",
-};
-
 export default function TaxSummary() {
   const { formatCurrency: fmt } = useCurrency();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+
+  const CATEGORY_LABELS = {
+    income: T("catIncome", "Income"),
+    food: T("catFood", "Food & Dining"),
+    transport: T("catTransport", "Transportation"),
+    utilities: T("catUtilities", "Utilities"),
+    subscriptions: T("catSubscriptions", "Subscriptions"),
+    health: T("catHealth", "Health & Medical"),
+    insurance: T("catInsurance", "Insurance"),
+    rent: T("catRent", "Rent & Housing"),
+    loan_payment: T("catLoanPayment", "Loan Payments"),
+    savings: T("catSavings", "Savings"),
+    entertainment: T("catEntertainment", "Entertainment"),
+    shopping: T("catShopping", "Shopping"),
+    other: T("catOther", "Other"),
+  };
+
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [transactions, setTransactions] = useState([]);
@@ -48,7 +53,6 @@ export default function TaxSummary() {
   const yearTxs = transactions.filter(t => t.date?.startsWith(String(year)));
   const yearPayments = payments.filter(p => p.payment_date?.startsWith(String(year)));
 
-  // Group by category
   const byCategory = {};
   yearTxs.forEach(t => {
     const cat = t.category || "other";
@@ -94,15 +98,14 @@ export default function TaxSummary() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
             <FileText className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-bold font-heading text-foreground">Tax Summary</h1>
-            <p className="text-xs text-muted-foreground">Annual financial report</p>
+            <h1 className="text-lg font-bold font-heading text-foreground">{T("taxSummaryTitle", "Tax Summary")}</h1>
+            <p className="text-xs text-muted-foreground">{T("annualFinancialReport", "Annual financial report")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -122,16 +125,15 @@ export default function TaxSummary() {
       </div>
 
       {loading ? (
-        <div className="text-center text-muted-foreground py-16">Loading...</div>
+        <div className="text-center text-muted-foreground py-16">{T("loading", "Loading...")}</div>
       ) : (
         <>
-          {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-3 mb-5">
             {[
-              { label: "Total Income", value: fmt(totalIncome), color: "text-primary" },
-              { label: "Total Expenses", value: fmt(totalExpenses), color: "text-destructive" },
-              { label: "Loan Payments", value: fmt(totalLoanPayments), color: "text-accent" },
-              { label: "Potentially Deductible", value: fmt(deductibleTotal), color: "text-amber-400" },
+              { label: T("totalIncome", "Total Income"), value: fmt(totalIncome), color: "text-primary" },
+              { label: T("totalExpenses", "Total Expenses"), value: fmt(totalExpenses), color: "text-destructive" },
+              { label: T("loanPaymentsLabel", "Loan Payments"), value: fmt(totalLoanPayments), color: "text-accent" },
+              { label: T("potentiallyDeductible", "Potentially Deductible"), value: fmt(deductibleTotal), color: "text-amber-400" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-card border border-border rounded-2xl p-4">
                 <p className="text-xs text-muted-foreground mb-1">{label}</p>
@@ -140,25 +142,23 @@ export default function TaxSummary() {
             ))}
           </div>
 
-          {/* Net */}
           <div className="bg-card border border-border rounded-2xl p-4 mb-5 flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground">Net Cash Flow ({year})</p>
+              <p className="text-xs text-muted-foreground">{T("netCashFlow", "Net Cash Flow")} ({year})</p>
               <p className={`text-2xl font-bold font-heading ${totalIncome - totalExpenses >= 0 ? "text-primary" : "text-destructive"}`}>
                 {fmt(totalIncome - totalExpenses)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">Transactions</p>
+              <p className="text-xs text-muted-foreground">{T("transactions", "Transactions")}</p>
               <p className="text-lg font-bold text-foreground">{yearTxs.length}</p>
             </div>
           </div>
 
-          {/* Expense Breakdown */}
-          <p className="text-sm font-semibold text-foreground mb-3">Expense Breakdown</p>
+          <p className="text-sm font-semibold text-foreground mb-3">{T("expenseBreakdown", "Expense Breakdown")}</p>
           <div className="space-y-2 mb-5">
             {expenseCategories.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm py-8">No expense transactions for {year}</p>
+              <p className="text-center text-muted-foreground text-sm py-8">{T("noExpenseTransactions", "No expense transactions for {year}").replace("{year}", year)}</p>
             )}
             {expenseCategories.map(({ cat, label, total, count, deductible, txs }) => (
               <div key={cat} className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -169,7 +169,7 @@ export default function TaxSummary() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">{label}</span>
                     {deductible && (
-                      <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-medium">deductible</span>
+                      <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full font-medium">{T("deductible", "deductible")}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -195,9 +195,8 @@ export default function TaxSummary() {
             ))}
           </div>
 
-          {/* Disclaimer */}
           <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
-            This is not tax advice. Consult a tax professional for guidance on deductions. Data is based on manually entered transactions.
+            {T("taxDisclaimer", "This is not tax advice. Consult a tax professional for guidance on deductions. Data is based on manually entered transactions.")}
           </p>
         </>
       )}

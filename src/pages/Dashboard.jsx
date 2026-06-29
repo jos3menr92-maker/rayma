@@ -184,11 +184,11 @@ export default function Dashboard() {
                <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-base mb-2">{iconMap[bill.category] || "📋"}</div>
                <p className="text-xs font-semibold text-foreground truncate">{bill.name}</p>
                <p className="text-base font-bold font-heading">{formatCurrency(bill.amount)}</p>
-               <p className="text-[9px] text-muted-foreground uppercase mt-1">{bill.due_day ? `Due ${bill.due_day}th` : "Monthly"}</p>
+               <p className="text-[9px] text-muted-foreground uppercase mt-1">{bill.due_day ? T("dueOnDay", "Due {n}th").replace("{n}", bill.due_day) : T("monthlyLabel", "Monthly")}</p>
             </div>
           )) : (
             <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/bills")}>
-              <p className="text-xs text-muted-foreground">No bills logged yet.</p>
+              <p className="text-xs text-muted-foreground">{T("noBillsLogged", "No bills logged yet.")}</p>
             </div>
           )}
         </div>
@@ -212,7 +212,7 @@ export default function Dashboard() {
             </div>
           )) : (
             <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/loans")}>
-              <p className="text-xs text-muted-foreground">No active loans.</p>
+              <p className="text-xs text-muted-foreground">{T("noActiveLoans", "No active loans.")}</p>
             </div>
           )}
         </div>

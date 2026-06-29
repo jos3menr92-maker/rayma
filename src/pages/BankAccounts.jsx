@@ -12,13 +12,15 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 
-const typeConfig = {
-  checking: { label: "Checking", icon: Wallet, color: "text-blue-400", bg: "bg-blue-400/10" },
-  savings:  { label: "Savings",  icon: PiggyBank, color: "text-green-400", bg: "bg-green-400/10" },
-  credit:   { label: "Credit",   icon: CreditCard, color: "text-red-400", bg: "bg-red-400/10" },
-  investment:{ label: "Investment", icon: BarChart3, color: "text-purple-400", bg: "bg-purple-400/10" },
-  other:    { label: "Other",    icon: Landmark, color: "text-muted-foreground", bg: "bg-muted" },
-};
+function buildTypeConfig(T) {
+  return {
+    checking: { label: T("checking", "Checking"), icon: Wallet, color: "text-blue-400", bg: "bg-blue-400/10" },
+    savings:  { label: T("savings", "Savings"),  icon: PiggyBank, color: "text-green-400", bg: "bg-green-400/10" },
+    credit:   { label: T("credit", "Credit"),   icon: CreditCard, color: "text-red-400", bg: "bg-red-400/10" },
+    investment:{ label: T("investment", "Investment"), icon: BarChart3, color: "text-purple-400", bg: "bg-purple-400/10" },
+    other:    { label: T("other", "Other"),    icon: Landmark, color: "text-muted-foreground", bg: "bg-muted" },
+  };
+}
 
 const emptyForm = { name: "", institution: "", account_type: "checking", balance: "", notes: "" };
 const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), description: "", amount: "", category: "other", type: "debit", notes: "" };
@@ -44,6 +46,7 @@ export default function BankAccounts() {
   const [txForm, setTxForm] = useState(emptyTx);
   const [loading, setLoading] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const typeConfig = useMemo(() => buildTypeConfig(T), [lang]);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -70,13 +73,13 @@ export default function BankAccounts() {
   };
 
   const deleteAccount = async (id) => {
-    if (!confirm("Delete this account?")) return;
+    if (!confirm(T("deleteAccountConfirm", "Delete this account?"))) return;
     await base44.entities.BankAccount.delete(id);
     fetchAll();
   };
 
   const saveTx = async () => {
-    if (!txForm.bank_account_id) { alert("Please select a bank account."); return; }
+    if (!txForm.bank_account_id) { alert(T("selectAccountPrompt", "Please select a bank account.")); return; }
     await base44.entities.Transaction.create({ ...txForm, amount: parseFloat(txForm.amount) || 0 });
     setShowTxDialog(false);
     setTxForm(emptyTx);
@@ -182,7 +185,7 @@ export default function BankAccounts() {
                 </div>
                 {acc.last_synced && (
                   <p className="text-[10px] text-muted-foreground mt-2 pl-13">
-                    Last updated {acc.last_synced}
+                    {T("lastUpdated", "Last updated")} {acc.last_synced}
                   </p>
                 )}
               </div>

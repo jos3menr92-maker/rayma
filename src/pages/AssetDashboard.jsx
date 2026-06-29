@@ -203,19 +203,19 @@ export default function AssetDashboard() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editing ? "Edit Asset" : "Add Asset"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? T("editAsset", "Edit Asset") : T("addAsset", "Add Asset")}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-3 mt-2">
             <div>
-              <Label className="text-xs text-muted-foreground">Name *</Label>
+              <Label className="text-xs text-muted-foreground">{T("nameRequired", "Name *")}</Label>
               <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. 401k, Home, Savings" required className="mt-1 rounded-xl" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Value ($) *</Label>
+                <Label className="text-xs text-muted-foreground">{T("valueRequired", "Value ($) *")}</Label>
                 <Input type="number" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0" required className="mt-1 rounded-xl" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Type</Label>
+                <Label className="text-xs text-muted-foreground">{T("type", "Type")}</Label>
                 <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
                   <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -227,11 +227,11 @@ export default function AssetDashboard() {
               </div>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Notes</Label>
-              <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optional" className="mt-1 rounded-xl" />
+              <Label className="text-xs text-muted-foreground">{T("notes", "Notes")}</Label>
+              <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder={T("optional", "Optional")} className="mt-1 rounded-xl" />
             </div>
             <Button type="submit" disabled={saving} className="w-full rounded-xl">
-              {saving ? "Saving..." : editing ? "Save Changes" : "Add Asset"}
+              {saving ? T("saving", "Saving...") : editing ? T("saveChanges", "Save Changes") : T("addAssetBtn", "Add Asset")}
             </Button>
           </form>
         </DialogContent>

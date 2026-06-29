@@ -21,12 +21,14 @@ function monthLabel(key, locale) {
   return `${getMonthName(parseInt(m) - 1, locale, "short")} ${y.slice(2)}`;
 }
 
-const TYPE_CONFIG = {
-  totalDebt: { label: "Total Debt", color: "hsl(var(--destructive))", description: "Original loan amounts over time" },
-  remaining: { label: "Remaining Balance", color: "hsl(var(--accent))", description: "Outstanding balance by month" },
-  totalPaid: { label: "Total Paid", color: "hsl(var(--primary))", description: "Cumulative payments made" },
-  monthlyDue: { label: "Monthly Due", color: "hsl(var(--chart-3))", description: "Total monthly obligations" },
-};
+function buildTypeConfig(T) {
+  return {
+    totalDebt: { label: T("totalDebt", "Total Debt"), color: "hsl(var(--destructive))", description: T("totalDebtDesc", "Original loan amounts over time") },
+    remaining: { label: T("remainingBalance", "Remaining Balance"), color: "hsl(var(--accent))", description: T("remainingDesc", "Outstanding balance by month") },
+    totalPaid: { label: T("totalPaid", "Total Paid"), color: "hsl(var(--primary))", description: T("totalPaidDesc", "Cumulative payments made") },
+    monthlyDue: { label: T("monthlyDue", "Monthly Due"), color: "hsl(var(--chart-3))", description: T("monthlyDueDesc", "Total monthly obligations") },
+  };
+}
 
 export default function MonthlyTrend() {
   const { lang, locale } = useLanguage();
@@ -38,6 +40,7 @@ export default function MonthlyTrend() {
 
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const TYPE_CONFIG = useMemo(() => buildTypeConfig(T), [lang]);
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.totalPaid;
 
   useEffect(() => { loadData(); }, [type]);

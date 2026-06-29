@@ -108,11 +108,11 @@ export default function LoansList() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="amount_high">Amount ↓</SelectItem>
-            <SelectItem value="amount_low">Amount ↑</SelectItem>
-            <SelectItem value="interest">Interest Rate</SelectItem>
-            <SelectItem value="due_date">Due Date</SelectItem>
+            <SelectItem value="default">{T("sortDefault", "Default")}</SelectItem>
+            <SelectItem value="amount_high">{T("sortAmountHigh", "Amount ↓")}</SelectItem>
+            <SelectItem value="amount_low">{T("sortAmountLow", "Amount ↑")}</SelectItem>
+            <SelectItem value="interest">{T("sortInterestRate", "Interest Rate")}</SelectItem>
+            <SelectItem value="due_date">{T("sortDueDate", "Due Date")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -141,7 +141,7 @@ export default function LoansList() {
           ) : (
             <>
               <Filter className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">No loans match your filters</p>
+              <p className="text-sm text-muted-foreground">{T("noLoansMatchFilters", "No loans match your filters")}</p>
             </>
           )}
         </div>

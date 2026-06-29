@@ -1,17 +1,21 @@
 import { useMemo } from "react";
 import { CalendarCheck } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const DOW_ORDER = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 export default function DueThisWeek({ loans, bills }) {
   const { formatCurrency: fmt } = useCurrency();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+
   const items = useMemo(() => {
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0=Sun
+    const dayOfWeek = today.getDay();
     const dayOfMonth = today.getDate();
 
-    // Get start/end of current week (Sun–Sat)
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - dayOfWeek);
     weekStart.setHours(0, 0, 0, 0);
@@ -21,7 +25,6 @@ export default function DueThisWeek({ loans, bills }) {
 
     const result = [];
 
-    // Monthly loans due this week
     loans.forEach(loan => {
       if (!loan.due_day || loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly") return;
       const dueDate = new Date(today.getFullYear(), today.getMonth(), loan.due_day);
@@ -31,7 +34,6 @@ export default function DueThisWeek({ loans, bills }) {
       }
     });
 
-    // Weekly/biweekly loans
     loans.forEach(loan => {
       if ((loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly") && loan.due_day_of_week) {
         const dueDayIdx = DOW_ORDER.indexOf(loan.due_day_of_week);
@@ -43,7 +45,6 @@ export default function DueThisWeek({ loans, bills }) {
       }
     });
 
-    // Monthly bills due this week
     bills.forEach(bill => {
       if (!bill.is_active) return;
       if (bill.payment_frequency === "weekly" || bill.payment_frequency === "biweekly") {
@@ -76,7 +77,7 @@ export default function DueThisWeek({ loans, bills }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <CalendarCheck className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold font-heading text-foreground">Due This Week</h2>
+          <h2 className="text-sm font-semibold font-heading text-foreground">{T("dueThisWeek", "Due This Week")}</h2>
         </div>
         <span className="text-xs font-bold text-primary">{fmt(totalDue)}</span>
       </div>
@@ -88,7 +89,7 @@ export default function DueThisWeek({ loans, bills }) {
               <div>
                 <p className="text-xs font-medium text-foreground">{item.name}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {item.daysUntil === 0 ? "Today" : item.daysUntil === 1 ? "Tomorrow" : `In ${item.daysUntil} days`}
+                  {item.daysUntil === 0 ? T("today", "Today") : item.daysUntil === 1 ? T("tomorrow", "Tomorrow") : T("inDays", "In {n} days").replace("{n}", item.daysUntil)}
                 </p>
               </div>
             </div>

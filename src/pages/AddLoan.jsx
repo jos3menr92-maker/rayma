@@ -173,7 +173,7 @@ export default function AddLoan() {
               name="interest_rate"
               value={formData.interest_rate}
               onChange={handleChange}
-              placeholder={T("raymaWillCalculate", "RAYMA will calculate")}
+              placeholder={T("raymaWillCalculate", "Rayma AI will calculate")}
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-primary/40"
             />
           </div>
@@ -205,7 +205,7 @@ export default function AddLoan() {
               name="total_payments"
               value={formData.total_payments}
               onChange={handleChange}
-              placeholder={T("raymaWillCalculate", "RAYMA will calculate")}
+              placeholder={T("raymaWillCalculate", "Rayma AI will calculate")}
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-primary/40"
             />
           </div>
