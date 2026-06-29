@@ -192,7 +192,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="mb-5">
+      <div className="mb-5" id="active-loans-section">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("activeLoans", "Active Loans")}</h2>
           <button onClick={() => navigate("/loans")} className="text-xs text-primary font-semibold flex items-center">{T("viewAll", "View All")} <ChevronRight className="w-3 h-3 ml-0.5" /></button>
@@ -218,7 +218,7 @@ export default function Dashboard() {
 
       <DueThisWeek loans={activeLoans} bills={bills} />
       <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
-      <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} />
+      <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} userProfile={userProfile} />
       
       <div id="financial-health-score">
         <FinancialHealthScore />

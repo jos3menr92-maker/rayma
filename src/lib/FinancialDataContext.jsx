@@ -39,13 +39,6 @@ export function FinancialDataProvider({ children }) {
       if (incomesRes.error) console.error("Supabase Incomes Error:", incomesRes.error);
       if (paymentsRes.error) console.error("Supabase Payments Error:", paymentsRes.error);
 
-      console.log("Supabase Data Received:", { 
-        loans: loansRes.data, 
-        bills: billsRes.data, 
-        incomes: incomesRes.data,
-        payments: paymentsRes.data
-      });
-
       setLoans(loansRes.data || []);
       setBills(billsRes.data || []);
       setIncomes(incomesRes.data || []);

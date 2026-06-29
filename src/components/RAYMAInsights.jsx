@@ -28,7 +28,7 @@ function saveCache(insights) {
   localStorage.setItem(CACHE_KEY, JSON.stringify({ insights, timestamp: Date.now() }));
 }
 
-export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) {
+export default function RAYMAInsights({ loans = [], bills = [], incomes = [], userProfile = null }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [insights, setInsights] = useState([]);
@@ -39,13 +39,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
   const [showGreeting, setShowGreeting] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(false);
   
-  const [userProfile, setUserProfile] = useState(null);
-  
   const touchStartX = useRef(null);
-
-  useEffect(() => {
-    base44.auth.me().then(me => setUserProfile(me)).catch(console.error);
-  }, []);
 
   useEffect(() => {
     const tourCompleted = localStorage.getItem(TOUR_COMPLETED_KEY);
@@ -142,10 +136,10 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [] }) 
         popoverClass: 'driver-popover rayma-flat-theme', // Injects our flat design!
         steps: [
           { popover: { title: T("tourWelcomeTitle", "Welcome to your Command Center! 🚀"), description: T("tourWelcomeDesc", "I'm Rayma AI. I don't just track your money—I help you manage it. Let me show you how to put me to work."), align: 'center' } },
-          { element: '#active-loans-section', popover: { title: T("tourDebtTitle", "Take Action on Debt 💳"), description: T("tourDebtDesc", "This is your active debt. See those PAY buttons? Use them to instantly log a payment."), side: "right", align: 'start' } },
+          { element: '#active-loans-section', popover: { title: T("tourDebtTitle", "Your Active Loans 💳"), description: T("tourDebtDesc", "Tap any loan to see its details, log payments, and track your payoff progress."), side: "right", align: 'start' } },
           { element: '#rayma-insights', popover: { title: T("tourInsightsTitle", "Daily AI Insights 💡"), description: T("tourInsightsDesc", "Swipe through these cards daily. I generate them based on your live data."), side: "bottom", align: 'start' } },
           { element: '#financial-health-score', popover: { title: T("tourHealthTitle", "Your Financial Health 🏥"), description: T("tourHealthDesc", "Think of this as your high score. It recalculates dynamically."), side: "left", align: 'start' } },
-          { popover: { title: T("tourControlPanelTitle", "Your Control Panel 💬"), description: T("tourControlPanelDesc", "Click the floating teal bubble in the bottom right anytime to talk to me and command me!"), align: 'center' } }
+          { popover: { title: T("tourControlPanelTitle", "Your AI Co-Pilot 💬"), description: T("tourControlPanelDesc", "Tap the glowing button in the bottom center anytime to chat with me and command your finances."), align: 'center' } }
         ],
         onDestroyStarted: () => {
           driverObj.destroy();
