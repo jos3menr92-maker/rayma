@@ -202,7 +202,7 @@ export default function Bills() {
                         if (freq === "weekly") return `${T("weekly", "Weekly")} · ${bill.due_day_of_week || ""}`;
                         if (freq === "biweekly") return `${T("biweekly", "Bi-weekly")} · ${bill.due_day_of_week || ""}`;
                         return bill.due_day ? `${T("monthly", "Monthly")} · ${bill.due_day}${T("th", "th")}` : T("monthlyNoDue", "Monthly · No due day");
-                      })()} · {bill.category}
+                      })()} · {categories.find(c => c.value === bill.category)?.label?.replace(/^[^\s]+\s/, "") || bill.category}
                     </p>
                   </div>
                 </div>
@@ -239,7 +239,7 @@ export default function Bills() {
             <button
               type="button"
               className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors border border-primary/20"
-              onClick={() => alert("Rayma AI OCR Scanner coming soon! 🤖")} // Placeholder for future logic
+              onClick={() => alert(T("ocrComingSoon", "Rayma AI OCR Scanner coming soon! 🤖"))}
             >
               <Sparkles className="w-4 h-4" /> {T("autofillRAYMA", "Auto-fill with Rayma AI")}
             </button>
@@ -248,7 +248,7 @@ export default function Bills() {
           <form onSubmit={handleSave} className="space-y-3 mt-4">
             <div>
               <Label className="text-xs text-muted-foreground">{T("name", "Name *")}</Label>
-              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Netflix" required className="mt-1 rounded-xl border-primary/20 focus-visible:ring-primary" />
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={T("billNamePlaceholder", "e.g. Netflix")} required className="mt-1 rounded-xl border-primary/20 focus-visible:ring-primary" />
             </div>
             
             <div className="grid grid-cols-2 gap-3">

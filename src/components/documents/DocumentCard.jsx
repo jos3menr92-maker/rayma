@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
 import { FileText, Eye, Trash2, CheckCircle2, Clock, Archive, ExternalLink } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
+import { useMemo } from "react";
 
 const folderEmoji = {
   payments: "💳",
@@ -10,14 +13,17 @@ const folderEmoji = {
   misc: "📁",
 };
 
-const statusConfig = {
-  pending_review: { label: "Pending Review", class: "bg-amber-400/10 text-amber-400", icon: Clock },
-  approved: { label: "Approved", class: "bg-primary/10 text-primary", icon: CheckCircle2 },
-  logged: { label: "Logged", class: "bg-green-500/10 text-green-500", icon: CheckCircle2 },
-  archived: { label: "Archived", class: "bg-muted text-muted-foreground", icon: Archive },
-};
-
 export default function DocumentCard({ doc, index, onDelete, onReview }) {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+
+  const statusConfig = {
+    pending_review: { label: T("pendingReview", "Pending Review"), class: "bg-amber-400/10 text-amber-400", icon: Clock },
+    approved: { label: T("approvedStatus", "Approved"), class: "bg-primary/10 text-primary", icon: CheckCircle2 },
+    logged: { label: T("loggedStatus", "Logged"), class: "bg-green-500/10 text-green-500", icon: CheckCircle2 },
+    archived: { label: T("archivedStatus", "Archived"), class: "bg-muted text-muted-foreground", icon: Archive },
+  };
+
   const status = statusConfig[doc.status] || statusConfig.pending_review;
   const StatusIcon = status.icon;
 
@@ -44,8 +50,8 @@ export default function DocumentCard({ doc, index, onDelete, onReview }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-foreground truncate">{doc.document_type || doc.file_name || "Document"}</p>
-              <p className="text-xs text-muted-foreground">{folderEmoji[doc.folder]} {doc.folder?.charAt(0).toUpperCase() + doc.folder?.slice(1)} · {doc.scan_date}</p>
+              <p className="text-sm font-semibold text-foreground truncate">{doc.document_type || doc.file_name || T("document", "Document")}</p>
+              <p className="text-xs text-muted-foreground">{folderEmoji[doc.folder]} {doc.folder ? doc.folder.charAt(0).toUpperCase() + doc.folder.slice(1) : ""} · {doc.scan_date}</p>
             </div>
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 ${status.class}`}>
               <StatusIcon className="w-2.5 h-2.5" />
@@ -59,13 +65,13 @@ export default function DocumentCard({ doc, index, onDelete, onReview }) {
             {doc.status === "pending_review" && (
               <button onClick={() => onReview(doc)}
                 className="text-xs px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-medium flex items-center gap-1 hover:bg-primary/20 transition-colors">
-                <Eye className="w-3 h-3" /> Review
+                <Eye className="w-3 h-3" /> {T("review", "Review")}
               </button>
             )}
             {doc.file_url && (
               <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
                 className="text-xs px-2.5 py-1 rounded-lg bg-muted text-muted-foreground font-medium flex items-center gap-1 hover:text-foreground transition-colors">
-                <ExternalLink className="w-3 h-3" /> View
+                <ExternalLink className="w-3 h-3" /> {T("view", "View")}
               </a>
             )}
             <button onClick={handleDelete}

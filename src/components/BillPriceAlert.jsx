@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 import { AlertTriangle, X } from "lucide-react";
 
 export default function BillPriceAlert() {
   const { bills, userProfile } = useFinancialData();
   const { formatCurrency: fmt } = useCurrency();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [changes, setChanges] = useState([]);
   const [dismissed, setDismissed] = useState(() => {
     try { return JSON.parse(localStorage.getItem("dismissed_bill_changes") || "[]"); } catch { return []; }
@@ -16,7 +20,6 @@ export default function BillPriceAlert() {
     async function check() {
       if (!userProfile?.id || bills.length === 0) return;
 
-      // 🚀 APPLE-COMPLIANT: Only fetches from your personal Vault
       const { data: payments } = await supabase
         .from('payments')
         .select('*')
@@ -60,7 +63,7 @@ export default function BillPriceAlert() {
         <div key={key} className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3">
           <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">{bill.name} price changed</p>
+            <p className="text-sm font-semibold text-foreground">{T("priceChanged", "{name} price changed").replace("{name}", bill.name)}</p>
             <p className="text-xs text-muted-foreground">
               {fmt(previous)} → {fmt(latest)}
               <span className={`ml-1 font-semibold ${change > 0 ? "text-destructive" : "text-primary"}`}>

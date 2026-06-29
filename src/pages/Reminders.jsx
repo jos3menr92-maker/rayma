@@ -55,15 +55,17 @@ async function loadData() {
 
     const isLoan = type === "loan";
     const amount = isLoan ? item.monthly_payment : item.amount;
-    const dueText = item.due_day ? `on the ${item.due_day}th of each month` : "soon";
+    const dueText = item.due_day ? T("dueOnDayOfMonth", "on the {n}th of each month").replace("{n}", item.due_day) : T("soon", "soon");
 
-    const subject = `💰 Payment Reminder: ${item.name}`;
-    const body = `Hi,\n\nThis is a reminder that your ${isLoan ? "loan payment" : "bill"} is due ${dueText}.\n\n` +
+    const subject = T("paymentReminderSubject", "💰 Payment Reminder: {name}").replace("{name}", item.name);
+    const body = T("reminderBodyGreeting", "Hi,\n\nThis is a reminder that your {type} is due {dueText}.\n\n")
+      .replace("{type}", isLoan ? T("loanPaymentLabel", "loan payment") : T("billLabel", "bill"))
+      .replace("{dueText}", dueText) +
       `📌 ${item.name}\n` +
-      `💵 Amount due: ${fmt(amount)}\n` +
-      (item.lender ? `🏦 Lender: ${item.lender}\n` : "") +
-      (item.category ? `🏷️ Category: ${item.category}\n` : "") +
-      `\nStay on top of your finances!\n\n— Debt Tracker`;
+      `💵 ${T("amountDue", "Amount due")}: ${fmt(amount)}\n` +
+      (item.lender ? `🏦 ${T("lenderLabel", "Lender")}: ${item.lender}\n` : "") +
+      (item.category ? `🏷️ ${T("categoryLabel", "Category")}: ${item.category}\n` : "") +
+      `\n${T("stayOnTopFinances", "Stay on top of your finances!")}\n\n${T("debtTrackerSignature", "— Debt Tracker")}`;
 
     await base44.integrations.Core.SendEmail({ to: email, subject, body });
 
@@ -123,7 +125,7 @@ async function loadData() {
                       <div>
                         <p className="text-sm font-semibold text-foreground">{loan.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {fmt(loan.monthly_payment)}/mo{loan.due_day ? ` · Due ${loan.due_day}th` : ""}
+                          {fmt(loan.monthly_payment)}{T("perMonth", "/mo")}{loan.due_day ? ` · ${T("dueOnDay", "Due {n}th").replace("{n}", loan.due_day)}` : ""}
                         </p>
                       </div>
                     </div>
@@ -167,7 +169,7 @@ async function loadData() {
                       <div>
                         <p className="text-sm font-semibold text-foreground">{bill.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {fmt(bill.amount)}/mo{bill.due_day ? ` · Due ${bill.due_day}th` : ""}
+                          {fmt(bill.amount)}{T("perMonth", "/mo")}{bill.due_day ? ` · ${T("dueOnDay", "Due {n}th").replace("{n}", bill.due_day)}` : ""}
                         </p>
                       </div>
                     </div>

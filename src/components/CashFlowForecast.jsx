@@ -1,13 +1,15 @@
 import { useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
+import { t } from "@/lib/i18n";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { getWeekdayNames } from "@/utils/formatLocalized";
 
 export default function CashFlowForecast({ loans, bills, incomes }) {
-  const { locale } = useLanguage();
+  const { lang, locale } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
   const forecast = useMemo(() => {
     const today = new Date();
@@ -16,7 +18,6 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
       ? incomes.slice(0, 8).reduce((s, i) => s + (i.amount || 0), 0) / Math.min(incomes.length, 8)
       : 0;
 
-    // Build 30-day daily forecast
     const days = [];
     let runningBalance = 0;
 
@@ -31,10 +32,8 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
       let dayExpense = 0;
       const events = [];
 
-      // Weekly income split daily (avg income / 7)
       dayIncome += avgWeeklyIncome / 7;
 
-      // Monthly loan payments
       loans.forEach(loan => {
         if (loan.payment_frequency === "monthly" && loan.due_day === dayOfMonth) {
           dayExpense += loan.monthly_payment || 0;
@@ -48,7 +47,6 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
         }
       });
 
-      // Bills
       bills.forEach(bill => {
         if (!bill.is_active) return;
         if (bill.payment_frequency === "monthly" && bill.due_day === dayOfMonth) {
@@ -67,7 +65,7 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
       days.push({ label, balance: Math.round(runningBalance), events, dayExpense: Math.round(dayExpense) });
     }
     return days;
-  }, [loans, bills, incomes]);
+  }, [loans, bills, incomes, locale]);
 
   const finalBalance = forecast[forecast.length - 1]?.balance || 0;
   const lowestPoint = Math.min(...forecast.map(d => d.balance));
@@ -78,13 +76,13 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
   return (
     <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-sm font-semibold font-heading text-foreground">30-Day Cash Flow Forecast</h2>
+        <h2 className="text-sm font-semibold font-heading text-foreground">{T("cashFlowForecast30", "30-Day Cash Flow Forecast")}</h2>
         <div className={`flex items-center gap-1 text-xs font-semibold ${isPositive ? "text-primary" : "text-destructive"}`}>
           {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
           {fmt(finalBalance)}
         </div>
       </div>
-      <p className="text-[10px] text-muted-foreground mb-3">Based on avg income & scheduled payments</p>
+      <p className="text-[10px] text-muted-foreground mb-3">{T("forecastBasedOn", "Based on avg income & scheduled payments")}</p>
 
       <ResponsiveContainer width="100%" height={110}>
         <AreaChart data={forecast} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -98,7 +96,7 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
           <YAxis hide />
           <ReferenceLine y={0} stroke="hsl(var(--border))" strokeDasharray="3 3" />
           <Tooltip
-            formatter={(v) => [fmt(v), "Balance"]}
+            formatter={(v) => [fmt(v), T("balanceLabel", "Balance")]}
             contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 10 }}
             labelStyle={{ color: "hsl(var(--muted-foreground))" }}
           />
@@ -109,7 +107,7 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
 
       {lowestPoint < 0 && (
         <p className="text-[10px] text-destructive mt-2 text-center">
-          ⚠️ Projected deficit of {fmt(Math.abs(lowestPoint))} at lowest point
+          {T("projectedDeficit", "⚠️ Projected deficit of {amount} at lowest point").replace("{amount}", fmt(Math.abs(lowestPoint)))}
         </p>
       )}
     </div>

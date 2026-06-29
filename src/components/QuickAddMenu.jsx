@@ -1,18 +1,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CreditCard, Receipt, DollarSign, PiggyBank, ArrowLeftRight, ScanLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
+import { useMemo } from "react";
 
 export default function QuickAddMenu({ open, onClose }) {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
   const actions = [
-    { key: "scan", icon: ScanLine, label: "Scan & Log Document", color: "bg-primary/10 text-primary border-primary/20", badge: "AI", action: () => { onClose(); navigate("/documents"); } },
-    { key: "loan", icon: CreditCard, label: "Add Loan", color: "bg-blue-500/10 text-blue-600 border-blue-200", action: () => { onClose(); navigate("/add-loan"); } },
-    { key: "bill", icon: Receipt, label: "Add Bill", color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => { onClose(); navigate("/bills"); } },
-    { key: "income", icon: DollarSign, label: "Log Income", color: "bg-green-500/10 text-green-600 border-green-200", action: () => { onClose(); navigate("/finance"); } }, 
-    // 🚀 FIXED: Re-routed to the actual Savings Vault (/budget-dashboard)
-    { key: "savings", icon: PiggyBank, label: "Add Savings Goal", color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => { onClose(); navigate("/budget-dashboard"); } }, 
-    { key: "transaction", icon: ArrowLeftRight, label: "Log Transaction", color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => { onClose(); navigate("/bank-accounts"); } }, 
+    { key: "scan", icon: ScanLine, label: T("scanLogDocument", "Scan & Log Document"), color: "bg-primary/10 text-primary border-primary/20", badge: "AI", action: () => { onClose(); navigate("/documents"); } },
+    { key: "loan", icon: CreditCard, label: T("addLoan", "Add Loan"), color: "bg-blue-500/10 text-blue-600 border-blue-200", action: () => { onClose(); navigate("/add-loan"); } },
+    { key: "bill", icon: Receipt, label: T("addBill", "Add Bill"), color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => { onClose(); navigate("/bills"); } },
+    { key: "income", icon: DollarSign, label: T("logIncome", "Log Income"), color: "bg-green-500/10 text-green-600 border-green-200", action: () => { onClose(); navigate("/finance"); } },
+    { key: "savings", icon: PiggyBank, label: T("addSavingsGoal", "Add Savings Goal"), color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => { onClose(); navigate("/budget-dashboard"); } },
+    { key: "transaction", icon: ArrowLeftRight, label: T("logTransaction", "Log Transaction"), color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => { onClose(); navigate("/bank-accounts"); } },
   ];
 
   return (
@@ -31,8 +35,8 @@ export default function QuickAddMenu({ open, onClose }) {
           >
             <div className="flex items-center justify-between px-5 pt-4 pb-3">
               <div>
-                <h2 className="text-base font-bold font-heading text-foreground">Quick Add</h2>
-                <p className="text-xs text-muted-foreground">What would you like to track?</p>
+                <h2 className="text-base font-bold font-heading text-foreground">{T("quickAdd", "Quick Add")}</h2>
+                <p className="text-xs text-muted-foreground">{T("whatWouldYouTrack", "What would you like to track?")}</p>
               </div>
               <button onClick={onClose} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                 <X className="w-4 h-4" />

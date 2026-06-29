@@ -1,23 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
-const categories = [
-  { value: "mortgage", label: "🏠 Mortgage" },
-  { value: "auto", label: "🚗 Auto Loan" },
-  { value: "student", label: "🎓 Student Loan" },
-  { value: "personal", label: "💰 Personal Loan" },
-  { value: "credit_card", label: "💳 Credit Card" },
-  { value: "medical", label: "🏥 Medical" },
-  { value: "other", label: "📋 Other" },
-];
-
 export default function EditLoanForm({ loan, onSave }) {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+
+  const categories = [
+    { value: "mortgage", label: `🏠 ${T("catMortgage", "Mortgage")}` },
+    { value: "auto", label: `🚗 ${T("catAuto", "Auto Loan")}` },
+    { value: "student", label: `🎓 ${T("catStudent", "Student Loan")}` },
+    { value: "personal", label: `💰 ${T("catPersonal", "Personal Loan")}` },
+    { value: "credit_card", label: `💳 ${T("catCreditCard", "Credit Card")}` },
+    { value: "medical", label: `🏥 ${T("catMedical", "Medical")}` },
+    { value: "other", label: `📋 ${T("catOther", "Other")}` },
+  ];
+
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: loan.name || "",
@@ -56,15 +61,15 @@ export default function EditLoanForm({ loan, onSave }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3 mt-2">
       <div>
-        <Label className="text-xs text-muted-foreground">Name</Label>
+        <Label className="text-xs text-muted-foreground">{T("name", "Name *")}</Label>
         <Input value={form.name} onChange={(e) => handleChange("name", e.target.value)} required className="mt-1 rounded-xl" />
       </div>
       <div>
-        <Label className="text-xs text-muted-foreground">Lender</Label>
+        <Label className="text-xs text-muted-foreground">{T("lenderLabel", "Lender")}</Label>
         <Input value={form.lender} onChange={(e) => handleChange("lender", e.target.value)} className="mt-1 rounded-xl" />
       </div>
       <div>
-        <Label className="text-xs text-muted-foreground">Category</Label>
+        <Label className="text-xs text-muted-foreground">{T("category", "Category")}</Label>
         <Select value={form.category} onValueChange={(v) => handleChange("category", v)}>
           <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -76,63 +81,63 @@ export default function EditLoanForm({ loan, onSave }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-muted-foreground">Original Amount</Label>
+          <Label className="text-xs text-muted-foreground">{T("originalAmount", "Original Amount")}</Label>
           <Input type="number" step="0.01" value={form.original_amount} onChange={(e) => handleChange("original_amount", e.target.value)} className="mt-1 rounded-xl" />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Current Balance</Label>
+          <Label className="text-xs text-muted-foreground">{T("currentBalance", "Current Balance")}</Label>
           <Input type="number" step="0.01" value={form.current_balance} onChange={(e) => handleChange("current_balance", e.target.value)} className="mt-1 rounded-xl" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-muted-foreground">Interest Rate (%)</Label>
+          <Label className="text-xs text-muted-foreground">{T("interestRatePct", "Interest Rate (%)")}</Label>
           <Input type="number" step="0.01" value={form.interest_rate} onChange={(e) => handleChange("interest_rate", e.target.value)} className="mt-1 rounded-xl" />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Monthly Payment</Label>
+          <Label className="text-xs text-muted-foreground">{T("monthlyPayment", "Monthly Payment")}</Label>
           <Input type="number" step="0.01" value={form.monthly_payment} onChange={(e) => handleChange("monthly_payment", e.target.value)} className="mt-1 rounded-xl" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-muted-foreground">Payment Frequency</Label>
+          <Label className="text-xs text-muted-foreground">{T("paymentFrequency", "Payment Frequency")}</Label>
           <Select value={form.payment_frequency} onValueChange={(v) => handleChange("payment_frequency", v)}>
             <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="biweekly">Bi-weekly</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">{T("monthly", "Monthly")}</SelectItem>
+              <SelectItem value="biweekly">{T("biweekly", "Bi-weekly")}</SelectItem>
+              <SelectItem value="weekly">{T("weekly", "Weekly")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Start Date</Label>
+          <Label className="text-xs text-muted-foreground">{T("startDate", "Start Date")}</Label>
           <Input type="date" value={form.start_date} onChange={(e) => handleChange("start_date", e.target.value)} className="mt-1 rounded-xl" />
         </div>
       </div>
       {form.payment_frequency === "monthly" ? (
         <div>
-          <Label className="text-xs text-muted-foreground">Due Day of Month (1-31)</Label>
+          <Label className="text-xs text-muted-foreground">{T("dueDayMonth", "Due Day of Month (1-31)")}</Label>
           <Input type="number" min="1" max="31" value={form.due_day} onChange={(e) => handleChange("due_day", e.target.value)} className="mt-1 rounded-xl" />
         </div>
       ) : (
         <div>
-          <Label className="text-xs text-muted-foreground">Due Day of Week</Label>
+          <Label className="text-xs text-muted-foreground">{T("dueDayWeek", "Due Day of Week")}</Label>
           <Select value={form.due_day_of_week} onValueChange={(v) => handleChange("due_day_of_week", v)}>
             <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {DOW.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              {DOW.map(d => <SelectItem key={d} value={d}>{T(`day${d}`, d)}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
       )}
       <div>
-        <Label className="text-xs text-muted-foreground">Notes</Label>
+        <Label className="text-xs text-muted-foreground">{T("notes", "Notes")}</Label>
         <Textarea value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} className="mt-1 rounded-xl" rows={2} />
       </div>
       <Button type="submit" disabled={saving} className="w-full rounded-xl">
-        {saving ? "Saving..." : "Save Changes"}
+        {saving ? T("saving", "Saving...") : T("saveChanges", "Save Changes")}
       </Button>
     </form>
   );

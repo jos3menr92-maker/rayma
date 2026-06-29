@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
+import { t } from '@/lib/i18n';
 
 const COLORS = ['#6C63FF', '#FF6584', '#43B89C', '#F59E0B', '#3B82F6', '#EC4899'];
 
 export default function LoanForm({ loan, onSave, onClose }) {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [form, setForm] = useState({
     name: loan?.name || '',
     lender: loan?.lender || '',
@@ -32,18 +36,16 @@ export default function LoanForm({ loan, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      {/* Header */}
       <div className="flex items-center justify-between px-5 pt-14 pb-4 border-b border-border">
-        <h2 className="text-xl font-bold">{loan ? 'Edit Loan' : 'Add Loan'}</h2>
+        <h2 className="text-xl font-bold">{loan ? T("editLoan", "Edit Loan") : T("addLoan", "Add Loan")}</h2>
         <button onClick={onClose} className="p-2 rounded-full hover:bg-muted">
           <X size={20} />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-5 space-y-4 pb-32">
-        {/* Color picker */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground mb-2 block">Color</label>
+          <label className="text-sm font-medium text-muted-foreground mb-2 block">{T("color", "Color")}</label>
           <div className="flex gap-2">
             {COLORS.map(c => (
               <button
@@ -57,26 +59,26 @@ export default function LoanForm({ loan, onSave, onClose }) {
           </div>
         </div>
 
-        <Field label="Loan Name *" value={form.name} onChange={v => set('name', v)} placeholder="e.g. Car Loan" required />
-        <Field label="Lender" value={form.lender} onChange={v => set('lender', v)} placeholder="e.g. Bank of America" />
+        <Field label={T("loanNameRequired", "Loan Name *")} value={form.name} onChange={v => set('name', v)} placeholder="e.g. Car Loan" required />
+        <Field label={T("lenderLabel", "Lender")} value={form.lender} onChange={v => set('lender', v)} placeholder={T("lenderEx", "e.g. Bank of America")} />
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Total Amount *" value={form.total_amount} onChange={v => set('total_amount', v)} placeholder="0" type="number" required />
-          <Field label="Amount Paid" value={form.amount_paid} onChange={v => set('amount_paid', v)} placeholder="0" type="number" />
+          <Field label={T("totalAmountRequired", "Total Amount *")} value={form.total_amount} onChange={v => set('total_amount', v)} placeholder="0" type="number" required />
+          <Field label={T("amountPaid", "Amount Paid")} value={form.amount_paid} onChange={v => set('amount_paid', v)} placeholder="0" type="number" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Monthly Payment" value={form.monthly_payment} onChange={v => set('monthly_payment', v)} placeholder="0" type="number" />
-          <Field label="Interest Rate %" value={form.interest_rate} onChange={v => set('interest_rate', v)} placeholder="0.0" type="number" />
+          <Field label={T("monthlyPayment", "Monthly Payment")} value={form.monthly_payment} onChange={v => set('monthly_payment', v)} placeholder="0" type="number" />
+          <Field label={`${T("interestRate", "Interest Rate")} %`} value={form.interest_rate} onChange={v => set('interest_rate', v)} placeholder="0.0" type="number" />
         </div>
 
-        <Field label="Next Payment Date" value={form.next_payment_date} onChange={v => set('next_payment_date', v)} type="date" />
-        <Field label="Notes" value={form.notes} onChange={v => set('notes', v)} placeholder="Optional notes..." textarea />
+        <Field label={T("nextPaymentDate", "Next Payment Date")} value={form.next_payment_date} onChange={v => set('next_payment_date', v)} type="date" />
+        <Field label={T("notes", "Notes")} value={form.notes} onChange={v => set('notes', v)} placeholder={T("optionalNotes", "Optional notes...")} textarea />
       </form>
 
       <div className="fixed bottom-0 left-0 right-0 p-5 bg-background border-t border-border">
-        <button type="submit" onClick={handleSubmit} className="w-full bg-debt-dark text-white py-4 rounded-2xl font-bold text-base active:scale-95 transition-transform">
-          {loan ? 'Save Changes' : 'Add Loan'}
+        <button type="submit" onClick={handleSubmit} className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold text-base active:scale-95 transition-transform">
+          {loan ? T("saveChanges", "Save Changes") : T("addLoan", "Add Loan")}
         </button>
       </div>
     </div>

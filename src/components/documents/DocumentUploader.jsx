@@ -1,9 +1,13 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Upload, Camera, FileImage, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function DocumentUploader({ onDocumentScanned }) {
+  const { lang } = useLanguage();
+  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -12,13 +16,11 @@ export default function DocumentUploader({ onDocumentScanned }) {
     if (!file) return;
     setUploading(true);
 
-    // Upload file
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-    // Ask RAYMA/LLM to analyze the document
     const today = new Date().toISOString().split("T")[0];
     const analysis = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are RAYMA, a financial document analyzer. Analyze this financial document image and extract all relevant information.
+      prompt: `You are Rayma AI, a financial document analyzer. Analyze this financial document image and extract all relevant information.
 
 Determine:
 1. What type of document this is (receipt, invoice, tax form W-2/1099, loan statement, bill/utility, bank statement, pay stub, insurance, other)
@@ -58,7 +60,6 @@ Today's date: ${today}`,
       }
     });
 
-    // Save to entity
     const doc = await base44.entities.ScannedDocument.create({
       file_url,
       file_name: file.name,
@@ -94,8 +95,8 @@ Today's date: ${today}`,
         {uploading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <p className="text-sm font-medium text-foreground">RAYMA is analyzing your document…</p>
-            <p className="text-xs text-muted-foreground">Extracting financial data</p>
+            <p className="text-sm font-medium text-foreground">{T("raymaAnalyzing", "Rayma AI is analyzing your document…")}</p>
+            <p className="text-xs text-muted-foreground">{T("extractingData", "Extracting financial data")}</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
@@ -103,15 +104,15 @@ Today's date: ${today}`,
               <Upload className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Upload or take a photo</p>
-              <p className="text-xs text-muted-foreground mt-1">Receipts, bills, loan statements, tax forms</p>
+              <p className="text-sm font-semibold text-foreground">{T("uploadOrPhoto", "Upload or take a photo")}</p>
+              <p className="text-xs text-muted-foreground mt-1">{T("uploadDesc", "Receipts, bills, loan statements, tax forms")}</p>
             </div>
             <div className="flex gap-2">
               <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground flex items-center gap-1">
-                <FileImage className="w-3 h-3" /> JPG, PNG, PDF
+                <FileImage className="w-3 h-3" /> {T("uploadFormats", "JPG, PNG, PDF")}
               </span>
               <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground flex items-center gap-1">
-                <Camera className="w-3 h-3" /> Camera
+                <Camera className="w-3 h-3" /> {T("camera", "Camera")}
               </span>
             </div>
           </div>
