@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, User, Mail, Shield, LogOut, ChevronRight, Lock, FileText, Info, Trash2, Download, Zap, TrendingUp, LayoutDashboard, PiggyBank, Folder, BarChart2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -25,6 +26,13 @@ export default function SideDrawer({ open, onClose }) {
   const { lang } = useLanguage();
 
   function go(path) { onClose(); navigate(path); }
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [open]);
 
   const tokenDisplay = () => {
     if (!user) return null;

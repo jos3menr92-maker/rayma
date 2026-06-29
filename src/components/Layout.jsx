@@ -112,6 +112,7 @@ export default function Layout() {
         onDragEnd={() => setTimeout(() => {isDragging.current = false;}, 100)}
         onClick={(e) => {if (isDragging.current) {e.preventDefault();return;}setQuickAddOpen(true);}}
         style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+        id="quick-add-button"
         className="fixed left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
         title="Quick Add (drag to move)">
         <Plus className="w-6 h-6 text-primary-foreground" />
@@ -119,7 +120,7 @@ export default function Layout() {
 
       <PushNotificationPrompt />
       
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
           <Link to="/" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <LayoutDashboard className="w-5 h-5" />

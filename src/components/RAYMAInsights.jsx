@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sparkles, ChevronLeft, ChevronRight, X, 
@@ -29,6 +30,7 @@ function saveCache(insights) {
 }
 
 export default function RAYMAInsights({ loans = [], bills = [], incomes = [], userProfile = null }) {
+  const navigate = useNavigate();
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [insights, setInsights] = useState([]);
@@ -108,7 +110,8 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
 
   // 4. APPLE/GOOGLE COMPLIANT LAZY-LOADER
   const startProductTour = () => {
-    setShowGreeting(false); 
+    setShowGreeting(false);
+    document.body.classList.add('tour-active');
 
     // Inject the script natively to bypass bundler limits and save app memory
     const loadDriverNatively = () => {
@@ -127,22 +130,31 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
       });
     };
 
+    const cleanupTour = () => {
+      document.body.classList.remove('tour-active');
+      navigate('/');
+    };
+
     loadDriverNatively().then((driverModule) => {
       const driverObj = driverModule.js.driver({
         showProgress: true,
         animate: true,
         smoothScroll: true,
         allowClose: false,
-        popoverClass: 'driver-popover rayma-flat-theme', // Injects our flat design!
+        popoverClass: 'driver-popover rayma-flat-theme',
         steps: [
           { popover: { title: T("tourWelcomeTitle", "Welcome to your Command Center! 🚀"), description: T("tourWelcomeDesc", "I'm Rayma AI. I don't just track your money—I help you manage it. Let me show you how to put me to work."), align: 'center' } },
+          { element: '#monthly-bills-section', popover: { title: T("tourBillsTitle", "Monthly Bills 🧾"), description: T("tourBillsDesc", "Your recurring bills live here. Tap any bill to manage it, or tap View All to see everything."), side: "right", align: 'start' } },
           { element: '#active-loans-section', popover: { title: T("tourDebtTitle", "Your Active Loans 💳"), description: T("tourDebtDesc", "Tap any loan to see its details, log payments, and track your payoff progress."), side: "right", align: 'start' } },
           { element: '#rayma-insights', popover: { title: T("tourInsightsTitle", "Daily AI Insights 💡"), description: T("tourInsightsDesc", "Swipe through these cards daily. I generate them based on your live data."), side: "bottom", align: 'start' } },
           { element: '#financial-health-score', popover: { title: T("tourHealthTitle", "Your Financial Health 🏥"), description: T("tourHealthDesc", "Think of this as your high score. It recalculates dynamically."), side: "left", align: 'start' } },
+          { element: '#quick-add-button', popover: { title: T("tourQuickAddTitle", "Quick Add ➕"), description: T("tourQuickAddDesc", "This floating button lets you instantly add a loan, bill, income, or scan a document."), side: "right", align: 'center' } },
+          { element: '#bottom-nav', popover: { title: T("tourNavTitle", "Navigation 🧭"), description: T("tourNavDesc", "Use this bar to jump between Home, Finance, Bills, and More features."), side: "top", align: 'center' } },
           { popover: { title: T("tourControlPanelTitle", "Your AI Co-Pilot 💬"), description: T("tourControlPanelDesc", "Tap the glowing button in the bottom center anytime to chat with me and command your finances."), align: 'center' } }
         ],
         onDestroyStarted: () => {
           driverObj.destroy();
+          cleanupTour();
         }
       });
       driverObj.drive();
@@ -152,7 +164,10 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
   useEffect(() => {
     const handleRemoteTourStart = () => startProductTour();
     window.addEventListener("trigger-rayma-tour", handleRemoteTourStart);
-    return () => window.removeEventListener("trigger-rayma-tour", handleRemoteTourStart);
+    return () => {
+      window.removeEventListener("trigger-rayma-tour", handleRemoteTourStart);
+      document.body.classList.remove('tour-active');
+    };
   }, []);
 
   const handleGetStarted = () => {

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
@@ -37,6 +38,13 @@ export default function MoreMenu({ open, onClose }) {
   const isAdmin = userProfile?.role === "admin";
 
   const visibleItems = moreItems.filter(item => !item.adminOnly || isAdmin);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [open]);
 
   // 🧹 CLEANED: Removed the rogue popup logic. It just routes smoothly now.
   function go(path) {

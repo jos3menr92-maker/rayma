@@ -3,12 +3,19 @@ import { X, CreditCard, Receipt, DollarSign, PiggyBank, ArrowLeftRight, ScanLine
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 export default function QuickAddMenu({ open, onClose }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [open]);
 
   const actions = [
     { key: "scan", icon: ScanLine, label: T("scanLogDocument", "Scan & Log Document"), color: "bg-primary/10 text-primary border-primary/20", badge: "AI", action: () => { onClose(); navigate("/documents"); } },

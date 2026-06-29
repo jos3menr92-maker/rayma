@@ -157,3 +157,9 @@
 .driver-popover-footer button:hover {
   opacity: 0.9;
 }
+
+/* Tour active state — blocks background interaction */
+body.tour-active #bottom-nav,
+body.tour-active #quick-add-button {
+  pointer-events: none;
+}

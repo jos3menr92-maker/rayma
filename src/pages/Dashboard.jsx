@@ -171,7 +171,7 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      <div className="mb-5">
+      <div className="mb-5" id="monthly-bills-section">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBills", "Monthly Bills")}</h2>
           <button onClick={() => navigate("/bills")} className="text-xs text-primary font-semibold flex items-center">{T("viewAll", "View All")} <ChevronRight className="w-3 h-3 ml-0.5" /></button>

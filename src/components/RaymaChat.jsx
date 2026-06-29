@@ -206,8 +206,9 @@ export default function RaymaChat({
     const tourTriggers = [ "tour","start tour","show me around","guide me","another tour","restart tour" ];
     if (tourTriggers.some(trigger => text.includes(trigger))) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: "Starting the tour now." }]);
-      window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
       if (onClose) onClose();
+      navigate("/");
+      setTimeout(() => window.dispatchEvent(new CustomEvent("trigger-rayma-tour")), 600);
       setInput(""); return;
     }
 
