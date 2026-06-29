@@ -4,13 +4,11 @@ import { motion } from "framer-motion";
 import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
+import { useT } from "@/lib/LanguageContext";
 import { isNativeMobileApp, getPlatform, triggerNativeIAP, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
 
 export default function Store() {
-  const { lang } = useLanguage();
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+  const T = useT();
 
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState("");

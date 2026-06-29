@@ -2,15 +2,14 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useLanguage } from "@/lib/LanguageContext";
+import { useLanguage, useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { t } from "@/lib/i18n";
 import { getMonthName, getWeekdayNames } from "@/utils/formatLocalized";
 
 export default function MiniCalendar({ bills, loans, userProfile }) {
   const { lang, locale } = useLanguage();
+  const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const [current, setCurrent] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
 

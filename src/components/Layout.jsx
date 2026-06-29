@@ -9,8 +9,7 @@ import MoreMenu from "./MoreMenu";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { getInitialsColor } from "@/components/AvatarPicker";
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
+import { useT } from "@/lib/LanguageContext";
 
 const HUMAN_AVATARS = [
 { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -24,8 +23,7 @@ const HUMAN_AVATARS = [
 
 
 export default function Layout() {
-  const { lang } = useLanguage();
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+  const T = useT();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);

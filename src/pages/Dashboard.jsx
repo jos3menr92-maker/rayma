@@ -14,8 +14,7 @@ import DueThisWeek from "../components/DueThisWeek";
 import NetWorthChart from "../components/NetWorthChart";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
+import { useT } from "@/lib/LanguageContext";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -57,8 +56,7 @@ function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, heigh
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { lang } = useLanguage();
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+  const T = useT();
   const { formatCurrency } = useCurrency();
   
   const { loans, bills, incomes, userProfile, loading, reload } = useFinancialData();

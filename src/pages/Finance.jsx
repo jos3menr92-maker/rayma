@@ -2,8 +2,7 @@ import { useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
+import { useLanguage, useT } from "@/lib/LanguageContext";
 import { motion } from "framer-motion";
 import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,8 +27,8 @@ function startOfWeek(date = new Date()) {
 export default function Finance() {
   const { formatCurrency: fmt } = useCurrency();
   const { lang, locale } = useLanguage();
+  const T = useT();
   const { bills, loans, incomes, userProfile, reload, loading } = useFinancialData();
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
 
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);

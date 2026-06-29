@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useLanguage } from "@/lib/LanguageContext";
+import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
-import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,17 +25,8 @@ const emptyForm = { name: "", institution: "", account_type: "checking", balance
 const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), description: "", amount: "", category: "other", type: "debit", notes: "" };
 
 export default function BankAccounts() {
-  const { lang } = useLanguage();
+  const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-
-  // 🌍 FIXED: Recreate T() when lang changes
-  const T = useMemo(() =>
-    (key, fallback) => {
-      const translated = t(lang, key);
-      return translated !== key ? translated : fallback;
-    },
-    [lang]
-  );
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -46,7 +36,7 @@ export default function BankAccounts() {
   const [txForm, setTxForm] = useState(emptyTx);
   const [loading, setLoading] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const typeConfig = useMemo(() => buildTypeConfig(T), [lang]);
+  const typeConfig = useMemo(() => buildTypeConfig(T), [T]);
 
   useEffect(() => { fetchAll(); }, []);
 

@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
-import { useLanguage } from "@/lib/LanguageContext"; 
-import { LANGUAGES, t } from "@/lib/i18n";
+import { useLanguage, useT } from "@/lib/LanguageContext"; 
+import { LANGUAGES } from "@/lib/i18n";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -50,8 +50,8 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 
 export default function Profile() { 
   const { lang, setLang } = useLanguage(); 
-  const navigate = useNavigate(); 
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+  const navigate = useNavigate();
+  const T = useT();
   const fileInputRef = useRef(null);
   
   const { userProfile, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
@@ -99,7 +99,7 @@ export default function Profile() {
         auto_insights: userProfile.auto_insights !== false,
       });
     }
-  }, [userProfile, lang]); 
+  }, [userProfile]);
 
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
@@ -254,21 +254,21 @@ export default function Profile() {
                 onClick={() => setForm(f => ({ ...f, avatar_photo_url: "" }))} 
                 type="button" 
                 className="absolute top-0 right-0 p-2 bg-destructive text-white rounded-full shadow-lg border-2 border-background hover:scale-105 transition-transform"
-                title="Remove Photo"
+                title={T("removePhoto", "Remove Photo")}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
             <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handlePhotoUpload} />
           </div>
-          <h1 className="text-2xl font-bold mt-4">{form.preferred_name || "User"}</h1>
+          <h1 className="text-2xl font-bold mt-4">{form.preferred_name || T("user", "User")}</h1>
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
           
           {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Fingerprint} title="Identity & Style" subtitle="Choose a professional avatar to represent you" />
+            <SectionHeader icon={Fingerprint} title={T("identityStyle", "Identity & Style")} subtitle={T("chooseAvatar", "Choose a professional avatar to represent you")} />
             
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
               {HUMAN_AVATARS.map((av) => (
@@ -284,29 +284,29 @@ export default function Profile() {
             </div>
             
             <div className="mt-6">
-              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Display Name</Label>
-              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder="How should we call you?" />
+              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("displayName", "Display Name")}</Label>
+              <Input value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} className="rounded-xl" placeholder={T("howShouldWeCallYou", "How should we call you?")} />
             </div>
           </div>
 
           {/* Theme & Focus */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Monitor} title="Theme & Focus" subtitle="Customize your dashboard experience" />
+            <SectionHeader icon={Monitor} title={T("themeFocus", "Theme & Focus")} subtitle={T("customizeDashboard", "Customize your dashboard experience")} />
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 p-1 bg-muted/50 rounded-xl border border-border/50">
                 <button type="button" onClick={() => setTheme("light")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "light" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Sun className="w-4 h-4" /> Light Mode
+                  <Sun className="w-4 h-4" /> {T("lightMode", "Light Mode")}
                 </button>
                 <button type="button" onClick={() => setTheme("dark")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "dark" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Moon className="w-4 h-4" /> Dark Mode
+                  <Moon className="w-4 h-4" /> {T("darkMode", "Dark Mode")}
                 </button>
               </div>
 
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
                 <div>
-                  <p className="text-sm font-medium">Focus Mode</p>
-                  <p className="text-xs text-muted-foreground">Hides dashboard accent colors for a distraction-free view</p>
+                  <p className="text-sm font-medium">{T("focusMode", "Focus Mode")}</p>
+                  <p className="text-xs text-muted-foreground">{T("focusModeDesc", "Hides dashboard accent colors for a distraction-free view")}</p>
                 </div>
                 <button 
                   type="button"
@@ -321,14 +321,14 @@ export default function Profile() {
 
           {/* AI Smart Notifications */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Bell} title="Smart Notifications" subtitle="Let Rayma AI handle the heavy lifting" />
+            <SectionHeader icon={Bell} title={T("smartNotifications", "Smart Notifications")} subtitle={T("raymaHeavyLifting", "Let Rayma AI handle the heavy lifting")} />
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3">
                 <div className="flex gap-3">
                   <div className="mt-0.5"><Sparkles className="w-4 h-4 text-primary" /></div>
                   <div>
-                    <p className="text-sm font-medium">Automated Cash Flow Insights</p>
-                    <p className="text-xs text-muted-foreground">Rayma AI analyzes your weekly spending automatically</p>
+                    <p className="text-sm font-medium">{T("automatedCashFlowInsights", "Automated Cash Flow Insights")}</p>
+                    <p className="text-xs text-muted-foreground">{T("raymaAnalyzesWeekly", "Rayma AI analyzes your weekly spending automatically")}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, auto_insights: !form.auto_insights})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.auto_insights ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
@@ -339,8 +339,8 @@ export default function Profile() {
                 <div className="flex gap-3">
                   <div className="mt-0.5"><AlertCircle className="w-4 h-4 text-muted-foreground" /></div>
                   <div>
-                    <p className="text-sm font-medium">Smart Bill Alerts</p>
-                    <p className="text-xs text-muted-foreground">Get notified only when upcoming obligations need attention</p>
+                    <p className="text-sm font-medium">{T("smartBillAlerts", "Smart Bill Alerts")}</p>
+                    <p className="text-xs text-muted-foreground">{T("notifiedObligations", "Get notified only when upcoming obligations need attention")}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setForm({...form, smart_alerts: !form.smart_alerts})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.smart_alerts ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
@@ -382,29 +382,29 @@ export default function Profile() {
 
           {/* Pay Schedule */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Calendar} title="Pay Schedule" subtitle="Helps Rayma AI calculate your cash flow" />
+            <SectionHeader icon={Calendar} title={T("paySchedule", "Pay Schedule")} subtitle={T("helpsRaymaCashFlow", "Helps Rayma AI calculate your cash flow")} />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">Frequency</Label>
+                <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("frequency", "Frequency")}</Label>
                 <Select value={form.pay_frequency} onValueChange={v => setForm({...form, pay_frequency: v})}>
-                  <SelectTrigger><SelectValue placeholder="Frequency" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={T("frequency", "Frequency")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="weekly">{T("weekly", "Weekly")}</SelectItem>
+                    <SelectItem value="biweekly">{T("biweekly", "Bi-weekly")}</SelectItem>
+                    <SelectItem value="monthly">{T("monthly", "Monthly")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("primaryPayday", "Primary Payday")}</Label>
-                <Input placeholder="e.g., 1st & 15th" value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="rounded-xl" />
+                <Input placeholder={T("paydayPlaceholder", "e.g., 1st & 15th")} value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="rounded-xl" />
               </div>
             </div>
           </div>
 
           {/* 🛡️ THE SECURITY VAULT */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <SectionHeader icon={Shield} title="Privacy & Legal" subtitle="Manage your data and account security." />
+            <SectionHeader icon={Shield} title={T("privacyLegal", "Privacy & Legal")} subtitle={T("manageDataSecurity", "Manage your data and account security.")} />
             
             <div className="space-y-3 mt-4">
                <Link to="/privacy" className="flex items-center justify-between p-3 bg-muted/30 hover:bg-muted rounded-xl text-sm transition-colors border border-border/50">
@@ -438,7 +438,7 @@ export default function Profile() {
               className="text-muted-foreground/30 hover:text-primary/60 transition-colors flex items-center gap-2 text-xs font-mono"
             >
               <Gamepad2 className="w-4 h-4" />
-              INSERT COIN
+              {T("insertCoinText", "INSERT COIN")}
             </button>
           </div>
         </form>
@@ -450,16 +450,16 @@ export default function Profile() {
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
             <div className="flex items-center gap-3 text-amber-500">
               <ShieldAlert className="w-6 h-6" />
-              <h3 className="font-bold text-lg text-foreground">Security Verification</h3>
+              <h3 className="font-bold text-lg text-foreground">{T("securityVerification", "Security Verification")}</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Please enter your password to confirm you want to {pendingAction === 'export' ? "export your data" : "permanently delete your account"}.
+              {T("enterPasswordConfirm", "Please enter your password to confirm you want to {action}.").replace("{action}", pendingAction === 'export' ? T("exportYourData", "export your data") : T("permanentlyDeleteAccount", "permanently delete your account"))}
             </p>
             
             <div className="space-y-1">
               <Input 
                 type="password" 
-                placeholder="Enter Password..." 
+                placeholder={T("enterPassword", "Enter password...")}
                 className="w-full bg-muted border rounded-xl p-3 text-sm focus:outline-primary"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -472,7 +472,7 @@ export default function Profile() {
             
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)} disabled={isVerifying}>
-                Cancel
+                {T("cancel", "Cancel")}
               </Button>
               <Button 
                 type="button" 
@@ -482,7 +482,7 @@ export default function Profile() {
                 disabled={!password || isVerifying}
               >
                 {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
-                Confirm
+                {T("confirm", "Confirm")}
               </Button>
             </div>
           </motion.div>

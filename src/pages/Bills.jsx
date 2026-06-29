@@ -11,8 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
+import { useT } from "@/lib/LanguageContext";
 
 const categoryIcons = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️",
@@ -20,8 +19,7 @@ const categoryIcons = {
 };
 
 export default function Bills() {
-  const { lang } = useLanguage();
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+  const T = useT();
   
   // 🧠 Pulling real data from your Supabase Brain
   const { bills, userProfile, reload, loading } = useFinancialData();

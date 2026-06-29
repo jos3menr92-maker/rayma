@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { detectBrowserLanguage, getDir } from "@/lib/i18n";
+import { detectBrowserLanguage, getDir, t } from "@/lib/i18n";
 
 const LOCALE_REGION_MAP = {
   "es-CO": { lang: "es", currency: "COP", country: "Colombia", tz: "America/Bogota" },
@@ -99,4 +99,12 @@ export function LanguageProvider({ children }) {
 
 export function useLanguage() {
   return useContext(LanguageContext);
+}
+
+export function useT() {
+  const { lang } = useLanguage();
+  return useMemo(() => (key, fallback) => {
+    const tr = t(lang, key);
+    return tr !== key ? tr : fallback;
+  }, [lang]);
 }

@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
+import { useT } from "@/lib/LanguageContext";
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
 import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, Download, MessageSquare, CreditCard,} from "lucide-react";
@@ -33,8 +32,7 @@ const moreItems = [
 
 export default function MoreMenu({ open, onClose }) {
   const navigate = useNavigate();
-  const { lang } = useLanguage();
-  const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
+  const T = useT();
   const { userProfile } = useFinancialData(); 
   const isAdmin = userProfile?.role === "admin";
 
