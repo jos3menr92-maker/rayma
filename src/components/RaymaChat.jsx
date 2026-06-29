@@ -203,13 +203,12 @@ export default function RaymaChat({
       return;
     }
 
-    const tourTriggers = [ "tour","start tour","show me around","guide me" ];  
-    if (!tourTriggered && tourTriggers.some(trigger => text === trigger || text.startsWith(trigger + " "))) {
-      setTourTriggered(true);
+    const tourTriggers = [ "tour","start tour","show me around","guide me","another tour","restart tour" ];
+    if (tourTriggers.some(trigger => text.includes(trigger))) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: "Starting the tour now." }]);
       window.dispatchEvent(new CustomEvent("trigger-rayma-tour"));
-      if (onClose) onClose(); 
-      setInput(""); return; 
+      if (onClose) onClose();
+      setInput(""); return;
     }
 
     if (text === "dark mode" || text === "light mode") {
