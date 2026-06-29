@@ -163,3 +163,7 @@ body.tour-active #bottom-nav,
 body.tour-active #quick-add-button {
   pointer-events: none;
 }
+
+body.tour-active #rayma-chat-panel {
+  display: none !important;
+}
