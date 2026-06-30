@@ -127,7 +127,7 @@ export default function Store() {
     setError("");
     setPromoSuccess(null);
     try {
-      const res = await base44.functions.invoke("redeemPromoCode", { code: promoCode.trim() });
+      const res = await base44.functions.invoke("redeemPromoCode", { code: promoCode.trim(), userId: user?.id });
       if (res.data?.success) {
         setPromoSuccess(res.data.message || T("promoSuccess", "Promo code redeemed!"));
         setPromoCode("");
