@@ -369,11 +369,16 @@ export default function Profile() {
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("preferredCurrency", "Currency")}</Label>
                 <Select value={form.preferred_currency} onValueChange={v => setForm({...form, preferred_currency: v})}>
                   <SelectTrigger><SelectValue placeholder={T("selectCurrency", "Select Currency")} /></SelectTrigger>
-                  <SelectContent>
+                   <SelectContent>
                     <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                    <SelectItem value="MXN">MXN ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="MXN">MXN ($)</SelectItem>
+                      {/* 👇 New South American Currencies 👇 */}
+                      <SelectItem value="COP">COP ($)</SelectItem>
+                      <SelectItem value="ARS">ARS ($)</SelectItem>
+                      <SelectItem value="BRL">BRL (R$)</SelectItem>
+                      <SelectItem value="CLP">CLP ($)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
