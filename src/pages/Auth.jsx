@@ -32,8 +32,7 @@ export default function Auth() {
         await checkAppState();
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         
-        // 🚀 FIXED: Hard redirect to break the infinite router loop
-        window.location.href = "/";
+        navigate("/", { replace: true });
       } else {
         await base44.auth.register({ 
           email: formData.email, 
@@ -63,8 +62,7 @@ export default function Auth() {
       }
       await checkAppState();
       
-      // 🚀 FIXED: Hard redirect after verifying
-      window.location.href = "/";
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.message || "Invalid verification code. Please try again.");
     } finally {
@@ -90,9 +88,8 @@ export default function Auth() {
     setError("");
     try {
       if (provider === "passkey") {
-        await base44.auth.signInWithPasskey(); 
-        // 🚀 FIXED: Hard redirect for passkey
-        window.location.href = "/";
+        await base44.auth.signInWithPasskey();
+        navigate("/", { replace: true });
       } else {
         await base44.auth.loginWithProvider(provider, "/");
       }

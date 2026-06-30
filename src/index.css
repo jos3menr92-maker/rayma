@@ -107,6 +107,9 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    overscroll-behavior-y: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
 

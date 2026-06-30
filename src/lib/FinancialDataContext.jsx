@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "./supabaseClient"; 
+import { supabase } from "./supabaseClient";
+import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);
 
@@ -68,12 +69,64 @@ export function FinancialDataProvider({ children }) {
     }
   }
 
+  // ─── Optimistic UI Mutation Functions ───
+
+  // Pay a bill: instantly marks bill as paid, syncs in background
+  async function payBill(bill, paymentAmount, paymentDate = new Date().toISOString().split('T')[0]) {
+    const prevBills = [...bills];
+    setBills(prev => prev.map(b => b.id === bill.id ? { ...b, last_paid_date: paymentDate } : b));
+
+    try {
+      const { data, error } = await supabase.from('payments').insert({
+        bill_id: bill.id,
+        amount: paymentAmount,
+        payment_date: paymentDate,
+        payment_type: 'bill',
+      }).select();
+      if (error) throw error;
+      if (data?.[0]) setPayments(prev => [data[0], ...prev]);
+    } catch (e) {
+      setBills(prevBills);
+      toast({ title: "Payment failed", description: e.message, variant: "destructive" });
+    }
+  }
+
+  // Update a loan: instantly updates local state, syncs in background
+  async function updateLoan(loanId, updates) {
+    const prevLoans = [...loans];
+    setLoans(prev => prev.map(l => l.id === loanId ? { ...l, ...updates } : l));
+
+    try {
+      const { error } = await supabase.from('loans').update(updates).eq('id', loanId);
+      if (error) throw error;
+    } catch (e) {
+      setLoans(prevLoans);
+      toast({ title: "Update failed", description: e.message, variant: "destructive" });
+    }
+  }
+
+  // Add a transaction: instantly adds to list, syncs in background
+  async function addTransaction(transactionData) {
+    const tempId = `temp_${Date.now()}`;
+    const optimisticRecord = { ...transactionData, id: tempId, created_at: new Date().toISOString() };
+    setPayments(prev => [optimisticRecord, ...prev]);
+
+    try {
+      const { data, error } = await supabase.from('payments').insert(transactionData).select();
+      if (error) throw error;
+      setPayments(prev => prev.map(p => p.id === tempId ? data[0] : p));
+    } catch (e) {
+      setPayments(prev => prev.filter(p => p.id !== tempId));
+      toast({ title: "Failed to add transaction", description: e.message, variant: "destructive" });
+    }
+  }
+
   useEffect(() => {
     loadAll();
   }, []);
 
   return (
-    <FinancialDataContext.Provider value={{ loans, bills, incomes, payments, userProfile, loading, reload: loadAll, refreshUserProfile }}>
+    <FinancialDataContext.Provider value={{ loans, bills, incomes, payments, userProfile, loading, reload: loadAll, refreshUserProfile, payBill, updateLoan, addTransaction }}>
       {children}
     </FinancialDataContext.Provider>
   );
