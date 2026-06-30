@@ -6,6 +6,7 @@ import { Mail, Lock, User, Loader2, ArrowRight, Chrome, Fingerprint } from "luci
 import { Link } from "react-router-dom";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/components/ui/use-toast";
+import { isNativeMobileApp } from "@/lib/iap";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -181,9 +182,12 @@ export default function Auth() {
         </div>
 
         <div className="space-y-3">
-          <button type="button" onClick={() => handleProviderSignIn("passkey")} disabled={loading || activeProvider} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm disabled:opacity-50">
-            {activeProvider === "passkey" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-5 h-5" />} Sign in with Passkey / Biometrics
-          </button>
+          {/* 🛡️ MOBILE GUARD: Only show Passkey on the web */}
+          {!isNativeMobileApp() && (
+            <button type="button" onClick={() => handleProviderSignIn("passkey")} disabled={loading || activeProvider} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm disabled:opacity-50">
+              {activeProvider === "passkey" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-5 h-5" />} Sign in with Passkey / Biometrics
+            </button>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <button type="button" onClick={() => handleProviderSignIn("google")} disabled={loading || activeProvider} className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50">
               {activeProvider === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />} Google
