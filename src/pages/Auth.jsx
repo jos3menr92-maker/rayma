@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/components/ui/use-toast";
 import { isNativeMobileApp } from "@/lib/iap";
-import { supabase } from "@/lib/supabaseClient"; // 🚀 NEW: Imported Supabase
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -31,7 +31,6 @@ export default function Auth() {
       if (isLogin) {
         await base44.auth.loginViaEmailPassword(formData.email, formData.password);
         
-        // 🚀 NEW: Silently sync session with Supabase so data loads properly
         const { error: supabaseError } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
@@ -72,7 +71,6 @@ export default function Auth() {
         base44.auth.setToken(result.access_token);
       }
 
-      // 🚀 NEW: Silently sync session with Supabase for BRAND NEW users!
       const { error: supabaseError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -187,6 +185,15 @@ export default function Auth() {
             <input type="password" placeholder="Password" className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50" onChange={(e) => setFormData({ ...formData, password: e.target.value })} required disabled={loading || activeProvider} />
           </div>
 
+          {/* 🚀 NEW: Forgot Password Link */}
+          {isLogin && (
+            <div className="flex justify-end">
+              <Link to="/reset-password" className="text-sm text-primary hover:underline font-medium -mt-2">
+                Forgot password?
+              </Link>
+            </div>
+          )}
+
           {error && <p className="text-sm text-destructive text-center bg-destructive/10 py-2 rounded-lg">{error}</p>}
 
           <button type="submit" disabled={loading || activeProvider} className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
@@ -208,15 +215,8 @@ export default function Auth() {
           )}
           
           {/* 🚀 TEMPORARILY DISABLED OAUTH FOR MVP LAUNCH
-            We will re-enable these once native Supabase OAuth syncing is built.
-            
           <div className="grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => handleProviderSignIn("google")} disabled={loading || activeProvider} className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50">
-              {activeProvider === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />} Google
-            </button>
-            <button type="button" onClick={() => handleProviderSignIn("apple")} disabled={loading || activeProvider} className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50">
-              {activeProvider === "apple" ? <Loader2 className="w-4 h-4 animate-spin" /> : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.58c.07-2.65 2.37-3.91 2.47-3.96-1.34-1.94-3.41-2.2-4.17-2.24-1.78-.18-3.47 1.05-4.38 1.05-.91 0-2.3-1.01-4.04-1.01-1.74 0-3.37 1.15-4.28 2.75-1.85 3.25-.48 8.04 1.33 10.66.89 1.28 1.94 2.7 3.32 2.65 1.33-.05 1.84-.86 3.44-.86 1.6 0 2.07.86 3.46.83 1.41-.03 2.33-1.28 3.22-2.57 1.03-1.49 1.46-2.94 1.48-3.02-.03-.02-2.82-1.08-2.88-4.24zm-2.4-7.23c.75-.92 1.25-2.2 1.11-3.48-1.09.04-2.45.74-3.23 1.68-.69.83-1.29 2.15-1.12 3.4 1.23.1 2.48-.68 3.24-1.6z" /></svg>} Apple
-            </button>
+            ... Google and Apple buttons ...
           </div> 
           */}
         </div>
