@@ -71,6 +71,16 @@ export default function Auth() {
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
+
+      // 🚀 NEW: Silently sync session with Supabase for BRAND NEW users!
+      const { error: supabaseError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (supabaseError) {
+        console.error("Supabase sync failed on verification:", supabaseError.message);
+      }
+
       await checkAppState();
       
       navigate("/", { replace: true });
@@ -196,6 +206,10 @@ export default function Auth() {
               {activeProvider === "passkey" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-5 h-5" />} Sign in with Passkey / Biometrics
             </button>
           )}
+          
+          {/* 🚀 TEMPORARILY DISABLED OAUTH FOR MVP LAUNCH
+            We will re-enable these once native Supabase OAuth syncing is built.
+            
           <div className="grid grid-cols-2 gap-3">
             <button type="button" onClick={() => handleProviderSignIn("google")} disabled={loading || activeProvider} className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50">
               {activeProvider === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Chrome className="w-4 h-4" />} Google
@@ -203,7 +217,8 @@ export default function Auth() {
             <button type="button" onClick={() => handleProviderSignIn("apple")} disabled={loading || activeProvider} className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border hover:bg-muted/50 transition-colors text-sm font-medium disabled:opacity-50">
               {activeProvider === "apple" ? <Loader2 className="w-4 h-4 animate-spin" /> : <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.58c.07-2.65 2.37-3.91 2.47-3.96-1.34-1.94-3.41-2.2-4.17-2.24-1.78-.18-3.47 1.05-4.38 1.05-.91 0-2.3-1.01-4.04-1.01-1.74 0-3.37 1.15-4.28 2.75-1.85 3.25-.48 8.04 1.33 10.66.89 1.28 1.94 2.7 3.32 2.65 1.33-.05 1.84-.86 3.44-.86 1.6 0 2.07.86 3.46.83 1.41-.03 2.33-1.28 3.22-2.57 1.03-1.49 1.46-2.94 1.48-3.02-.03-.02-2.82-1.08-2.88-4.24zm-2.4-7.23c.75-.92 1.25-2.2 1.11-3.48-1.09.04-2.45.74-3.23 1.68-.69.83-1.29 2.15-1.12 3.4 1.23.1 2.48-.68 3.24-1.6z" /></svg>} Apple
             </button>
-          </div>
+          </div> 
+          */}
         </div>
 
         <div className="text-center space-y-4">
