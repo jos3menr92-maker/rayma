@@ -16,6 +16,7 @@ export function FinancialDataProvider({ children }) {
   async function loadAll() {
     setLoading(true);
     try {
+      // 1. Fetch the user first
       const me = await base44.auth.me();
       setUserProfile(me || null);
 
@@ -28,6 +29,7 @@ export function FinancialDataProvider({ children }) {
         return;
       }
 
+      // 2. Fetch all Supabase data now that we have a session
       const [loansRes, billsRes, incomesRes, paymentsRes] = await Promise.all([
         supabase.from('loans').select('*').order('created_at', { ascending: false }),
         supabase.from('bills').select('*').order('created_at', { ascending: false }),
@@ -47,8 +49,6 @@ export function FinancialDataProvider({ children }) {
 
     } catch (e) {
       console.error("Failed to load financial data from Supabase:", e);
-      // We clear the financial data arrays on error, 
-      // but we DO NOT wipe out the userProfile!
       setLoans([]);
       setBills([]);
       setIncomes([]);
@@ -73,6 +73,7 @@ export function FinancialDataProvider({ children }) {
 
   // Pay a bill: instantly marks bill as paid, syncs in background
   async function payBill(bill, paymentAmount, paymentDate = new Date().toISOString().split('T')[0]) {
+    if (!userProfile?.id) return; // Guard clause
     const prevBills = [...bills];
     setBills(prev => prev.map(b => b.id === bill.id ? { ...b, last_paid_date: paymentDate } : b));
 
@@ -82,6 +83,7 @@ export function FinancialDataProvider({ children }) {
         amount: paymentAmount,
         payment_date: paymentDate,
         payment_type: 'bill',
+        user_id: userProfile.id // 🚀 FIXED: Explicitly attach the user ID
       }).select();
       if (error) throw error;
       if (data?.[0]) setPayments(prev => [data[0], ...prev]);
@@ -107,12 +109,18 @@ export function FinancialDataProvider({ children }) {
 
   // Add a transaction: instantly adds to list, syncs in background
   async function addTransaction(transactionData) {
+    if (!userProfile?.id) return; // Guard clause
     const tempId = `temp_${Date.now()}`;
-    const optimisticRecord = { ...transactionData, id: tempId, created_at: new Date().toISOString() };
+    
+    // 🚀 FIXED: Attach user ID to the local optimistic record
+    const optimisticRecord = { ...transactionData, id: tempId, created_at: new Date().toISOString(), user_id: userProfile.id };
     setPayments(prev => [optimisticRecord, ...prev]);
 
     try {
-      const { data, error } = await supabase.from('payments').insert(transactionData).select();
+      const { data, error } = await supabase.from('payments').insert({
+        ...transactionData,
+        user_id: userProfile.id // 🚀 FIXED: Explicitly attach the user ID to Supabase
+      }).select();
       if (error) throw error;
       setPayments(prev => prev.map(p => p.id === tempId ? data[0] : p));
     } catch (e) {
@@ -121,6 +129,7 @@ export function FinancialDataProvider({ children }) {
     }
   }
 
+  // This safely runs exactly once when the app opens, preventing the infinite loading loop
   useEffect(() => {
     loadAll();
   }, []);
