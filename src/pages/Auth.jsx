@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/components/ui/use-toast";
 import { isNativeMobileApp } from "@/lib/iap";
+import { supabase } from "@/lib/supabaseClient"; // 🚀 NEW: Imported Supabase
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -29,6 +30,16 @@ export default function Auth() {
     try {
       if (isLogin) {
         await base44.auth.loginViaEmailPassword(formData.email, formData.password);
+        
+        // 🚀 NEW: Silently sync session with Supabase so data loads properly
+        const { error: supabaseError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        if (supabaseError) {
+          console.error("Supabase sync failed:", supabaseError.message);
+        }
+
         await checkAppState();
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         
