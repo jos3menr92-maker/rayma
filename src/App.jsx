@@ -42,6 +42,7 @@ const BudgetDashboard = lazy(() => import('./pages/BudgetDashboard'));
 const DebtPayoffSimulator = lazy(() => import('./pages/DebtPayoffSimulator'));
 const MonthlyRecap = lazy(() => import('./pages/MonthlyRecap'));
 const AssetDashboard = lazy(() => import('./pages/AssetDashboard'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const TaxSummary = lazy(() => import('./pages/TaxSummary'));
 
 const PageLoader = () => (
@@ -145,6 +146,8 @@ function App() {
             
             {/* 🚀 NEW: Placed in the public router so unauthenticated users can actually reach it! */}
             <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
+            {/* 🚀 NEW: The page the email link actually goes to */}
+            <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
             
             <Route path="/*" element={<AuthenticatedApp />} />
           </Routes>
