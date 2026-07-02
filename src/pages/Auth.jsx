@@ -29,21 +29,29 @@ export default function Auth() {
 
     try {
       if (isLogin) {
+        // 1. Authenticate with Base44
         await base44.auth.loginViaEmailPassword(formData.email, formData.password);
         
-        const { error: supabaseError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-        if (supabaseError) {
-          console.error("Supabase sync failed:", supabaseError.message);
+        // 2. Call backend to sync user and generate the one-time secure token
+        const syncResponse = await base44.functions.invoke('syncSupabaseUser', {});
+        
+        // 3. THE SECURE HANDOFF: Use the temp token to get the real Supabase session
+        if (syncResponse.data?.tempToken) {
+          const { error: supabaseError } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: syncResponse.data.tempToken,
+          });
+          
+          if (supabaseError) {
+            console.error("Supabase sync failed:", supabaseError.message);
+          }
         }
 
         await checkAppState();
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         
         navigate("/", { replace: true });
-} else {
+      } else {
         // 1. Registers the user in Base44
         await base44.auth.register({ 
           email: formData.email, 
@@ -73,7 +81,20 @@ export default function Auth() {
         base44.auth.setToken(result.access_token);
       }
 
-      await base44.functions.invoke('syncSupabaseUser', {});
+      // 1. Call the backend to sync the user and grab the one-time secure token
+      const syncResponse = await base44.functions.invoke('syncSupabaseUser', {});
+
+      // 2. 🚀 THE SECURE HANDOFF: Use the temp token to get the real Supabase session
+      if (syncResponse.data?.tempToken) {
+        const { error: supabaseError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: syncResponse.data.tempToken,
+        });
+
+        if (supabaseError) {
+          console.error("Supabase session sync failed:", supabaseError.message);
+        }
+      }
 
       await checkAppState();
       
