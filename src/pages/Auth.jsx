@@ -188,7 +188,7 @@ export default function Auth() {
           {/* 🚀 NEW: Forgot Password Link */}
           {isLogin && (
             <div className="flex justify-end">
-              <Link to="/reset-password" className="text-sm text-primary hover:underline font-medium -mt-2">
+              <Link to="/forgot-password" className="text-sm text-primary hover:underline font-medium -mt-2">
                 Forgot password?
               </Link>
             </div>
