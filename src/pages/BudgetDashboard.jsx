@@ -25,7 +25,7 @@ const emptyForm = { name: "", category_key: "other", monthly_limit: "" };
 export default function BudgetDashboard() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const { bills, loans, userProfile, reload } = useFinancialData();
+  const { bills, loans, userProfile, supaUser, reload } = useFinancialData();
 
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -66,7 +66,7 @@ export default function BudgetDashboard() {
     if (editing) {
       await supabase.from('budget_categories').update(data).eq('id', editing.id);
     } else {
-      await supabase.from('budget_categories').insert([{ ...data, user_id: userProfile?.id }]);
+      await supabase.from('budget_categories').insert([{ ...data, user_id: supaUser?.id }]);
     }
     setShowDialog(false);
     fetchAll();

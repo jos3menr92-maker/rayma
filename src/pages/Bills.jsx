@@ -22,7 +22,7 @@ export default function Bills() {
   const T = useT();
   
   // 🧠 Pulling real data from your Supabase Brain
-  const { bills, userProfile, reload, loading } = useFinancialData();
+  const { bills, userProfile, supaUser, reload, loading } = useFinancialData();
   
   const categories = [
     { value: "utilities", label: T("catUtilities", "⚡ Utilities") },
@@ -76,7 +76,7 @@ export default function Bills() {
     // 🛡️ Data formatting before saving to Supabase
     const data = {
       ...form,
-      user_id: userProfile?.id, // Locks bill to the current user!
+      user_id: supaUser?.id, // Locks bill to the current user!
       amount: parseFloat(form.amount) || 0,
       due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
       due_day_of_week: (form.payment_frequency === "weekly" || form.payment_frequency === "biweekly") ? (form.due_day_of_week || "Monday") : null,
@@ -136,7 +136,7 @@ export default function Bills() {
     try {
       await supabase.from('payments').insert([{
         bill_id: bill.id,
-        user_id: userProfile.id,
+        user_id: supaUser.id,
         amount: bill.amount,
         payment_type: "bill",
         payment_date: format(new Date(), "yyyy-MM-dd"),

@@ -7,7 +7,7 @@ import { t } from "@/lib/i18n";
 import { AlertTriangle, X } from "lucide-react";
 
 export default function BillPriceAlert() {
-  const { bills, userProfile } = useFinancialData();
+  const { bills, userProfile, supaUser } = useFinancialData();
   const { formatCurrency: fmt } = useCurrency();
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -18,12 +18,12 @@ export default function BillPriceAlert() {
 
   useEffect(() => {
     async function check() {
-      if (!userProfile?.id || bills.length === 0) return;
+      if (!supaUser?.id || bills.length === 0) return;
 
       const { data: payments } = await supabase
         .from('payments')
         .select('*')
-        .eq('user_id', userProfile.id)
+        .eq('user_id', supaUser.id)
         .order('payment_date', { ascending: false });
 
       if (!payments) return;
@@ -46,7 +46,7 @@ export default function BillPriceAlert() {
       setChanges(detected);
     }
     check();
-  }, [bills, userProfile, dismissed]);
+  }, [bills, supaUser, dismissed]);
 
   function dismiss(key) {
     const next = [...dismissed, key];

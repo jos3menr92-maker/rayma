@@ -28,7 +28,7 @@ export default function Finance() {
   const { formatCurrency: fmt } = useCurrency();
   const { lang, locale } = useLanguage();
   const T = useT();
-  const { bills, loans, incomes, userProfile, reload, loading } = useFinancialData();
+  const { bills, loans, incomes, userProfile, supaUser, reload, loading } = useFinancialData();
 
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
@@ -68,7 +68,7 @@ const payload = {
       week_start: incomeForm.week_start, 
       note: incomeForm.note, 
       source: incomeForm.note || "Manual Log", // 🚀 THIS FIXES THE CRASH!
-      user_id: userProfile?.id,
+      user_id: supaUser?.id,
       is_active: true
     };
     

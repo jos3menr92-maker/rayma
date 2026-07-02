@@ -25,7 +25,7 @@ const TYPE_COLORS = {
 const emptyForm = { name: "", amount: "", type: "cash", notes: "" };
 
 export default function AssetDashboard() {
-  const { loans, userProfile, loading: contextLoading } = useFinancialData();
+  const { loans, userProfile, supaUser, loading: contextLoading } = useFinancialData();
   const { lang } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
 
@@ -45,15 +45,15 @@ export default function AssetDashboard() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { 
-    if (userProfile?.id) loadAssets(); 
-  }, [userProfile]);
+    if (supaUser?.id) loadAssets(); 
+  }, [supaUser]);
 
   async function loadAssets() {
     setLocalLoading(true);
     const { data } = await supabase
       .from('assets')
       .select('*')
-      .eq('user_id', userProfile.id) // 🔒 Security lock!
+      .eq('user_id', supaUser.id) // 🔒 Security lock!
       .order('created_at', { ascending: false });
       
     setAssets(data || []);
@@ -83,7 +83,7 @@ export default function AssetDashboard() {
     const payload = { 
       ...form, 
       amount: parseFloat(form.amount) || 0,
-      user_id: userProfile.id 
+      user_id: supaUser.id
     };
 
     if (editing) {

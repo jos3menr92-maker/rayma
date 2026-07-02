@@ -54,7 +54,7 @@ export default function Profile() {
   const T = useT();
   const fileInputRef = useRef(null);
   
-  const { userProfile, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
+  const { userProfile, supaUser, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
   
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
@@ -107,7 +107,7 @@ export default function Profile() {
     setUploadingPhoto(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userProfile.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${supaUser.id}-${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file);
       if (uploadError) throw uploadError;
@@ -129,7 +129,7 @@ export default function Profile() {
     
     try {
       await supabase.auth.updateUser({ data: form });
-      await supabase.from('profiles').update(form).eq('id', userProfile.id);
+      await supabase.from('profiles').update(form).eq('id', supaUser.id);
       await reload();
       
       if (form.preferred_language) setLang(form.preferred_language); 
@@ -218,7 +218,7 @@ export default function Profile() {
       // Future upgrade: Call a Supabase Edge Function here to hard-delete from Auth
       await supabase.from('profiles').update({ 
         deleted_at: new Date().toISOString() 
-      }).eq('id', userProfile.id);
+      }).eq('id', supaUser.id);
       
       await supabase.auth.signOut();
       window.location.href = "/auth";

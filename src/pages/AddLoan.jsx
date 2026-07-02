@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function AddLoan() {
   const navigate = useNavigate();
-  const { userProfile, reload } = useFinancialData();
+  const { userProfile, supaUser, reload } = useFinancialData();
   const { lang } = useLanguage();
 
   // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
@@ -45,7 +45,7 @@ export default function AddLoan() {
     setErrorMsg("");
 
     try {
-      if (!userProfile?.id) throw new Error("Missing User ID: The app doesn't know who is logged in.");
+      if (!supaUser?.id) throw new Error("Missing User ID: The app doesn't know who is logged in.");
       if (!supabase) throw new Error("Missing Supabase: The database client didn't load.");
 
       // 🧠 RAYMA INTERCEPT: Auto-filling the missing blanks
@@ -61,7 +61,7 @@ export default function AddLoan() {
       }
 
       const { error } = await supabase.from('loans').insert([{
-        user_id: userProfile.id,
+        user_id: supaUser.id,
         name: formData.name || "Unnamed Loan", // RAYMA fallback
         original_amount: parseFloat(formData.original_amount) || parseFloat(formData.current_balance) || 0, 
         current_balance: parseFloat(formData.current_balance) || 0,

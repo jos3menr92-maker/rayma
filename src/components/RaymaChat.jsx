@@ -21,6 +21,7 @@ import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
@@ -41,6 +42,7 @@ export default function RaymaChat({
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
   const navigate = useNavigate();
+  const { supaUser } = useFinancialData();
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -129,7 +131,7 @@ export default function RaymaChat({
       setTimeout(async () => {
         try {
           await supabase.from('payments').insert([{
-            user_id: userProfile?.id, amount: amount, target_name: target, status: 'completed', date: new Date().toISOString()
+            user_id: supaUser?.id, amount: amount, target_name: target, status: 'completed', date: new Date().toISOString()
           }]);
           setMessages(prev => [...prev, { role: "assistant", content: `✅ **Payment Logged!** I just securely recorded your $${amount} payment to ${target} in your database. Your balances will update automatically.` }]);
         } catch (error) {

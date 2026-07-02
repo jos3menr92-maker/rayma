@@ -18,7 +18,7 @@ const CATEGORIES_STATIC = [
 export default function Feedback() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userProfile } = useFinancialData();
+  const { userProfile, supaUser } = useFinancialData();
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
@@ -48,7 +48,7 @@ export default function Feedback() {
         message: message.trim() || null,
         category,
         page: location.pathname, 
-        user_id: userProfile?.id // Ties it securely to the user
+        user_id: supaUser?.id // Ties it securely to the user
       }]);
       
       setSubmitted(true);

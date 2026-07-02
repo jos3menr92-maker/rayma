@@ -28,7 +28,7 @@ const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), d
 export default function BankAccounts() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const { userProfile } = useFinancialData();
+  const { userProfile, supaUser } = useFinancialData();
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -63,7 +63,7 @@ export default function BankAccounts() {
     if (editing) {
       await supabase.from('bank_accounts').update(data).eq('id', editing.id);
     } else {
-      await supabase.from('bank_accounts').insert([{ ...data, user_id: userProfile?.id }]);
+      await supabase.from('bank_accounts').insert([{ ...data, user_id: supaUser?.id }]);
     }
     setShowDialog(false);
     fetchAll();
@@ -77,7 +77,7 @@ export default function BankAccounts() {
 
   const saveTx = async () => {
     if (!txForm.bank_account_id) { alert(T("selectAccountPrompt", "Please select a bank account.")); return; }
-    await supabase.from('transactions').insert([{ ...txForm, amount: parseFloat(txForm.amount) || 0, user_id: userProfile?.id }]);
+    await supabase.from('transactions').insert([{ ...txForm, amount: parseFloat(txForm.amount) || 0, user_id: supaUser?.id }]);
     setShowTxDialog(false);
     setTxForm(emptyTx);
     fetchAll();
