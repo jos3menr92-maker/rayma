@@ -43,11 +43,23 @@ export default function Auth() {
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
         
         navigate("/", { replace: true });
-      } else {
+} else {
+        // 1. Registers the user in Base44
         await base44.auth.register({ 
           email: formData.email, 
           password: formData.password 
         });
+        
+        // 🚀 THE FIX: Creates the user in Supabase too!
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        if (signUpError && !signUpError.message.includes("already registered")) {
+          console.error("Supabase sign up failed:", signUpError.message);
+        }
+
         setShowOtp(true);
       }
     } catch (err) {
