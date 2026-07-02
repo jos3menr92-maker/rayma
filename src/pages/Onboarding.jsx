@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient"; // 🚀 NEW: Added Supabase
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: To get the User ID
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -23,8 +25,8 @@ function ProgressDots({ step }) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
+  const { supaUser } = useFinancialData(); // 🚀 NEW: Grab the Supabase ID
 
-  // 🌍 FIXED: Recreate T() when lang changes so translations update in real-time
   const T = useMemo(() =>
     (key, fallback) => {
       const translated = t(lang, key);
@@ -36,14 +38,9 @@ export default function Onboarding() {
   const [step, setStep] = useState("welcome");
   const [loading, setLoading] = useState(false);
 
-  // Income step
   const [weeklyIncome, setWeeklyIncome] = useState("");
-
-  // Bill step
   const [billName, setBillName] = useState("");
   const [billAmount, setBillAmount] = useState("");
-
-  // Loan step
   const [loanName, setLoanName] = useState("");
   const [loanBalance, setLoanBalance] = useState("");
   const [loanPayment, setLoanPayment] = useState("");
@@ -51,11 +48,20 @@ export default function Onboarding() {
   async function handleIncome() {
     if (!weeklyIncome || isNaN(weeklyIncome)) { setStep("bill"); return; }
     setLoading(true);
-    await base44.entities.WeeklyIncome.create({
-      amount: parseFloat(weeklyIncome),
-      week_start: new Date().toISOString().split("T")[0],
-      note: "Set during onboarding",
-    });
+    
+    // 🚀 FIXED: Save to Supabase
+    if (supaUser?.id) {
+      await supabase.from('incomes').insert([{
+        user_id: supaUser.id,
+        source: "Weekly Income",
+        amount: parseFloat(weeklyIncome),
+        frequency: "weekly",
+        week_start: new Date().toISOString().split("T")[0],
+        note: "Set during onboarding",
+        is_active: true
+      }]);
+    }
+    
     setLoading(false);
     setStep("bill");
   }
@@ -63,12 +69,18 @@ export default function Onboarding() {
   async function handleBill() {
     if (billName && billAmount && !isNaN(billAmount)) {
       setLoading(true);
-      await base44.entities.Bill.create({
-        name: billName,
-        amount: parseFloat(billAmount),
-        payment_frequency: "monthly",
-        is_active: true,
-      });
+      
+      // 🚀 FIXED: Save to Supabase
+      if (supaUser?.id) {
+        await supabase.from('bills').insert([{
+          user_id: supaUser.id,
+          name: billName,
+          amount: parseFloat(billAmount),
+          payment_frequency: "monthly",
+          is_active: true
+        }]);
+      }
+      
       setLoading(false);
     }
     setStep("loan");
@@ -77,13 +89,20 @@ export default function Onboarding() {
   async function handleLoan() {
     if (loanName && loanBalance && !isNaN(loanBalance)) {
       setLoading(true);
-      await base44.entities.Loan.create({
-        name: loanName,
-        original_amount: parseFloat(loanBalance),
-        current_balance: parseFloat(loanBalance),
-        monthly_payment: loanPayment ? parseFloat(loanPayment) : undefined,
-        status: "active",
-      });
+      
+      // 🚀 FIXED: Save to Supabase
+      if (supaUser?.id) {
+        await supabase.from('loans').insert([{
+          user_id: supaUser.id,
+          name: loanName,
+          original_amount: parseFloat(loanBalance),
+          current_balance: parseFloat(loanBalance),
+          remaining_balance: parseFloat(loanBalance),
+          monthly_payment: loanPayment ? parseFloat(loanPayment) : 0,
+          status: "active"
+        }]);
+      }
+      
       setLoading(false);
     }
     setStep("done");
@@ -98,7 +117,6 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}>
       <div className="w-full max-w-sm">
         <AnimatePresence mode="wait">
-
           {/* WELCOME */}
           {step === "welcome" && (
             <motion.div key="welcome" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
@@ -131,13 +149,7 @@ export default function Onboarding() {
               <p className="text-sm text-muted-foreground mb-6">{T("incomeHelps", "This helps Rayma AI calculate your monthly cash flow. You can update it anytime.")}</p>
               <div className="relative mb-6">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
-                <Input
-                  type="number"
-                  placeholder={T("exampleAmount", "e.g. 800")}
-                  value={weeklyIncome}
-                  onChange={e => setWeeklyIncome(e.target.value)}
-                  className="pl-7 rounded-xl h-12 text-base"
-                />
+                <Input type="number" placeholder={T("exampleAmount", "e.g. 800")} value={weeklyIncome} onChange={e => setWeeklyIncome(e.target.value)} className="pl-7 rounded-xl h-12 text-base" />
               </div>
               <Button className="w-full rounded-2xl h-12" onClick={handleIncome} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
@@ -199,12 +211,7 @@ export default function Onboarding() {
           {/* DONE */}
           {step === "done" && (
             <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6"
-              >
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 200 }} className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-10 h-10 text-green-600" />
               </motion.div>
               <h2 className="text-2xl font-bold font-heading text-foreground mb-3">{T("allSet", "You're all set! 🎉")}</h2>
