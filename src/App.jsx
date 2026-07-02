@@ -22,10 +22,11 @@ import { LanguageProvider } from '@/lib/LanguageContext';
 import { FinancialDataProvider } from '@/lib/FinancialDataContext';
 
 // 🛋️ THE LAZY LOUNGE: Lightning fast boot times!
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword')); // 🚀 NEW: Lazy loaded public route
 const Profile = lazy(() => import('./pages/Profile'));
 const Reminders = lazy(() => import('./pages/Reminders'));
 const Budget = lazy(() => import('./pages/Budget'));
-const Store = lazy(() => import('./pages/Store')); // 🚀 RENAMED SUPPORT TO STORE
+const Store = lazy(() => import('./pages/Store'));
 const SecurityAudit = lazy(() => import('./pages/SecurityAudit'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
@@ -95,10 +96,7 @@ if (authError) {
           <Route path="/reminders" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Reminders /></Suspense></ProtectedLayout>} />
           <Route path="/profile" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedLayout>} />
           <Route path="/budget" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Budget /></Suspense></ProtectedLayout>} />
-          
-          {/* 🚀 FIXED ROUTE: Now points to /store */}
           <Route path="/store" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Store /></Suspense></ProtectedLayout>} />
-          
           <Route path="/security" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense></ProtectedLayout>} />
           <Route path="/privacy" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense></ProtectedLayout>} />
           <Route path="/terms" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><TermsOfService /></Suspense></ProtectedLayout>} />
@@ -144,6 +142,10 @@ function App() {
           <Routes>
             <Route path="/home" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* 🚀 NEW: Placed in the public router so unauthenticated users can actually reach it! */}
+            <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
+            
             <Route path="/*" element={<AuthenticatedApp />} />
           </Routes>
         </Router>
