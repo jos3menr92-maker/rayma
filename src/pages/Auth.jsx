@@ -50,16 +50,6 @@ export default function Auth() {
           password: formData.password 
         });
         
-        // 🚀 THE FIX: Creates the user in Supabase too!
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-        });
-        
-        if (signUpError && !signUpError.message.includes("already registered")) {
-          console.error("Supabase sign up failed:", signUpError.message);
-        }
-
         setShowOtp(true);
       }
     } catch (err) {
@@ -83,17 +73,12 @@ export default function Auth() {
         base44.auth.setToken(result.access_token);
       }
 
-      const { error: supabaseError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-      if (supabaseError) {
-        console.error("Supabase sync failed on verification:", supabaseError.message);
-      }
+      await base44.functions.invoke('syncSupabaseUser', {});
 
       await checkAppState();
       
       navigate("/", { replace: true });
+      window.location.reload();
     } catch (err) {
       setError(err.message || "Invalid verification code. Please try again.");
     } finally {
