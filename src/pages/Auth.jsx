@@ -126,6 +126,11 @@ export default function Auth() {
     try {
       if (provider === "passkey") {
         await base44.auth.signInWithPasskey();
+        
+        // 🚀 THE PASSKEY BRIDGE: Sync the biometric user to Supabase
+        await base44.functions.invoke('syncSupabaseUser', {});
+        
+        await checkAppState();
         navigate("/", { replace: true });
       } else {
         await base44.auth.loginWithProvider(provider, "/");
