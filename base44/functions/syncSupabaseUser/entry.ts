@@ -8,31 +8,37 @@ Deno.serve(async (req) => {
     
     if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("VITE_SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-    );
+    // Safely look for either environment variable name
+    const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-    const tempToken = crypto.randomUUID() + crypto.randomUUID();
-
-    let { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: me.email,
-      email_confirm: true,
-      password: tempToken,
-      user_id: me.id 
-    });
-
-    if (error && error.message.includes('already exists')) {
-      const updateRes = await supabaseAdmin.auth.admin.updateUserById(me.id, {
-        password: tempToken
-      });
-      data = updateRes.data;
-      error = updateRes.error;
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Missing Supabase configuration secrets.");
     }
 
-    if (error) {
-      console.error("Supabase user sync failed:", error.message);
-      return Response.json({ success: false, error: error.message }, { status: 500 });
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+    const tempToken = crypto.randomUUID() + crypto.randomUUID();
+
+    // 1. Fetch existing users to find the correct Supabase UUID by email
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) throw listError;
+
+    const existingUser = users.find(u => u.email === me.email);
+
+    if (existingUser) {
+      // 2. If they exist, update using the REAL Supabase ID
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { 
+          password: tempToken 
+      });
+      if (updateError) throw updateError;
+    } else {
+      // 3. If they don't exist, let Supabase create them and generate a valid UUID
+      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: me.email,
+        email_confirm: true,
+        password: tempToken
+      });
+      if (createError) throw createError;
     }
 
     return Response.json({ success: true, tempToken });
