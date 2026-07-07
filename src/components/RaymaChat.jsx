@@ -1,16 +1,16 @@
 /**
  * ==========================================
- * RAYMA CONFIDENTIAL & PROPRIETARY
+ * Rayma AI CONFIDENTIAL & PROPRIETARY
  * ==========================================
- * Copyright (C) 2026 RAYMA. All Rights Reserved.
+ * Copyright (C) 2026 Rayma AI. All Rights Reserved.
  *
  * NOTICE: All information contained herein is, and remains
- * the property of RAYMA. The intellectual and technical
- * concepts contained herein are proprietary to RAYMA and
+ * the property of Rayma AI. The intellectual and technical
+ * concepts contained herein are proprietary to Rayma AI and
  * are protected by trade secret and copyright law.
  * Dissemination of this information or reproduction of this
  * material is strictly forbidden unless prior written
- * permission is obtained from RAYMA Management.
+ * permission is obtained from Rayma AI Management.
  * ==========================================
  */
 
@@ -142,9 +142,9 @@ export default function RaymaChat({
           await supabase.from('payments').insert([{
             user_id: supaUser.id, 
             amount: amount, 
-            target_name: target, 
-            status: 'completed', 
-            date: new Date().toISOString()
+            note: target,                  // ✅ Correct column name
+            payment_type: 'completed',     // ✅ Correct column name
+            payment_date: new Date().toISOString() // ✅ Correct column name
           }]);
           setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your $${amount} payment to ${target} in your database. Your balances will update automatically.`) }]);
         } catch (error) {
