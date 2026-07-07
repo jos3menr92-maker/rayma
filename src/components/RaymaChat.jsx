@@ -94,6 +94,7 @@ export default function RaymaChat({
   async function startConversation() {
     setInitializing(true);
     try {
+      // Create conversation (Base44 AI is naturally multilingual, so it adapts to the user's input automatically)
       const conv = await base44.agents.createConversation({ agent_name: "rayma" });
       setConversation(conv);
       setMessages(conv.messages || []);
@@ -113,7 +114,7 @@ export default function RaymaChat({
       setInput("");
       setLoading(true);
       setTimeout(() => {
-        const response = `I analyzed your cash flow. You have **$${bills.reduce((a,b)=>a+b.amount,0)}** in bills, mostly concentrated in the first week of the month. \n\nI recommend shifting your **Netflix** and **Car Insurance** due dates to the 15th to align with your mid-month payday. \n\n*Script to use:* "Hi, I'm calling to align my billing cycle with my pay schedule. Can we permanently shift my monthly due date to the 15th?"`;
+        const response = T("cashFlowSmootherResponse", `I analyzed your cash flow. You have **$${bills.reduce((a,b)=>a+b.amount,0)}** in bills, mostly concentrated in the first week of the month. \n\nI recommend shifting your **Netflix** and **Car Insurance** due dates to the 15th to align with your mid-month payday. \n\n*Script to use:* "Hi, I'm calling to align my billing cycle with my pay schedule. Can we permanently shift my monthly due date to the 15th?"`);
         setMessages(prev => [...prev, { role: "assistant", content: response }]);
         setLoading(false);
       }, 800);
@@ -128,14 +129,26 @@ export default function RaymaChat({
       setLoading(true);
       const amount = parseFloat(paidMatch[1]);
       const target = paidMatch[2];
+      
       setTimeout(async () => {
+        // 🔒 SAFETY CHECK: Ensure the Supabase ID is present before inserting
+        if (!supaUser?.id) {
+           setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
+           setLoading(false);
+           return;
+        }
+
         try {
           await supabase.from('payments').insert([{
-            user_id: supaUser?.id, amount: amount, target_name: target, status: 'completed', date: new Date().toISOString()
+            user_id: supaUser.id, 
+            amount: amount, 
+            target_name: target, 
+            status: 'completed', 
+            date: new Date().toISOString()
           }]);
-          setMessages(prev => [...prev, { role: "assistant", content: `✅ **Payment Logged!** I just securely recorded your $${amount} payment to ${target} in your database. Your balances will update automatically.` }]);
+          setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your $${amount} payment to ${target} in your database. Your balances will update automatically.`) }]);
         } catch (error) {
-          setMessages(prev => [...prev, { role: "assistant", content: `I tried to log your payment to ${target}, but I couldn't connect to the database.` }]);
+          setMessages(prev => [...prev, { role: "assistant", content: T("paymentLogError", `I tried to log your payment to ${target}, but I couldn't connect to the database.`) }]);
         }
         setLoading(false);
       }, 1000);
@@ -146,10 +159,10 @@ export default function RaymaChat({
     if (text.includes("what am i looking at") || text.includes("explain this page") || text.includes("help me with this")) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
-      let response = "You are currently viewing your Rayma AI app.";
-      if (currentPage.includes("tax-summary")) response = "You are looking at your **Tax Summary**. This page tracks your deductible expenses and organizes your financial data so you are ready for tax season.";
-      if (currentPage.includes("debt-simulator")) response = "You are in the **Debt Simulator**. This tool lets you test out different payoff strategies. Enter an extra monthly payment amount, and I'll show you how much interest you'll save!";
-      if (currentPage === "/") response = "You are on the **Main Dashboard**. This is your Command Center. You can see your cash flow, upcoming bills, and overall financial health score here.";
+      let response = T("contextAppGeneral", "You are currently viewing your Rayma AI app.");
+      if (currentPage.includes("tax-summary")) response = T("contextTaxSummary", "You are looking at your **Tax Summary**. This page tracks your deductible expenses and organizes your financial data so you are ready for tax season.");
+      if (currentPage.includes("debt-simulator")) response = T("contextDebtSimulator", "You are in the **Debt Simulator**. This tool lets you test out different payoff strategies. Enter an extra monthly payment amount, and I'll show you how much interest you'll save!");
+      if (currentPage === "/") response = T("contextDashboard", "You are on the **Main Dashboard**. This is your Command Center. You can see your cash flow, upcoming bills, and overall financial health score here.");
       setMessages(prev => [...prev, { role: "assistant", content: response }]);
       return;
     }
@@ -163,10 +176,19 @@ export default function RaymaChat({
       const monthlyIncome = incomes.length > 0 ? (incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length) * 4.33 : 0;
       const dti = monthlyIncome > 0 ? (totalMonthlyObligations / monthlyIncome) * 100 : 100;
       let advisorResponse = "";
-      if (monthlyIncome === 0) { advisorResponse = "I don't see any income logged in your account right now. Without income data, I can't calculate your debt-to-income ratio."; } 
-      else if (dti > 45) { advisorResponse = `Based on your current debt-to-income (DTI) ratio of **${dti.toFixed(1)}%**, your obligations are quite high relative to your income. Taking on a new loan right now might put significant strain on your cash flow.`; } 
-      else if (dti > 30) { advisorResponse = `Your debt-to-income (DTI) ratio is **${dti.toFixed(1)}%**. It's in a manageable range, but be cautious.`; } 
-      else { advisorResponse = `Your debt-to-income (DTI) ratio is very healthy at **${dti.toFixed(1)}%**. If you have a clear plan for the funds, it could be a viable option.`; }
+      
+      if (monthlyIncome === 0) { 
+        advisorResponse = T("dtiNoIncome", "I don't see any income logged in your account right now. Without income data, I can't calculate your debt-to-income ratio."); 
+      } 
+      else if (dti > 45) { 
+        advisorResponse = T("dtiHigh", `Based on your current debt-to-income (DTI) ratio of **${dti.toFixed(1)}%**, your obligations are quite high relative to your income. Taking on a new loan right now might put significant strain on your cash flow.`); 
+      } 
+      else if (dti > 30) { 
+        advisorResponse = T("dtiMedium", `Your debt-to-income (DTI) ratio is **${dti.toFixed(1)}%**. It's in a manageable range, but be cautious.`); 
+      } 
+      else { 
+        advisorResponse = T("dtiHealthy", `Your debt-to-income (DTI) ratio is very healthy at **${dti.toFixed(1)}%**. If you have a clear plan for the funds, it could be a viable option.`); 
+      }
       setTimeout(() => { setMessages(prev => [...prev, { role: "assistant", content: advisorResponse }]); setLoading(false); }, 600);
       return;
     }
@@ -206,7 +228,7 @@ export default function RaymaChat({
     if (text === "help" || text === "what can you do" || text === "who are you") {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
-      const helpText = `I am Rayma AI, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document"\n* **Learn:** "Start tour"\n* **Security:** "Log me out"`;
+      const helpText = T("helpText", `I am Rayma AI, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document"\n* **Learn:** "Start tour"\n* **Security:** "Log me out"`);
       setMessages(prev => [...prev, { role: "assistant", content: helpText }]);
       return;
     }
@@ -222,7 +244,6 @@ export default function RaymaChat({
     if (text.includes("focus mode")) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
-      // Safely apply it locally without hitting the old Base44 database!
       document.documentElement.classList.add("focus-mode");
       localStorage.setItem("focus_mode", "true");
       setMessages(prev => [...prev, { role: "assistant", content: T("focusModeActivated", "Focus Mode activated. UI muted.") }]);
@@ -231,7 +252,7 @@ export default function RaymaChat({
 
     const tourTriggers = [ "tour","start tour","show me around","guide me","another tour","restart tour" ];
     if (tourTriggers.some(trigger => text.includes(trigger))) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: "Starting the tour now." }]);
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: T("startingTour", "Starting the tour now.") }]);
       if (onClose) onClose();
       navigate("/");
       setTimeout(() => window.dispatchEvent(new CustomEvent("trigger-rayma-tour")), 600);
@@ -243,7 +264,7 @@ export default function RaymaChat({
       document.documentElement.classList.remove(mode === "dark" ? "light" : "dark"); 
       document.documentElement.classList.add(mode); 
       localStorage.setItem("theme", mode);
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: `Done! Switched to ${mode} mode.` }]);
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: T("modeSwitched", `Done! Switched to ${mode} mode.`) }]);
       setInput(""); return;
     }
 
