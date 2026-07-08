@@ -4,6 +4,7 @@ import { FolderOpen, Sparkles, Clock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: Added the global data brain
 import DocumentUploader from "../components/documents/DocumentUploader";
 import DocumentCard from "../components/documents/DocumentCard";
 import DocumentReviewModal from "../components/documents/DocumentReviewModal";
@@ -21,9 +22,12 @@ const FOLDERS_STATIC = [
 export default function DocumentVault() {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+  
+  // 🚀 FIXED: Pulling actual loans and bills from Supabase instead of local state!
+  const { loans, bills } = useFinancialData(); 
+  const activeLoans = useMemo(() => loans.filter(x => x.status !== "paid_off"), [loans]);
+
   const [docs, setDocs] = useState([]);
-  const [loans, setLoans] = useState([]);
-  const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFolder, setActiveFolder] = useState("all");
   const [reviewingDoc, setReviewingDoc] = useState(null);
@@ -37,14 +41,9 @@ export default function DocumentVault() {
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    const [d, l, b] = await Promise.all([
-      base44.entities.ScannedDocument.list("-created_date", 100),
-      base44.entities.Loan.list("-created_date", 100),
-      base44.entities.Bill.list("-created_date", 100),
-    ]);
+    // 🚀 FIXED: We only fetch scanned docs from Base44 now. Loans and Bills are handled by Supabase globally!
+    const d = await base44.entities.ScannedDocument.list("-created_date", 100);
     setDocs(d);
-    setLoans(l.filter(x => x.status !== "paid_off"));
-    setBills(b);
     setLoading(false);
   }
 
@@ -164,8 +163,8 @@ export default function DocumentVault() {
         <DocumentReviewModal
           doc={reviewingDoc}
           analysis={reviewAnalysis}
-          loans={loans}
-          bills={bills}
+          loans={activeLoans} // 🚀 Using the active loans from Supabase
+          bills={bills}       // 🚀 Using the bills from Supabase
           onClose={() => setReviewingDoc(null)}
           onDone={handleReviewDone}
         />
