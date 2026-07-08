@@ -56,7 +56,7 @@ export default function LoanDetail() {
 
   async function loadData() { 
     const { data: loanData } = await supabase.from('loans').select('*').eq('id', id).single(); 
-    const { data: paymentData } = await supabase.from('payments').select('*').eq('loan_id', id).order('payment_date', { ascending: false }); 
+    const { data: paymentData } = await supabase.from('payments').select('*').eq('loan_id', id).eq('user_id', supaUser.id).order('payment_date', { ascending: false }); 
     setLoan(loanData); 
     setPayments(paymentData || []); 
     setLoading(false); 

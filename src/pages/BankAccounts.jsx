@@ -44,9 +44,10 @@ export default function BankAccounts() {
 
   const fetchAll = async () => {
     setLoading(true);
+    const uid = supaUser?.id;
     const [accsRes, txsRes] = await Promise.all([
-      supabase.from('bank_accounts').select('*').order('updated_at', { ascending: false }),
-      supabase.from('transactions').select('*').order('date', { ascending: false }).limit(100),
+      supabase.from('bank_accounts').select('*').eq('user_id', uid).order('updated_at', { ascending: false }),
+      supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(100),
     ]);
     if (accsRes.error) console.error("Bank accounts error:", accsRes.error);
     if (txsRes.error) console.error("Transactions error:", txsRes.error);

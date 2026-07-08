@@ -148,7 +148,16 @@ export function FinancialDataProvider({ children }) {
 
   useEffect(() => {
     loadAll();
-    return () => {}; 
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setSupaUser(session?.user || null);
+        loadAll(); 
+      } else if (event === 'SIGNED_OUT') {
+        setSupaUser(null);
+        setLoans([]); setBills([]); setIncomes([]); setPayments([]); setAssets([]); setSavingsGoals([]);
+      }
+    });
+    return () => { authListener.subscription.unsubscribe(); };
   }, []);
 
   // 🚀 NEW: Export assets and savingsGoals so the rest of the app can use them!

@@ -54,7 +54,7 @@ export default function AddLoan() {
       if (!finalDueDate) {
         const today = new Date();
         if (formData.payment_frequency === "weekly") today.setDate(today.getDate() + 7);
-        else if (formData.payment_frequency === "bi-weekly") today.setDate(today.getDate() + 14);
+        else if (formData.payment_frequency === "biweekly") today.setDate(today.getDate() + 14);
         else today.setMonth(today.getMonth() + 1); // Default to exactly 1 month from today
         
         finalDueDate = today.toISOString().split('T')[0];

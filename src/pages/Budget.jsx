@@ -27,7 +27,7 @@ export default function Budget() {
 
   async function loadData() {
     setLoading(true);
-    const { data } = await supabase.from('savings_goals').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('savings_goals').select('*').eq('user_id', supaUser.id).order('created_at', { ascending: false });
     setGoals(data || []);
     setLoading(false);
   }
