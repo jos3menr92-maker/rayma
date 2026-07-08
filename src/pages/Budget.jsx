@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 
 export default function Budget() {
   const { lang } = useLanguage();
@@ -20,6 +21,7 @@ export default function Budget() {
   const [editingGoal, setEditingGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({ name: "", target_amount: "", current_saved: "", notes: "" });
   const [savingGoal, setSavingGoal] = useState(false);
+  const { supaUser, reload } = useFinancialData();
 
   useEffect(() => { loadData(); }, []);
 
@@ -45,9 +47,9 @@ export default function Budget() {
   async function handleSaveGoal(e) {
     e.preventDefault();
     setSavingGoal(true);
-// 🚀 FIXED: Added user_id so Supabase RLS accepts the save
+
     const data = {
-      user_id: supaUser?.id, // <-- THIS WAS MISSING
+      user_id: supaUser?.id, 
       name: goalForm.name,
       target_amount: parseFloat(goalForm.target_amount) || 0,
       current_saved: parseFloat(goalForm.current_saved) || 0,
@@ -57,17 +59,20 @@ export default function Budget() {
     try {
       if (editingGoal) {
         const { error } = await supabase.from('savings_goals').update(data).eq('id', editingGoal.id);
-        if (error) throw error; // Force it to catch errors
+        if (error) throw error;
       } else {
         const { error } = await supabase.from('savings_goals').insert([data]);
-        if (error) throw error; // Force it to catch errors
+        if (error) throw error;
       }
-      await reload(); // Tell the global brain to fetch the new data
-      setGoalDialog(false);
+      
+      await reload(); 
+      setGoalOpen(false); 
     } catch (err) {
       console.error("Failed to save savings goal:", err.message);
-      // Optional: Add a toast notification here so you know if it fails
+    } finally {
+      setSavingGoal(false); 
     }
+  }
 
   async function handleDeleteGoal(id) {
     await supabase.from('savings_goals').delete().eq('id', id);
