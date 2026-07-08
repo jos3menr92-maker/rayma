@@ -10,9 +10,12 @@ export function FinancialDataProvider({ children }) {
   const [bills, setBills] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [userProfile, setUserProfile] = useState(null);
   
-  // 🚀 THE MISSING PIECE: The Supabase User state
+  // 🚀 NEW: Added the missing state containers for Assets and Savings
+  const [assets, setAssets] = useState([]);
+  const [savingsGoals, setSavingsGoals] = useState([]);
+  
+  const [userProfile, setUserProfile] = useState(null);
   const [supaUser, setSupaUser] = useState(null); 
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +24,6 @@ export function FinancialDataProvider({ children }) {
     setLoading(true);
     
     try {
-      // 🚀 Fetch Base44 and Supabase sessions in parallel
       const [me, { data: { session } }] = await Promise.all([
         base44.auth.me().catch(() => null),
         supabase.auth.getSession()
@@ -36,7 +38,7 @@ export function FinancialDataProvider({ children }) {
 
       if (!me?.id || !currentSupaUser?.id) {
         if (isMounted) {
-          setLoans([]); setBills([]); setIncomes([]); setPayments([]);
+          setLoans([]); setBills([]); setIncomes([]); setPayments([]); setAssets([]); setSavingsGoals([]);
           setLoading(false);
         }
         return;
@@ -44,11 +46,14 @@ export function FinancialDataProvider({ children }) {
 
       const uid = currentSupaUser.id;
 
-      const [loansRes, billsRes, incomesRes, paymentsRes] = await Promise.all([
+      // 🚀 NEW: Tell Supabase to fetch assets and savings_goals too
+      const [loansRes, billsRes, incomesRes, paymentsRes, assetsRes, savingsRes] = await Promise.all([
         supabase.from('loans').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
         supabase.from('bills').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
         supabase.from('incomes').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-        supabase.from('payments').select('*').eq('user_id', uid).order('payment_date', { ascending: false })
+        supabase.from('payments').select('*').eq('user_id', uid).order('payment_date', { ascending: false }),
+        supabase.from('assets').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+        supabase.from('savings_goals').select('*').eq('user_id', uid).order('created_at', { ascending: false })
       ]);
 
       if (!isMounted) return;
@@ -57,6 +62,10 @@ export function FinancialDataProvider({ children }) {
       setBills(billsRes.data || []);
       setIncomes(incomesRes.data || []);
       setPayments(paymentsRes.data || []);
+      
+      // 🚀 NEW: Save them to the global state
+      setAssets(assetsRes.data || []);
+      setSavingsGoals(savingsRes.data || []);
 
     } catch (e) {
       console.error("Failed to load financial data:", e);
@@ -142,9 +151,9 @@ export function FinancialDataProvider({ children }) {
     return () => {}; 
   }, []);
 
-  // 🚀 Added supaUser to the exported provider value so the rest of the app can see it
+  // 🚀 NEW: Export assets and savingsGoals so the rest of the app can use them!
   return (
-    <FinancialDataContext.Provider value={{ loans, bills, incomes, payments, userProfile, supaUser, loading, reload: loadAll, refreshUserProfile, payBill, updateLoan, addTransaction }}>
+    <FinancialDataContext.Provider value={{ loans, bills, incomes, payments, assets, savingsGoals, userProfile, supaUser, loading, reload: loadAll, refreshUserProfile, payBill, updateLoan, addTransaction }}>
       {children}
     </FinancialDataContext.Provider>
   );
