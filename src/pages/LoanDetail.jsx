@@ -28,7 +28,8 @@ export default function LoanDetail() {
   const { id } = useParams(); 
   const navigate = useNavigate(); 
   const { formatCurrency: fmt } = useCurrency(); 
-  const { reload } = useFinancialData(); 
+  // 🚀 FIXED: Extracted supaUser to secure the database inserts
+  const { reload, supaUser } = useFinancialData(); 
   const { lang } = useLanguage();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   
@@ -116,11 +117,26 @@ export default function LoanDetail() {
 
   async function handleAddPayment(e) { 
     e.preventDefault(); 
+    
+    // 🛡️ Safety check to prevent blank IDs
+    if (!supaUser?.id) return; 
+
     setSaving(true); 
     const amount = parseFloat(payForm.amount); 
-    await supabase.from('payments').insert([{ loan_id: id, amount, payment_date: payForm.payment_date, note: payForm.note }]); 
+    
+    // 🚀 FIXED: Added user_id to the Supabase insert so RLS accepts it
+    await supabase.from('payments').insert([{ 
+      loan_id: id, 
+      user_id: supaUser.id, 
+      amount, 
+      payment_date: payForm.payment_date, 
+      note: payForm.note,
+      payment_type: 'loan' // Standardized to match your schema
+    }]); 
+
     const newBalance = Math.max((loan.current_balance || 0) - amount, 0); 
     await supabase.from('loans').update({ current_balance: newBalance, status: newBalance <= 0 ? "paid_off" : "active" }).eq('id', id); 
+    
     reload(); 
     setPayForm({ amount: "", payment_date: new Date().toISOString().split("T")[0], note: "" }); 
     setPaymentOpen(false); 
