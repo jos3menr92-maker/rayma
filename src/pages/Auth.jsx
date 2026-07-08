@@ -120,18 +120,30 @@ export default function Auth() {
     }
   };
 
-  const handleProviderSignIn = async (provider) => {
+const handleProviderSignIn = async (provider) => {
     setActiveProvider(provider);
     setError("");
     try {
       if (provider === "passkey") {
         await base44.auth.signInWithPasskey();
         
-        // 🚀 THE PASSKEY BRIDGE: Sync the biometric user to Supabase
-        await base44.functions.invoke('syncSupabaseUser', {});
+        // 1. Trigger backend sync
+        const syncResponse = await base44.functions.invoke('syncSupabaseUser', {});
+        
+        // 2. 🚀 NEW: Actually use the token to log into Supabase!
+        if (syncResponse.data?.tempToken) {
+          const me = await base44.auth.me(); // Get the email
+          if (me?.email) {
+            await supabase.auth.signInWithPassword({
+              email: me.email,
+              password: syncResponse.data.tempToken,
+            });
+          }
+        }
         
         await checkAppState();
         navigate("/", { replace: true });
+        window.location.reload(); // Force clean session fetch
       } else {
         await base44.auth.loginWithProvider(provider, "/");
       }
