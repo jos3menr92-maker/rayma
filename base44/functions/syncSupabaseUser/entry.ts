@@ -17,7 +17,9 @@ Deno.serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
-    const tempToken = crypto.randomUUID() + crypto.randomUUID();
+    
+    // 🚀 FIXED: Injected "R@" to guarantee strong password compliance
+    const tempToken = "R@" + crypto.randomUUID() + crypto.randomUUID();
 
     // 1. Fetch existing users to find the correct Supabase UUID by email
     const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
