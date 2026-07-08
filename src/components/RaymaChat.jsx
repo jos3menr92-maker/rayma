@@ -141,7 +141,7 @@ export default function RaymaChat({
             user_id: supaUser.id, 
             amount: amount, 
             note: target,                  
-            payment_type: 'completed',     
+            payment_type: 'bill',     
             payment_date: new Date().toISOString() 
           }]);
           setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your $${amount} payment to ${target} in your database. Your balances will update automatically.`) }]);
@@ -244,7 +244,7 @@ export default function RaymaChat({
         report += `- 🧾 **Bills:** ${await testTable('bills', { user_id: supaUser.id, name: `Auto ${testId}`, amount: 10 }, 'name', `Auto ${testId}`)}\n`;
         report += `- 🏦 **Loans:** ${await testTable('loans', { user_id: supaUser.id, name: `Auto ${testId}`, remaining_balance: 100, monthly_payment: 10 }, 'name', `Auto ${testId}`)}\n`;
         report += `- 💵 **Incomes:** ${await testTable('incomes', { user_id: supaUser.id, source: `Auto ${testId}`, amount: 100 }, 'source', `Auto ${testId}`)}\n`;
-        report += `- 💳 **Payments:** ${await testTable('payments', { user_id: supaUser.id, note: `Auto ${testId}`, amount: 10, payment_type: 'completed', payment_date: new Date().toISOString() }, 'note', `Auto ${testId}`)}\n`;
+        report += `- 💳 **Payments:** ${await testTable('payments', { user_id: supaUser.id, note: `Auto ${testId}`, amount: 10, payment_type: 'bill', payment_date: new Date().toISOString() }, 'note', `Auto ${testId}`)}\n`;
         
         // 🚀 NEW: Savings Goals Test
         report += `- 🎯 **Savings Goals:** ${await testTable('savings_goals', { user_id: supaUser.id, name: `Auto ${testId}`, target_amount: 1000, current_saved: 100 }, 'name', `Auto ${testId}`)}\n`;
