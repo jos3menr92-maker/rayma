@@ -40,7 +40,11 @@ export default function BankAccounts() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const typeConfig = useMemo(() => buildTypeConfig(T), [T]);
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    if (supaUser?.id) {
+      fetchAll();
+    }
+  }, [supaUser?.id]);
 
   const fetchAll = async () => {
     setLoading(true);

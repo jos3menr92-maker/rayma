@@ -23,7 +23,11 @@ export default function Budget() {
   const [savingGoal, setSavingGoal] = useState(false);
   const { supaUser, reload } = useFinancialData();
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    if (supaUser?.id) {
+      loadData();
+    }
+  }, [supaUser?.id]);
 
   async function loadData() {
     setLoading(true);

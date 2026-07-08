@@ -49,10 +49,12 @@ export default function LoanDetail() {
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => { 
-    loadData(); 
+    if (supaUser?.id) {
+      loadData(); 
+    }
     const params = new URLSearchParams(window.location.search); 
     if (params.get("quickpay") === "1") setPaymentOpen(true); 
-  }, [id]); 
+  }, [id, supaUser?.id]); 
 
   async function loadData() { 
     const { data: loanData } = await supabase.from('loans').select('*').eq('id', id).single(); 

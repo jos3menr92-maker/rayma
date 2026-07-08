@@ -147,9 +147,8 @@ export function FinancialDataProvider({ children }) {
   }
 
   useEffect(() => {
-    loadAll();
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setSupaUser(session?.user || null);
         loadAll(); 
       } else if (event === 'SIGNED_OUT') {
