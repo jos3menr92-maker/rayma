@@ -66,9 +66,11 @@ export default function BankAccounts() {
   const saveAccount = async () => {
     const data = { ...form, balance: parseFloat(form.balance) || 0, last_synced: format(new Date(), "yyyy-MM-dd") };
     if (editing) {
-      await supabase.from('bank_accounts').update(data).eq('id', editing.id);
+      const { error } = await supabase.from('bank_accounts').update(data).eq('id', editing.id);
+      if (error) throw error;
     } else {
-      await supabase.from('bank_accounts').insert([{ ...data, user_id: supaUser?.id }]);
+      const { error } = await supabase.from('bank_accounts').insert([{ ...data, user_id: supaUser?.id }]);
+      if (error) throw error;
     }
     setShowDialog(false);
     fetchAll();
@@ -76,13 +78,15 @@ export default function BankAccounts() {
 
   const deleteAccount = async (id) => {
     if (!confirm(T("deleteAccountConfirm", "Delete this account?"))) return;
-    await supabase.from('bank_accounts').delete().eq('id', id);
+    const { error } = await supabase.from('bank_accounts').delete().eq('id', id);
+    if (error) throw error;
     fetchAll();
   };
 
   const saveTx = async () => {
     if (!txForm.bank_account_id) { alert(T("selectAccountPrompt", "Please select a bank account.")); return; }
-    await supabase.from('transactions').insert([{ ...txForm, amount: parseFloat(txForm.amount) || 0, user_id: supaUser?.id }]);
+    const { error } = await supabase.from('transactions').insert([{ ...txForm, amount: parseFloat(txForm.amount) || 0, user_id: supaUser?.id }]);
+    if (error) throw error;
     setShowTxDialog(false);
     setTxForm(emptyTx);
     fetchAll();

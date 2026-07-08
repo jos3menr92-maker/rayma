@@ -36,11 +36,8 @@ export function FinancialDataProvider({ children }) {
         setSupaUser(currentSupaUser);
       }
 
-      if (!me?.id || !currentSupaUser?.id) {
-        if (isMounted) {
-          setLoans([]); setBills([]); setIncomes([]); setPayments([]); setAssets([]); setSavingsGoals([]);
-          setLoading(false);
-        }
+      if (!currentSupaUser?.id) {
+        if (isMounted) setLoading(false);
         return;
       }
 

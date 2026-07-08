@@ -86,11 +86,13 @@ export default function AssetDashboard() {
       user_id: supaUser.id
     };
 
-    if (editing) {
-      await supabase.from('assets').update(payload).eq('id', editing.id);
-    } else {
-      await supabase.from('assets').insert([payload]);
-    }
+      if (editing) {
+        const { error } = await supabase.from('assets').update(payload).eq('id', editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('assets').insert([payload]);
+        if (error) throw error;
+      }
     
     setSaving(false);
     setDialogOpen(false);

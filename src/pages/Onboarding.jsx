@@ -25,7 +25,7 @@ function ProgressDots({ step }) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
-  const { supaUser } = useFinancialData(); // 🚀 NEW: Grab the Supabase ID
+  const { supaUser, reload } = useFinancialData(); // 🚀 NEW: Grab the Supabase ID
 
   const T = useMemo(() =>
     (key, fallback) => {
@@ -51,7 +51,7 @@ export default function Onboarding() {
     
     // 🚀 FIXED: Save to Supabase
     if (supaUser?.id) {
-      await supabase.from('incomes').insert([{
+      const { error } = await supabase.from('incomes').insert([{
         user_id: supaUser.id,
         source: "Weekly Income",
         amount: parseFloat(weeklyIncome),
@@ -60,6 +60,7 @@ export default function Onboarding() {
         note: "Set during onboarding",
         is_active: true
       }]);
+      if (error) throw error;
     }
     
     setLoading(false);
@@ -72,13 +73,14 @@ export default function Onboarding() {
       
       // 🚀 FIXED: Save to Supabase
       if (supaUser?.id) {
-        await supabase.from('bills').insert([{
+        const { error } = await supabase.from('bills').insert([{
           user_id: supaUser.id,
           name: billName,
           amount: parseFloat(billAmount),
           payment_frequency: "monthly",
           is_active: true
         }]);
+        if (error) throw error;
       }
       
       setLoading(false);
@@ -92,7 +94,7 @@ export default function Onboarding() {
       
       // 🚀 FIXED: Save to Supabase
       if (supaUser?.id) {
-        await supabase.from('loans').insert([{
+        const { error } = await supabase.from('loans').insert([{
           user_id: supaUser.id,
           name: loanName,
           original_amount: parseFloat(loanBalance),
@@ -101,6 +103,8 @@ export default function Onboarding() {
           monthly_payment: loanPayment ? parseFloat(loanPayment) : 0,
           status: "active"
         }]);
+        if (error) throw error;
+        await reload();
       }
       
       setLoading(false);
