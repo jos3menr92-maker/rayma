@@ -189,7 +189,7 @@ export default function AddLoan() {
               className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
             >
               <option value="weekly">{T("weekly", "Weekly")}</option>
-              <option value="bi-weekly">{T("biweekly", "Bi-Weekly")}</option>
+              <option value="biweekly">{T("biweekly", "Bi-Weekly")}</option>
               <option value="semi-monthly">{T("semiMonthly", "Semi-Monthly")}</option>
               <option value="monthly">{T("monthly", "Monthly")}</option>
               <option value="annually">{T("annually", "Annually")}</option>
