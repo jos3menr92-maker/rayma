@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import { useLanguage } from "@/lib/LanguageContext";
 
 /**
  * ProtectedLayout Component
@@ -30,6 +31,7 @@ import { useAuth } from '@/lib/AuthContext';
 const ProtectedLayout = ({ children }) => {
   // Access authentication state from context
   const { isAuthenticated, isLoadingAuth, authError } = useAuth();
+  const { T } = useLanguage();
 
   // Show loading spinner while checking authentication
   if (isLoadingAuth) {
@@ -38,7 +40,7 @@ const ProtectedLayout = ({ children }) => {
         <div className="flex flex-col items-center gap-4">
           {/* Loading Spinner */}
           <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-slate-800 dark:border-t-slate-100 rounded-full animate-spin" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">Verifying access...</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{T ? T("verifyingAccess", "Verifying access...") : "Verifying access..."}</p>
         </div>
       </div>
     );

@@ -8,6 +8,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { toast } from "@/components/ui/use-toast";
 import { isNativeMobileApp } from "@/lib/iap";
 import { supabase } from "@/lib/supabaseClient";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,6 +22,7 @@ export default function Auth() {
 
   const navigate = useNavigate();
   const { checkAppState } = useAuth();
+  const { T } = useLanguage();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -197,7 +199,7 @@ const handleProviderSignIn = async (provider) => {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold font-heading text-foreground mb-2">
-            {isLogin ? "Welcome Back" : "Create Account"}
+            {isLogin ? (T ? T("welcomeBack", "Welcome Back") : "Welcome Back") : (T ? T("createAccount", "Create Account") : "Create Account")}
           </h1>
           <p className="text-muted-foreground text-sm">
             {isLogin ? "Sign in to continue to Rayma AI" : "Join us to take control of your finances"}
@@ -213,11 +215,11 @@ const handleProviderSignIn = async (provider) => {
           )}
           <div className="relative">
             <Mail className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
-            <input type="email" placeholder="Email address" className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50" onChange={(e) => setFormData({ ...formData, email: e.target.value })} required disabled={loading || activeProvider} />
+            <input type="email" placeholder={T ? T("emailAddress", "Email address") : "Email address"} className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50" onChange={(e) => setFormData({ ...formData, email: e.target.value })} required disabled={loading || activeProvider} />
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
-            <input type="password" placeholder="Password" className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50" onChange={(e) => setFormData({ ...formData, password: e.target.value })} required disabled={loading || activeProvider} />
+            <input type="password" placeholder={T ? T("password", "Password") : "Password"} className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50" onChange={(e) => setFormData({ ...formData, password: e.target.value })} required disabled={loading || activeProvider} />
           </div>
 
           {/* 🚀 NEW: Forgot Password Link */}
@@ -232,7 +234,7 @@ const handleProviderSignIn = async (provider) => {
           {error && <p className="text-sm text-destructive text-center bg-destructive/10 py-2 rounded-lg">{error}</p>}
 
           <button type="submit" disabled={loading || activeProvider} className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> {isLogin ? "Sign In" : "Sign Up"} <ArrowRight className="w-4 h-4" /></>}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <> {isLogin ? (T ? T("signIn", "Sign In") : "Sign In") : (T ? T("signUp", "Sign Up") : "Sign Up")} <ArrowRight className="w-4 h-4" /></>}
           </button>
         </form>
 
