@@ -51,16 +51,20 @@ export default function Onboarding() {
     
     // 🚀 FIXED: Save to Supabase
     if (supaUser?.id) {
-      const { error } = await supabase.from('incomes').insert([{
-        user_id: supaUser.id,
-        source: "Weekly Income",
-        amount: parseFloat(weeklyIncome),
-        frequency: "weekly",
-        week_start: new Date().toISOString().split("T")[0],
-        note: "Set during onboarding",
-        is_active: true
-      }]);
-      if (error) throw error;
+      try {
+        const { error } = await supabase.from('incomes').insert([{
+          user_id: supaUser.id,
+          source: "Weekly Income",
+          amount: parseFloat(weeklyIncome),
+          frequency: "weekly",
+          week_start: new Date().toISOString().split("T")[0],
+          note: "Set during onboarding",
+          is_active: true
+        }]);
+        if (error) throw error;
+      } catch (err) {
+        console.error("Onboarding Error:", err.message);
+      }
     }
     
     setLoading(false);
@@ -73,14 +77,18 @@ export default function Onboarding() {
       
       // 🚀 FIXED: Save to Supabase
       if (supaUser?.id) {
-        const { error } = await supabase.from('bills').insert([{
-          user_id: supaUser.id,
-          name: billName,
-          amount: parseFloat(billAmount),
-          payment_frequency: "monthly",
-          is_active: true
-        }]);
-        if (error) throw error;
+        try {
+          const { error } = await supabase.from('bills').insert([{
+            user_id: supaUser.id,
+            name: billName,
+            amount: parseFloat(billAmount),
+            payment_frequency: "monthly",
+            is_active: true
+          }]);
+          if (error) throw error;
+        } catch (err) {
+          console.error("Onboarding Error:", err.message);
+        }
       }
       
       setLoading(false);
@@ -94,17 +102,21 @@ export default function Onboarding() {
       
       // 🚀 FIXED: Save to Supabase
       if (supaUser?.id) {
-        const { error } = await supabase.from('loans').insert([{
-          user_id: supaUser.id,
-          name: loanName,
-          original_amount: parseFloat(loanBalance),
-          current_balance: parseFloat(loanBalance),
-          remaining_balance: parseFloat(loanBalance),
-          monthly_payment: loanPayment ? parseFloat(loanPayment) : 0,
-          status: "active"
-        }]);
-        if (error) throw error;
-        await reload();
+        try {
+          const { error } = await supabase.from('loans').insert([{
+            user_id: supaUser.id,
+            name: loanName,
+            original_amount: parseFloat(loanBalance),
+            current_balance: parseFloat(loanBalance),
+            remaining_balance: parseFloat(loanBalance),
+            monthly_payment: loanPayment ? parseFloat(loanPayment) : 0,
+            status: "active"
+          }]);
+          if (error) throw error;
+          await reload();
+        } catch (err) {
+          console.error("Onboarding Error:", err.message);
+        }
       }
       
       setLoading(false);

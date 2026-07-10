@@ -4,22 +4,27 @@ import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { code, userId } = await req.json();
+    const user = await base44.auth.me();
+
+    if (!user || !user.id) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { code } = await req.json();
 
     if (!code || typeof code !== 'string') {
       return Response.json({ error: 'Invalid code' }, { status: 400 });
     }
-    if (!userId || typeof userId !== 'string') {
-      return Response.json({ error: 'User ID is required' }, { status: 400 });
-    }
 
-    // Initialize Supabase client for promo validation/redemption
+    const userId = user.id;
+
+    // Initialize Supabase admin client to bypass RLS for promo code lookups
     const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('VITE_SUPABASE_ANON_KEY');
-    if (!supabaseUrl || !supabaseAnonKey) {
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !supabaseServiceKey) {
       return Response.json({ error: 'Supabase credentials not configured' }, { status: 500 });
     }
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 1. Validate the promo code in Supabase
     const { data: promoCode, error: fetchError } = await supabase
@@ -57,19 +62,14 @@ Deno.serve(async (req) => {
 
     // 5. Apply reward via Base44 User entity
     const users = await base44.asServiceRole.entities.User.filter({ id: userId });
-    const user = users[0];
-    if (!user) {
+    const userRecord = users[0];
+    if (!userRecord) {
       return Response.json({ error: 'User not found' }, { status: 404 });
     }
 
     let rewardMessage = '';
 
-    if (promoCode.reward_type === 'energy_bars') {
-      const currentEnergy = user.energy_bars || 0;
-      const newEnergy = currentEnergy + (promoCode.reward_value || 0);
-      await base44.asServiceRole.entities.User.update(userId, { energy_bars: newEnergy });
-      rewardMessage = `You've unlocked ${promoCode.reward_value} Energy Bars! ⚡`;
-    } else if (promoCode.reward_type === 'tokens') {
+    if (promoCode.reward_type === 'tokens') {
       const currentTokens = user.ai_tokens || 0;
       const newTokens = currentTokens + (promoCode.reward_value || 0);
       await base44.asServiceRole.entities.User.update(userId, { ai_tokens: newTokens });
