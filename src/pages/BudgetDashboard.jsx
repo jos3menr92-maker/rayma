@@ -42,14 +42,14 @@ export default function BudgetDashboard() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [budRes, txRes] = await Promise.all([
-      supabase.from('budget_categories').select('*').order('created_at', { ascending: false }),
-      supabase.from('transactions').select('*').order('date', { ascending: false }).limit(200),
-    ]);
-    if (budRes.error) console.error("Budget categories error:", budRes.error);
-    if (txRes.error) console.error("Transactions error:", txRes.error);
-    setBudgets(budRes.data || []);
-    setTransactions(txRes.data || []);
+    const uid = supaUser?.id;
+    if (!uid) { setLoading(false); return; }
+    const { data: catData, error: catErr } = await supabase.from('budget_categories').select('*').eq('user_id', uid).order('created_at', { ascending: false });
+    if (catErr) throw catErr;
+    const { data: txData, error: txErr } = await supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(200);
+    if (txErr) throw txErr;
+    setBudgets(catData || []);
+    setTransactions(txData || []);
     setLoading(false);
   };
 

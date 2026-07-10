@@ -128,8 +128,11 @@ export default function Profile() {
     setSaving(true); 
     
     try {
-      await supabase.auth.updateUser({ data: form });
-      await supabase.from('profiles').update(form).eq('id', supaUser.id);
+      const { error: authError } = await supabase.auth.updateUser({ data: form });
+      if (authError) throw authError;
+
+      const { error: profileError } = await supabase.from('profiles').update(form).eq('id', supaUser.id);
+      if (profileError) throw profileError;
       await reload();
       
       if (form.preferred_language) setLang(form.preferred_language); 

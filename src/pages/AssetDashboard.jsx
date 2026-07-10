@@ -46,7 +46,7 @@ export default function AssetDashboard() {
 
   useEffect(() => { 
     if (supaUser?.id) loadAssets(); 
-  }, [supaUser]);
+  }, [supaUser?.id]);
 
   async function loadAssets() {
     setLocalLoading(true);

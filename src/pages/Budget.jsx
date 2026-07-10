@@ -4,7 +4,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, PiggyBank, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Edit3, PiggyBank } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,7 +107,7 @@ export default function Budget() {
 
         <div className="space-y-4">
           <AnimatePresence>
-            {goals.map((goal, i) => {
+            {goals.map((goal) => {
               const progress = Math.min((goal.current_saved / goal.target_amount) * 100, 100);
               return (
                 <motion.div key={goal.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-3xl p-5 shadow-sm">
