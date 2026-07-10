@@ -4,7 +4,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, PiggyBank } from "lucide-react";
+import { Plus, Trash2, Edit3, PiggyBank, ShieldAlert, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,13 @@ export default function Budget() {
   const [goalForm, setGoalForm] = useState({ name: "", target_amount: "", current_saved: "", notes: "" });
   const [savingGoal, setSavingGoal] = useState(false);
   const { supaUser, reload } = useFinancialData();
+
+  // 🔐 Security Vault State
+  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState(null);
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     if (supaUser?.id) {
@@ -78,8 +85,34 @@ export default function Budget() {
     }
   }
 
-  async function handleDeleteGoal(id) {
+  const handleDeleteGoal = (id) => {
+    setGoalToDelete(id);
+    setPassword("");
+    setAuthError("");
+    setShowPasswordLock(true);
+  };
+
+  const verifyAndExecute = async () => {
+    setAuthError("");
+    setIsVerifying(true);
+    try {
+      await executeDeleteGoal(password, goalToDelete);
+      setShowPasswordLock(false);
+    } catch (err) {
+      setAuthError(T("invalidPassword", "Invalid password. Please try again."));
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  async function executeDeleteGoal(password, id) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) throw new Error("Could not verify user identity.");
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
+    if (signInError) throw signInError;
+
     await supabase.from('savings_goals').delete().eq('id', id);
+    setGoalToDelete(null);
     loadData();
   }
 
@@ -145,6 +178,27 @@ export default function Budget() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 🔐 SECURITY MODAL (The Vault) */}
+      {showPasswordLock && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-amber-500">
+              <ShieldAlert className="w-6 h-6" />
+              <h3 className="font-bold text-lg text-foreground">{T("verifyPassword", "Verify Password")}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">{T("deleteGoalConfirm", "Enter your password to permanently delete this goal.")}</p>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={T("enterPassword", "Enter password...")} />
+            {authError && <p className="text-xs text-destructive">{authError}</p>}
+            <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>{T("cancel", "Cancel")}</Button>
+              <Button className="flex-1" onClick={verifyAndExecute} disabled={isVerifying || !password}>
+                {isVerifying ? <Loader2 className="animate-spin" /> : T("confirm", "Confirm")}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
