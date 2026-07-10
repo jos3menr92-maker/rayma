@@ -120,6 +120,18 @@ export default function Store() {
     }
   }
 
+  const handleRestorePurchases = async () => {
+    try {
+      if (window.RAYMA_IAP && window.RAYMA_IAP.restore) {
+        await window.RAYMA_IAP.restore();
+      } else {
+        console.warn("Native IAP bridge not available for restore.");
+      }
+    } catch (error) {
+      console.error("Restore failed:", error.message);
+    }
+  };
+
   async function handlePromoCode(e) {
     e.preventDefault();
     if (!promoCode.trim()) return;
@@ -264,6 +276,17 @@ export default function Store() {
           {T("currencyNote", "Prices may vary automatically based on your local currency to ensure fair access globally.")}<br />
           {T("seeTerms", "See")} <a href="/terms" className="underline text-primary">{T("termsOfService", "Terms of Service")}</a> {T("forFullDetails", "for full details.")}
         </p>
+
+        {isNativeMobileApp && isNativeMobileApp() && (
+          <div className="mt-8 text-center pb-6">
+            <button
+              onClick={handleRestorePurchases}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground underline transition-colors"
+            >
+              {T ? T("restorePurchases", "Restore Purchases") : "Restore Purchases"}
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );
