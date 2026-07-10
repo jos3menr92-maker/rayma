@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { useLanguage, useT } from "@/lib/LanguageContext"; 
 import { LANGUAGES } from "@/lib/i18n";
+import { base44 } from "@/api/base44Client";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -215,17 +216,33 @@ export default function Profile() {
   };
 
   const handleDelete = async () => {
-    alert("⚠️ ALARM: Account Deletion Initiated. Your data will be wiped in 30 days.");
     setDeleting(true);
     try {
-      // Future upgrade: Call a Supabase Edge Function here to hard-delete from Auth
-      await supabase.from('profiles').update({ 
-        deleted_at: new Date().toISOString() 
-      }).eq('id', supaUser.id);
-      
+      const uid = supaUser?.id;
+      if (!uid) throw new Error("User ID missing. Cannot delete account.");
+
+      // 1. Hard wipe all financial data from Supabase
+      await Promise.all([
+        supabase.from('transactions').delete().eq('user_id', uid),
+        supabase.from('bank_accounts').delete().eq('user_id', uid),
+        supabase.from('payments').delete().eq('user_id', uid),
+        supabase.from('loans').delete().eq('user_id', uid),
+        supabase.from('bills').delete().eq('user_id', uid),
+        supabase.from('incomes').delete().eq('user_id', uid),
+        supabase.from('assets').delete().eq('user_id', uid),
+        supabase.from('savings_goals').delete().eq('user_id', uid),
+        supabase.from('profiles').delete().eq('id', uid)
+      ]);
+
+      // 2. Delete Base44 Account (if SDK supports it, otherwise logout)
+      if (base44?.auth?.deleteAccount) {
+        await base44.auth.deleteAccount();
+      }
+
+      // 3. Terminate Supabase session and redirect
       await supabase.auth.signOut();
       window.location.href = "/auth";
-    } catch (err) { 
+    } catch (err) {
       console.error(err);
       setDeleting(false);
     }
