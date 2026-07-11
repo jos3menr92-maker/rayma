@@ -221,18 +221,12 @@ export default function Profile() {
       const uid = supaUser?.id;
       if (!uid) throw new Error("User ID missing. Cannot delete account.");
 
-      // 1. Hard wipe all financial data from Supabase
-      await Promise.all([
-        supabase.from('transactions').delete().eq('user_id', uid),
-        supabase.from('bank_accounts').delete().eq('user_id', uid),
-        supabase.from('payments').delete().eq('user_id', uid),
-        supabase.from('loans').delete().eq('user_id', uid),
-        supabase.from('bills').delete().eq('user_id', uid),
-        supabase.from('incomes').delete().eq('user_id', uid),
-        supabase.from('assets').delete().eq('user_id', uid),
-        supabase.from('savings_goals').delete().eq('user_id', uid),
-        supabase.from('profiles').delete().eq('id', uid)
-      ]);
+      // 1. Hard wipe all financial data from Supabase (sequential to prevent partial wipes)
+      const tables = ['transactions', 'bank_accounts', 'payments', 'loans', 'bills', 'incomes', 'assets', 'savings_goals', 'profiles'];
+      for (const table of tables) {
+        const { error } = await supabase.from(table).delete().eq(table === 'profiles' ? 'id' : 'user_id', uid);
+        if (error) throw new Error(`Failed to delete from ${table}: ${error.message}`);
+      }
 
       // 2. Delete Base44 Account (if SDK supports it, otherwise logout)
       if (base44?.auth?.deleteAccount) {

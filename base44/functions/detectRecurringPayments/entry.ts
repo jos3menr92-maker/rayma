@@ -1,4 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
 
 Deno.serve(async (req) => {
   try {
@@ -9,8 +10,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch all transactions for this user
-    const transactions = await base44.entities.Transaction.list('-date', 1000);
+    // Initialize Supabase admin client
+    const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return Response.json({ error: 'Supabase credentials not configured' }, { status: 500 });
+    }
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch all transactions for this user from Supabase
+    const { data: transactions, error } = await supabaseAdmin.from('transactions').select('*').eq('user_id', user.id);
+    if (error) throw error;
     
     if (!transactions || transactions.length === 0) {
       return Response.json({ 
