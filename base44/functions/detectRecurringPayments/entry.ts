@@ -18,8 +18,24 @@ Deno.serve(async (req) => {
     }
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch all transactions for this user from Supabase
-    const { data: transactions, error } = await supabaseAdmin.from('transactions').select('*').eq('user_id', user.id);
+    // Resolve the Supabase UUID from the Base44 user's email
+    // (Base44 user.id is not a UUID; transactions.user_id stores the Supabase auth UUID)
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) throw listError;
+
+    const supabaseUser = users.find(u => u.email === user.email);
+    if (!supabaseUser) {
+      return Response.json({
+        success: true,
+        recurring_payments: [],
+        message: 'No Supabase account found for this user email'
+      });
+    }
+
+    const supaUserId = supabaseUser.id;
+
+    // Fetch all transactions for this user from Supabase using the correct UUID
+    const { data: transactions, error } = await supabaseAdmin.from('transactions').select('*').eq('user_id', supaUserId);
     if (error) throw error;
     
     if (!transactions || transactions.length === 0) {

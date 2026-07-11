@@ -70,14 +70,14 @@ Deno.serve(async (req) => {
     let rewardMessage = '';
 
     if (promoCode.reward_type === 'tokens') {
-      const currentTokens = user.ai_tokens || 0;
+      const currentTokens = userRecord.ai_tokens || 0;
       const newTokens = currentTokens + (promoCode.reward_value || 0);
       await base44.asServiceRole.entities.User.update(userId, { ai_tokens: newTokens });
       rewardMessage = `You've been granted ${promoCode.reward_value} AI tokens! 🤖`;
     } else if (promoCode.reward_type === 'annual_pass') {
       let baseDate = new Date();
-      if (user.annual_pass_expires_at) {
-        const currentExpiry = new Date(user.annual_pass_expires_at);
+      if (userRecord.annual_pass_expires_at) {
+        const currentExpiry = new Date(userRecord.annual_pass_expires_at);
         if (currentExpiry > baseDate) baseDate = currentExpiry;
       }
       baseDate.setFullYear(baseDate.getFullYear() + 1);

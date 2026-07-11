@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 /**
  * Daily Energy Reset (scheduled via pg_cron at 00:00 UTC)
@@ -69,15 +69,10 @@ Deno.serve(async (req) => {
       }
 
       // ── DETERMINE TIER ────────────────────────────────────────────────────
-      // Check if the user has an active Stripe subscription (power_lithium / power_generator).
-      // If subscription_expires_at is in the past (or missing), treat them as free.
-      const hasActiveSubscription = user.subscription_expires_at
-        ? new Date(user.subscription_expires_at + 'T23:59:59Z') > now
-        : false;
-
-      const activeTier = hasActiveSubscription
-        ? (user.subscription_tier || 'free')
-        : 'free';
+      // stripeWebhook sets `subscription_type` to 'power_lithium' or 'power_generator'.
+      // Check that field directly to assign the correct daily energy cap.
+      const subType = user.subscription_type;
+      const activeTier = (subType && DAILY_ENERGY_BY_TIER[subType]) ? subType : 'free';
 
       // ── CALCULATE DAILY ENERGY ────────────────────────────────────────────
       const baseDailyEnergy  = DAILY_ENERGY_BY_TIER[activeTier] ?? 10;
