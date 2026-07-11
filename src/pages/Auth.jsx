@@ -164,8 +164,8 @@ const handleProviderSignIn = async (provider) => {
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
               <Mail className="w-6 h-6 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold font-heading text-foreground mb-2">Verify your email</h1>
-            <p className="text-muted-foreground text-sm">We sent a 6-digit code to {formData.email}</p>
+            <h1 className="text-2xl font-bold font-heading text-foreground mb-2">{T("verifyEmail", "Verify your email")}</h1>
+            <p className="text-muted-foreground text-sm">{T("otpSentTo", "We sent a 6-digit code to")} {formData.email}</p>
           </div>
           {error && <p className="text-sm text-destructive text-center bg-destructive/10 py-2 rounded-lg">{error}</p>}
           <div className="flex justify-center mb-6">
@@ -181,12 +181,12 @@ const handleProviderSignIn = async (provider) => {
             </InputOTP>
           </div>
           <button onClick={handleVerify} disabled={loading || otpCode.length < 6} className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify Code"}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : T("verifyCode", "Verify Code")}
           </button>
           <p className="text-center text-sm text-muted-foreground mt-4">
-            Didn't receive the code?{" "}
+            {T("didntReceiveCode", "Didn't receive the code?")}{" "}
             <button type="button" onClick={handleResend} className="text-primary font-medium hover:underline">
-              Resend
+              {T("resend", "Resend")}
             </button>
           </p>
         </div>
@@ -202,7 +202,7 @@ const handleProviderSignIn = async (provider) => {
             {isLogin ? (T ? T("welcomeBack", "Welcome Back") : "Welcome Back") : (T ? T("createAccount", "Create Account") : "Create Account")}
           </h1>
           <p className="text-muted-foreground text-sm">
-            {isLogin ? "Sign in to continue to Rayma AI" : "Join us to take control of your finances"}
+            {isLogin ? T("signInContinue", "Sign in to continue to Rayma AI") : T("joinUs", "Join us to take control of your finances")}
           </p>
         </div>
 
@@ -210,7 +210,7 @@ const handleProviderSignIn = async (provider) => {
           {!isLogin && (
             <div className="relative">
               <User className="absolute left-3 top-3.5 w-5 h-5 text-muted-foreground" />
-              <input type="text" placeholder="Full Name" className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50" onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} required disabled={loading || activeProvider} />
+              <input type="text" placeholder={T("fullName", "Full Name")} className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50" onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} required disabled={loading || activeProvider} />
             </div>
           )}
           <div className="relative">
@@ -226,7 +226,7 @@ const handleProviderSignIn = async (provider) => {
           {isLogin && (
             <div className="flex justify-end">
               <Link to="/forgot-password" className="text-sm text-primary hover:underline font-medium -mt-2">
-                Forgot password?
+                {T("forgotPassword", "Forgot password?")}
               </Link>
             </div>
           )}
@@ -240,14 +240,14 @@ const handleProviderSignIn = async (provider) => {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or continue with</span></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">{T("orContinueWith", "Or continue with")}</span></div>
         </div>
 
         <div className="space-y-3">
           {/* 🛡️ MOBILE GUARD: Only show Passkey on the web */}
           {!isNativeMobileApp() && (
             <button type="button" onClick={() => handleProviderSignIn("passkey")} disabled={loading || activeProvider} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm disabled:opacity-50">
-              {activeProvider === "passkey" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-5 h-5" />} Sign in with Passkey / Biometrics
+              {activeProvider === "passkey" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-5 h-5" />} {T("signInPasskey", "Sign in with Passkey / Biometrics")}
             </button>
           )}
           
@@ -260,10 +260,10 @@ const handleProviderSignIn = async (provider) => {
 
         <div className="text-center space-y-4">
           <button onClick={() => setIsLogin(!isLogin)} className="text-sm text-primary hover:underline font-medium">
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            {isLogin ? T("noAccountSignUp", "Don't have an account? Sign up") : T("hasAccountSignIn", "Already have an account? Sign in")}
           </button>
           <p className="text-[10px] text-muted-foreground">
-            By continuing, you agree to our <Link to="/terms" className="underline">Terms of Service</Link> and <Link to="/privacy" className="underline">Privacy Policy</Link>.
+            {T("agreeToTerms", "By continuing, you agree to our")} <Link to="/terms" className="underline">{T("termsOfService", "Terms of Service")}</Link> {T("and", "and")} <Link to="/privacy" className="underline">{T("privacyPolicy", "Privacy Policy")}</Link>.
           </p>
         </div>
       </div>

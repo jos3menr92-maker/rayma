@@ -132,7 +132,8 @@ export default function AssetDashboard() {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
     if (signInError) throw signInError;
 
-    await supabase.from('assets').delete().eq('id', id);
+    const { error } = await supabase.from('assets').delete().eq('id', id);
+    if (error) throw error;
     setAssetToDelete(null);
     loadAssets();
   }

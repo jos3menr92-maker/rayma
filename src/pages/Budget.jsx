@@ -111,7 +111,8 @@ export default function Budget() {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
     if (signInError) throw signInError;
 
-    await supabase.from('savings_goals').delete().eq('id', id);
+    const { error } = await supabase.from('savings_goals').delete().eq('id', id);
+    if (error) throw error;
     setGoalToDelete(null);
     loadData();
   }

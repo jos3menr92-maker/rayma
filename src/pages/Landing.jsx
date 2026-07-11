@@ -20,7 +20,7 @@ const testimonials = [
 ];
 
 const faqs = [
-  { q: "Is Rayma AI free?", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. Rayma AI gives you 5 free consultations every month. Buy token packs if you need more, or get the Annual Pass for unlimited AI." },
+  { q: "Is Rayma AI free?", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. Rayma AI gives you 5 free consultations every month. Buy Insert Coin for a one-time energy boost, or subscribe to Lithium or Generator for daily energy bars." },
   { q: "Does Rayma AI connect to my bank?", a: "No. Rayma AI is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
   { q: "Is my data private?", a: "Absolutely. Every record is privately scoped to your account with row-level security. We never sell or share your data." },
   { q: "What platforms does Rayma AI work on?", a: "Rayma AI works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
@@ -213,36 +213,36 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-            {/* Starter */}
+            {/* Insert Coin */}
             <div className="bg-card border border-border rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{T("starterPack", "Starter Pack")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$0.99</p>
-              <p className="text-xs text-muted-foreground mb-4">{T("oneTimeTokens10", "One-time · +10 AI tokens")}</p>
-              {[T("feature10AI", "10 AI consultations"), T("featureAnytime", "Use anytime"), T("featureNoExpiry", "No expiry"), T("featureOccasional", "Great for occasional use")].map(f => (
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{T("insertCoin", "Insert Coin")}</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$1.99</p>
+              <p className="text-xs text-muted-foreground mb-4">{T("oneTimeInstantEnergy", "One-time · Instant Energy")}</p>
+              {[T("featureInstantEnergy", "Instant energy boost"), T("featureAnytime", "Use anytime"), T("featureNoExpiry", "No expiry"), T("featureOccasional", "Great for occasional use")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
               ))}
             </div>
-            {/* Popular */}
+            {/* Lithium */}
             <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 rounded-2xl p-5 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">{T("popular", "POPULAR")}</div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("popularPack", "Popular Pack")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$3.99</p>
-              <p className="text-xs text-muted-foreground mb-4">{T("oneTimeTokens50", "One-time · +50 AI tokens")}</p>
-              {[T("feature50AI", "50 AI consultations"), T("featureAnytime", "Use anytime"), T("featureNoExpiry", "No expiry"), T("featureBestValue", "Best per-token value")].map(f => (
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("lithium", "Lithium")}</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$5.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$5.99/mo or $49.99/year · 50 daily energy bars")}</p>
+              {[T("feature50DailyEnergy", "50 daily energy bars"), T("featureMonthly", "Billed monthly"), T("featureAnnual", "or $49.99/year"), T("featureBestValue", "Best per-token value")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>
               ))}
             </div>
-            {/* Annual */}
+            {/* Generator */}
             <div className="bg-primary/5 border-2 border-primary rounded-2xl p-5 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-0.5 rounded-full">{T("bestValue", "BEST VALUE")}</div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">{T("annualPass", "Annual Pass")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$19.99</p>
-              <p className="text-xs text-muted-foreground mb-4">{T("unlimitedAI1Year", "One-time · Unlimited AI for 1 year")}</p>
-              {[T("featureUnlimitedAI", "Unlimited AI for 1 year"), T("featureAllFeatures", "All future features"), T("featurePriority", "Priority experience"), T("featureMonthly", "~$1.67/month")].map(f => (
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">{T("generator", "Generator")}</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$11.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$11.99/mo or $95.99/year · 200 daily energy bars")}</p>
+              {[T("feature200DailyEnergy", "200 daily energy bars"), T("featureAllFeatures", "All future features"), T("featurePriority", "Priority experience"), T("featureAnnualGen", "or $95.99/year")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
