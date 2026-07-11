@@ -73,7 +73,7 @@ export default function Landing() {
     { qKey: "faq6Q", q: "How do I get started?", aKey: "faq6A", a: "Sign up for free, add your first loan or bill in under 2 minutes, and Rayma AI starts giving you insights immediately." },
   ];
 
-  const handleLogin = () => base44.auth.redirectToLogin();
+  const handleLogin = () => { window.location.href = '/auth'; };
 
   return (
     <div className="min-h-screen bg-background text-foreground font-body">
