@@ -26,6 +26,11 @@
       "type": "string",
       "format": "date",
       "description": "Date of the adjustment"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional additional details"
     }
   },
   "required": [

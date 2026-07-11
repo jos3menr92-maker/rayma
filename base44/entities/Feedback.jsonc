@@ -24,6 +24,11 @@
     "page": {
       "type": "string",
       "description": "Page the user was on when submitting feedback"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional additional details"
     }
   },
   "required": [

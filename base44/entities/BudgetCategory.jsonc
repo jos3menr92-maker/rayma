@@ -34,6 +34,11 @@
     "icon": {
       "type": "string",
       "description": "Lucide icon name"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional additional details"
     }
   },
   "required": [

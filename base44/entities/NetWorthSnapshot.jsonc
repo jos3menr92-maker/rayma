@@ -15,6 +15,11 @@
     },
     "net_worth": {
       "type": "number"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional additional details"
     }
   },
   "required": [
