@@ -8,7 +8,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { toast } from "@/components/ui/use-toast";
 import { isNativeMobileApp } from "@/lib/iap";
 import { supabase } from "@/lib/supabaseClient";
-import { useLanguage } from "@/lib/LanguageContext";
+import { useLanguage, useT } from "@/lib/LanguageContext";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,7 +22,7 @@ export default function Auth() {
 
   const navigate = useNavigate();
   const { checkAppState } = useAuth();
-  const { T } = useLanguage();
+  const T = useT();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
