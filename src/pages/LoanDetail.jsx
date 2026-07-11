@@ -51,17 +51,26 @@ export default function LoanDetail() {
   useEffect(() => { 
     if (supaUser?.id) {
       loadData(); 
+    } else {
+      setLoading(false);
     }
     const params = new URLSearchParams(window.location.search); 
     if (params.get("quickpay") === "1") setPaymentOpen(true); 
   }, [id, supaUser?.id]); 
 
   async function loadData() { 
-    const { data: loanData } = await supabase.from('loans').select('*').eq('id', id).single(); 
-    const { data: paymentData } = await supabase.from('payments').select('*').eq('loan_id', id).eq('user_id', supaUser.id).order('payment_date', { ascending: false }); 
-    setLoan(loanData); 
-    setPayments(paymentData || []); 
-    setLoading(false); 
+    try {
+      const { data: loanData, error: loanError } = await supabase.from('loans').select('*').eq('id', id).eq('user_id', supaUser.id).single(); 
+      if (loanError) console.error('Loan fetch failed:', loanError.message);
+      const { data: paymentData, error: paymentError } = await supabase.from('payments').select('*').eq('loan_id', id).eq('user_id', supaUser.id).order('payment_date', { ascending: false }); 
+      if (paymentError) console.error('Payments fetch failed:', paymentError.message);
+      setLoan(loanData); 
+      setPayments(paymentData || []); 
+    } catch (err) {
+      console.error('loadData failed:', err.message);
+    } finally {
+      setLoading(false); 
+    }
   }
 
   // ---------------------------------------------------------
@@ -95,22 +104,34 @@ export default function LoanDetail() {
   };
 
   async function executeDeleteLoan() {
-    await supabase.from('payments').delete().eq('loan_id', id);
-    await supabase.from('loans').delete().eq('id', id);
-    reload();
-    navigate("/loans");
+    try {
+      const { error: payError } = await supabase.from('payments').delete().eq('loan_id', id);
+      if (payError) throw payError;
+      const { error: loanError } = await supabase.from('loans').delete().eq('id', id);
+      if (loanError) throw loanError;
+      reload();
+      navigate("/loans");
+    } catch (err) {
+      console.error('Delete loan failed:', err.message);
+    }
   }
 
   async function executeDeletePayment(paymentId) {
-    const payment = payments.find((p) => p.id === paymentId);
-    await supabase.from('payments').delete().eq('id', paymentId);
-    const newBalance = (loan.current_balance || 0) + (payment.amount || 0);
-    await supabase.from('loans').update({
-      current_balance: newBalance,
-      status: newBalance > 0 ? "active" : "paid_off",
-    }).eq('id', id);
-    reload();
-    loadData();
+    try {
+      const payment = payments.find((p) => p.id === paymentId);
+      const { error: payError } = await supabase.from('payments').delete().eq('id', paymentId);
+      if (payError) throw payError;
+      const newBalance = (loan.current_balance || 0) + (payment.amount || 0);
+      const { error: loanError } = await supabase.from('loans').update({
+        current_balance: newBalance,
+        status: newBalance > 0 ? "active" : "paid_off",
+      }).eq('id', id);
+      if (loanError) throw loanError;
+      reload();
+      loadData();
+    } catch (err) {
+      console.error('Delete payment failed:', err.message);
+    }
   }
 
   // ---------------------------------------------------------
@@ -120,37 +141,47 @@ export default function LoanDetail() {
   async function handleAddPayment(e) { 
     e.preventDefault(); 
     
-    // 🛡️ Safety check to prevent blank IDs
     if (!supaUser?.id) return; 
 
     setSaving(true); 
     const amount = parseFloat(payForm.amount); 
     
-    // 🚀 FIXED: Added user_id to the Supabase insert so RLS accepts it
-    await supabase.from('payments').insert([{ 
-      loan_id: id, 
-      user_id: supaUser.id, 
-      amount, 
-      payment_date: payForm.payment_date, 
-      note: payForm.note,
-      payment_type: 'loan' // Standardized to match your schema
-    }]); 
+    try {
+      const { error: payError } = await supabase.from('payments').insert([{ 
+        loan_id: id, 
+        user_id: supaUser.id, 
+        amount, 
+        payment_date: payForm.payment_date, 
+        note: payForm.note,
+        payment_type: 'loan'
+      }]); 
+      if (payError) throw payError;
 
-    const newBalance = Math.max((loan.current_balance || 0) - amount, 0); 
-    await supabase.from('loans').update({ current_balance: newBalance, status: newBalance <= 0 ? "paid_off" : "active" }).eq('id', id); 
-    
-    reload(); 
-    setPayForm({ amount: "", payment_date: new Date().toISOString().split("T")[0], note: "" }); 
-    setPaymentOpen(false); 
-    setSaving(false); 
-    loadData(); 
+      const newBalance = Math.max((loan.current_balance || 0) - amount, 0); 
+      const { error: loanError } = await supabase.from('loans').update({ current_balance: newBalance, status: newBalance <= 0 ? "paid_off" : "active" }).eq('id', id); 
+      if (loanError) throw loanError;
+      
+      reload(); 
+      setPayForm({ amount: "", payment_date: new Date().toISOString().split("T")[0], note: "" }); 
+      setPaymentOpen(false); 
+      loadData(); 
+    } catch (err) {
+      console.error('Add payment failed:', err.message);
+    } finally {
+      setSaving(false); 
+    }
   }
 
   async function handleSaveEdit(updatedData) { 
-    await supabase.from('loans').update(updatedData).eq('id', id); 
-    reload(); 
-    setEditOpen(false); 
-    loadData(); 
+    try {
+      const { error } = await supabase.from('loans').update(updatedData).eq('id', id); 
+      if (error) throw error;
+      reload(); 
+      setEditOpen(false); 
+      loadData(); 
+    } catch (err) {
+      console.error('Save edit failed:', err.message);
+    }
   }
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;

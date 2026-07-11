@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabaseClient';
+import { useFinancialData } from '@/lib/FinancialDataContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLanguage } from '@/lib/LanguageContext';
 import { t } from '@/lib/i18n';
@@ -8,6 +9,7 @@ import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 export default function LatePaymentLog({ loan, onLoanUpdated }) {
   const { formatCurrency: fmt } = useCurrency();
   const { lang, locale } = useLanguage();
+  const { supaUser } = useFinancialData();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [adjustments, setAdjustments] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -20,8 +22,9 @@ export default function LatePaymentLog({ loan, onLoanUpdated }) {
   });
 
   const load = async () => {
-    const data = await base44.entities.LoanAdjustment.filter({ loan_id: loan.id }, '-date', 50);
-    setAdjustments(data);
+    const { data, error } = await supabase.from('loan_adjustments').select('*').eq('loan_id', loan.id).order('date', { ascending: false });
+    if (error) console.error('Failed to load adjustments:', error.message);
+    setAdjustments(data || []);
   };
 
   useEffect(() => { load(); }, [loan.id]);
@@ -31,40 +34,56 @@ export default function LatePaymentLog({ loan, onLoanUpdated }) {
     setSaving(true);
     const amount = parseFloat(form.amount);
 
-    await base44.entities.LoanAdjustment.create({
-      loan_id: loan.id,
-      amount,
-      direction: form.direction,
-      reason: form.reason,
-      date: form.date,
-    });
+    try {
+      const { error: adjError } = await supabase.from('loan_adjustments').insert({
+        loan_id: loan.id,
+        user_id: supaUser.id,
+        amount,
+        direction: form.direction,
+        reason: form.reason,
+        date: form.date,
+      });
+      if (adjError) throw adjError;
 
-    let updatePayload = {};
-    if (form.direction === 'add') {
-      updatePayload = { original_amount: (loan.original_amount || 0) + amount };
-    } else {
-      updatePayload = { current_balance: Math.max(0, (loan.current_balance || 0) - amount) };
+      let updatePayload = {};
+      if (form.direction === 'add') {
+        updatePayload = { original_amount: (loan.original_amount || 0) + amount };
+      } else {
+        updatePayload = { current_balance: Math.max(0, (loan.current_balance || 0) - amount) };
+      }
+      const { error: loanError } = await supabase.from('loans').update(updatePayload).eq('id', loan.id);
+      if (loanError) throw loanError;
+
+      setForm({ amount: '', direction: 'add', reason: '', date: new Date().toISOString().split('T')[0] });
+      setShowForm(false);
+      load();
+      onLoanUpdated();
+    } catch (err) {
+      console.error('Failed to log adjustment:', err.message);
+    } finally {
+      setSaving(false);
     }
-    await base44.entities.Loan.update(loan.id, updatePayload);
-
-    setForm({ amount: '', direction: 'add', reason: '', date: new Date().toISOString().split('T')[0] });
-    setShowForm(false);
-    setSaving(false);
-    load();
-    onLoanUpdated();
   };
 
   const handleDelete = async (adj) => {
-    await base44.entities.LoanAdjustment.delete(adj.id);
-    let updatePayload = {};
-    if (adj.direction === 'add') {
-      updatePayload = { original_amount: Math.max(0, (loan.original_amount || 0) - adj.amount) };
-    } else {
-      updatePayload = { current_balance: (loan.current_balance || 0) + adj.amount };
+    try {
+      const { error: delError } = await supabase.from('loan_adjustments').delete().eq('id', adj.id);
+      if (delError) throw delError;
+
+      let updatePayload = {};
+      if (adj.direction === 'add') {
+        updatePayload = { original_amount: Math.max(0, (loan.original_amount || 0) - adj.amount) };
+      } else {
+        updatePayload = { current_balance: (loan.current_balance || 0) + adj.amount };
+      }
+      const { error: loanError } = await supabase.from('loans').update(updatePayload).eq('id', loan.id);
+      if (loanError) throw loanError;
+
+      load();
+      onLoanUpdated();
+    } catch (err) {
+      console.error('Failed to delete adjustment:', err.message);
     }
-    await base44.entities.Loan.update(loan.id, updatePayload);
-    load();
-    onLoanUpdated();
   };
 
   return (
