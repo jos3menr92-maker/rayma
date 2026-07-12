@@ -129,7 +129,7 @@ export default function Profile() {
     setSaving(true); 
     
     try {
-      const { error: profileError } = await supabase.from('profiles').update(form).eq('id', supaUser.id);
+      const { error: profileError } = await supabase.from('profiles').update(form).eq('id', userProfile.id);
       if (profileError) throw profileError;
       await reload();
       
