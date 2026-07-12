@@ -56,18 +56,6 @@ export default function PrivacyPolicy() {
             <li>{T("financialDocs", "Scanned documents and uploaded receipts")}</li>
           </ul>
 
-          <h3 className="font-semibold mt-4">{T("thirdPartyData", "Third-Party Data (Plaid)")}</h3>
-          <p className="mt-2">
-            {T("plaidInfo", "If you link your bank account via Plaid, Plaid retrieves and shares with us:")}
-          </p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li>{T("plaidAccounts", "Bank account list and real-time balances")}</li>
-            <li>{T("plaidTransactions", "Transaction history (last 90 days by default)")}</li>
-            <li>{T("plaidAccountType", "Account type and institution details")}</li>
-          </ul>
-          <p className="mt-2 text-xs italic text-muted-foreground">
-            {T("plaidPassword", "Note: Plaid does not share your passwords. Access is read-only via OAuth.")}
-          </p>
 
           <h3 className="font-semibold mt-4">{T("paymentDataStripe", "Payment Data (Stripe)")}</h3>
           <ul className="list-disc list-inside space-y-1 mt-2">
@@ -140,7 +128,7 @@ export default function PrivacyPolicy() {
           </ul>
 
           <p className="mt-4">
-            {T("exerciseRights", "To exercise these rights, email")} <strong>privacy@raymaapp.com</strong> {T("withRequest", "with your request. We will respond within 30 days.")}</p>
+            {T("exerciseRights", "To exercise these rights, email")} <strong>support@reema.app</strong> {T("withRequest", "with your request. We will respond within 30 days.")}</p>
         </section>
 
         <section>
@@ -148,7 +136,7 @@ export default function PrivacyPolicy() {
           <ul className="list-disc list-inside space-y-2">
             <li>{T("securityHTTPS", "All data is transmitted using HTTPS encryption")}</li>
             <li>{T("securityPasswords", "Passwords are hashed and never stored in plain text")}</li>
-            <li>{T("securityBankCreds", "Bank credentials are never stored—only secure Plaid access tokens")}</li>
+            <li>{T("securityBankCreds", "Bank credentials are never stored on our servers")}</li>
             <li>{T("securityAudits", "We conduct regular security audits and penetration testing")}</li>
             <li>{T("securityBreach", "If a breach occurs, affected users will be notified within 30 days")}</li>
           </ul>
@@ -162,7 +150,7 @@ export default function PrivacyPolicy() {
             {T("thirdPartyDesc", "We may share data with trusted partners to provide the Service:")}
           </p>
           <ul className="list-disc list-inside space-y-2 mt-3">
-            <li><strong>{T("plaidService", "Plaid (Bank Linking):")}</strong> {T("plaidServiceDesc", "Retrieves account/transaction data.")} <a href="https://plaid.com/privacy" className="text-primary underline">{T("privacyPolicy2", "Plaid Privacy Policy")}</a></li>
+            
             <li><strong>{T("stripeService", "Stripe (Payments):")}</strong> {T("stripeServiceDesc", "Processes token purchases.")} <a href="https://stripe.com/en-us/privacy" className="text-primary underline">{T("stripePrivacyPolicy", "Stripe Privacy Policy")}</a></li>
             <li><strong>{T("base44Service", "Base44 (Backend Infrastructure):")}</strong> {T("base44Desc", "Hosts our database and authentication. Base44 complies with GDPR and uses encrypted storage.")}</li>
             <li><strong>{T("analyticsService", "Analytics (Optional):")}</strong> {T("analyticsServiceDesc", "We use aggregated, non-personal analytics to understand usage patterns.")}</li>
@@ -193,7 +181,7 @@ export default function PrivacyPolicy() {
           </p>
           <div className="mt-3 p-3 bg-muted rounded-lg text-xs">
             <p className="font-semibold">{T("raymaPrivacyTeam", "Rayma AI Privacy Team")}</p>
-            <p>Email: privacy@raymaapp.com</p>
+            <p>Email: support@reema.app</p>
             <p>{T("responseTime", "Response time: 30 days")}</p>
             <p className="mt-2 text-muted-foreground">{T("gdprComplaint", "For GDPR complaints, you also have the right to lodge a complaint with your local data protection authority.")}</p>
           </div>

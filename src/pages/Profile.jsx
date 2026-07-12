@@ -222,18 +222,25 @@ export default function Profile() {
       if (!uid) throw new Error("User ID missing. Cannot delete account.");
 
       // 1. Hard wipe all financial data from Supabase (sequential to prevent partial wipes)
-      const tables = ['transactions', 'bank_accounts', 'payments', 'loans', 'bills', 'incomes', 'assets', 'savings_goals', 'profiles'];
+      const tables = ['transactions', 'bank_accounts', 'payments', 'loan_adjustments', 'loans', 'bills', 'incomes', 'assets', 'savings_goals', 'profiles'];
       for (const table of tables) {
         const { error } = await supabase.from(table).delete().eq(table === 'profiles' ? 'id' : 'user_id', uid);
         if (error) throw new Error(`Failed to delete from ${table}: ${error.message}`);
       }
 
-      // 2. Delete Base44 Account (if SDK supports it, otherwise logout)
+      // 2. Delete Supabase Auth user (frees up the email permanently — Apple Guideline 5.1.1)
+      try {
+        await base44.functions.invoke('deleteUserAccount', { supabaseUserId: uid });
+      } catch (e) {
+        console.error('Supabase auth user deletion failed:', e.message);
+      }
+
+      // 3. Delete Base44 Account (if SDK supports it, otherwise logout)
       if (base44?.auth?.deleteAccount) {
         await base44.auth.deleteAccount();
       }
 
-      // 3. Terminate Supabase session and redirect
+      // 4. Terminate Supabase session and redirect
       await supabase.auth.signOut();
       window.location.href = "/auth";
     } catch (err) {

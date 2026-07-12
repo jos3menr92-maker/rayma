@@ -164,11 +164,13 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("paymentsRefunds", "11. Payments & Refunds")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>{T("purchasesOneTime", "All purchases (token packs and Annual Pass) are one-time payments — not subscriptions and not auto-renewing")}</li>
-            <li>{T("nonRefundable", "All purchases are non-refundable once completed")}</li>
+            <li><strong>{T("insertCoinOneTime", "Insert Coin ($1.99):")}</strong> {T("insertCoinOneTimeDesc", "One-time purchase. Not a subscription. Does not auto-renew.")}</li>
+            <li><strong>{T("lithiumSubscription", "Lithium ($5.99/month or $49.99/year):")}</strong> {T("lithiumSubscriptionDesc", "Auto-renewing subscription billed monthly or annually depending on your selection. You can cancel anytime by turning off auto-renewal in your app store settings.")}</li>
+            <li><strong>{T("generatorSubscription", "Generator ($11.99/month or $95.99/year):")}</strong> {T("generatorSubscriptionDesc", "Auto-renewing subscription billed monthly or annually depending on your selection. You can cancel anytime by turning off auto-renewal in your app store settings.")}</li>
+            <li>{T("subscriptionManagement", "Subscriptions can be managed or cancelled at any time from your Apple App Store or Google Play Store account settings.")}</li>
+            <li>{T("nonRefundable", "One-time purchases are non-refundable once completed.")}</li>
             <li>{T("pricingSubject", "Pricing is subject to change at any time")}</li>
-            <li>{T("refundRemorse", "Refund requests due to buyer's remorse are not accepted")}</li>
-            <li>{T("errorPayment", "If a payment was made in error, contact support@raymaapp.com within 7 days")}</li>
+            <li>{T("errorPayment", "If a payment was made in error, contact support@reema.app within 7 days")}</li>
             <li>{T("stripeRefund", "Stripe processes all payment refunds per")} <a href="https://stripe.com/legal" className="text-primary underline">{T("stripePolicy", "Stripe's refund policy")}</a></li>
           </ul>
         </section>
@@ -220,7 +222,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("disputeResolution", "17. Dispute Resolution")}</h2>
           <p>
-            {T("disputeDesc", "Before pursuing legal action, please contact support@raymaapp.com to attempt resolution. If disputes cannot be resolved, you may pursue binding arbitration instead of litigation.")}
+            {T("disputeDesc", "Before pursuing legal action, please contact support@reema.app to attempt resolution. If disputes cannot be resolved, you may pursue binding arbitration instead of litigation.")}
           </p>
         </section>
 
@@ -231,7 +233,7 @@ export default function TermsOfService() {
           </p>
           <div className="mt-3 p-3 bg-muted rounded-lg text-xs">
             <p className="font-semibold">{T("raymaLegalTeam", "Rayma AI Legal Team")}</p>
-            <p>Email: legal@raymaapp.com</p>
+            <p>Email: support@reema.app</p>
             <p>{T("responseTime", "Response time: 30 days")}</p>
           </div>
         </section>
