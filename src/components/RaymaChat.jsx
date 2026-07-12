@@ -191,70 +191,6 @@ export default function RaymaChat({
       return;
     }
 
-    // --- 5. SUPER DEBUG MODE (ADMIN V2 DIAGNOSTICS) ---
-    if (text === "rayma debug mode r4yma-d3v-2026") {
-      setMessages(prev => [...prev, { role: "user", content: "********" }]);
-      setInput("");
-      setLoading(true);
-      
-      const isDebug = localStorage.getItem("rayma_debug_mode") === "true";
-      const newState = !isDebug;
-      localStorage.setItem("rayma_debug_mode", newState ? "true" : "false");
-      window.dispatchEvent(new CustomEvent("toggle-debug-mode"));
-
-      if (!newState) {
-        setMessages(prev => [...prev, { role: "assistant", content: "🔒 **SUPER DEBUG MODE SECURED.** Returning to standard user environment." }]);
-        setLoading(false); 
-        return;
-      }
-
-      setMessages(prev => [...prev, { role: "assistant", content: "🔐 **ADMIN MODE UNLOCKED.** \n\nRunning deep system diagnostics..." }]);
-
-      setTimeout(async () => {
-        let report = "⚙️ **SYSTEM DIAGNOSTIC REPORT**\n\n";
-        
-        // 1. IDENTITY & AUTH CHECK
-        const { data: sessionData } = await supabase.auth.getSession();
-        report += `**--- IDENTITY CHECK ---**\n`;
-        report += `- **Base44 ID:** \`${userProfile?.id || 'MISSING'}\`\n`;
-        report += `- **Supabase ID:** \`${supaUser?.id || 'MISSING'}\`\n`;
-        report += `- **Active JWT Session:** ${sessionData?.session ? '✅ Yes' : '❌ No'}\n\n`;
-
-        if (!supaUser?.id) {
-            report += `⚠️ **CRITICAL HALT:** Cannot run table tests. Supabase User ID (\`supaUser\`) is missing from context. You must update FinancialDataContext.jsx to expose it.`;
-            setMessages(prev => [...prev, { role: "assistant", content: report }]);
-            setLoading(false); 
-            return;
-        }
-
-        // 2. DATABASE WRITE/VERIFY TESTS
-        report += `**--- DATABASE ROUTING ---**\n`;
-        const testId = `Test_${Date.now()}`;
-
-        const testTable = async (tableName, insertPayload, verifyColumn, verifyValue) => {
-            try {
-                const { error: iErr } = await supabase.from(tableName).insert([insertPayload]);
-                if (iErr) throw iErr;
-                const { data: vData } = await supabase.from(tableName).select('id').eq(verifyColumn, verifyValue).single();
-                if (vData) await supabase.from(tableName).delete().eq('id', vData.id);
-                return `✅ Passed`;
-            } catch (e) { return `❌ Failed (${e.message})`; }
-        };
-
-        report += `- 🧾 **Bills:** ${await testTable('bills', { user_id: supaUser.id, name: `Auto ${testId}`, amount: 10 }, 'name', `Auto ${testId}`)}\n`;
-        report += `- 🏦 **Loans:** ${await testTable('loans', { user_id: supaUser.id, name: `Auto ${testId}`, remaining_balance: 100, monthly_payment: 10 }, 'name', `Auto ${testId}`)}\n`;
-        report += `- 💵 **Incomes:** ${await testTable('incomes', { user_id: supaUser.id, source: `Auto ${testId}`, amount: 100 }, 'source', `Auto ${testId}`)}\n`;
-        report += `- 💳 **Payments:** ${await testTable('payments', { user_id: supaUser.id, note: `Auto ${testId}`, amount: 10, payment_type: 'bill', payment_date: new Date().toISOString() }, 'note', `Auto ${testId}`)}\n`;
-        
-        // 🚀 NEW: Savings Goals Test
-        report += `- 🎯 **Savings Goals:** ${await testTable('savings_goals', { user_id: supaUser.id, name: `Auto ${testId}`, target_amount: 1000, current_saved: 100 }, 'name', `Auto ${testId}`)}\n`;
-
-        setMessages(prev => [...prev, { role: "assistant", content: report }]);
-        setLoading(false);
-      }, 1500);
-      return;
-    }
-
     // --- 6. USER DIAGNOSTIC PIN ---
     const isPin = /^\d{6}$/.test(input.trim());
     if (isPin) {
@@ -287,7 +223,7 @@ export default function RaymaChat({
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
       setMessages(prev => [...prev, { role: "assistant", content: T("loggingOut", "Logging you out securely. See you next time!") }]);
-      setTimeout(async () => { await base44.auth.logout(); window.location.href = "/login"; }, 1500);
+      setTimeout(async () => { await base44.auth.logout(); window.location.href = "/auth"; }, 1500);
       return;
     }
 

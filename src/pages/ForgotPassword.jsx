@@ -35,7 +35,7 @@ export default function ForgotPassword() {
       title={T("resetPassword", "Reset password")}
       subtitle={T("resetSubtitle", "We'll send you a link to reset it")}
       footer={
-        <Link to="/login" className="text-primary font-medium hover:underline">
+        <Link to="/auth" className="text-primary font-medium hover:underline">
           <ArrowLeft className="w-3 h-3 inline mr-1" />{T("backToLogin", "Back to log in")}
         </Link>
       }

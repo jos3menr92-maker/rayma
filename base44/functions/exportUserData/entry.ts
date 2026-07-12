@@ -3,7 +3,8 @@
  * Returns all user data as a JSON bundle for download.
  * Required by GDPR Art. 20 (Right to Data Portability) and CCPA.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
 
 Deno.serve(async (req) => {
   try {
@@ -13,24 +14,42 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch all user-owned data in parallel
-    const [loans, bills, payments, transactions, budgetCategories, assets, savingsGoals, weeklyIncomes, netWorthSnapshots, scannedDocuments, userMemories] = await Promise.all([
-      base44.entities.Loan.list(),
-      base44.entities.Bill.list(),
-      base44.entities.Payment.list(),
-      base44.entities.Transaction.list(),
-      base44.entities.BudgetCategory.list(),
-      base44.entities.Asset.list(),
-      base44.entities.SavingsGoal.list(),
-      base44.entities.WeeklyIncome.list(),
-      base44.entities.NetWorthSnapshot.list(),
-      base44.entities.ScannedDocument.list(),
-      base44.entities.UserMemory.list(),
+    // Instantiate Supabase admin client
+    const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing Supabase configuration secrets.");
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
+    // Resolve the Supabase UUID from the Base44 user's email (scalable server-side search)
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
+    if (listError) throw listError;
+
+    const supabaseUser = users.find(u => u.email === user.email);
+    if (!supabaseUser) {
+      throw new Error("Supabase user not found for email: " + user.email);
+    }
+
+    const uid = supabaseUser.id;
+
+    // Fetch all user-owned data from Supabase tables in parallel
+    const [loans, bills, payments, transactions, assets, savingsGoals, incomes, bankAccounts] = await Promise.all([
+      supabaseAdmin.from('loans').select('*').eq('user_id', uid),
+      supabaseAdmin.from('bills').select('*').eq('user_id', uid),
+      supabaseAdmin.from('payments').select('*').eq('user_id', uid),
+      supabaseAdmin.from('transactions').select('*').eq('user_id', uid),
+      supabaseAdmin.from('assets').select('*').eq('user_id', uid),
+      supabaseAdmin.from('savings_goals').select('*').eq('user_id', uid),
+      supabaseAdmin.from('incomes').select('*').eq('user_id', uid),
+      supabaseAdmin.from('bank_accounts').select('*').eq('user_id', uid),
     ]);
 
     const exportBundle = {
       export_date: new Date().toISOString(),
-      export_version: "1.0",
+      export_version: "2.0",
       app: "Rayma AI — Debt & Bills Tracker",
       user: {
         id: user.id,
@@ -39,20 +58,14 @@ Deno.serve(async (req) => {
         created_date: user.created_date,
       },
       data: {
-        loans,
-        bills,
-        payments,
-        transactions,
-        budget_categories: budgetCategories,
-        assets,
-        savings_goals: savingsGoals,
-        weekly_incomes: weeklyIncomes,
-        net_worth_snapshots: netWorthSnapshots,
-        scanned_documents: scannedDocuments.map(d => ({
-          ...d,
-          file_url: d.file_url, // URL included; actual file requires separate download
-        })),
-        ai_memories: userMemories,
+        bank_accounts: bankAccounts.data || [],
+        loans: loans.data || [],
+        bills: bills.data || [],
+        payments: payments.data || [],
+        transactions: transactions.data || [],
+        assets: assets.data || [],
+        savings_goals: savingsGoals.data || [],
+        incomes: incomes.data || [],
       },
       notes: "This export contains all personal financial data stored by Rayma AI for your account. To request permanent deletion, visit the Delete Account section in your profile.",
     };
@@ -65,7 +78,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
-    console.error('[exportUserData] Error:', error);
+    console.error('[exportUserData] Error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
