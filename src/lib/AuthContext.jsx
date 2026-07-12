@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabaseClient';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
@@ -89,24 +90,41 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      const me = await base44.auth.me();
+
+      // Await full Supabase session sync BEFORE releasing the loading state.
+      // This prevents the race condition where protected routes mount and
+      // bounce users to /auth before the Supabase handshake completes.
+      try {
+        const syncRes = await base44.functions.invoke('syncSupabaseUser');
+        if (syncRes?.data?.tempToken) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: me.email,
+            password: syncRes.data.tempToken,
+          });
+          if (signInError) throw signInError;
+        }
+      } catch (syncError) {
+        console.error('Supabase sync failed:', syncError);
+        // Non-fatal: Base44 auth succeeded; Supabase will retry on next data fetch
+      }
+
+      // ONLY unlock the UI after both Base44 + Supabase sessions are confirmed
+      setUser(me);
       setIsAuthenticated(true);
-      setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
       setIsAuthenticated(false);
-      
-      // If user auth fails, it might be an expired token
+
       if (error.status === 401 || error.status === 403) {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
         });
       }
+    } finally {
+      setIsLoadingAuth(false);
     }
   };
 
