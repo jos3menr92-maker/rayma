@@ -21,8 +21,8 @@ Deno.serve(async (req) => {
     // 🚀 FIXED: Injected "R@" to guarantee strong password compliance
     const tempToken = "R@" + crypto.randomUUID();
 
-    // 1. Fetch existing users to find the correct Supabase UUID by email
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    // 1. Search for the user by email (scalable — uses server-side search, not full list pagination)
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: me.email });
     if (listError) throw listError;
 
     const existingUser = users.find(u => u.email === me.email);

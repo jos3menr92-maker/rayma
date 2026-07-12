@@ -26,9 +26,8 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    // Resolve the Supabase UUID from the Base44 user's email
-    // (Base44 user.id is not a UUID; arcade_scores.user_id requires the Supabase auth UUID)
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    // Resolve the Supabase UUID from the Base44 user's email (scalable server-side search)
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
     if (listError) throw listError;
 
     const supabaseUser = users.find(u => u.email === user.email);
