@@ -60,7 +60,29 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'You have already redeemed this code' }, { status: 400 });
     }
 
-    // 5. Apply reward via Base44 User entity
+    // 5. Lock the code FIRST — insert redemption record BEFORE granting any reward
+    //    This prevents race conditions where the reward is applied but the anti-reuse lock fails.
+    const { error: insertError } = await supabase
+      .from('promo_redemptions')
+      .insert({
+        promo_code_id: promoCode.id,
+        user_id: userId,
+        reward_type: promoCode.reward_type,
+        reward_value: promoCode.reward_value,
+      });
+
+    if (insertError) {
+      console.error('Failed to log redemption (aborting reward grant):', insertError.message);
+      throw new Error(`Failed to redeem promo code: ${insertError.message}`);
+    }
+
+    // 6. Increment the usage counter on the promo code
+    await supabase
+      .from('promo_codes')
+      .update({ times_used: (promoCode.times_used || 0) + 1 })
+      .eq('id', promoCode.id);
+
+    // 7. Now safely grant the reward — the lock is already in place
     const users = await base44.asServiceRole.entities.User.filter({ id: userId });
     const userRecord = users[0];
     if (!userRecord) {
@@ -86,22 +108,9 @@ Deno.serve(async (req) => {
       });
       rewardMessage = `You've been granted the Annual Pass! 🎉`;
     } else {
+      // Unsupported type — roll back the redemption lock
+      await supabase.from('promo_redemptions').delete().eq('promo_code_id', promoCode.id).eq('user_id', userId);
       return Response.json({ error: `Unsupported reward type: ${promoCode.reward_type}` }, { status: 400 });
-    }
-
-    // 6. Lock the code — insert redemption record
-    const { error: insertError } = await supabase
-      .from('promo_redemptions')
-      .insert({
-        promo_code_id: promoCode.id,
-        user_id: userId,
-        reward_type: promoCode.reward_type,
-        reward_value: promoCode.reward_value,
-      });
-
-    if (insertError) {
-      console.error('Failed to log redemption:', insertError.message);
-      // Reward was applied but lock failed — warn but don't fail the response
     }
 
     console.log(`✓ Promo code redeemed: ${code} by user ${userId} | Type: ${promoCode.reward_type} | Value: +${promoCode.reward_value}`);

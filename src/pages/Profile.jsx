@@ -196,23 +196,20 @@ export default function Profile() {
   };
 
   const handleExport = async () => {
-    const exportData = {
-      profile: userProfile,
-      incomes,
-      bills,
-      loans,
-      exported_at: new Date().toISOString()
-    };
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rayma-data-export-${new Date().toISOString().split("T")[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    alert("✅ Data Exported! Check your downloads folder.");
+    try {
+      const res = await base44.functions.invoke('exportUserData');
+      const exportBundle = res.data;
+      const blob = new Blob([JSON.stringify(exportBundle, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rayma-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err.message);
+      setAuthError(T("exportFailed", "Failed to export data. Please try again."));
+    }
   };
 
   const handleDelete = async () => {
@@ -228,19 +225,16 @@ export default function Profile() {
         if (error) throw new Error(`Failed to delete from ${table}: ${error.message}`);
       }
 
-      // 2. Delete Supabase Auth user (frees up the email permanently — Apple Guideline 5.1.1)
+      // 2. Delete both Supabase auth user AND Base44 user record via backend function
+      //    (No client-side Base44 SDK method exists — must use service role server-side)
       try {
         await base44.functions.invoke('deleteUserAccount', { supabaseUserId: uid });
       } catch (e) {
-        console.error('Supabase auth user deletion failed:', e.message);
+        console.error('Account deletion failed:', e.message);
+        throw new Error(e.message || "Failed to delete account. Please try again.");
       }
 
-      // 3. Delete Base44 Account (if SDK supports it, otherwise logout)
-      if (base44?.auth?.deleteAccount) {
-        await base44.auth.deleteAccount();
-      }
-
-      // 4. Terminate Supabase session and redirect
+      // 3. Terminate Supabase session and redirect
       await supabase.auth.signOut();
       window.location.href = "/auth";
     } catch (err) {

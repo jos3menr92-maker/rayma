@@ -92,8 +92,6 @@ export default function TermsOfService() {
           <h2 className="text-lg font-semibold mb-3">{T("accuracyOfInfo", "5. Accuracy of Information")}</h2>
           <ul className="list-disc list-inside space-y-2">
             <li>{T("responSibleAccuracy", "You are responsible for the accuracy of financial information you enter into Rayma AI")}</li>
-            <li>{T("plaidAsIs", "Plaid bank sync data is provided \"as-is\" from your financial institution and Plaid")}</li>
-            <li>{T("notResponsibleBankErrors", "Rayma AI is not responsible for errors, delays, or inaccuracies in bank data")}</li>
             <li>{T("verifyBank", "Always verify your bank balance directly with your financial institution")}</li>
             <li>{T("interestApprox", "Interest rate calculations are approximations and may not reflect actual charges from lenders")}</li>
           </ul>
@@ -118,7 +116,6 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("thirdPartyServices2", "7. Third-Party Services")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li><strong>{T("plaidTOS", "Plaid:")}</strong> {T("plaidTOSDesc", "Rayma AI uses Plaid for secure bank account linking. Read the")} <a href="https://plaid.com/privacy" className="text-primary underline">{T("plaidPrivacyPolicy2", "Plaid Privacy Policy")}</a> {T("and", "and")} <a href="https://plaid.com/legal" className="text-primary underline">{T("plaidLegal", "Plaid Legal Terms")}</a>.</li>
             <li><strong>{T("stripeTOS", "Stripe:")}</strong> {T("stripeTOSDesc", "Rayma AI uses Stripe for payment processing. Read")} <a href="https://stripe.com/legal" className="text-primary underline">{T("stripeLegal", "Stripe's Terms")}</a>.</li>
             <li>{T("notResponsibleThirdParty", "Rayma AI is not responsible for third-party service availability, outages, or errors")}</li>
             <li>{T("notLiableThirdParty", "Rayma AI is not liable for data loss or breaches at third-party providers")}</li>

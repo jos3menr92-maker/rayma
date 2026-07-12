@@ -37,8 +37,15 @@ Deno.serve(async (req) => {
     // Delete the Supabase auth user — frees up the email for re-registration (Apple 5.1.1)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(supabaseUserId);
     if (deleteError) throw deleteError;
-
     console.log(`Supabase auth user deleted: ${supabaseUserId} (email: ${user.email})`);
+
+    // Delete the Base44 user record using service role (no client-side SDK method exists)
+    try {
+      await base44.asServiceRole.entities.User.delete(user.id);
+      console.log(`Base44 user deleted: ${user.id} (email: ${user.email})`);
+    } catch (b44Err) {
+      console.error('Base44 user deletion failed (Supabase user already deleted):', b44Err.message);
+    }
 
     return Response.json({ success: true });
   } catch (error) {
