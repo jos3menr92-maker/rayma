@@ -114,6 +114,21 @@ export default function Dashboard() {
   const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
+  const renderBattery = (tokens, max, plan) => {
+    const isInf = plan === 'Generator' || tokens > 900;
+    const pct = isInf ? 100 : Math.max(0, Math.min(100, (tokens / (max || 10)) * 100));
+    const color = isInf ? "bg-amber-400" : (pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-yellow-500" : "bg-destructive");
+    return (
+      <div onClick={() => navigate("/store")} className="flex items-center gap-1.5 cursor-pointer bg-card border border-border px-2 py-1.5 rounded-lg shadow-sm active:scale-95 transition-transform">
+        <div className="relative w-6 h-3 border-2 border-muted-foreground/40 rounded-sm p-[1px] flex">
+          <div className={`h-full rounded-sm transition-all ${color}`} style={{ width: `${pct}%` }} />
+          <div className="absolute -right-[3px] top-0.5 w-[2px] h-1 bg-muted-foreground/40 rounded-r-sm" />
+        </div>
+        <span className="text-[10px] font-bold font-mono text-foreground">{isInf ? "∞" : tokens}</span>
+      </div>
+    );
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
   if (!userProfile) {
@@ -173,9 +188,12 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">{userProfile?.dashboard_greeting || T("stayOnTop", "Stay on top of your finances")}</p>
         </div>
         
-        <button onClick={() => navigate("/profile")} className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
-          {imageToShow ? <img src={imageToShow} alt="avatar" className="w-full h-full object-cover rounded-full" /> : <span className="font-bold text-white text-sm">?</span>}
-        </button>
+        <div className="flex items-center gap-3">
+          {renderBattery(userProfile?.ai_tokens_remaining || 0, userProfile?.ai_tokens_daily_limit || 10, userProfile?.subscription_type)}
+          <button onClick={() => navigate("/profile")} className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
+            {imageToShow ? <img src={imageToShow} alt="avatar" className="w-full h-full object-cover rounded-full" /> : <span className="font-bold text-white text-sm">?</span>}
+          </button>
+        </div>
       </motion.div>
 
       <RAYMAExpiryBanner user={userProfile} />

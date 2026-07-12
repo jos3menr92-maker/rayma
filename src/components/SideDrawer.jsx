@@ -36,9 +36,20 @@ export default function SideDrawer({ open, onClose }) {
 
   const tokenDisplay = () => {
     if (!user) return null;
-    if (user.annual_pass_expires_at && new Date(user.annual_pass_expires_at) > new Date()) return `∞ ${t(lang, 'annualPassActive')}`;
-    const tokens = user.ai_tokens_remaining ?? 5;
-    return `${tokens} AI token${tokens !== 1 ? "s" : ""} ${t(lang, 'remaining')}`;
+    const tokens = user.ai_tokens_remaining || 0;
+    const max = user.ai_tokens_daily_limit || 10;
+    const isInf = user.subscription_type === 'Generator' || tokens > 900;
+    const pct = isInf ? 100 : Math.max(0, Math.min(100, (tokens / max) * 100));
+    const color = isInf ? "bg-amber-400" : (pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-yellow-500" : "bg-destructive");
+    return (
+      <div className="flex items-center gap-2">
+        <div className="relative w-6 h-3 border-2 border-muted-foreground/40 rounded-sm p-[1px] flex">
+          <div className={`h-full rounded-sm transition-all ${color}`} style={{ width: `${pct}%` }} />
+          <div className="absolute -right-[3px] top-0.5 w-[2px] h-1 bg-muted-foreground/40 rounded-r-sm" />
+        </div>
+        <span>{isInf ? "∞" : tokens}</span>
+      </div>
+    );
   };
 
   async function handleLogout() {
@@ -137,7 +148,7 @@ function DrawerRow({ icon: Icon, label, value, small, chevron, onClick, destruct
       <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${destructive ? "text-destructive" : "text-muted-foreground"}`} />
       <div className="flex-1 min-w-0">
         <p className={`text-xs ${destructive ? "text-destructive font-medium" : "text-muted-foreground"}`}>{label}</p>
-        {value && <p className={`font-medium text-foreground ${small ? "text-xs mt-0.5 leading-relaxed" : "text-sm"} truncate`}>{value}</p>}
+        {value && <div className={`font-medium text-foreground ${small ? "text-xs mt-0.5 leading-relaxed" : "text-sm"} truncate`}>{value}</div>}
       </div>
       {chevron && <ChevronRight className={`w-4 h-4 mt-0.5 shrink-0 ${destructive ? "text-destructive/60" : "text-muted-foreground"}`} />}
     </div>

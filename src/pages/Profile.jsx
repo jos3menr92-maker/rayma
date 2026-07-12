@@ -296,6 +296,7 @@ export default function Profile() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {T("dailyTokens", "Daily Tokens")}: {userProfile?.ai_tokens_daily_limit || 10}
                 </p>
+                <p className="text-[10px] text-amber-500 font-semibold mt-1.5">⚡ {T("earnMoreArcade", "Play in the Arcade to earn extra tokens!")}</p>
               </div>
               <Button type="button" onClick={() => navigate("/store")} className="rounded-xl shadow-sm">
                 {T("upgradeManage", "Manage Plan")}
@@ -467,7 +468,7 @@ export default function Profile() {
               className="text-muted-foreground/30 hover:text-primary/60 transition-colors flex items-center gap-2 text-xs font-mono"
             >
               <Gamepad2 className="w-4 h-4" />
-              {T("insertCoinText", "INSERT COIN")}
+              {T("playToWin", "PLAY TO WIN TOKENS")}
             </button>
           </div>
         </form>
