@@ -141,6 +141,7 @@ export default function Profile() {
       setTimeout(() => setSaved(false), 2500); 
     } catch (err) { 
       console.error(err); 
+      alert(T("saveError", "Failed to save: ") + err.message);
     } finally { 
       setSaving(false); 
     }
@@ -243,7 +244,13 @@ export default function Profile() {
     }
   };
 
-  if (contextLoading || deleting) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  const getPaydayPlaceholder = () => {
+    if (form.pay_frequency === 'weekly') return T("paydayWeekly", "e.g., Friday");
+    if (form.pay_frequency === 'biweekly') return T("paydayBiweekly", "e.g., Every other Friday");
+    return T("paydayPlaceholder", "e.g., 1st & 15th");
+  };
+
+  if (contextLoading || deleting) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>; 
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-32">
@@ -280,8 +287,26 @@ export default function Profile() {
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
-          
-          {/* Identity & Style */}
+
+          {/* Subscription Hub */}
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-6 mb-6">
+            <SectionHeader icon={Sparkles} title={T("currentPlan", "Current Plan")} subtitle={T("manageSubscription", "Manage your AI access and billing")} />
+            <div className="flex items-center justify-between mt-4">
+              <div>
+                <p className="text-2xl font-bold font-heading text-foreground uppercase">
+                  {userProfile?.subscription_type || "FREE"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {T("dailyTokens", "Daily Tokens")}: {userProfile?.ai_tokens_daily_limit || 10}
+                </p>
+              </div>
+              <Button type="button" onClick={() => navigate("/store")} className="rounded-xl shadow-sm">
+                {T("upgradeManage", "Manage Plan")}
+              </Button>
+            </div>
+          </div>
+
+           {/* Identity & Style */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Fingerprint} title={T("identityStyle", "Identity & Style")} subtitle={T("chooseAvatar", "Choose a professional avatar to represent you")} />
             
@@ -318,19 +343,6 @@ export default function Profile() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
-                <div>
-                  <p className="text-sm font-medium">{T("focusMode", "Focus Mode")}</p>
-                  <p className="text-xs text-muted-foreground">{T("focusModeDesc", "Hides dashboard accent colors for a distraction-free view")}</p>
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setForm({...form, compact_mode: !form.compact_mode})}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.compact_mode ? 'bg-primary' : 'bg-muted-foreground/30'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${form.compact_mode ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -417,7 +429,7 @@ export default function Profile() {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("primaryPayday", "Primary Payday")}</Label>
-                <Input placeholder={T("paydayPlaceholder", "e.g., 1st & 15th")} value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="rounded-xl" />
+                <Input placeholder={getPaydayPlaceholder()} value={form.pay_day} onChange={e => setForm({...form, pay_day: e.target.value})} className="rounded-xl" />
               </div>
             </div>
           </div>
