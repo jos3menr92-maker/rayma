@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { ChevronLeft, Save, AlertTriangle, Sparkles } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -182,16 +183,19 @@ export default function AddLoan() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-foreground">{T("frequency", "Frequency")}</label>
-            <select
-              name="payment_frequency"
+            <Select
               value={formData.payment_frequency}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all"
+              onValueChange={(v) => setFormData({ ...formData, payment_frequency: v })}
             >
-              <option value="weekly">{T("weekly", "Weekly")}</option>
-              <option value="biweekly">{T("biweekly", "Bi-Weekly")}</option>
-              <option value="monthly">{T("monthly", "Monthly")}</option>
-            </select>
+              <SelectTrigger className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm focus:ring-2 focus:ring-primary/30 transition-all h-[50px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">{T("weekly", "Weekly")}</SelectItem>
+                <SelectItem value="biweekly">{T("biweekly", "Bi-Weekly")}</SelectItem>
+                <SelectItem value="monthly">{T("monthly", "Monthly")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">

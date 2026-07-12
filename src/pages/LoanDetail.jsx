@@ -195,7 +195,7 @@ export default function LoanDetail() {
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <button onClick={() => navigate("/loans")} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2 flex-1 mx-2 min-w-0">
