@@ -1,3 +1,4 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@14.21.0';
 
 /**
@@ -43,10 +44,17 @@ Deno.serve(async (req) => {
     // ----------------------------------------
 
     const body = await req.json();
-    const { purchaseType, successUrl, cancelUrl, customerEmail, userId } = body;
+    const { purchaseType, successUrl, cancelUrl } = body;
 
     if (!purchaseType || !PRICE_IDS[purchaseType]) {
       return Response.json({ error: 'Invalid purchaseType. Must be one of: ' + Object.keys(PRICE_IDS).join(', ') }, { status: 400 });
+    }
+
+    // 🔒 SECURE: Fetch authenticated user server-side — never trust client-supplied userId
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user || !user.id) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const isValidUrl = (url) => url && /^https?:\/\//.test(url);
@@ -68,20 +76,20 @@ Deno.serve(async (req) => {
       cancel_url: cancelUrl || `${req.headers.get('origin') || ''}/store?cancelled=true`,
       metadata: {
         base44_app_id: Deno.env.get('BASE44_APP_ID'),
-        user_id: userId || '',
-        user_email: customerEmail || '',
+        user_id: user.id,
+        user_email: user.email || '',
         purchase_type: purchaseType,
       },
     };
 
     // Pre-fill the Stripe checkout email when available
-    if (customerEmail) {
-      sessionConfig.customer_email = customerEmail;
+    if (user.email) {
+      sessionConfig.customer_email = user.email;
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    console.log(`Checkout session created: ${session.id} for ${customerEmail || 'guest'}, type: ${purchaseType}`);
+    console.log(`Checkout session created: ${session.id} for ${user.email || 'guest'}, type: ${purchaseType}`);
     return Response.json({ url: session.url });
 
   } catch (error) {

@@ -1,23 +1,17 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@14.21.0';
 
 /**
  * Stripe Webhook Handler
  * ======================
- * Listens for checkout.session.completed events and updates user profiles.
- * 
- * Supported purchase types:
- *   - Token packs: token_pack_10, token_pack_50, token_pack_100 (one-time, add to balance)
- *   - Annual pass: annual_pass (one-time, set expiry 1 year)
- *   - Monthly subscriptions: power_lithium_monthly, power_generator_monthly (recurring, set subscription type)
- *   - Single purchase power tiers: power_insert_coin (one-time instant boost)
+ * Handles checkout completion, subscription lifecycle events, and payment failures.
+ *
+ * Events handled:
+ *   - checkout.session.completed      → grant entitlements
+ *   - customer.subscription.deleted   → revoke premium access
+ *   - customer.subscription.updated   → revoke on cancellation/downgrade
+ *   - invoice.payment_failed          → revoke premium access
  */
-
-const TOKEN_GRANTS = {
-  token_pack_10: 10,
-  token_pack_50: 50,
-  token_pack_100: 100,
-};
 
 // Power tier subscription configurations: daily energy bar capacity
 const POWER_TIER_CONFIG = {
@@ -64,6 +58,9 @@ Deno.serve(async (req) => {
     const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     console.log(`Stripe webhook event: ${event.type}`);
 
+    const base44 = createClientFromRequest(req);
+
+    // ===== EVENT: checkout.session.completed — Grant entitlements =====
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const userId = session.metadata?.user_id;
@@ -74,46 +71,10 @@ Deno.serve(async (req) => {
         return Response.json({ received: true });
       }
 
-      const base44 = createClientFromRequest(req);
-
-      // ===== CASE 1: Token Packs (one-time, add to balance) =====
-      if (TOKEN_GRANTS[purchaseType]) {
-        const tokensToAdd = TOKEN_GRANTS[purchaseType];
-        const users = await base44.asServiceRole.entities.User.filter({ id: userId });
-        const userData = users[0];
-        const currentTokens = userData?.ai_tokens || 0;
-        const newTokens = currentTokens + tokensToAdd;
-
-        await base44.asServiceRole.entities.User.update(userId, {
-          ai_tokens: newTokens,
-        });
-
-        console.log(`Token pack (${purchaseType}) applied for user ${userId}: +${tokensToAdd} tokens → total ${newTokens}`);
-
-      // ===== CASE 2: Annual Pass (one-time, set 1-year expiry) =====
-      } else if (purchaseType === 'annual_pass') {
-        const users = await base44.asServiceRole.entities.User.filter({ id: userId });
-        const userData = users[0];
-        let baseDate = new Date();
-        
-        // If annual pass is already active, extend from current expiry; otherwise from today
-        if (userData?.annual_pass_expires_at) {
-          const currentExpiry = new Date(userData.annual_pass_expires_at + 'T00:00:00');
-          if (currentExpiry > baseDate) baseDate = currentExpiry;
-        }
-        baseDate.setFullYear(baseDate.getFullYear() + 1);
-        const expiresStr = baseDate.toISOString().split('T')[0];
-
-        await base44.asServiceRole.entities.User.update(userId, {
-          annual_pass_expires_at: expiresStr,
-        });
-
-        console.log(`Annual pass granted for user ${userId} until ${expiresStr}`);
-
-      // ===== CASE 3: Power Tier Monthly/Annual Subscriptions (recurring, update subscription type + daily limit) =====
-      } else if (POWER_TIER_CONFIG[purchaseType]) {
+      // CASE 1: Power Tier Subscriptions (recurring, update subscription type + daily limit)
+      if (POWER_TIER_CONFIG[purchaseType]) {
         const tierConfig = POWER_TIER_CONFIG[purchaseType];
-        
+
         await base44.asServiceRole.entities.User.update(userId, {
           subscription_type: tierConfig.subscription_type,
           ai_tokens_daily_limit: tierConfig.daily_limit,
@@ -122,7 +83,7 @@ Deno.serve(async (req) => {
 
         console.log(`Power tier subscription (${purchaseType}) activated for user ${userId}: daily limit set to ${tierConfig.daily_limit} energy bars`);
 
-      // ===== CASE 4: Instant Boost (one-time, add immediate energy) =====
+      // CASE 2: Instant Boost (one-time, add immediate energy)
       } else if (INSTANT_BOOST_CONFIG[purchaseType]) {
         const boostConfig = INSTANT_BOOST_CONFIG[purchaseType];
         const users = await base44.asServiceRole.entities.User.filter({ id: userId });
@@ -135,6 +96,48 @@ Deno.serve(async (req) => {
         });
 
         console.log(`Instant boost (${purchaseType}) applied for user ${userId}: +${boostConfig.boost_tokens} tokens → total ${newTokens}`);
+      }
+    }
+
+    // ===== EVENT: customer.subscription.deleted — Subscription cancelled, revoke premium =====
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object;
+      const userId = subscription.metadata?.user_id;
+
+      if (userId) {
+        await base44.asServiceRole.entities.User.update(userId, {
+          subscription_type: 'free',
+          ai_tokens_daily_limit: 10,
+        });
+        console.log(`Subscription cancelled (deleted) for user ${userId}. Premium access revoked.`);
+      }
+    }
+
+    // ===== EVENT: customer.subscription.updated — Handle cancellation/downgrade =====
+    if (event.type === 'customer.subscription.updated') {
+      const subscription = event.data.object;
+      const userId = subscription.metadata?.user_id;
+
+      if (userId && subscription.status === 'canceled') {
+        await base44.asServiceRole.entities.User.update(userId, {
+          subscription_type: 'free',
+          ai_tokens_daily_limit: 10,
+        });
+        console.log(`Subscription updated to 'canceled' for user ${userId}. Premium access revoked.`);
+      }
+    }
+
+    // ===== EVENT: invoice.payment_failed — Recurring payment failed, revoke premium =====
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object;
+      const userId = invoice.metadata?.user_id;
+
+      if (userId) {
+        await base44.asServiceRole.entities.User.update(userId, {
+          subscription_type: 'free',
+          ai_tokens_daily_limit: 10,
+        });
+        console.log(`Payment failed for user ${userId}. Premium access revoked.`);
       }
     }
 
