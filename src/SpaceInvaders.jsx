@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
+import TouchControls from '@/components/arcade/TouchControls';
 
 const GAME_ID = 'space_invaders';
 
@@ -12,6 +13,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const canvasRef = useRef(null);
+  const touchRef = useRef({});
 
   useEffect(() => {
     const saved = localStorage.getItem('spaceInvadersBestScore');
@@ -73,6 +75,19 @@ export default function SpaceInvaders({ onUpdateScore }) {
         bullets.push({ x: player.x + player.width / 2 - 2, y: player.y, width: 4, height: 12, speed: 7 });
       }
     };
+
+    const touchMove = (dir) => {
+      if (dir === 'left') player.dx = -player.speed;
+      if (dir === 'right') player.dx = player.speed;
+    };
+    const touchRelease = (dir) => {
+      if (dir === 'left' && player.dx < 0) player.dx = 0;
+      if (dir === 'right' && player.dx > 0) player.dx = 0;
+    };
+    const touchFire = () => {
+      bullets.push({ x: player.x + player.width / 2 - 2, y: player.y, width: 4, height: 12, speed: 7 });
+    };
+    touchRef.current = { touchMove, touchRelease, touchFire };
 
     const handleKeyUp = (e) => {
       if (e.key === 'ArrowLeft' && player.dx < 0) player.dx = 0;
@@ -187,6 +202,15 @@ export default function SpaceInvaders({ onUpdateScore }) {
             <div className="absolute inset-0 z-40 bg-black/50 flex items-center justify-center">
               <h2 className="text-white text-4xl font-black uppercase tracking-widest">Paused</h2>
             </div>
+          )}
+
+          {!gameOver && !gameWon && !isPaused && (
+            <TouchControls
+              onDirection={(dir) => touchRef.current.touchMove?.(dir)}
+              onDirectionRelease={(dir) => touchRef.current.touchRelease?.(dir)}
+              onAction={() => touchRef.current.touchFire?.()}
+              actionLabel="FIRE"
+            />
           )}
 
           {(gameOver || gameWon) && (

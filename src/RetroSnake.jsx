@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
+import TouchControls from '@/components/arcade/TouchControls';
 
 const GAME_ID = 'retro_snake';
 
@@ -11,6 +12,7 @@ export default function RetroSnake({ onUpdateScore }) {
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const canvasRef = useRef(null);
+  const directionRef = useRef(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('snakeBestScore');
@@ -40,7 +42,15 @@ export default function RetroSnake({ onUpdateScore }) {
     let food = { x: 20, y: 10 };
     let dx = 1;
     let dy = 0;
-    let currentScore = score; 
+    let currentScore = score;
+
+    const setDirection = (dir) => {
+      if (dir === 'up' && dy === 0) { dx = 0; dy = -1; }
+      if (dir === 'down' && dy === 0) { dx = 0; dy = 1; }
+      if (dir === 'left' && dx === 0) { dx = -1; dy = 0; }
+      if (dir === 'right' && dx === 0) { dx = 1; dy = 0; }
+    };
+    directionRef.current = setDirection;
     let frameCount = 0;
 
     const handleKeyDown = (e) => {
@@ -148,6 +158,10 @@ export default function RetroSnake({ onUpdateScore }) {
             <div className="absolute inset-0 z-40 bg-black/50 flex items-center justify-center">
               <h2 className="text-white text-4xl font-black uppercase tracking-widest">Paused</h2>
             </div>
+          )}
+
+          {!gameOver && !isPaused && (
+            <TouchControls showUpDown={true} onDirection={(dir) => directionRef.current?.(dir)} />
           )}
 
           {gameOver && (

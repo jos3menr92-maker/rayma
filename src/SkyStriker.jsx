@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
+import TouchControls from '@/components/arcade/TouchControls';
 
 const GAME_ID = 'sky_striker';
 
@@ -11,6 +12,7 @@ export default function SkyStriker({ onUpdateScore }) {
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const canvasRef = useRef(null);
+  const touchRef = useRef({});
 
   useEffect(() => {
     const saved = localStorage.getItem('skyStrikerBestScore');
@@ -56,6 +58,16 @@ export default function SkyStriker({ onUpdateScore }) {
       if (e.key === 'ArrowLeft' && player.dx < 0) player.dx = 0;
       if (e.key === 'ArrowRight' && player.dx > 0) player.dx = 0;
     };
+
+    const touchMove = (dir) => {
+      if (dir === 'left') player.dx = -player.speed;
+      if (dir === 'right') player.dx = player.speed;
+    };
+    const touchRelease = (dir) => {
+      if (dir === 'left' && player.dx < 0) player.dx = 0;
+      if (dir === 'right' && player.dx > 0) player.dx = 0;
+    };
+    touchRef.current = { touchMove, touchRelease };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -192,6 +204,14 @@ export default function SkyStriker({ onUpdateScore }) {
             <div className="absolute inset-0 z-40 bg-black/50 flex items-center justify-center">
               <h2 className="text-white text-4xl font-black uppercase tracking-widest">Paused</h2>
             </div>
+          )}
+
+          {!gameOver && !isPaused && (
+            <TouchControls
+              onDirection={(dir) => touchRef.current.touchMove?.(dir)}
+              onDirectionRelease={(dir) => touchRef.current.touchRelease?.(dir)}
+              actionLabel="AUTO"
+            />
           )}
 
           {gameOver && (

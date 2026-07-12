@@ -136,9 +136,31 @@ export default function Dashboard() {
 
       <AnimatePresence>
         {(pullDistance > 10 || refreshing) && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 32 }} exit={{ opacity: 0, height: 0 }} className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
-            {refreshing ? T("refreshing", "Refreshing...") : pullDistance > 50 ? T("releaseRefresh", "Release to refresh") : T("pullRefresh", "Pull to refresh")}
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 48, marginBottom: 8 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="flex items-center justify-center gap-3"
+          >
+            <div
+              className="relative w-7 h-7 flex items-center justify-center"
+              style={{ transform: `rotate(${pullDistance * 4}deg)` }}
+            >
+              <RefreshCw
+                className={`w-7 h-7 ${refreshing ? "animate-spin" : ""}`}
+                style={{ color: refreshing || pullDistance > 50 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}
+              />
+            </div>
+            <span
+              className={`text-sm font-medium ${refreshing || pullDistance > 50 ? "text-primary" : "text-muted-foreground"}`}
+            >
+              {refreshing
+                ? T("refreshing", "Refreshing...")
+                : pullDistance > 50
+                  ? T("releaseRefresh", "Release to refresh")
+                  : T("pullRefresh", "Pull to refresh")}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
