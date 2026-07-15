@@ -94,35 +94,51 @@ export const AuthProvider = ({ children }) => {
       const me = await base44.auth.me();
 
       // Await full Supabase session sync BEFORE releasing the loading state.
-      // This prevents the race condition where protected routes mount and
-      // bounce users to /auth before the Supabase handshake completes.
+      // Only invoke syncSupabaseUser + signInWithPassword when no valid
+      // Supabase session already exists — prevents brute-force rate-limit (429).
       try {
-        const syncRes = await base44.functions.invoke('syncSupabaseUser');
-        if (syncRes?.data?.tempToken) {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: me.email,
-            password: syncRes.data.tempToken,
-          });
-          if (signInError) throw signInError;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          const syncRes = await base44.functions.invoke('syncSupabaseUser');
+          if (syncRes?.data?.tempToken) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email: me.email,
+              password: syncRes.data.tempToken,
+            });
+            if (signInError) throw signInError;
+          }
         }
       } catch (syncError) {
         console.error('Supabase sync failed:', syncError);
-        // Non-fatal: Base44 auth succeeded; Supabase will retry on next data fetch
+        throw syncError; // Bubble to outer catch so the user sees the real error
       }
 
       // ONLY unlock the UI after both Base44 + Supabase sessions are confirmed
       setUser(me);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsAuthenticated(false);
+      console.error('Auth Error caught:', error);
 
-      if (error.status === 401 || error.status === 403) {
+      // Surface the actual error to the UI instead of swallowing it
+      if (error.status === 429 || error.message?.toLowerCase().includes('rate limit')) {
+        setAuthError({
+          type: 'rate_limited',
+          message: 'Too many login attempts. Please wait a few minutes before trying again.'
+        });
+      } else if (error.status === 401 || error.status === 403) {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
         });
+      } else {
+        setAuthError({
+          type: 'connection_error',
+          message: error.message || 'Authentication failed to connect to the database.'
+        });
       }
+
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoadingAuth(false);
     }
