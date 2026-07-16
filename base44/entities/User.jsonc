@@ -47,6 +47,14 @@
       "type": "boolean",
       "default": false
     },
+    "smart_alerts": {
+      "type": "boolean",
+      "default": true
+    },
+    "auto_insights": {
+      "type": "boolean",
+      "default": true
+    },
     "rayma_expires_at": {
       "type": "string",
       "format": "date",
@@ -89,7 +97,11 @@
     },
     "subscription_tier": {
       "type": "string",
-      "enum": ["free", "power_lithium", "power_generator"],
+      "enum": [
+        "free",
+        "power_lithium",
+        "power_generator"
+      ],
       "default": "free",
       "description": "Active Stripe subscription tier. Set by the Stripe webhook on purchase. 'free' when no active subscription."
     },
@@ -97,19 +109,16 @@
       "type": "string",
       "format": "date",
       "description": "Date when the current Stripe subscription period ends. Null if the user is on the free tier."
+    },
+    "subscription_type": {
+      "type": "string",
+      "description": "Display label for current subscription"
+    },
+    "ai_tokens_daily_limit": {
+      "type": "number",
+      "default": 10,
+      "description": "Daily AI token limit based on subscription tier"
     }
   },
-  "required": [
-    "preferred_name",
-    "avatar_id",
-    "avatar_emoji",
-    "avatar_photo_url",
-    "dashboard_greeting",
-    "pay_frequency",
-    "pay_day",
-    "accent_color",
-    "rayma_expires_at",
-    "ai_tokens_reset_date",
-    "annual_pass_expires_at"
-  ]
+  "required": []
 }

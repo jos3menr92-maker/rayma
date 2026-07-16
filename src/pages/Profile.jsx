@@ -129,11 +129,38 @@ export default function Profile() {
     setSaving(true); 
     
     try {
-      const { error: profileError } = await supabase.from('profiles').update(form).eq('id', userProfile.id);
+      // Safe-merge: combine existing user data with form changes,
+      // replacing null/undefined with "" for strings to prevent validation crashes
+      const existing = userProfile || {};
+      const stringFields = [
+        'preferred_name', 'avatar_id', 'avatar_emoji', 'avatar_photo_url',
+        'preferred_currency', 'preferred_language', 'pay_frequency', 'pay_day'
+      ];
+      
+      const safePayload = {};
+      for (const key of stringFields) {
+        const val = form[key] != null ? form[key] : (existing[key] || "");
+        safePayload[key] = val || "";
+      }
+      // Boolean fields stay boolean
+      safePayload.compact_mode = form.compact_mode ?? existing.compact_mode ?? false;
+      safePayload.smart_alerts = form.smart_alerts ?? existing.smart_alerts ?? true;
+      safePayload.auto_insights = form.auto_insights ?? existing.auto_insights ?? true;
+
+      // 1. Update Supabase profiles table
+      const { error: profileError } = await supabase.from('profiles').update(safePayload).eq('id', userProfile.id);
       if (profileError) throw profileError;
+
+      // 2. Sync to Base44 User entity (schema now allows partial updates)
+      try {
+        await base44.auth.updateMe(safePayload);
+      } catch (base44Err) {
+        console.error("Base44 sync failed (non-fatal):", base44Err.message);
+      }
+
       await reload();
       
-      if (form.preferred_language) setLang(form.preferred_language); 
+      if (safePayload.preferred_language) setLang(safePayload.preferred_language); 
       setSaved(true); 
       setTimeout(() => setSaved(false), 2500); 
     } catch (err) { 
