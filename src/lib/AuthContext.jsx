@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (syncError) {
         console.error('Supabase sync failed:', syncError);
-        throw syncError; // Bubble to outer catch so the user sees the real error
+        // Non-fatal: Base44 auth succeeded; Supabase will retry on next data fetch
       }
 
       // ONLY unlock the UI after both Base44 + Supabase sessions are confirmed

@@ -51,9 +51,10 @@ export default function Auth() {
 
         await checkAppState();
         try { sessionStorage.setItem("rayma_auto_open", "true"); } catch (err) { /* ignore */ }
-        
-        navigate("/", { replace: true });
-      } else {
+
+        // Hard redirect — forces appParams.token to re-evaluate on fresh mount
+        window.location.href = '/';
+        } else {
         // 1. Registers the user in Base44
         await base44.auth.register({ 
           email: formData.email, 
