@@ -30,17 +30,27 @@ export default function Budget() {
   const [authError, setAuthError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // 🛡️ FAIL-SAFE: Ensure spinner stops if user session isn't found
   useEffect(() => {
     if (supaUser?.id) {
       loadData();
+    } else {
+      setLoading(false);
     }
   }, [supaUser?.id]);
 
+  // 🛡️ FAIL-SAFE: Wrapped in try/catch/finally to guarantee UI unlocks
   async function loadData() {
-    setLoading(true);
-    const { data } = await supabase.from('savings_goals').select('*').eq('user_id', supaUser.id).order('created_at', { ascending: false });
-    setGoals(data || []);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('savings_goals').select('*').eq('user_id', supaUser.id).order('created_at', { ascending: false });
+      if (error) throw error;
+      setGoals(data || []);
+    } catch (err) {
+      console.error("Failed to load goals:", err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function openAddGoal() {
@@ -57,10 +67,13 @@ export default function Budget() {
 
   async function handleSaveGoal(e) {
     e.preventDefault();
+    
+    if (!supaUser?.id) return; // 🛡️ FAIL-SAFE: Prevent null ID crash
+    
     setSavingGoal(true);
 
     const data = {
-      user_id: supaUser?.id, 
+      user_id: supaUser.id, 
       name: goalForm.name,
       target_amount: parseFloat(goalForm.target_amount) || 0,
       current_saved: parseFloat(goalForm.current_saved) || 0,
