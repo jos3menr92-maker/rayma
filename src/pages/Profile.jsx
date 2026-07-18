@@ -245,14 +245,23 @@ export default function Profile() {
 
       // 1. Delete Supabase Storage files (avatars)
       if (userProfile?.avatar_id) {
-        await supabase.storage.from('avatars').remove([userProfile.avatar_id]).catch(console.error);
+        await supabase.storage.from('avatars').remove([userProfile.avatar_id]).catch(e => console.warn("Avatar ID cleanup missed:", e.message));
+      }
+      if (userProfile?.avatar_photo_url) {
+        const fileName = userProfile.avatar_photo_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage.from('avatars').remove([fileName]).catch(e => console.warn("Custom photo cleanup missed:", e.message));
+        }
       }
 
-      // 2. Hard wipe all financial data from Supabase (sequential to prevent partial wipes)
+      // 2. Hard wipe all financial data from Supabase (fail-safe: continues on table misses)
       const tables = ['documents', 'arcade_scores', 'promo_redemptions', 'feedback', 'transactions', 'bank_accounts', 'payments', 'loan_adjustments', 'loans', 'bills', 'incomes', 'assets', 'savings_goals', 'profiles'];
       for (const table of tables) {
-        const { error } = await supabase.from(table).delete().eq(table === 'profiles' ? 'id' : 'user_id', uid);
-        if (error) throw new Error(`Failed to delete from ${table}: ${error.message}`);
+        const { error } = await supabase.from(table).delete().eq('user_id', supaUser.id);
+        if (error) {
+          console.warn(`Failed to wipe ${table}, continuing to next...`, error.message);
+          continue;
+        }
       }
 
       // 2. Delete both Supabase auth user AND Base44 user record via backend function
