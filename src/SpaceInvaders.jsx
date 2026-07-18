@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Pause, Play } from 'lucide-react';
+import { Pause, Play, X } from 'lucide-react';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 
@@ -199,8 +199,11 @@ export default function SpaceInvaders({ onUpdateScore }) {
           <canvas ref={canvasRef} width={800} height={450} className="w-full h-[100dvh] max-w-7xl object-contain bg-slate-900 border-4 border-slate-800 z-10" />
           
           {isPaused && !gameOver && !gameWon && (
-            <div className="absolute inset-0 z-40 bg-black/50 flex items-center justify-center">
+            <div className="absolute inset-0 z-40 bg-black/50 flex flex-col items-center justify-center gap-6">
               <h2 className="text-white text-4xl font-black uppercase tracking-widest">Paused</h2>
+              <button onClick={() => { setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                <X className="w-5 h-5" /> Exit
+              </button>
             </div>
           )}
 
@@ -222,7 +225,12 @@ export default function SpaceInvaders({ onUpdateScore }) {
                     🎉 WAVE 10 REACHED: +1 ENERGY BAR!
                   </div>
                 )}
-                <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase rounded-xl">Try Again</button>
+                <div className="flex gap-4">
+                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase rounded-xl">Try Again</button>
+                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                    <X className="w-5 h-5" /> Exit
+                  </button>
+                </div>
              </div>
           )}
         </div>

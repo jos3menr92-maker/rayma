@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Pause, Play } from 'lucide-react';
+import { Pause, Play, X } from 'lucide-react';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 
@@ -155,8 +155,11 @@ export default function RetroSnake({ onUpdateScore }) {
           <canvas ref={canvasRef} width={800} height={450} className="w-full h-[100dvh] max-w-7xl object-contain bg-slate-900" />
           
           {isPaused && !gameOver && (
-            <div className="absolute inset-0 z-40 bg-black/50 flex items-center justify-center">
+            <div className="absolute inset-0 z-40 bg-black/50 flex flex-col items-center justify-center gap-6">
               <h2 className="text-white text-4xl font-black uppercase tracking-widest">Paused</h2>
+              <button onClick={() => { setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                <X className="w-5 h-5" /> Exit
+              </button>
             </div>
           )}
 
@@ -173,7 +176,12 @@ export default function RetroSnake({ onUpdateScore }) {
                     🎉 LEVEL 10 REACHED: +1 ENERGY BAR!
                   </div>
                 )}
-                <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl">Play Again</button>
+                <div className="flex gap-4">
+                  <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl">Play Again</button>
+                  <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                    <X className="w-5 h-5" /> Exit
+                  </button>
+                </div>
              </div>
           )}
         </div>
