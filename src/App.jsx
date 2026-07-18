@@ -44,6 +44,7 @@ const MonthlyRecap = lazy(() => import('./pages/MonthlyRecap'));
 const AssetDashboard = lazy(() => import('./pages/AssetDashboard'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const TaxSummary = lazy(() => import('./pages/TaxSummary'));
+const Calendar = lazy(() => import('./pages/Calendar'));
 
 const PageLoader = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -114,6 +115,7 @@ if (authError) {
           <Route path="/monthly-recap" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><MonthlyRecap /></Suspense></ProtectedLayout>} />
           <Route path="/assets" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><AssetDashboard /></Suspense></ProtectedLayout>} />
           <Route path="/tax-summary" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><TaxSummary /></Suspense></ProtectedLayout>} />
+          <Route path="/calendar" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Calendar /></Suspense></ProtectedLayout>} />
           
           <Route path="*" element={<PageNotFound />} />
         </Route>
