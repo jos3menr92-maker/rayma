@@ -51,20 +51,32 @@ export default function AssetDashboard() {
   const [authError, setAuthError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // 🛡️ FAIL-SAFE: Ensure spinner stops if user session isn't found
   useEffect(() => { 
-    if (supaUser?.id) loadAssets(); 
+    if (supaUser?.id) {
+      loadAssets(); 
+    } else {
+      setLocalLoading(false);
+    }
   }, [supaUser?.id]);
 
+  // 🛡️ FAIL-SAFE: Wrapped in try/catch/finally to guarantee UI unlocks
   async function loadAssets() {
-    setLocalLoading(true);
-    const { data } = await supabase
-      .from('assets')
-      .select('*')
-      .eq('user_id', supaUser.id) // 🔒 Security lock!
-      .order('created_at', { ascending: false });
-      
-    setAssets(data || []);
-    setLocalLoading(false);
+    try {
+      setLocalLoading(true);
+      const { data, error } = await supabase
+        .from('assets')
+        .select('*')
+        .eq('user_id', supaUser.id) // 🔒 Security lock!
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setAssets(data || []);
+    } catch (err) {
+      console.error("Failed to load assets:", err.message);
+    } finally {
+      setLocalLoading(false);
+    }
   }
 
   // 🧮 Net Worth Math
@@ -83,8 +95,12 @@ export default function AssetDashboard() {
   function openAdd() { setEditing(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(a) { setEditing(a); setForm({ name: a.name, amount: a.amount, type: a.type || "cash", notes: a.notes || "" }); setDialogOpen(true); }
 
+  // 🛡️ FAIL-SAFE: Wrapped mutations to prevent fatal app crashes on error
   async function handleSave(e) {
     e.preventDefault();
+    
+    if (!supaUser?.id) return; // Prevent null ID crash
+    
     setSaving(true);
     
     const payload = { 
@@ -93,6 +109,7 @@ export default function AssetDashboard() {
       user_id: supaUser.id
     };
 
+    try {
       if (editing) {
         const { error } = await supabase.from('assets').update(payload).eq('id', editing.id);
         if (error) throw error;
@@ -100,10 +117,14 @@ export default function AssetDashboard() {
         const { error } = await supabase.from('assets').insert([payload]);
         if (error) throw error;
       }
-    
-    setSaving(false);
-    setDialogOpen(false);
-    loadAssets();
+      
+      setDialogOpen(false);
+      loadAssets();
+    } catch (err) {
+      console.error("Asset Error:", err.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const handleDelete = (id) => {
