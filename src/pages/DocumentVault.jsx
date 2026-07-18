@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
+import { supabase } from "@/lib/supabaseClient"; // 🚀 NEW: Added Supabase client
 import { motion } from "framer-motion";
 import { FolderOpen, Sparkles, Clock } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+// Removed base44 import as we now fetch from Supabase
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: Added the global data brain
+import { useFinancialData } from "@/lib/FinancialDataContext"; 
 import DocumentUploader from "../components/documents/DocumentUploader";
 import DocumentCard from "../components/documents/DocumentCard";
 import DocumentReviewModal from "../components/documents/DocumentReviewModal";
@@ -23,8 +24,8 @@ export default function DocumentVault() {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   
-  // 🚀 FIXED: Pulling actual loans and bills from Supabase instead of local state!
-  const { loans, bills } = useFinancialData(); 
+  // 🚀 Grab supaUser for strict RLS filtering
+  const { loans, bills, supaUser } = useFinancialData(); 
   const activeLoans = useMemo(() => loans.filter(x => x.status !== "paid_off"), [loans]);
 
   const [docs, setDocs] = useState([]);
@@ -38,18 +39,36 @@ export default function DocumentVault() {
     label: T(f.labelKey, f.labelKey === "pending" ? "Pending" : f.labelKey.charAt(0).toUpperCase() + f.labelKey.slice(1))
   }));
 
-  useEffect(() => { loadData(); }, []);
+  // 🛡️ FAIL-SAFE: Wait for Supabase session before fetching
+  useEffect(() => { 
+    if (supaUser?.id) {
+      loadData(); 
+    } else {
+      setLoading(false);
+    }
+  }, [supaUser?.id]);
 
+  // 🚀 FIXED: Fetching from Supabase 'documents' table instead of Base44 entities
   async function loadData() {
-    // 🚀 FIXED: We only fetch scanned docs from Base44 now. Loans and Bills are handled by Supabase globally!
-    const d = await base44.entities.ScannedDocument.list("-created_date", 100);
-    setDocs(d);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('user_id', supaUser.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDocs(data || []);
+    } catch (err) {
+      console.error("Failed to load documents:", err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleDocumentScanned(doc) {
     setDocs(prev => [doc, ...prev]);
-    // Auto-open review
     setReviewingDoc(doc);
     setReviewAnalysis(doc._analysis);
   }
@@ -86,7 +105,6 @@ export default function DocumentVault() {
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-8">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        {/* Header */}
         <div className="flex items-center gap-3 mb-1">
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
             <FolderOpen className="w-5 h-5 text-primary" />
@@ -95,7 +113,6 @@ export default function DocumentVault() {
         </div>
         <p className="text-sm text-muted-foreground mb-5 ml-12">{T("documentVaultSubtitle", "Scan receipts, bills & documents — Rayma AI logs them for you")}</p>
 
-        {/* RAYMA hint */}
         <div className="bg-primary/5 border border-primary/15 rounded-2xl p-3 mb-5 flex gap-2.5">
           <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-xs text-foreground leading-relaxed">
@@ -103,12 +120,10 @@ export default function DocumentVault() {
           </p>
         </div>
 
-        {/* Uploader */}
         <div className="mb-6">
           <DocumentUploader onDocumentScanned={handleDocumentScanned} />
         </div>
 
-        {/* Folder tabs */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4 pb-1">
           {FOLDERS.map(f => (
             <button
@@ -130,7 +145,6 @@ export default function DocumentVault() {
           ))}
         </div>
 
-        {/* Document list */}
         {filtered.length === 0 ? (
           <div className="text-center py-14">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 text-3xl">📂</div>
@@ -158,13 +172,12 @@ export default function DocumentVault() {
         )}
       </motion.div>
 
-      {/* Review Modal */}
       {reviewingDoc && (
         <DocumentReviewModal
           doc={reviewingDoc}
           analysis={reviewAnalysis}
-          loans={activeLoans} // 🚀 Using the active loans from Supabase
-          bills={bills}       // 🚀 Using the bills from Supabase
+          loans={activeLoans} 
+          bills={bills}       
           onClose={() => setReviewingDoc(null)}
           onDone={handleReviewDone}
         />
