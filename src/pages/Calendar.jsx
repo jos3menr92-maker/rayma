@@ -1,11 +1,16 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, CalendarDays, TrendingUp, Wallet, AlertCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage, useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getMonthName, getWeekdayNames } from "@/utils/formatLocalized";
+import CalendarToolbar from "@/components/calendar/CalendarToolbar";
+import CalendarMonthView from "@/components/calendar/CalendarMonthView";
+import CalendarWeekView from "@/components/calendar/CalendarWeekView";
+import AddEventDialog from "@/components/calendar/AddEventDialog";
+import AddBillDialog from "@/components/AddBillDialog";
 
 const categoryIcons = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️",
@@ -13,45 +18,44 @@ const categoryIcons = {
   mortgage: "🏠", auto: "🚗", student: "🎓", personal: "👤", credit_card: "💳", medical: "🏥",
 };
 
-const categoryColors = {
-  bill: "bg-destructive",
-  loan: "bg-orange-500",
-  income: "bg-primary",
-  payday: "bg-emerald-500",
-};
+const jsDayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+
+function extractDay(dateStr) {
+  if (!dateStr) return null;
+  return parseInt(dateStr.split('T')[0].split('-')[2], 10);
+}
 
 export default function Calendar() {
   const navigate = useNavigate();
-  const { loans, bills, incomes, userProfile, loading } = useFinancialData();
+  const { loans, bills, incomes, userProfile, loading, reload } = useFinancialData();
   const { lang, locale } = useLanguage();
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
 
+  const [view, setView] = useState("month");
   const [current, setCurrent] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
+  const [filters, setFilters] = useState({ bills: true, loans: true, income: true, payday: true });
+  const [showAddEvent, setShowAddEvent] = useState(false);
+  const [showAddBill, setShowAddBill] = useState(false);
 
   const year = current.getFullYear();
   const month = current.getMonth();
   const today = new Date();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
 
   const monthName = useMemo(() => getMonthName(month, locale, "long"), [year, month, locale]);
   const dayHeaders = useMemo(() => getWeekdayNames(locale, "short"), [locale]);
   const dayHeadersNarrow = useMemo(() => getWeekdayNames(locale, "narrow"), [locale]);
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  // Build day map: bills, loans, incomes, paydays
+  // Build day map for month view
   const { dayMap, payDays } = useMemo(() => {
     const map = {};
     const pays = [];
 
-    // Helper: find all days in month matching a weekday name
     const findDaysForWeekday = (weekdayName) => {
       if (!weekdayName) return [];
-      const dayNames = getWeekdayNames(locale, "long");
-      // Map locale weekday names to JS getDay() index (0=Sunday)
-      const jsDayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
       const targetDow = jsDayMap[weekdayName];
       if (targetDow === undefined) return [];
       const matches = [];
@@ -61,7 +65,6 @@ export default function Calendar() {
       return matches;
     };
 
-    // Bills: monthly uses due_day (number), weekly/biweekly uses due_day_of_week
     bills.filter(b => b.is_active !== false).forEach(b => {
       let days = [];
       if (b.payment_frequency === "weekly" || b.payment_frequency === "biweekly") {
@@ -79,7 +82,6 @@ export default function Calendar() {
       });
     });
 
-    // Loans: use due_date (ISO string) or due_day, or due_day_of_week for recurring
     loans.filter(l => l.status !== "paid_off").forEach(l => {
       let days = [];
       if (l.payment_frequency === "weekly" || l.payment_frequency === "biweekly") {
@@ -97,7 +99,6 @@ export default function Calendar() {
       });
     });
 
-    // Incomes: use week_start date or date field
     incomes.forEach(inc => {
       const day = extractDay(inc.week_start) || extractDay(inc.date) || extractDay(inc.created_at);
       if (day && day >= 1 && day <= daysInMonth) {
@@ -110,44 +111,105 @@ export default function Calendar() {
       const d = parseInt(userProfile.pay_day);
       if (d >= 1 && d <= daysInMonth) pays.push(d);
     } else if ((userProfile?.pay_frequency === "weekly" || userProfile?.pay_frequency === "biweekly") && userProfile?.pay_day) {
-      const dayNames = getWeekdayNames(locale, "long");
-      const targetDow = dayNames.indexOf(userProfile.pay_day);
-      if (targetDow !== -1) {
+      const targetDow = jsDayMap[userProfile.pay_day];
+      if (targetDow !== undefined) {
         const step = userProfile.pay_frequency === "weekly" ? 7 : 14;
         let firstOccurrence = -1;
         for (let d = 1; d <= daysInMonth; d++) {
-          const dow = new Date(year, month, d).getDay();
-          if (dow === targetDow) { firstOccurrence = d; break; }
+          if (new Date(year, month, d).getDay() === targetDow) { firstOccurrence = d; break; }
         }
         if (firstOccurrence > 0) {
-          for (let d = firstOccurrence; d <= daysInMonth; d += step) {
-            pays.push(d);
-          }
+          for (let d = firstOccurrence; d <= daysInMonth; d += step) pays.push(d);
         }
       }
     }
 
     return { dayMap: map, payDays: pays };
-  }, [bills, loans, incomes, userProfile, year, month, daysInMonth, locale]);
+  }, [bills, loans, incomes, userProfile, year, month, daysInMonth]);
+
+  // Apply filters
+  const filteredDayMap = useMemo(() => {
+    const map = {};
+    Object.entries(dayMap).forEach(([day, items]) => {
+      const filtered = items.filter(item => {
+        if (item._type === "bill") return filters.bills;
+        if (item._type === "loan") return filters.loans;
+        if (item._type === "income") return filters.income;
+        return true;
+      });
+      if (filtered.length > 0) map[day] = filtered;
+    });
+    return map;
+  }, [dayMap, filters]);
+
+  const filteredPayDays = filters.payday ? payDays : [];
+
+  // Get events for any date (week view)
+  const getEventsForDate = (date) => {
+    const dDay = date.getDate();
+    const targetDow = date.getDay();
+    const events = [];
+
+    if (filters.bills) {
+      bills.filter(b => b.is_active !== false).forEach(b => {
+        let matches = false;
+        if (b.payment_frequency === "weekly") matches = jsDayMap[b.due_day_of_week] === targetDow;
+        else if (b.payment_frequency === "biweekly") matches = jsDayMap[b.due_day_of_week] === targetDow && dDay <= 7;
+        else { const d = extractDay(b.due_date) || b.due_day; matches = d === dDay; }
+        if (matches) events.push({ ...b, _type: "bill", _amount: b.amount || 0 });
+      });
+    }
+
+    if (filters.loans) {
+      loans.filter(l => l.status !== "paid_off").forEach(l => {
+        let matches = false;
+        if (l.payment_frequency === "weekly") matches = jsDayMap[l.due_day_of_week] === targetDow;
+        else if (l.payment_frequency === "biweekly") matches = jsDayMap[l.due_day_of_week] === targetDow && dDay <= 7;
+        else { const d = extractDay(l.due_date) || l.due_day; matches = d === dDay; }
+        if (matches) events.push({ ...l, _type: "loan", _amount: l.monthly_payment || 0 });
+      });
+    }
+
+    if (filters.income) {
+      incomes.forEach(inc => {
+        const incDay = extractDay(inc.week_start) || extractDay(inc.date) || extractDay(inc.created_at);
+        if (incDay === dDay) events.push({ ...inc, _type: "income", _amount: inc.amount || 0 });
+      });
+    }
+
+    return events;
+  };
+
+  const getPaydayForDate = (date) => {
+    if (!filters.payday) return false;
+    const dDay = date.getDate();
+    const targetDow = date.getDay();
+
+    if (userProfile?.pay_frequency === "monthly" && userProfile?.pay_day) {
+      return parseInt(userProfile.pay_day) === dDay;
+    }
+    if ((userProfile?.pay_frequency === "weekly" || userProfile?.pay_frequency === "biweekly") && userProfile?.pay_day) {
+      const targetDowFromName = jsDayMap[userProfile.pay_day];
+      if (targetDowFromName === undefined) return false;
+      if (userProfile.pay_frequency === "weekly") return targetDow === targetDowFromName;
+      if (userProfile.pay_frequency === "biweekly") return targetDow === targetDowFromName && dDay <= 7;
+    }
+    return false;
+  };
+
+  // Month totals
+  const allFilteredItems = Object.values(filteredDayMap).flat();
+  const monthBills = allFilteredItems.filter(x => x._type === "bill").reduce((s, x) => s + (x._amount || 0), 0);
+  const monthLoans = allFilteredItems.filter(x => x._type === "loan").reduce((s, x) => s + (x._amount || 0), 0);
+  const monthIncome = allFilteredItems.filter(x => x._type === "income").reduce((s, x) => s + (x._amount || 0), 0);
 
   const cells = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
-  const selectedItems = selectedDay ? (dayMap[selectedDay] || []) : [];
-  const isPayday = selectedDay && payDays.includes(selectedDay);
-
-  // Month totals
-  const monthBills = Object.values(dayMap).flat().filter(x => x._type === "bill").reduce((s, x) => s + (x._amount || 0), 0);
-  const monthLoans = Object.values(dayMap).flat().filter(x => x._type === "loan").reduce((s, x) => s + (x._amount || 0), 0);
-  const monthIncome = Object.values(dayMap).flat().filter(x => x._type === "income").reduce((s, x) => s + (x._amount || 0), 0);
-  const totalDue = monthBills + monthLoans;
+  const selectedItems = selectedDay ? (filteredDayMap[selectedDay] || []) : [];
+  const isPayday = selectedDay && filteredPayDays.includes(selectedDay);
   const selectedTotal = selectedItems.reduce((s, x) => s + (x._type === "income" ? -(x._amount || 0) : (x._amount || 0)), 0);
-
-  function extractDay(dateStr) {
-    if (!dateStr) return null;
-    return parseInt(dateStr.split('T')[0].split('-')[2], 10);
-  }
 
   const handleItemClick = (item) => {
     if (item._type === "loan") navigate(`/loan/${item.id}`);
@@ -155,10 +217,32 @@ export default function Calendar() {
     else if (item._type === "income") navigate("/bank-accounts");
   };
 
-  const goToday = () => {
-    setCurrent(new Date());
-    setSelectedDay(today.getDate());
+  const toggleFilter = (key) => setFilters(f => ({ ...f, [key]: !f[key] }));
+
+  const goPrev = () => {
+    if (view === "month") setCurrent(new Date(year, month - 1, 1));
+    else { const d = new Date(current); d.setDate(d.getDate() - 7); setCurrent(d); }
   };
+  const goNext = () => {
+    if (view === "month") setCurrent(new Date(year, month + 1, 1));
+    else { const d = new Date(current); d.setDate(d.getDate() + 7); setCurrent(d); }
+  };
+  const goToday = () => { setCurrent(new Date()); setSelectedDay(today.getDate()); };
+
+  const handleAddBill = () => { setShowAddEvent(false); setShowAddBill(true); };
+  const handleAddLoan = () => { setShowAddEvent(false); navigate("/add-loan"); };
+  const handleAddIncome = () => { setShowAddEvent(false); navigate("/finance"); };
+
+  const periodLabel = useMemo(() => {
+    if (view === "month") return `${monthName} ${year}`;
+    const ws = new Date(current);
+    ws.setDate(current.getDate() - current.getDay());
+    const we = new Date(ws);
+    we.setDate(ws.getDate() + 6);
+    const sM = getMonthName(ws.getMonth(), locale, "short");
+    const eM = getMonthName(we.getMonth(), locale, "short");
+    return `${sM} ${ws.getDate()} - ${eM} ${we.getDate()}`;
+  }, [view, current, monthName, year, locale]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -167,110 +251,45 @@ export default function Calendar() {
   );
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+    <div className="max-w-3xl mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-bold font-heading text-foreground flex items-center gap-2">
-            <CalendarDays className="w-6 h-6 text-primary" />
-            {T("fullCalendar", "Full Calendar")}
-          </h1>
-          <button
-            onClick={goToday}
-            className="text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-          >
-            {T("today", "Today")}
-          </button>
-        </div>
-        <p className="text-sm text-muted-foreground mb-6">{T("calendarSubtitle", "See all your financial events")}</p>
+        <CalendarToolbar
+          view={view} setView={setView}
+          periodLabel={periodLabel}
+          onPrev={goPrev} onNext={goNext} onToday={goToday}
+          filters={filters} toggleFilter={toggleFilter}
+          onAddEvent={() => setShowAddEvent(true)}
+          monthIncome={monthIncome} monthBills={monthBills} monthLoans={monthLoans}
+          fmt={fmt}
+        />
 
-        {/* Month Summary Cards */}
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
-            <Wallet className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">{T("income", "Income")}</p>
-            <p className="text-xs font-bold text-primary">{fmt(monthIncome)}</p>
-          </div>
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
-            <AlertCircle className="w-4 h-4 text-destructive mx-auto mb-1" />
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">{T("bills", "Bills")}</p>
-            <p className="text-xs font-bold text-destructive">{fmt(monthBills)}</p>
-          </div>
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
-            <TrendingUp className="w-4 h-4 text-orange-500 mx-auto mb-1" />
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase">{T("loans", "Loans")}</p>
-            <p className="text-xs font-bold text-orange-500">{fmt(monthLoans)}</p>
-          </div>
-        </div>
+        {view === "month" ? (
+          <CalendarMonthView
+            cells={cells}
+            dayMap={filteredDayMap}
+            payDays={filteredPayDays}
+            selectedDay={selectedDay}
+            onSelectDay={setSelectedDay}
+            today={today} year={year} month={month}
+            dayHeaders={dayHeaders} dayHeadersNarrow={dayHeadersNarrow}
+            onItemClick={handleItemClick}
+            fmt={fmt}
+          />
+        ) : (
+          <CalendarWeekView
+            current={current}
+            getEventsForDate={getEventsForDate}
+            getPaydayForDate={getPaydayForDate}
+            today={today}
+            locale={locale}
+            onItemClick={handleItemClick}
+            fmt={fmt}
+          />
+        )}
 
-        {/* Calendar Card */}
-        <div className="bg-card border border-border rounded-3xl p-4 mb-6 shadow-sm">
-          {/* Month nav */}
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={() => setCurrent(new Date(year, month - 1, 1))} className="p-2 rounded-xl hover:bg-muted transition-colors">
-              <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-            </button>
-            <span className="text-sm font-bold text-foreground capitalize">{monthName} {year}</span>
-            <button onClick={() => setCurrent(new Date(year, month + 1, 1))} className="p-2 rounded-xl hover:bg-muted transition-colors">
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </button>
-          </div>
-
-          {/* Day headers - responsive */}
-          <div className="grid grid-cols-7 mb-2">
-            {dayHeaders.map((d, i) => (
-              <div key={i} className="text-center text-[11px] font-bold text-muted-foreground py-1 hidden sm:block">{d}</div>
-            ))}
-            {dayHeadersNarrow.map((d, i) => (
-              <div key={`n-${i}`} className="text-center text-[11px] font-bold text-muted-foreground py-1 sm:hidden block">{d}</div>
-            ))}
-          </div>
-
-          {/* Grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {cells.map((day, i) => {
-              if (!day) return <div key={`e-${i}`} className="aspect-square" />;
-              const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
-              const isSelected = selectedDay === day;
-              const items = dayMap[day] || [];
-              const isPay = payDays.includes(day);
-              const hasItems = items.length > 0;
-
-              return (
-                <button
-                  key={day}
-                  onClick={() => setSelectedDay(isSelected ? null : day)}
-                  className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-bold transition-all
-                    ${isSelected ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105 z-10"
-                      : isToday ? "bg-primary/10 text-primary border border-primary/30"
-                      : "bg-muted/30 hover:bg-muted text-foreground"}
-                  `}
-                >
-                  {day}
-                  {/* Dots */}
-                  <div className="absolute bottom-1 flex gap-0.5 justify-center flex-wrap max-w-[80%]">
-                    {items.slice(0, 3).map((item, idx) => (
-                      <div key={idx} className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : categoryColors[item._type] || "bg-muted-foreground"}`} />
-                    ))}
-                    {isPay && <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-emerald-500"}`} />}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-3 mt-4 pt-4 border-t border-border text-[10px] font-semibold text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-destructive" /> {T("bills", "Bills")}</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500" /> {T("loans", "Loans")}</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> {T("income", "Income")}</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> {T("paydayLegend", "Payday")}</span>
-          </div>
-        </div>
-
-        {/* Selected Day Detail */}
+        {/* Selected Day Detail (month view) */}
         <AnimatePresence mode="wait">
-          {selectedDay && (
+          {selectedDay && view === "month" && (
             <motion.div
               key={selectedDay}
               initial={{ opacity: 0, y: 10 }}
@@ -279,30 +298,17 @@ export default function Calendar() {
               className="bg-card border border-border rounded-3xl p-5 mb-6 shadow-sm"
             >
               <div className="flex items-center justify-between mb-4">
-                <p className="text-lg font-bold text-foreground">
-                  {monthName} {selectedDay}, {year}
-                </p>
-                {selectedTotal > 0 && (
-                  <span className="text-xs font-bold px-2.5 py-1 bg-destructive/10 text-destructive rounded-lg">
-                    {fmt(selectedTotal)} {T("dueAmount", "due")}
-                  </span>
-                )}
-                {selectedTotal < 0 && (
-                  <span className="text-xs font-bold px-2.5 py-1 bg-primary/10 text-primary rounded-lg">
-                    +{fmt(Math.abs(selectedTotal))}
-                  </span>
-                )}
+                <p className="text-lg font-bold text-foreground">{monthName} {selectedDay}, {year}</p>
+                {selectedTotal > 0 && <span className="text-xs font-bold px-2.5 py-1 bg-destructive/10 text-destructive rounded-lg">{fmt(selectedTotal)} {T("dueAmount", "due")}</span>}
+                {selectedTotal < 0 && <span className="text-xs font-bold px-2.5 py-1 bg-primary/10 text-primary rounded-lg">+{fmt(Math.abs(selectedTotal))}</span>}
               </div>
 
-              {/* Payday indicator */}
               {isPayday && (
                 <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-4 py-3 mb-3">
                   <span className="text-xl">💰</span>
                   <div>
                     <p className="text-sm font-bold text-foreground">{T("paydayLabel", "Payday!")}</p>
-                    <p className="text-[11px] font-medium text-muted-foreground capitalize">
-                      {userProfile?.pay_frequency} {T("payLabel", "pay")}
-                    </p>
+                    <p className="text-[11px] font-medium text-muted-foreground capitalize">{userProfile?.pay_frequency} {T("payLabel", "pay")}</p>
                   </div>
                 </div>
               )}
@@ -313,13 +319,12 @@ export default function Calendar() {
                 </div>
               )}
 
-              {/* Items */}
               <div className="space-y-2">
                 {selectedItems.map(item => (
-                  <button
+                  <div
                     key={item.id}
                     onClick={() => handleItemClick(item)}
-                    className="w-full flex items-center justify-between bg-muted/20 hover:bg-muted/40 border border-border rounded-2xl px-4 py-3 transition-colors text-left"
+                    className="w-full flex items-center justify-between bg-muted/20 hover:bg-muted/40 border border-border rounded-2xl px-4 py-3 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base ${
@@ -330,22 +335,34 @@ export default function Calendar() {
                       <div>
                         <p className="text-sm font-bold text-foreground">{item.name}</p>
                         <p className="text-[11px] font-medium text-muted-foreground capitalize">
-                          {item._type === "loan" ? T("loanPayment", "Loan payment")
-                            : item._type === "income" ? T("income", "Income")
-                            : item.category}
+                          {item._type === "loan" ? T("loanPayment", "Loan payment") : item._type === "income" ? T("income", "Income") : item.category}
                         </p>
                       </div>
                     </div>
                     <span className={`text-sm font-bold ${item._type === "income" ? "text-primary" : "text-destructive"}`}>
                       {item._type === "income" ? "+" : "-"}{fmt(item._amount)}
                     </span>
-                  </button>
+                  </div>
                 ))}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
+
+      <AddEventDialog
+        open={showAddEvent}
+        onClose={() => setShowAddEvent(false)}
+        onAddBill={handleAddBill}
+        onAddLoan={handleAddLoan}
+        onAddIncome={handleAddIncome}
+      />
+
+      <AddBillDialog
+        open={showAddBill}
+        onClose={() => setShowAddBill(false)}
+        onSaved={() => { setShowAddBill(false); reload(); }}
+      />
     </div>
   );
 }
