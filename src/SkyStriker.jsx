@@ -72,23 +72,23 @@ export default function SkyStriker({ onUpdateScore }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    const endGame = async () => {
+    const endGame = () => {
+      window.cancelAnimationFrame(animationFrameId);
       setGameOver(true);
       if (currentScore > bestScore) {
         setBestScore(currentScore);
         localStorage.setItem('skyStrikerBestScore', currentScore.toString());
       }
 
-      await saveArcadeScore(GAME_ID, currentScore);
-
-      // Play-to-Earn: Level 10 is 1,350 points
-      const levelReached = Math.floor(currentScore / 150) + 1;
-      if (levelReached >= 10) {
-        await claimArcadeReward(GAME_ID, levelReached);
-      }
+      // Background API calls — don't block the game-over UI
+      saveArcadeScore(GAME_ID, currentScore).then(() => {
+        const levelReached = Math.floor(currentScore / 150) + 1;
+        if (levelReached >= 10) {
+          claimArcadeReward(GAME_ID, levelReached);
+        }
+      });
 
       latestScoreUpdate.current && latestScoreUpdate.current(GAME_ID, currentScore);
-      window.cancelAnimationFrame(animationFrameId);
     };
 
     const render = () => {

@@ -62,23 +62,23 @@ export default function RetroSnake({ onUpdateScore }) {
     };
     window.addEventListener('keydown', handleKeyDown);
 
-    const endGame = async (finalScore) => {
+    const endGame = (finalScore) => {
+      window.cancelAnimationFrame(animationFrameId);
       setGameOver(true);
       if (finalScore > bestScore) {
         setBestScore(finalScore);
         localStorage.setItem('snakeBestScore', finalScore.toString());
       }
 
-      await saveArcadeScore(GAME_ID, finalScore);
-
-      // Play-to-Earn: Level 10 is 450 points
-      const levelReached = Math.floor(finalScore / 50) + 1;
-      if (levelReached >= 10) {
-        await claimArcadeReward(GAME_ID, levelReached);
-      }
+      // Background API calls — don't block the game-over UI
+      saveArcadeScore(GAME_ID, finalScore).then(() => {
+        const levelReached = Math.floor(finalScore / 50) + 1;
+        if (levelReached >= 10) {
+          claimArcadeReward(GAME_ID, levelReached);
+        }
+      });
 
       latestScoreUpdate.current && latestScoreUpdate.current(GAME_ID, finalScore);
-      window.cancelAnimationFrame(animationFrameId);
     };
 
     const render = () => {

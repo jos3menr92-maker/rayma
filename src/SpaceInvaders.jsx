@@ -97,7 +97,8 @@ export default function SpaceInvaders({ onUpdateScore }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    const triggerEnd = async (won = false) => {
+    const triggerEnd = (won = false) => {
+      window.cancelAnimationFrame(animationFrameId);
       if (won) setGameWon(true);
       else setGameOver(true);
 
@@ -106,16 +107,15 @@ export default function SpaceInvaders({ onUpdateScore }) {
         localStorage.setItem('spaceInvadersBestScore', currentScore.toString());
       }
 
-      await saveArcadeScore(GAME_ID, currentScore);
-
-      // Play-to-Earn: Level 10 is 4,500 points
-      const levelReached = Math.floor(currentScore / 500) + 1;
-      if (levelReached >= 10) {
-        await claimArcadeReward(GAME_ID, levelReached);
-      }
+      // Background API calls — don't block the game-over UI
+      saveArcadeScore(GAME_ID, currentScore).then(() => {
+        const levelReached = Math.floor(currentScore / 500) + 1;
+        if (levelReached >= 10) {
+          claimArcadeReward(GAME_ID, levelReached);
+        }
+      });
 
       latestScoreUpdate.current && latestScoreUpdate.current(GAME_ID, currentScore);
-      window.cancelAnimationFrame(animationFrameId);
     };
 
     const renderLoop = () => {
