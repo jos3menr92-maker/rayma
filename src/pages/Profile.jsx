@@ -243,8 +243,13 @@ export default function Profile() {
       const uid = supaUser?.id;
       if (!uid) throw new Error("User ID missing. Cannot delete account.");
 
-      // 1. Hard wipe all financial data from Supabase (sequential to prevent partial wipes)
-      const tables = ['transactions', 'bank_accounts', 'payments', 'loan_adjustments', 'loans', 'bills', 'incomes', 'assets', 'savings_goals', 'profiles'];
+      // 1. Delete Supabase Storage files (avatars)
+      if (userProfile?.avatar_id) {
+        await supabase.storage.from('avatars').remove([userProfile.avatar_id]).catch(console.error);
+      }
+
+      // 2. Hard wipe all financial data from Supabase (sequential to prevent partial wipes)
+      const tables = ['documents', 'arcade_scores', 'promo_redemptions', 'feedback', 'transactions', 'bank_accounts', 'payments', 'loan_adjustments', 'loans', 'bills', 'incomes', 'assets', 'savings_goals', 'profiles'];
       for (const table of tables) {
         const { error } = await supabase.from(table).delete().eq(table === 'profiles' ? 'id' : 'user_id', uid);
         if (error) throw new Error(`Failed to delete from ${table}: ${error.message}`);

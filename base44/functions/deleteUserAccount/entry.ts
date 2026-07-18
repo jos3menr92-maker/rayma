@@ -39,6 +39,17 @@ Deno.serve(async (req) => {
     if (deleteError) throw deleteError;
     console.log(`Supabase auth user deleted: ${supabaseUserId} (email: ${user.email})`);
 
+    // Wipe legacy Base44 entity data to ensure zero orphaned PII remains on Base44 servers
+    const legacyEntities = ['NetWorthSnapshot', 'UserMemory', 'ScannedDocument'];
+    for (const entity of legacyEntities) {
+      try {
+        await base44.asServiceRole.entities[entity].deleteMany({ created_by: user.email });
+        console.log(`${entity} records deleted for ${user.email}`);
+      } catch (e) {
+        console.error(`${entity} cleanup failed:`, e.message);
+      }
+    }
+
     // Delete the Base44 user record using service role (no client-side SDK method exists)
     try {
       await base44.asServiceRole.entities.User.delete(user.id);
