@@ -2,6 +2,8 @@ import { useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Upload, Camera, FileImage, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
@@ -11,6 +13,7 @@ export default function DocumentUploader({ onDocumentScanned }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const { supaUser } = useFinancialData();
 
   async function processFile(file) {
     if (!file) return;
@@ -60,20 +63,27 @@ Today's date: ${today}`,
       }
     });
 
-    const doc = await base44.entities.ScannedDocument.create({
-      file_url,
-      file_name: file.name,
-      folder: analysis.folder || "misc",
-      status: "pending_review",
-      document_type: analysis.document_type,
-      extracted_data: analysis.extracted_data || {},
-      loggable: analysis.loggable !== false,
-      notes: analysis.rayma_message || analysis.summary,
-      scan_date: today,
-    });
-
-    setUploading(false);
-    onDocumentScanned({ ...doc, _analysis: analysis });
+    try {
+      const { data, error } = await supabase.from('documents').insert({
+        file_url,
+        file_name: file.name,
+        folder: analysis.folder || "misc",
+        status: "pending_review",
+        document_type: analysis.document_type,
+        extracted_data: analysis.extracted_data || {},
+        loggable: analysis.loggable !== false,
+        notes: analysis.rayma_message || analysis.summary,
+        scan_date: today,
+        user_id: supaUser?.id,
+      }).select();
+      if (error) throw error;
+      const doc = data[0];
+      onDocumentScanned({ ...doc, _analysis: analysis });
+    } catch (err) {
+      console.error('Failed to save document to Supabase:', err);
+    } finally {
+      setUploading(false);
+    }
   }
 
   function handleFiles(files) {

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { FileText, Eye, Trash2, CheckCircle2, Clock, Archive, ExternalLink } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useMemo } from "react";
@@ -28,8 +28,13 @@ export default function DocumentCard({ doc, index, onDelete, onReview }) {
   const StatusIcon = status.icon;
 
   async function handleDelete() {
-    await base44.entities.ScannedDocument.delete(doc.id);
-    onDelete(doc.id);
+    try {
+      const { error } = await supabase.from('documents').delete().eq('id', doc.id);
+      if (error) throw error;
+      onDelete(doc.id);
+    } catch (err) {
+      console.error('Failed to delete document:', err);
+    }
   }
 
   return (

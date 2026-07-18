@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
@@ -31,67 +32,99 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
 
   async function handleApprove() {
     setSaving(true);
-    if (folder === "payments" && fields.amount && fields.date) {
-      const matchedLoan = loans.find(l =>
-        fields.payee && l.name?.toLowerCase().includes(fields.payee?.toLowerCase())
-      ) || loans[0];
-      if (matchedLoan) {
-        const payment = await base44.entities.Payment.create({
-          loan_id: matchedLoan.id,
+    try {
+      if (folder === "payments" && fields.amount && fields.date) {
+        const matchedLoan = loans.find(l =>
+          fields.payee && l.name?.toLowerCase().includes(fields.payee?.toLowerCase())
+        ) || loans[0];
+        if (matchedLoan) {
+          const payment = await base44.entities.Payment.create({
+            loan_id: matchedLoan.id,
+            amount: parseFloat(fields.amount),
+            payment_date: fields.date,
+            note: `Auto-logged from document: ${doc.file_name}`,
+          });
+          await base44.entities.Loan.update(matchedLoan.id, {
+            current_balance: Math.max((matchedLoan.current_balance || 0) - parseFloat(fields.amount), 0)
+          });
+          const { error } = await supabase.from('documents').update({
+            status: "logged", folder, extracted_data: fields,
+            logged_entity_type: "payment", logged_entity_id: payment.id
+          }).eq('id', doc.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('documents').update({ status: "approved", folder, extracted_data: fields }).eq('id', doc.id);
+          if (error) throw error;
+        }
+      } else if (folder === "bills" && fields.amount && fields.description) {
+        const bill = await base44.entities.Bill.create({
+          name: fields.description || fields.payee || "Imported Bill",
           amount: parseFloat(fields.amount),
-          payment_date: fields.date,
-          note: `Auto-logged from document: ${doc.file_name}`,
+          category: fields.category || "other",
+          notes: `Imported from document: ${doc.file_name}`,
         });
-        await base44.entities.Loan.update(matchedLoan.id, {
-          current_balance: Math.max((matchedLoan.current_balance || 0) - parseFloat(fields.amount), 0)
-        });
-        await base44.entities.ScannedDocument.update(doc.id, {
+        const { error } = await supabase.from('documents').update({
           status: "logged", folder, extracted_data: fields,
-          logged_entity_type: "payment", logged_entity_id: payment.id
-        });
+          logged_entity_type: "bill", logged_entity_id: bill.id
+        }).eq('id', doc.id);
+        if (error) throw error;
       } else {
-        await base44.entities.ScannedDocument.update(doc.id, { status: "approved", folder, extracted_data: fields });
+        const { error } = await supabase.from('documents').update({ status: "approved", folder, extracted_data: fields }).eq('id', doc.id);
+        if (error) throw error;
       }
-    } else if (folder === "bills" && fields.amount && fields.description) {
-      const bill = await base44.entities.Bill.create({
-        name: fields.description || fields.payee || "Imported Bill",
-        amount: parseFloat(fields.amount),
-        category: fields.category || "other",
-        notes: `Imported from document: ${doc.file_name}`,
-      });
-      await base44.entities.ScannedDocument.update(doc.id, {
-        status: "logged", folder, extracted_data: fields,
-        logged_entity_type: "bill", logged_entity_id: bill.id
-      });
-    } else {
-      await base44.entities.ScannedDocument.update(doc.id, { status: "approved", folder, extracted_data: fields });
+    } catch (err) {
+      console.error('Failed to approve document:', err);
+      return;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
     onDone();
   }
 
   async function handleArchive() {
     setSaving(true);
-    await base44.entities.ScannedDocument.update(doc.id, { status: "archived", folder });
-    setSaving(false);
+    try {
+      const { error } = await supabase.from('documents').update({ status: "archived", folder }).eq('id', doc.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Failed to archive document:', err);
+      return;
+    } finally {
+      setSaving(false);
+    }
     onDone();
   }
 
   async function handleDiscard() {
     setSaving(true);
-    await base44.entities.ScannedDocument.delete(doc.id);
-    setSaving(false);
+    try {
+      const { error } = await supabase.from('documents').delete().eq('id', doc.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Failed to discard document:', err);
+      return;
+    } finally {
+      setSaving(false);
+    }
     onDone();
   }
 
   async function handleKeepMisc(keep) {
     setSaving(true);
-    if (keep) {
-      await base44.entities.ScannedDocument.update(doc.id, { status: "archived", folder: "misc" });
-    } else {
-      await base44.entities.ScannedDocument.delete(doc.id);
+    try {
+      if (keep) {
+        const { error } = await supabase.from('documents').update({ status: "archived", folder: "misc" }).eq('id', doc.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('documents').delete().eq('id', doc.id);
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error('Failed to update document:', err);
+      return;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
     onDone();
   }
 
