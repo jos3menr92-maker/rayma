@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, CalendarDays, TrendingUp, Wallet, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, TrendingUp, Wallet, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage, useT } from "@/lib/LanguageContext";
@@ -22,7 +22,7 @@ const categoryColors = {
 
 export default function Calendar() {
   const navigate = useNavigate();
-  const { loans, bills, incomes, userProfile } = useFinancialData();
+  const { loans, bills, incomes, userProfile, loading } = useFinancialData();
   const { lang, locale } = useLanguage();
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
@@ -46,24 +46,60 @@ export default function Calendar() {
     const map = {};
     const pays = [];
 
-    bills.forEach(b => {
-      const day = extractDay(b.due_date) || b.due_day;
-      if (day && day >= 1 && day <= daysInMonth) {
-        if (!map[day]) map[day] = [];
-        map[day].push({ ...b, _type: "bill", _amount: b.amount || 0 });
+    // Helper: find all days in month matching a weekday name
+    const findDaysForWeekday = (weekdayName) => {
+      if (!weekdayName) return [];
+      const dayNames = getWeekdayNames(locale, "long");
+      // Map locale weekday names to JS getDay() index (0=Sunday)
+      const jsDayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+      const targetDow = jsDayMap[weekdayName];
+      if (targetDow === undefined) return [];
+      const matches = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (new Date(year, month, d).getDay() === targetDow) matches.push(d);
       }
+      return matches;
+    };
+
+    // Bills: monthly uses due_day (number), weekly/biweekly uses due_day_of_week
+    bills.filter(b => b.is_active !== false).forEach(b => {
+      let days = [];
+      if (b.payment_frequency === "weekly" || b.payment_frequency === "biweekly") {
+        days = findDaysForWeekday(b.due_day_of_week);
+        if (b.payment_frequency === "biweekly") days = days.length > 0 ? [days[0]] : [];
+      } else {
+        const d = extractDay(b.due_date) || b.due_day;
+        if (d) days = [d];
+      }
+      days.forEach(day => {
+        if (day >= 1 && day <= daysInMonth) {
+          if (!map[day]) map[day] = [];
+          map[day].push({ ...b, _type: "bill", _amount: b.amount || 0 });
+        }
+      });
     });
 
+    // Loans: use due_date (ISO string) or due_day, or due_day_of_week for recurring
     loans.filter(l => l.status !== "paid_off").forEach(l => {
-      const day = extractDay(l.due_date) || l.due_day;
-      if (day && day >= 1 && day <= daysInMonth) {
-        if (!map[day]) map[day] = [];
-        map[day].push({ ...l, _type: "loan", _amount: l.monthly_payment || 0 });
+      let days = [];
+      if (l.payment_frequency === "weekly" || l.payment_frequency === "biweekly") {
+        days = findDaysForWeekday(l.due_day_of_week);
+        if (l.payment_frequency === "biweekly") days = days.length > 0 ? [days[0]] : [];
+      } else {
+        const d = extractDay(l.due_date) || l.due_day;
+        if (d) days = [d];
       }
+      days.forEach(day => {
+        if (day >= 1 && day <= daysInMonth) {
+          if (!map[day]) map[day] = [];
+          map[day].push({ ...l, _type: "loan", _amount: l.monthly_payment || 0 });
+        }
+      });
     });
 
+    // Incomes: use week_start date or date field
     incomes.forEach(inc => {
-      const day = extractDay(inc.week_start);
+      const day = extractDay(inc.week_start) || extractDay(inc.date) || extractDay(inc.created_at);
       if (day && day >= 1 && day <= daysInMonth) {
         if (!map[day]) map[day] = [];
         map[day].push({ ...inc, _type: "income", _amount: inc.amount || 0 });
@@ -123,6 +159,12 @@ export default function Calendar() {
     setCurrent(new Date());
     setSelectedDay(today.getDate());
   };
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
+  );
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
