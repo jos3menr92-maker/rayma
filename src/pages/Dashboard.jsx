@@ -15,6 +15,7 @@ import NetWorthChart from "../components/NetWorthChart";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useT } from "@/lib/LanguageContext";
+import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -197,6 +198,8 @@ export default function Dashboard() {
       </motion.div>
 
       <RAYMAExpiryBanner user={userProfile} />
+
+      <BudgetPacingWidget />
 
       {monthlyIncome > 0 && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`rounded-2xl border px-4 py-3 mb-4 flex items-center justify-between ${cashLeft >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}>
