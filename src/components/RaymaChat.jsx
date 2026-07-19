@@ -25,6 +25,26 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
+// 🔒 PRIVACY COMPLIANCE: Strip tokens, account numbers, and PII before diagnostic dispatch
+const SENSITIVE_KEYS = ['token', 'access_token', 'plaid_access_token', 'account_number', 'account_id', 'routing_number', 'ssn', 'email', 'phone', 'password', 'api_key', 'secret', 'authorization'];
+function sanitizeForDiagnostic(obj) {
+  if (!obj || typeof obj !== 'object') return {};
+  const cleaned = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (SENSITIVE_KEYS.some(sk => key.toLowerCase().includes(sk))) {
+      cleaned[key] = '[REDACTED]';
+    } else if (typeof value === 'string') {
+      cleaned[key] = value
+        .replace(/[\w.-]+@[\w.-]+\.\w+/g, '[REDACTED_EMAIL]')
+        .replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{1,4}\b/g, '[REDACTED_ACCT]')
+        .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[REDACTED_SSN]');
+    } else {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
   assets = [], savingsGoals = [], taxes = [], userProfile = null, 
@@ -201,7 +221,8 @@ export default function RaymaChat({
         const module = await import("../lib/runRemoteDiagnostic");
         const runRemoteDiagnostic = module.runRemoteDiagnostic;
         const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
-        const result = await runRemoteDiagnostic(input.trim(), mockLogs);
+        const sanitizedLogs = sanitizeForDiagnostic(mockLogs);
+        const result = await runRemoteDiagnostic(input.trim(), sanitizedLogs);
         setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
       } catch (err) {
         setMessages(prev => [...prev, { role: "assistant", content: T("diagnosticError", "Error loading diagnostic protocol. Try again later.") }]);
