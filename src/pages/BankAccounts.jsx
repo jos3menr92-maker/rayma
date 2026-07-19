@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, ShieldAlert, Loader2 } from "lucide-react";
+import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, ShieldAlert, Loader2, SplitSquareHorizontal } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { SplitTransactionDialog } from "@/components/transactions/SplitTransactionDialog";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 
@@ -39,6 +41,8 @@ export default function BankAccounts() {
   const [txForm, setTxForm] = useState(emptyTx);
   const [loading, setLoading] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [splitTx, setSplitTx] = useState(null);
+  const { toast } = useToast();
   const typeConfig = useMemo(() => buildTypeConfig(T), [T]);
 
   // 🔐 Security Vault State
@@ -265,13 +269,22 @@ export default function BankAccounts() {
           <div className="space-y-1.5">
             {visibleTxs.slice(0, 20).map(tx => (
               <div key={tx.id} className="flex items-center justify-between px-4 py-3 bg-card border border-border rounded-xl">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{tx.description}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{tx.description}</p>
                   <p className="text-xs text-muted-foreground">{tx.date} · {tx.category}</p>
                 </div>
-                <p className={`font-semibold text-sm ${tx.amount >= 0 ? "text-primary" : "text-destructive"}`}>
-                  {tx.amount >= 0 ? "+" : ""}{fmt(tx.amount)}
-                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setSplitTx(tx)}
+                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                    title={T("splitTransaction", "Split Transaction")}
+                  >
+                    <SplitSquareHorizontal className="w-3.5 h-3.5" />
+                  </button>
+                  <p className={`font-semibold text-sm ${tx.amount >= 0 ? "text-primary" : "text-destructive"}`}>
+                    {tx.amount >= 0 ? "+" : ""}{fmt(tx.amount)}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -345,6 +358,21 @@ export default function BankAccounts() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 📂 Split Transaction Dialog */}
+      {splitTx && (
+        <SplitTransactionDialog
+          tx={splitTx}
+          supaUser={supaUser}
+          onClose={() => setSplitTx(null)}
+          onSaved={async (parentTxId) => {
+            toast({ title: T("splitSaved", "Transaction split saved!") });
+            setSplitTx(null);
+            fetchAll();
+          }}
+          onError={(msg) => toast({ title: T("splitError", "Split failed"), description: msg, variant: "destructive" })}
+        />
+      )}
 
       {/* 🔐 SECURITY MODAL (The Vault) */}
       {showPasswordLock && (

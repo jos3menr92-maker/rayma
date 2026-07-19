@@ -20,6 +20,18 @@ const CATEGORY_COLORS = {
   savings: "#22c55e", entertainment: "#a855f7", shopping: "#14b8a6", other: "#64748b"
 };
 
+// 🕐 PACING: Compare spend% vs. time-of-month% for Mint-style pacing intelligence
+function getPacingStatus(spent, limit, dayOfMonth, daysInMonth) {
+  if (limit <= 0) return { color: "bg-slate-400", label: "No Limit", pacingPct: 0 };
+  const spendRatio = spent / limit;
+  const timeRatio = daysInMonth > 0 ? dayOfMonth / daysInMonth : 1;
+  if (spendRatio > 1) return { color: "bg-destructive", label: "Over Budget", pacingPct: spendRatio };
+  const pacing = timeRatio > 0 ? spendRatio / timeRatio : spendRatio;
+  if (pacing <= 1.0) return { color: "bg-primary", label: "On Track", pacingPct: pacing };
+  if (pacing <= 1.25) return { color: "bg-amber-500", label: "Watch Out", pacingPct: pacing };
+  return { color: "bg-destructive", label: "Over Pace", pacingPct: pacing };
+}
+
 const emptyForm = { name: "", category_key: "other", monthly_limit: "" };
 
 export default function BudgetDashboard() {
@@ -146,6 +158,7 @@ export default function BudgetDashboard() {
             const pct = b.monthly_limit > 0 ? Math.min((spent / b.monthly_limit) * 100, 100) : 0;
             const over = spent > b.monthly_limit;
             const color = CATEGORY_COLORS[b.category_key] || "#64748b";
+            const pacing = getPacingStatus(spent, b.monthly_limit || 0, now.getDate(), new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
             return (
               <Card key={b.id} className="bg-card border-border">
                 <CardContent className="p-4">
@@ -160,10 +173,17 @@ export default function BudgetDashboard() {
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(b)}><Pencil className="w-3 h-3" /></Button>
                     </div>
                   </div>
-                  <Progress value={pct} className="h-2" style={{ "--progress-color": over ? "#ef4444" : color }} />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {over ? `${fmt(spent - b.monthly_limit)} ${T("overLimit", "over limit")}` : `${fmt(b.monthly_limit - spent)} ${T("remaining", "remaining")}`}
-                  </p>
+                  <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div className={`h-full ${pacing.color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      {over ? `${fmt(spent - b.monthly_limit)} ${T("overLimit", "over limit")}` : `${fmt(b.monthly_limit - spent)} ${T("remaining", "remaining")}`}
+                    </p>
+                    <span className={`text-[10px] font-semibold ${pacing.color === "bg-primary" ? "text-primary" : pacing.color === "bg-amber-500" ? "text-amber-500" : "text-destructive"}`}>
+                      {T(`pacing_${pacing.label.replace(/\s/g, '')}`, pacing.label)}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             );

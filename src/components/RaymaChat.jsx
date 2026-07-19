@@ -140,6 +140,79 @@ export default function RaymaChat({
       return;
     }
 
+    // --- 1B. SPLIT-LOGGER (Multi-category transactions) ---
+    const splitMatch = input.trim().match(/^log \$?(\d+(?:\.\d+)?)\s+at\s+(.+?),\s+split\s+(.+)$/i);
+    if (splitMatch) {
+      const totalAmount = parseFloat(splitMatch[1]);
+      const merchant = splitMatch[2].trim();
+      const splitPart = splitMatch[3].trim();
+
+      // Parse "split $60 food and $40 household" or "split $60 food, $40 household"
+      const splitRegex = /\$?(\d+(?:\.\d+)?)\s+(\w+)/g;
+      const parsedSplits = [];
+      let m;
+      while ((m = splitRegex.exec(splitPart)) !== null) {
+        parsedSplits.push({ amount: parseFloat(m[1]), category: m[2].toLowerCase() });
+      }
+
+      if (parsedSplits.length >= 2 && !supaUser?.id) {
+        setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+        setInput("");
+        setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
+        return;
+      }
+
+      if (parsedSplits.length >= 2 && supaUser?.id) {
+        setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+        setInput("");
+        setLoading(true);
+
+        const splitSum = parsedSplits.reduce((s, sp) => s + sp.amount, 0);
+        if (Math.abs(splitSum - totalAmount) > 0.01) {
+          setMessages(prev => [...prev, { role: "assistant", content: T("splitMismatch", `Your splits add up to $${splitSum.toFixed(2)}, but the transaction is $${totalAmount.toFixed(2)}. Please adjust and try again.`) }]);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const todayISO = new Date().toISOString().split("T")[0];
+
+          // 1. Insert parent transaction
+          const { data: parentTx, error: txError } = await supabase.from("transactions").insert([{
+            user_id: supaUser.id,
+            date: todayISO,
+            description: merchant,
+            amount: -totalAmount,
+            category: parsedSplits[0].category,
+            type: "debit",
+            notes: `Split transaction (${parsedSplits.length} categories)`
+          }]).select().single();
+
+          if (txError) throw txError;
+
+          // 2. Insert transaction_splits rows
+          const splitRows = parsedSplits.map(sp => ({
+            transaction_id: parentTx.id,
+            user_id: supaUser.id,
+            amount: sp.amount,
+            category: sp.category,
+            note: merchant
+          }));
+
+          const { error: splitError } = await supabase.from("transaction_splits").insert(splitRows);
+          if (splitError) throw splitError;
+
+          const summary = parsedSplits.map(sp => `$${sp.amount.toFixed(2)} ${sp.category}`).join(" + ");
+          setMessages(prev => [...prev, { role: "assistant", content: T("splitLoggedSuccess", `✅ **Split Logged!** I recorded a $${totalAmount.toFixed(2)} transaction at ${merchant}, split into: ${summary}. Your budgets will update automatically.`) }]);
+        } catch (err) {
+          console.error("Split log error:", err.message);
+          setMessages(prev => [...prev, { role: "assistant", content: T("splitLogError", `I tried to log your split transaction at ${merchant}, but encountered a database error. Please try again.`) }]);
+        }
+        setLoading(false);
+        return;
+      }
+    }
+
     // --- 2. THE AUTO-LOGGER (WRITE ACCESS) ---
     const paidMatch = text.match(/paid \$?(\d+)\s+(?:to|for)\s+(.+)/);
     if (paidMatch) {
