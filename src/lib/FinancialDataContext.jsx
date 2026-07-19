@@ -10,19 +10,22 @@ export function FinancialDataProvider({ children }) {
   const [bills, setBills] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [payments, setPayments] = useState([]);
-  
-  // 🚀 NEW: Added the missing state containers for Assets and Savings
+
+  // 🚀 Existing global containers
   const [assets, setAssets] = useState([]);
   const [savingsGoals, setSavingsGoals] = useState([]);
-  
+
+  // ✅ NEW: Global split transaction container
+  const [transactionSplits, setTransactionSplits] = useState([]);
+
   const [userProfile, setUserProfile] = useState(null);
-  const [supaUser, setSupaUser] = useState(null); 
+  const [supaUser, setSupaUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   async function loadAll() {
-    let isMounted = true; 
+    let isMounted = true;
     setLoading(true);
-    
+
     try {
       const [me, { data: { session } }] = await Promise.all([
         base44.auth.me().catch(() => null),
@@ -38,7 +41,13 @@ export function FinancialDataProvider({ children }) {
 
       if (!currentSupaUser?.id) {
         if (isMounted) {
-          setLoans([]); setBills([]); setIncomes([]); setPayments([]); setAssets([]); setSavingsGoals([]);
+          setLoans([]);
+          setBills([]);
+          setIncomes([]);
+          setPayments([]);
+          setAssets([]);
+          setSavingsGoals([]);
+          setTransactionSplits([]);
           setLoading(false);
         }
         return;
@@ -46,14 +55,23 @@ export function FinancialDataProvider({ children }) {
 
       const uid = currentSupaUser.id;
 
-      // 🚀 NEW: Tell Supabase to fetch assets and savings_goals too
-      const [loansRes, billsRes, incomesRes, paymentsRes, assetsRes, savingsRes] = await Promise.all([
-        supabase.from('loans').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-        supabase.from('bills').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-        supabase.from('incomes').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-        supabase.from('payments').select('*').eq('user_id', uid).order('payment_date', { ascending: false }),
-        supabase.from('assets').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-        supabase.from('savings_goals').select('*').eq('user_id', uid).order('created_at', { ascending: false })
+      // ✅ NEW: Include transaction_splits in global fetch pipeline
+      const [
+        loansRes,
+        billsRes,
+        incomesRes,
+        paymentsRes,
+        assetsRes,
+        savingsRes,
+        splitsRes
+      ] = await Promise.all([
+        supabase.from("loans").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("bills").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("incomes").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("payments").select("*").eq("user_id", uid).order("payment_date", { ascending: false }),
+        supabase.from("assets").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("savings_goals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("transaction_splits").select("*").eq("user_id", uid).order("date", { ascending: false })
       ]);
 
       if (!isMounted) return;
@@ -62,14 +80,16 @@ export function FinancialDataProvider({ children }) {
       setBills(billsRes.data || []);
       setIncomes(incomesRes.data || []);
       setPayments(paymentsRes.data || []);
-      
-      // 🚀 NEW: Save them to the global state
       setAssets(assetsRes.data || []);
       setSavingsGoals(savingsRes.data || []);
-
+      setTransactionSplits(splitsRes.data || []);
     } catch (e) {
       console.error("Failed to load financial data:", e);
-      toast({ title: "Connection Error", description: "Could not sync latest data. Check connection.", variant: "destructive" });
+      toast({
+        title: "Connection Error",
+        description: "Could not sync latest data. Check connection.",
+        variant: "destructive"
+      });
     } finally {
       if (isMounted) setLoading(false);
     }
@@ -86,27 +106,27 @@ export function FinancialDataProvider({ children }) {
     }
   }
 
-  async function payBill(bill, paymentAmount, paymentDate = new Date().toISOString().split('T')[0]) {
+  async function payBill(bill, paymentAmount, paymentDate = new Date().toISOString().split("T")[0]) {
     if (!supaUser?.id) return;
     const prevBills = [...bills];
     const prevPayments = [...payments];
-    
-    setBills(prev => prev.map(b => b.id === bill.id ? { ...b, last_paid_date: paymentDate } : b));
+
+    setBills(prev => prev.map(b => (b.id === bill.id ? { ...b, last_paid_date: paymentDate } : b)));
 
     try {
-      const { data, error } = await supabase.from('payments').insert({
+      const { data, error } = await supabase.from("payments").insert({
         bill_id: bill.id,
         amount: paymentAmount,
         payment_date: paymentDate,
-        payment_type: 'bill',
+        payment_type: "bill",
         user_id: supaUser.id
       }).select();
-      
+
       if (error) throw error;
       if (data?.[0]) setPayments(prev => [data[0], ...prev]);
     } catch (e) {
       setBills(prevBills);
-      setPayments(prevPayments); 
+      setPayments(prevPayments);
       toast({ title: "Payment failed", description: e.message, variant: "destructive" });
     }
   }
@@ -114,10 +134,10 @@ export function FinancialDataProvider({ children }) {
   async function updateLoan(loanId, updates) {
     if (!supaUser?.id) return;
     const prevLoans = [...loans];
-    setLoans(prev => prev.map(l => l.id === loanId ? { ...l, ...updates } : l));
+    setLoans(prev => prev.map(l => (l.id === loanId ? { ...l, ...updates } : l)));
 
     try {
-      const { error } = await supabase.from('loans').update(updates).eq('id', loanId).eq('user_id', supaUser.id);
+      const { error } = await supabase.from("loans").update(updates).eq("id", loanId).eq("user_id", supaUser.id);
       if (error) throw error;
     } catch (e) {
       setLoans(prevLoans);
@@ -129,17 +149,17 @@ export function FinancialDataProvider({ children }) {
     if (!supaUser?.id) return;
     const tempId = `temp_${Date.now()}`;
     const optimisticRecord = { ...transactionData, id: tempId, created_at: new Date().toISOString(), user_id: supaUser.id };
-    
+
     setPayments(prev => [optimisticRecord, ...prev]);
 
     try {
-      const { data, error } = await supabase.from('payments').insert({
+      const { data, error } = await supabase.from("payments").insert({
         ...transactionData,
         user_id: supaUser.id
       }).select();
-      
+
       if (error) throw error;
-      setPayments(prev => prev.map(p => p.id === tempId ? data[0] : p));
+      setPayments(prev => prev.map(p => (p.id === tempId ? data[0] : p)));
     } catch (e) {
       setPayments(prev => prev.filter(p => p.id !== tempId));
       toast({ title: "Failed to add transaction", description: e.message, variant: "destructive" });
@@ -148,20 +168,45 @@ export function FinancialDataProvider({ children }) {
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         setSupaUser(session?.user || null);
-        loadAll(); 
-      } else if (event === 'SIGNED_OUT') {
+        loadAll();
+      } else if (event === "SIGNED_OUT") {
         setSupaUser(null);
-        setLoans([]); setBills([]); setIncomes([]); setPayments([]); setAssets([]); setSavingsGoals([]);
+        setLoans([]);
+        setBills([]);
+        setIncomes([]);
+        setPayments([]);
+        setAssets([]);
+        setSavingsGoals([]);
+        setTransactionSplits([]);
       }
     });
-    return () => { authListener.subscription.unsubscribe(); };
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  // 🚀 NEW: Export assets and savingsGoals so the rest of the app can use them!
   return (
-    <FinancialDataContext.Provider value={{ loans, bills, incomes, payments, assets, savingsGoals, userProfile, supaUser, loading, reload: loadAll, refreshUserProfile, payBill, updateLoan, addTransaction }}>
+    <FinancialDataContext.Provider
+      value={{
+        loans,
+        bills,
+        incomes,
+        payments,
+        assets,
+        savingsGoals,
+        transactionSplits,
+        userProfile,
+        supaUser,
+        loading,
+        reload: loadAll,
+        refreshUserProfile,
+        payBill,
+        updateLoan,
+        addTransaction
+      }}
+    >
       {children}
     </FinancialDataContext.Provider>
   );
