@@ -255,11 +255,14 @@ export default function Profile() {
       }
 
       // 2. Hard wipe all financial data from Supabase (fail-safe: continues on table misses)
-      const tables = ['documents', 'arcade_scores', 'promo_redemptions', 'feedback', 'transactions', 'bank_accounts', 'payments', 'loan_adjustments', 'loans', 'bills', 'incomes', 'assets', 'savings_goals', 'profiles'];
+      const tables = ['documents', 'arcade_scores', 'promo_redemptions', 'feedback', 'transactions', 'bank_accounts', 'payments', 'loan_adjustments', 'loans', 'bills', 'incomes', 'assets', 'saving_goals', 'notifications', 'profiles'];
       for (const table of tables) {
-        const { error } = await supabase.from(table).delete().eq('user_id', supaUser.id);
+        // 🛡️ Fail-Safe Key Mapping: profiles table primary key is 'id', others use 'user_id'
+        const targetColumn = table === 'profiles' ? 'id' : 'user_id';
+        
+        const { error } = await supabase.from(table).delete().eq(targetColumn, supaUser.id);
         if (error) {
-          console.warn(`Failed to wipe ${table}, continuing to next...`, error.message);
+          console.warn(`Failed to wipe table ${table}, plowing forward...`, error.message);
           continue;
         }
       }
@@ -374,10 +377,10 @@ export default function Profile() {
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 p-1 bg-muted/50 rounded-xl border border-border/50">
-                <button type="button" onClick={() => setTheme("light")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "light" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <button type="button" onClick={() => setTheme("light")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "light" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                   <Sun className="w-4 h-4" /> {T("lightMode", "Light Mode")}
                 </button>
-                <button type="button" onClick={() => setTheme("dark")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "dark" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <button type="button" onClick={() => setTheme("dark")} className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${theme === "dark" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                   <Moon className="w-4 h-4" /> {T("darkMode", "Dark Mode")}
                 </button>
               </div>
@@ -524,7 +527,7 @@ export default function Profile() {
               <h3 className="font-bold text-lg text-foreground">{T("securityVerification", "Security Verification")}</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              {T("enterPasswordConfirm", "Please enter your password to confirm you want to {action}.").replace("{action}", pendingAction === 'export' ? T("exportYourData", "export your data") : T("permanentlyDeleteAccount", "permanently delete your account"))}
+              {T("enterPasswordConfirm", "Please enter your password to confirm you want to {action}.").replace("{action}", pendingAction === 'export' ? T("exportYourData", "export your data") : T("deleteAccountData", "delete your account and all data"))}
             </p>
             
             <div className="space-y-1">
