@@ -71,11 +71,6 @@ export default function Layout() {
   const presetAvatar = HUMAN_AVATARS.find((a) => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
-  const handleQuickLog = () => {
-    setRaymaPrefillPrompt("Log");
-    setRaymaOpen(true);
-  };
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -130,20 +125,6 @@ export default function Layout() {
         className="fixed left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
         title="Quick Add (drag to move)">
         <Plus className="w-6 h-6 text-primary-foreground" />
-      </motion.button>
-
-      <motion.button
-        whileTap={{ scale: 0.94 }}
-        whileHover={{ scale: 1.04 }}
-        onClick={handleQuickLog}
-        id="quick-log-button"
-        className="fixed right-4 z-40 flex items-center gap-2 h-14 px-4 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 font-semibold"
-        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
-        aria-label={T("quickLog", "Quick Log")}
-        title={T("quickLog", "Quick Log")}
-      >
-        <Receipt className="w-5 h-5" />
-        <span className="text-sm">{T("quickLog", "Quick Log")}</span>
       </motion.button>
 
       <PushNotificationPrompt />
