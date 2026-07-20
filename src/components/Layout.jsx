@@ -34,6 +34,7 @@ export default function Layout() {
   const dragStartPos = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
+  const [raymaPrefillPrompt, setRaymaPrefillPrompt] = useState("");
 
   useBackHandler([
     { isOpen: drawerOpen, onClose: () => setDrawerOpen(false) },
@@ -70,6 +71,11 @@ export default function Layout() {
   const presetAvatar = HUMAN_AVATARS.find((a) => a.id === userProfile?.avatar_id);
   const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
+  const handleQuickLog = () => {
+    setRaymaPrefillPrompt("Log");
+    setRaymaOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -93,7 +99,7 @@ export default function Layout() {
             <span className="text-sm font-semibold font-heading text-foreground tracking-wide">Rayma AI</span>
           </div>
           <div className="flex items-center">
-            <button onClick={() => setDrawerOpen(true)} aria-label="Open Menu" className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0">
+            <button onClick={() => setDrawerOpen(true)} aria-label="Open Menu" className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Menu className="w-8 h-8" />
             </button>
           </div>
@@ -126,6 +132,20 @@ export default function Layout() {
         <Plus className="w-6 h-6 text-primary-foreground" />
       </motion.button>
 
+      <motion.button
+        whileTap={{ scale: 0.94 }}
+        whileHover={{ scale: 1.04 }}
+        onClick={handleQuickLog}
+        id="quick-log-button"
+        className="fixed right-4 z-40 flex items-center gap-2 h-14 px-4 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 font-semibold"
+        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+        aria-label={T("quickLog", "Quick Log")}
+        title={T("quickLog", "Quick Log")}
+      >
+        <Receipt className="w-5 h-5" />
+        <span className="text-sm">{T("quickLog", "Quick Log")}</span>
+      </motion.button>
+
       <PushNotificationPrompt />
       
       <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
@@ -142,7 +162,7 @@ export default function Layout() {
           <div className="relative -top-5 flex justify-center w-16">
             <button
               onClick={() => setRaymaOpen(true)}
-              className="absolute flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 shadow-[0_4px_20px_rgba(34,211,238,0.4)] border-4 border-background hover:scale-105 active:scale-95 transition-all duration-300 z-50 group">
+              className="absolute flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 shadow-[0_4px_20px_rgba(56,189,248,0.35)] hover:scale-105 transition-transform group">
               
               <Sparkles className="w-6 h-6 text-cyan-400 dark:text-cyan-600 group-hover:animate-pulse" />
               <div className="absolute inset-0 rounded-full border border-cyan-400/30 animate-[ping_3s_ease-in-out_infinite]" />
@@ -165,6 +185,8 @@ export default function Layout() {
         autoOpen={raymaAutoOpen}
         forceOpen={raymaOpen}
         onClose={() => setRaymaOpen(false)}
+        prefillPrompt={raymaPrefillPrompt}
+        onPrefillConsumed={() => setRaymaPrefillPrompt("")}
         loans={loans}
         bills={bills}
         incomes={incomes}
