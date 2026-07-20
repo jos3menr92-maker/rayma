@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, TrendingDown } from "lucide-react";
 import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
@@ -20,7 +19,6 @@ const CATEGORY_COLORS = {
   savings: "#22c55e", entertainment: "#a855f7", shopping: "#14b8a6", other: "#64748b"
 };
 
-// 🕐 PACING: Compare spend% vs. time-of-month% for Mint-style pacing intelligence
 function getPacingStatus(spent, limit, dayOfMonth, daysInMonth) {
   if (limit <= 0) return { color: "bg-slate-400", label: "No Limit", pacingPct: 0 };
   const spendRatio = spent / limit;
@@ -37,7 +35,7 @@ const emptyForm = { name: "", category_key: "other", monthly_limit: "" };
 export default function BudgetDashboard() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const { bills, loans, userProfile, supaUser, reload } = useFinancialData();
+  const { bills, loans, supaUser, transactionSplits } = useFinancialData();
 
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -50,23 +48,56 @@ export default function BudgetDashboard() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+  }, [supaUser?.id]);
 
   const fetchAll = async () => {
     setLoading(true);
     const uid = supaUser?.id;
-    if (!uid) { setLoading(false); return; }
-    const { data: catData, error: catErr } = await supabase.from('budget_categories').select('*').eq('user_id', uid).order('created_at', { ascending: false });
+
+    if (!uid) {
+      setBudgets([]);
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data: catData, error: catErr } = await supabase
+      .from("budget_categories")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false });
     if (catErr) throw catErr;
-    const { data: txData, error: txErr } = await supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(200);
+
+    const { data: txData, error: txErr } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", uid)
+      .order("date", { ascending: false })
+      .limit(500);
     if (txErr) throw txErr;
+
     setBudgets(catData || []);
     setTransactions(txData || []);
     setLoading(false);
   };
 
-  const openAdd = () => { setEditing(null); setForm(emptyForm); setShowDialog(true); };
-  const openEdit = (b) => { setEditing(b); setForm({ name: b.name, category_key: b.category_key, monthly_limit: String(b.monthly_limit) }); setShowDialog(true); };
+  const openAdd = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setShowDialog(true);
+  };
+
+  const openEdit = (b) => {
+    setEditing(b);
+    setForm({
+      name: b.name,
+      category_key: b.category_key,
+      monthly_limit: String(b.monthly_limit),
+    });
+    setShowDialog(true);
+  };
 
   const save = async () => {
     const data = {
@@ -75,30 +106,56 @@ export default function BudgetDashboard() {
       monthly_limit: parseFloat(form.monthly_limit) || 0,
       color: CATEGORY_COLORS[form.category_key] || "#64748b",
     };
+
     if (editing) {
-      await supabase.from('budget_categories').update(data).eq('id', editing.id);
+      await supabase.from("budget_categories").update(data).eq("id", editing.id);
     } else {
-      await supabase.from('budget_categories').insert([{ ...data, user_id: supaUser?.id }]);
+      await supabase.from("budget_categories").insert([{ ...data, user_id: supaUser?.id }]);
     }
+
     setShowDialog(false);
     fetchAll();
   };
 
+  // split rows = source of truth; parent tx is fallback only when that tx has zero splits
   const getSpent = (categoryKey) => {
-    return transactions
-      .filter(tx => {
-        if (tx.category !== categoryKey) return false;
-        try { return isWithinInterval(parseISO(tx.date), { start: monthStart, end: monthEnd }); } catch { return false; }
-      })
-      .reduce((s, tx) => s + Math.abs(tx.amount || 0), 0);
+    const inMonth = (dateValue) => {
+      if (!dateValue) return false;
+      try {
+        return isWithinInterval(parseISO(dateValue), { start: monthStart, end: monthEnd });
+      } catch {
+        return false;
+      }
+    };
+
+    const monthSplits = (transactionSplits || []).filter((s) => inMonth(s.date));
+    const monthTransactions = (transactions || []).filter((tx) => inMonth(tx.date));
+
+    const txIdsWithSplits = new Set(
+      monthSplits.map((s) => s.transaction_id).filter(Boolean)
+    );
+
+    const splitCategoryTotal = monthSplits
+      .filter((s) => s.category === categoryKey)
+      .reduce((sum, s) => sum + Math.abs(Number(s.amount) || 0), 0);
+
+    const parentFallbackTotal = monthTransactions
+      .filter((tx) => tx.category === categoryKey && !txIdsWithSplits.has(tx.id))
+      .reduce((sum, tx) => sum + Math.abs(Number(tx.amount) || 0), 0);
+
+    return splitCategoryTotal + parentFallbackTotal;
   };
 
-  const activeBills = useMemo(() => bills.filter(b => b.is_active !== false), [bills]);
-  const activeLoans = useMemo(() => loans.filter(l => l.status !== "paid_off"), [loans]);
+  const activeBills = useMemo(() => bills.filter((b) => b.is_active !== false), [bills]);
+  const activeLoans = useMemo(() => loans.filter((l) => l.status !== "paid_off"), [loans]);
 
   const fixedExpenses = [
-    ...activeBills.map(b => ({ name: b.name, amount: b.amount, category: b.category })),
-    ...activeLoans.map(l => ({ name: l.name + " " + T("loanSuffix", "(loan)"), amount: l.monthly_payment, category: "loan_payment" })),
+    ...activeBills.map((b) => ({ name: b.name, amount: b.amount, category: b.category })),
+    ...activeLoans.map((l) => ({
+      name: `${l.name} ${T("loanSuffix", "(loan)")}`,
+      amount: l.monthly_payment,
+      category: "loan_payment",
+    })),
   ];
 
   const totalBudgeted = budgets.reduce((s, b) => s + (b.monthly_limit || 0), 0);
@@ -111,13 +168,17 @@ export default function BudgetDashboard() {
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">{T("budgetDashboard", "Budget Dashboard")}</h1>
+          <h1 className="text-2xl font-heading font-bold text-foreground">
+            {T("budgetDashboard", "Budget Dashboard")}
+          </h1>
           <p className="text-sm text-muted-foreground">{format(now, "MMMM yyyy")}</p>
         </div>
-        <Button size="sm" onClick={openAdd}><Plus className="w-4 h-4 mr-1" />{T("addBudget", "Add Budget")}</Button>
+        <Button size="sm" onClick={openAdd}>
+          <Plus className="w-4 h-4 mr-1" />
+          {T("addBudget", "Add Budget")}
+        </Button>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Card className="bg-card border-border overflow-hidden">
           <CardContent className="p-3 sm:p-4 text-center min-w-0">
@@ -128,7 +189,9 @@ export default function BudgetDashboard() {
         <Card className="bg-card border-border overflow-hidden">
           <CardContent className="p-3 sm:p-4 text-center min-w-0">
             <p className="text-xs text-muted-foreground mb-1 truncate">{T("spent", "Spent")}</p>
-            <p className={`text-base sm:text-lg font-bold truncate ${totalSpent > totalBudgeted ? "text-destructive" : "text-primary"}`}>{fmt(totalSpent)}</p>
+            <p className={`text-base sm:text-lg font-bold truncate ${totalSpent > totalBudgeted ? "text-destructive" : "text-primary"}`}>
+              {fmt(totalSpent)}
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border overflow-hidden">
@@ -139,7 +202,6 @@ export default function BudgetDashboard() {
         </Card>
       </div>
 
-      {/* Budget Categories */}
       {loading ? (
         <div className="text-center py-8 text-muted-foreground text-sm">{T("loading", "Loading...")}</div>
       ) : budgets.length === 0 ? (
@@ -147,18 +209,29 @@ export default function BudgetDashboard() {
           <CardContent className="py-12 text-center">
             <TrendingDown className="w-8 h-8 mx-auto text-muted-foreground mb-3" />
             <p className="text-muted-foreground text-sm">{T("noBudgets", "No budgets set. Add a category to start tracking.")}</p>
-            <Button className="mt-4" onClick={openAdd}><Plus className="w-4 h-4 mr-1" />{T("addBudgetCategory", "Add Budget Category")}</Button>
+            <Button className="mt-4" onClick={openAdd}>
+              <Plus className="w-4 h-4 mr-1" />
+              {T("addBudgetCategory", "Add Budget Category")}
+            </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{T("variableBudgets", "Variable Budgets")}</h2>
-          {budgets.map(b => {
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            {T("variableBudgets", "Variable Budgets")}
+          </h2>
+          {budgets.map((b) => {
             const spent = getSpent(b.category_key);
             const pct = b.monthly_limit > 0 ? Math.min((spent / b.monthly_limit) * 100, 100) : 0;
             const over = spent > b.monthly_limit;
             const color = CATEGORY_COLORS[b.category_key] || "#64748b";
-            const pacing = getPacingStatus(spent, b.monthly_limit || 0, now.getDate(), new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
+            const pacing = getPacingStatus(
+              spent,
+              b.monthly_limit || 0,
+              now.getDate(),
+              new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+            );
+
             return (
               <Card key={b.id} className="bg-card border-border">
                 <CardContent className="p-4">
@@ -166,11 +239,19 @@ export default function BudgetDashboard() {
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
                       <span className="font-medium text-foreground text-sm truncate">{b.name}</span>
-                      {over && <Badge variant="destructive" className="text-xs py-0 shrink-0">{T("overBudget", "Over Budget")}</Badge>}
+                      {over && (
+                        <Badge variant="destructive" className="text-xs py-0 shrink-0">
+                          {T("overBudget", "Over Budget")}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-muted-foreground">{fmt(spent)} / {fmt(b.monthly_limit)}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(b)}><Pencil className="w-3 h-3" /></Button>
+                      <span className="text-xs text-muted-foreground">
+                        {fmt(spent)} / {fmt(b.monthly_limit)}
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(b)}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
                   <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
@@ -178,10 +259,12 @@ export default function BudgetDashboard() {
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-muted-foreground">
-                      {over ? `${fmt(spent - b.monthly_limit)} ${T("overLimit", "over limit")}` : `${fmt(b.monthly_limit - spent)} ${T("remaining", "remaining")}`}
+                      {over
+                        ? `${fmt(spent - b.monthly_limit)} ${T("overLimit", "over limit")}`
+                        : `${fmt(b.monthly_limit - spent)} ${T("remaining", "remaining")}`}
                     </p>
                     <span className={`text-[10px] font-semibold ${pacing.color === "bg-primary" ? "text-primary" : pacing.color === "bg-amber-500" ? "text-amber-500" : "text-destructive"}`}>
-                      {T(`pacing_${pacing.label.replace(/\s/g, '')}`, pacing.label)}
+                      {T(`pacing_${pacing.label.replace(/\s/g, "")}`, pacing.label)}
                     </span>
                   </div>
                 </CardContent>
@@ -191,10 +274,11 @@ export default function BudgetDashboard() {
         </div>
       )}
 
-      {/* Fixed Expenses from Bills & Loans */}
       {fixedExpenses.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{T("fixedExpenses", "Fixed Expenses (from Bills & Loans)")}</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            {T("fixedExpenses", "Fixed Expenses (from Bills & Loans)")}
+          </h2>
           <div className="space-y-2">
             {fixedExpenses.map((e, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
@@ -210,21 +294,55 @@ export default function BudgetDashboard() {
         </div>
       )}
 
-      {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle>{editing ? T("editBudget", "Edit Budget") : T("addBudgetCategory", "Add Budget Category")}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing ? T("editBudget", "Edit Budget") : T("addBudgetCategory", "Add Budget Category")}</DialogTitle>
+          </DialogHeader>
+
           <div className="space-y-3">
-            <div><Label>{T("label", "Label")}</Label><Input className="mt-1" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={T("labelPlaceholder", "e.g. Groceries")} /></div>
-            <div><Label>{T("category", "Category")}</Label>
-              <Select value={form.category_key} onValueChange={v => setForm({ ...form, category_key: v, name: form.name || v })}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            <div>
+              <Label>{T("label", "Label")}</Label>
+              <Input
+                className="mt-1"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder={T("labelPlaceholder", "e.g. Groceries")}
+              />
+            </div>
+
+            <div>
+              <Label>{T("category", "Category")}</Label>
+              <Select
+                value={form.category_key}
+                onValueChange={(v) => setForm({ ...form, category_key: v, name: form.name || v })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
-            <div><Label>{T("monthlyLimit", "Monthly Limit ($)")}</Label><Input className="mt-1" type="number" value={form.monthly_limit} onChange={e => setForm({ ...form, monthly_limit: e.target.value })} placeholder="500" /></div>
+
+            <div>
+              <Label>{T("monthlyLimit", "Monthly Limit ($)")}</Label>
+              <Input
+                className="mt-1"
+                type="number"
+                value={form.monthly_limit}
+                onChange={(e) => setForm({ ...form, monthly_limit: e.target.value })}
+              />
+            </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowDialog(false)}>{T("cancel", "Cancel")}</Button><Button onClick={save}>{T("save", "Save")}</Button></DialogFooter>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>{T("cancel", "Cancel")}</Button>
+            <Button onClick={save}>{T("save", "Save")}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
