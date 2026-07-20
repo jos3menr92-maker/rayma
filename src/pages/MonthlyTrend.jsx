@@ -7,6 +7,7 @@ import { t } from "@/lib/i18n";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { getMonthName } from "@/utils/formatLocalized";
+import { supabase } from "@/lib/supabaseClient";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
@@ -43,86 +44,95 @@ export default function MonthlyTrend() {
   const TYPE_CONFIG = useMemo(() => buildTypeConfig(T), [lang]);
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.totalPaid;
 
-  const { loans: ctxLoans, payments: ctxPayments, bills: ctxBills } = useFinancialData();
+  const { loans: ctxLoans, payments: ctxPayments, bills: ctxBills, supaUser } = useFinancialData();
 
   useEffect(() => {
     if (!ctxLoans && !ctxPayments && !ctxBills) return;
     loadData(ctxLoans, ctxPayments, ctxBills);
-  }, [ctxLoans, ctxPayments, ctxBills, type, locale]);
+  }, [ctxLoans, ctxPayments, ctxBills, type, locale, supaUser?.id]);
 
-  function loadData(loans, payments, bills) {
-    const activeBills = bills.filter(b => b.is_active !== false);
-    const monthlyBills = activeBills.reduce((s, b) => s + (b.amount || 0), 0);
+  async function loadData(loans, payments, bills) {
+    setLoading(true);
 
-    // Group payments by month
-    const byMonth = {};
-    payments.forEach(p => {
-      const key = getMonthKey(p.payment_date);
-      if (!byMonth[key]) byMonth[key] = 0;
-      byMonth[key] += p.amount || 0;
+    const uid = supaUser?.id;
+    const [incomeRes, txRes, splitRes] = await Promise.all([
+      uid
+        ? supabase.from("incomes").select("amount,week_start").eq("user_id", uid).order("week_start", { ascending: true })
+        : Promise.resolve({ data: [], error: null }),
+      uid
+        ? supabase.from("transactions").select("id,date,amount").eq("user_id", uid).order("date", { ascending: true })
+        : Promise.resolve({ data: [], error: null }),
+      uid
+        ? supabase.from("transaction_splits").select("transaction_id,amount").eq("user_id", uid)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (incomeRes.error) console.error("Income fetch error:", incomeRes.error);
+    if (txRes.error) console.error("Transactions fetch error:", txRes.error);
+    if (splitRes.error) console.error("Transaction splits fetch error:", splitRes.error);
+
+    const incomes = incomeRes.data || [];
+    const transactions = txRes.data || [];
+    const splits = splitRes.data || [];
+
+    const splitByTx = splits.reduce((acc, sp) => {
+      if (!acc[sp.transaction_id]) acc[sp.transaction_id] = 0;
+      acc[sp.transaction_id] += Math.abs(sp.amount || 0);
+      return acc;
+    }, {});
+
+    const incomeByMonth = {};
+    incomes.forEach((inc) => {
+      if (!inc.week_start) return;
+      const key = getMonthKey(inc.week_start);
+      if (!incomeByMonth[key]) incomeByMonth[key] = 0;
+      incomeByMonth[key] += inc.amount || 0;
     });
 
-    // Build sorted month list from loan start dates + payment dates
-    const allKeys = new Set();
-    payments.forEach(p => allKeys.add(getMonthKey(p.payment_date)));
-    loans.forEach(l => { if (l.start_date) allKeys.add(getMonthKey(l.start_date)); });
+    const spendingByMonth = {};
+    transactions.forEach((tx) => {
+      if (!tx.date) return;
+      const key = getMonthKey(tx.date);
+      const parentSpending = tx.amount < 0 ? Math.abs(tx.amount) : 0;
+      const splitSpending = splitByTx[tx.id] || 0;
+      const totalSpending = splitSpending > 0 ? splitSpending : parentSpending;
+      if (!spendingByMonth[key]) spendingByMonth[key] = 0;
+      spendingByMonth[key] += totalSpending;
+    });
 
-    // Fill in last 12 months at minimum
+    const allKeys = new Set();
+    Object.keys(incomeByMonth).forEach((k) => allKeys.add(k));
+    Object.keys(spendingByMonth).forEach((k) => allKeys.add(k));
+
     const now = new Date();
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       allKeys.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
     }
 
-    const sortedKeys = [...allKeys].sort();
+    const data = [...allKeys]
+      .sort()
+      .map((key) => {
+        const income = incomeByMonth[key] || 0;
+        const spending = spendingByMonth[key] || 0;
+        const netFlow = income - spending;
+        return {
+          month: monthLabel(key, locale),
+          income,
+          spending,
+          netFlow,
+        };
+      });
 
-    // Calculate running totals
-    const originalDebt = loans.reduce((s, l) => s + (l.original_amount || 0), 0);
-    const currentBalance = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.current_balance || 0), 0);
-    const totalPaidToDate = loans.reduce((s, l) => s + Math.max(0, (l.original_amount || 0) - (l.current_balance || 0)), 0);
-
-    // BUG FIX: Calculate base payments made before user started tracking individual logs
-    const totalLoggedPayments = Object.values(byMonth).reduce((s, v) => s + v, 0);
-    const untrackedPaid = Math.max(0, totalPaidToDate - totalLoggedPayments);
-
-    let cumulativePaid = untrackedPaid; // Start from the untracked baseline instead of 0
-    
-    const data = sortedKeys.map(key => {
-      const monthPaid = byMonth[key] || 0;
-      cumulativePaid += monthPaid;
-
-      // BUG FIX: In the past, the remaining balance was HIGHER. Add payments since to find past balance.
-      const approxRemaining = currentBalance + (totalPaidToDate - cumulativePaid);
-      const monthlyLoanPayments = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (l.monthly_payment || 0), 0);
-
-      return {
-        month: monthLabel(key, locale),
-        totalDebt: originalDebt,
-        remaining: type === "remaining" ? approxRemaining : undefined,
-        totalPaid: cumulativePaid,
-        monthlyDue: monthlyLoanPayments + monthlyBills,
-        value:
-          type === "totalDebt" ? originalDebt :
-          type === "remaining" ? approxRemaining :
-          type === "totalPaid" ? cumulativePaid :
-          monthlyLoanPayments + monthlyBills,
-      };
-    });
-
-    // Only show months with meaningful data
-    const filtered = type === "totalPaid"
-      ? data.filter(d => d.value > 0)
-      : data;
-
-    setChartData(filtered.slice(-12));
+    setChartData(data.slice(-12));
     setLoading(false);
   }
 
-  const maxVal = Math.max(...chartData.map(d => d.value), 1);
-  const minVal = Math.min(...chartData.map(d => d.value), 0);
-  const latest = chartData[chartData.length - 1]?.value || 0;
-  const prev = chartData[chartData.length - 2]?.value || 0;
-  const delta = latest - prev;
+  const maxVal = Math.max(...chartData.flatMap(d => [d.income, d.spending]), 1);
+  const latest = chartData[chartData.length - 1];
+  const latestNet = latest?.netFlow || 0;
+  const prevNet = chartData[chartData.length - 2]?.netFlow || 0;
+  const delta = latestNet - prevNet;
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -141,13 +151,13 @@ export default function MonthlyTrend() {
           <ArrowLeft className="w-4 h-4" /> {T("back", "Back")}
         </button>
 
-        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">{config.label}</h1>
-        <p className="text-sm text-muted-foreground mb-6">{config.description}</p>
+        <h1 className="text-2xl font-bold font-heading text-foreground mb-1">{T("incomeVsSpending", "Income vs. Spending")}</h1>
+        <p className="text-sm text-muted-foreground mb-6">{T("incomeVsSpendingDesc", "Monthly income, spending, and net flow")}</p>
 
         {/* Summary */}
         <div className="bg-card border border-border rounded-3xl p-5 mb-6">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{T("current", "Current")}</p>
-          <p className="text-3xl font-bold font-heading text-foreground mb-1">{fmt(latest)}</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{T("currentNetFlow", "Current Net Flow")}</p>
+          <p className="text-3xl font-bold font-heading text-foreground mb-1">{fmt(latestNet)}</p>
           {chartData.length >= 2 && (
             <p className={`text-sm font-medium ${delta >= 0 ? "text-primary" : "text-destructive"}`}>
               {delta >= 0 ? "+" : ""}{fmt(delta)} {T("vsLastMonth", "vs last month")}
@@ -171,19 +181,35 @@ export default function MonthlyTrend() {
                   tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                   tickFormatter={v => `$${Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + "k" : v}`}
                   width={48}
-                  domain={[Math.max(minVal * 0.95, 0), maxVal * 1.05]}
+                  domain={[0, maxVal * 1.05]}
                 />
                 <Tooltip
-                  formatter={v => [fmt(v), config.label]}
+                  formatter={(v, name) => [fmt(v), name === "income" ? T("income", "Income") : T("spending", "Spending")]}
+                  labelFormatter={(label, payload) => {
+                    const row = payload?.[0]?.payload;
+                    const net = row?.netFlow || 0;
+                    return `${label} • ${T("netFlow", "Net Flow")}: ${fmt(net)}`;
+                  }}
                   contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", fontSize: 11 }}
                   labelStyle={{ fontWeight: 600 }}
                 />
+                <ReferenceLine y={0} stroke="hsl(var(--border))" strokeDasharray="3 3" />
                 <Line
                   type="monotone"
-                  dataKey="value"
-                  stroke={config.color}
+                  dataKey="income"
+                  name="income"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: config.color, strokeWidth: 0 }}
+                  dot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="spending"
+                  name="spending"
+                  stroke="hsl(var(--destructive))"
+                  strokeWidth={2.5}
+                  dot={{ r: 4, fill: "hsl(var(--destructive))", strokeWidth: 0 }}
                   activeDot={{ r: 6 }}
                 />
               </LineChart>
@@ -199,9 +225,11 @@ export default function MonthlyTrend() {
             </div>
             <div className="divide-y divide-border">
               {[...chartData].reverse().map((d, i) => (
-                <div key={i} className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-muted-foreground">{d.month}</span>
-                  <span className="text-sm font-semibold text-foreground">{fmt(d.value)}</span>
+                <div key={i} className="grid grid-cols-4 gap-2 items-center px-4 py-3 text-sm">
+                  <span className="text-muted-foreground">{d.month}</span>
+                  <span className="text-primary font-semibold text-right">{fmt(d.income)}</span>
+                  <span className="text-destructive font-semibold text-right">{fmt(d.spending)}</span>
+                  <span className={`font-semibold text-right ${d.netFlow >= 0 ? "text-foreground" : "text-destructive"}`}>{fmt(d.netFlow)}</span>
                 </div>
               ))}
             </div>
