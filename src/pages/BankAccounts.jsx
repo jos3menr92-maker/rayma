@@ -61,7 +61,7 @@ export default function BankAccounts() {
       setShowTxDialog(true);
       navigate("/bank-accounts", { replace: true, state: {} });
     }
-  }, []);
+  }, [location.state, navigate]);
 
   useEffect(() => {
     if (supaUser?.id) {
