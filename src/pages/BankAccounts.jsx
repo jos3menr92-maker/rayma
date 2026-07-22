@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { SplitTransactionDialog } from "@/components/transactions/SplitTransactionDialog";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function buildTypeConfig(T) {
   return {
@@ -32,6 +33,8 @@ export default function BankAccounts() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
   const { userProfile, supaUser } = useFinancialData();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -51,6 +54,14 @@ export default function BankAccounts() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // Auto-open transaction modal when navigated with autoOpenLog state
+  useEffect(() => {
+    if (location.state?.autoOpenLog) {
+      setShowTxDialog(true);
+      navigate("/bank-accounts", { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
 
   useEffect(() => {
     if (supaUser?.id) {

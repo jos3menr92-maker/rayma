@@ -23,7 +23,7 @@ export default function QuickAddMenu({ open, onClose }) {
     { key: "bill", icon: Receipt, label: T("addBill", "Add Bill"), color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => { onClose(); navigate("/bills"); } },
     { key: "income", icon: DollarSign, label: T("logIncome", "Log Income"), color: "bg-green-500/10 text-green-600 border-green-200", action: () => { onClose(); navigate("/finance"); } },
     { key: "savings", icon: PiggyBank, label: T("addSavingsGoal", "Add Savings Goal"), color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => { onClose(); navigate("/budget-dashboard"); } },
-    { key: "transaction", icon: ArrowLeftRight, label: T("logTransaction", "Log Transaction"), color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => { onClose(); navigate("/bank-accounts"); } },
+    { key: "transaction", icon: ArrowLeftRight, label: T("logTransaction", "Log Transaction"), color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => { onClose(); navigate("/bank-accounts", { state: { autoOpenLog: true } }); } },
   ];
 
   return (

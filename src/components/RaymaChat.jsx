@@ -432,7 +432,7 @@ export default function RaymaChat({
             ) : messages.length === 0 ? (
               <div className="flex justify-start">
                 <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
-                  {T("raymaGreeting", "Hi! I'm Rayma AI, your personal financial advisor. I can read your balances, adjust your cash flow, or log a payment. How can I help you today?")}
+                  {T("raymaGreeting", "Hi! I'm Rayma AI, your personal financial advisor. I can help you log transactions, split expenses, add bills, or update loans—just ask!")}
                 </div>
               </div>
             ) : (
@@ -490,7 +490,7 @@ export default function RaymaChat({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder={T("chatPlaceholder", "Type 'I paid $50 to Netflix'...")}
+              placeholder={T("chatPlaceholder", "Try: 'Log $50 to Netflix' or 'Add a bill'…")}
               className="flex-1 h-12 bg-muted border-0 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-1 focus:ring-primary min-w-0"
               disabled={loading || initializing}
             />
