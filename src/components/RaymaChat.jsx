@@ -426,8 +426,43 @@ export default function RaymaChat({
       return;
     }
 
-    // --- 8. MAIN AI FALLBACK LOGIC ---
+// --- 8. MAIN AI FALLBACK LOGIC (WITH BATTERY DRAIN) ---
     if (!input.trim() || loading || !conversation) return;
+
+    // 🔋 THE TOKEN TOLL BOOTH
+    // Calculate total available tokens (Free Energy + Purchased Coins)
+    const freeEnergy = userProfile?.energy_bars || 0;
+    const paidEnergy = userProfile?.purchased_energy || 0;
+    const totalEnergy = freeEnergy + paidEnergy;
+
+    if (totalEnergy <= 0) {
+      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setInput("");
+      setTimeout(() => {
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: T("outOfEnergy", "⚡ **Out of Energy!** \n\nI need a recharge to run this analysis. Head over to the **Arcade** to play a game and earn free tokens, or visit the **Store** for a quick recharge!") 
+        }]);
+      }, 500);
+      return; // Stop the AI from running
+    }
+
+    // Deduct 1 Token (Prioritize draining free daily energy first)
+    if (supaUser?.id) {
+      let updates = {};
+      if (freeEnergy > 0) {
+        updates = { energy_bars: freeEnergy - 1 };
+      } else if (paidEnergy > 0) {
+        updates = { purchased_energy: paidEnergy - 1 };
+      }
+      
+      // Fire the deduction to Supabase (using 'id' for profiles table based on your schema)
+      supabase.from('profiles').update(updates).eq('id', supaUser.id).then(({error}) => {
+        if (error) console.error("Failed to deduct token:", error.message);
+      });
+    }
+
+    // Proceed with sending the message to the AI
     const messageContent = input.trim(); 
     setInput("");
     setLoading(true);
@@ -435,7 +470,6 @@ export default function RaymaChat({
     await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
     clearTimeout(timeout);
   }
-
   async function handleScanFile(e) {
     const file = e.target.files?.[0];
     if (!file || !conversation) return;
