@@ -112,8 +112,16 @@ export default function Dashboard() {
   }, [incomes]);
   const cashLeft = monthlyIncome - (monthlyTotal || 0);
 
-  const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
-  const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
+const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
+const imageToShow = 
+  userProfile?.avatar_url || 
+  userProfile?.avatar_photo_url || 
+  presetAvatar?.url || 
+  (userProfile?.avatar_id?.startsWith('http') ? userProfile.avatar_id : null);
+
+// Get user initials (e.g. "O" for Ori) instead of "?"
+const userDisplayName = userProfile?.preferred_name || userProfile?.full_name || "";
+const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
 
   const renderBattery = (tokens, max, plan) => {
     const isInf = plan === 'Generator' || tokens > 900;
@@ -191,9 +199,17 @@ export default function Dashboard() {
         
         <div className="flex items-center gap-3">
           {renderBattery(userProfile?.ai_tokens_remaining || 0, userProfile?.ai_tokens_daily_limit || 10, userProfile?.subscription_type)}
-          <button onClick={() => navigate("/profile")} className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm" style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
-            {imageToShow ? <img src={imageToShow} alt="avatar" className="w-full h-full object-cover rounded-full" /> : <span className="font-bold text-white text-sm">?</span>}
-          </button>
+         <button 
+          onClick={() => navigate("/profile")} 
+          className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm overflow-hidden" 
+          style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#10b981" }}
+        >
+          {imageToShow ? (
+            <img src={imageToShow} alt="avatar" className="w-full h-full object-cover rounded-full" />
+          ) : (
+            <span className="font-bold text-white text-base">{initial}</span>
+          )}
+       </button>
         </div>
       </motion.div>
 
