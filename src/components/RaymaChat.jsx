@@ -20,7 +20,7 @@ import { X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";

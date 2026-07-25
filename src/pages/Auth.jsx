@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/components/ui/use-toast";
 import { isNativeMobileApp } from "@/lib/iap";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage, useT } from "@/lib/LanguageContext";
 
 export default function Auth() {

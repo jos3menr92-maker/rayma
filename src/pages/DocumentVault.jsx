@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClient"; // 🚀 NEW: Added Supabase client
+import { supabase } from "@/lib/supabaseClientFrontend"; // 🚀 NEW: Added Supabase client
 import { motion } from "framer-motion";
 import { FolderOpen, Sparkles, Clock } from "lucide-react";
 // Removed base44 import as we now fetch from Supabase

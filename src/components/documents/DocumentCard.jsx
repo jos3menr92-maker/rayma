@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { FileText, Eye, Trash2, CheckCircle2, Clock, Archive, ExternalLink } from "lucide-react";
-import { supabase } from "@/api/supabaseClient";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useMemo } from "react";

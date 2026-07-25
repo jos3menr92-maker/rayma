@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "./supabaseClient";
+import { supabase } from "./supabaseClientFrontend";
 import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);

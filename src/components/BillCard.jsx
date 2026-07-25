@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { motion } from "framer-motion";
 import { Trash2, CheckCircle2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";

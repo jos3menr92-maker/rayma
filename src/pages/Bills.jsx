@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { supabase } from "@/lib/supabaseClient"; // 🔌 THE VAULT
+import { supabase } from "@/lib/supabaseClientFrontend"; // 🔌 THE VAULT
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, Receipt, CheckCircle2, Sparkles, ShieldAlert, Loader2 } from "lucide-react";
