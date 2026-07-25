@@ -2,7 +2,7 @@ import { useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Upload, Camera, FileImage, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "@/api/supabaseClient";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";

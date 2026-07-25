@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react"; 
-import { supabase } from "@/lib/supabaseClient"; 
+import { supabase } from "@/lib/supabaseClientFrontend"; 
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
 import { motion } from "framer-motion"; 
 import { 

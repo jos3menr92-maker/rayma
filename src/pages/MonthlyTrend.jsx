@@ -7,7 +7,7 @@ import { t } from "@/lib/i18n";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { getMonthName } from "@/utils/formatLocalized";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,

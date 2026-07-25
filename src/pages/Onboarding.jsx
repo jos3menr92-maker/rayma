@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "@/lib/supabaseClient"; // 🚀 NEW: Added Supabase
+import { supabase } from "@/lib/supabaseClientFrontend"; // 🚀 NEW: Added Supabase
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: To get the User ID
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";

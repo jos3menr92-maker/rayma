@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"; 
 import { useParams, useNavigate } from "react-router-dom"; 
-import { supabase } from "@/lib/supabaseClient"; 
+import { supabase } from "@/lib/supabaseClientFrontend"; 
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
