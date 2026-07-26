@@ -8,7 +8,6 @@ Deno.serve(async (req) => {
     
     if (!me) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Safely look for either environment variable name
     const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
@@ -18,29 +17,31 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
     
-    // 🚀 FIXED: Injected "R@" to guarantee strong password compliance
+    // 🚀 Injected "R@" to guarantee strong password compliance
     const tempToken = "R@" + crypto.randomUUID();
 
-    // 1. Search for the user by email (scalable — uses server-side search, not full list pagination)
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: me.email });
-    if (listError) throw listError;
+    // 1. Try to create the user in Supabase
+    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: me.email,
+      email_confirm: true,
+      password: tempToken
+    });
 
-    const existingUser = users.find(u => u.email === me.email);
+    if (createError) {
+      // 2. If user already exists, list users correctly and update their password
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (listError) throw listError;
 
-    if (existingUser) {
-      // 2. If they exist, update using the REAL Supabase ID
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { 
-          password: tempToken 
-      });
-      if (updateError) throw updateError;
-    } else {
-      // 3. If they don't exist, let Supabase create them and generate a valid UUID
-      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email: me.email,
-        email_confirm: true,
-        password: tempToken
-      });
-      if (createError) throw createError;
+      const existingUser = users.find(u => u.email === me.email);
+
+      if (existingUser) {
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { 
+            password: tempToken 
+        });
+        if (updateError) throw updateError;
+      } else {
+        throw createError;
+      }
     }
 
     return Response.json({ success: true, tempToken });
