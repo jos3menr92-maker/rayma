@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
+import { runConnectionTrap } from '@/lib/supabaseClientFrontend';
 import RemoteSupport from './pages/RemoteSupport';
-import { Toaster } from "@/components/ui/toaster"
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClientInstance } from '@/lib/query-client'
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClientInstance } from '@/lib/query-client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import PageNotFound from './lib/PageNotFound';
@@ -22,7 +23,7 @@ import { LanguageProvider } from '@/lib/LanguageContext';
 import { FinancialDataProvider } from '@/lib/FinancialDataContext';
 
 // 🛋️ THE LAZY LOUNGE: Lightning fast boot times!
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword')); // 🚀 NEW: Lazy loaded public route
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Reminders = lazy(() => import('./pages/Reminders'));
 const Budget = lazy(() => import('./pages/Budget'));
@@ -63,7 +64,7 @@ const AuthenticatedApp = () => {
     );
   }
 
-if (authError) {
+  if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
@@ -124,7 +125,8 @@ if (authError) {
   );
 };
 
-function App() {
+export default function App() {
+  // 1. Theme Initialization
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
@@ -137,28 +139,27 @@ function App() {
     }
   }, []);
 
+  // 2. Spring the Diagnostic Trap on App Load!
+  useEffect(() => {
+    runConnectionTrap();
+  }, []);
+
   return (
     <AuthProvider>
       <LanguageProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <Routes>
-            <Route path="/home" element={<Landing />} />
-            <Route path="/auth" element={<Auth />} />
-            
-            {/* 🚀 NEW: Placed in the public router so unauthenticated users can actually reach it! */}
-            <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
-            {/* 🚀 NEW: The page the email link actually goes to */}
-            <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
-            
-            <Route path="/*" element={<AuthenticatedApp />} />
-          </Routes>
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <Routes>
+              <Route path="/home" element={<Landing />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
+              <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
+              <Route path="/*" element={<AuthenticatedApp />} />
+            </Routes>
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
       </LanguageProvider>
     </AuthProvider>
-  )
+  );
 }
-
-export default App
