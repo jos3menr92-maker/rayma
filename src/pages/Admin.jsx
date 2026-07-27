@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
@@ -45,14 +46,19 @@ export default function Admin() {
       return;
     }
 
-    const [allUsers, allPromoCodes, allFeedback, allLoans, allBills, allTransactions] = await Promise.all([
+    const [allUsers, allPromoCodes, allFeedback, loansRes, billsRes, transactionsRes] = await Promise.all([
       base44.entities.User.list(),
-      base44.entities.PromoCode.list(),
+      supabase.from("promo_codes").select("*"),
       base44.entities.Feedback.list("-created_date", 10),
-      base44.entities.Loan.list(),
-      base44.entities.Bill.list(),
-      base44.entities.Transaction.list("-created_date", 500),
+      supabase.from("loans").select("id"),
+      supabase.from("bills").select("id"),
+      supabase.from("transactions").select("id").order("created_at", { ascending: false }).limit(500),
     ]);
+
+    const allPromoCodes_data = allPromoCodes.data || [];
+    const allLoans = loansRes.data || [];
+    const allBills = billsRes.data || [];
+    const allTransactions = transactionsRes.data || [];
 
     const annualPassUsers = allUsers.filter(u => u.annual_pass_expires_at && new Date(u.annual_pass_expires_at) > new Date());
     const tokenUsers = allUsers.filter(u => (u.ai_tokens || 0) > 0);
@@ -72,7 +78,7 @@ export default function Admin() {
     });
 
     setUsers(allUsers.slice(0, 20));
-    setPromoCodes(allPromoCodes);
+    setPromoCodes(allPromoCodes_data);
     setRecentFeedback(allFeedback.slice(0, 5));
     setLoading(false);
   }
@@ -80,7 +86,7 @@ export default function Admin() {
   const handleCreateCode = async () => {
     if (!newCode) return;
     try {
-      await base44.entities.PromoCode.create({ 
+      await supabase.from("promo_codes").insert({ 
         code: newCode, 
         is_active: true, 
         created_by_role: "admin" 

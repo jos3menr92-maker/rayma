@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
@@ -13,13 +14,14 @@ const CHECKS = [
     label: "Loans — Row-Level Security",
     description: "Users can only read/write their own loan records.",
     icon: Database,
-    run: async (base44) => {
-      const me = await base44.auth.me();
-      const loans = await base44.entities.Loan.list();
-      const breach = loans.some(l => l.created_by_id && l.created_by_id !== me.id);
+    run: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      const { data: loans } = await supabase.from("loans").select("id, user_id");
+      const breach = (loans || []).some(l => l.user_id && l.user_id !== uid);
       return breach
         ? { pass: false, detail: "Found records belonging to other users — RLS may be misconfigured." }
-        : { pass: true, detail: `${loans.length} loan record(s) — all belong to your account.` };
+        : { pass: true, detail: `${(loans || []).length} loan record(s) — all belong to your account.` };
     },
   },
   {
@@ -28,13 +30,14 @@ const CHECKS = [
     label: "Bills — Row-Level Security",
     description: "Users can only see their own bills.",
     icon: Database,
-    run: async (base44) => {
-      const me = await base44.auth.me();
-      const bills = await base44.entities.Bill.list();
-      const breach = bills.some(l => l.created_by_id && l.created_by_id !== me.id);
+    run: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      const { data: bills } = await supabase.from("bills").select("id, user_id");
+      const breach = (bills || []).some(l => l.user_id && l.user_id !== uid);
       return breach
         ? { pass: false, detail: "Found records belonging to other users — RLS may be misconfigured." }
-        : { pass: true, detail: `${bills.length} bill record(s) — all belong to your account.` };
+        : { pass: true, detail: `${(bills || []).length} bill record(s) — all belong to your account.` };
     },
   },
   {
@@ -43,13 +46,14 @@ const CHECKS = [
     label: "Transactions — Row-Level Security",
     description: "Financial transactions are user-scoped.",
     icon: Database,
-    run: async (base44) => {
-      const me = await base44.auth.me();
-      const txns = await base44.entities.Transaction.list();
-      const breach = txns.some(t => t.created_by_id && t.created_by_id !== me.id);
+    run: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      const { data: txns } = await supabase.from("transactions").select("id, user_id");
+      const breach = (txns || []).some(t => t.user_id && t.user_id !== uid);
       return breach
         ? { pass: false, detail: "Cross-user transactions detected — critical data leak." }
-        : { pass: true, detail: `${txns.length} transaction(s) — all scoped to your account.` };
+        : { pass: true, detail: `${(txns || []).length} transaction(s) — all scoped to your account.` };
     },
   },
   {
@@ -58,13 +62,14 @@ const CHECKS = [
     label: "Assets — Row-Level Security",
     description: "Asset records are private per user.",
     icon: Database,
-    run: async (base44) => {
-      const me = await base44.auth.me();
-      const assets = await base44.entities.Asset.list();
-      const breach = assets.some(a => a.created_by_id && a.created_by_id !== me.id);
+    run: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      const { data: assets } = await supabase.from("assets").select("id, user_id");
+      const breach = (assets || []).some(a => a.user_id && a.user_id !== uid);
       return breach
         ? { pass: false, detail: "Assets from other users are visible — data leak detected." }
-        : { pass: true, detail: `${assets.length} asset(s) — properly isolated.` };
+        : { pass: true, detail: `${(assets || []).length} asset(s) — properly isolated.` };
     },
   },
   {
@@ -73,9 +78,10 @@ const CHECKS = [
     label: "Session Authentication",
     description: "All API calls require a valid authenticated session.",
     icon: Lock,
-    run: async (base44) => {
-      const me = await base44.auth.me();
-      if (!me || !me.email) return { pass: false, detail: "No authenticated session found." };
+    run: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const me = await base44.auth.me().catch(() => null);
+      if (!session?.user || !me?.email) return { pass: false, detail: "No authenticated session found." };
       return { pass: true, detail: `Authenticated as ${me.email} (role: ${me.role}).` };
     },
   },
@@ -85,8 +91,8 @@ const CHECKS = [
     label: "Admin Role Verification",
     description: "Admin-only backend functions reject non-admin callers.",
     icon: User,
-    run: async (base44) => {
-      const me = await base44.auth.me();
+    run: async () => {
+      const me = await base44.auth.me().catch(() => null);
       if (me?.role === "admin") {
         return { pass: true, detail: "You are an admin — admin guards are enforced for all non-admin users." };
       }
@@ -167,11 +173,10 @@ export default function SecurityAudit() {
     setRunning(true);
     setRan(false);
     setResults({});
-    const base44client = base44;
 
     for (const check of CHECKS) {
       try {
-        const result = await check.run(base44client);
+        const result = await check.run();
         setResults(prev => ({ ...prev, [check.id]: { ...result, done: true } }));
       } catch (err) {
         setResults(prev => ({ ...prev, [check.id]: { pass: false, detail: `Error: ${err.message}`, done: true } }));
