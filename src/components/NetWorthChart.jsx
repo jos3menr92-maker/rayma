@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
@@ -15,14 +15,22 @@ export default function NetWorthChart() {
 
   useEffect(() => {
     let cancelled = false;
-    base44.entities.NetWorthSnapshot.list("snapshot_date", 24).then(data => {
-      if (!cancelled) {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      const { data } = await supabase
+        .from("net_worth_snapshots")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("snapshot_date", { ascending: true })
+        .limit(24);
+      if (!cancelled && data) {
         setSnapshots(data.map(s => ({
           ...s,
           label: s.snapshot_date ? format(new Date(s.snapshot_date + "T00:00:00"), "MMM d") : "",
         })));
       }
-    });
+    })();
     return () => { cancelled = true; };
   }, []);
 

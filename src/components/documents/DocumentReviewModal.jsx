@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -28,28 +27,38 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(doc.loggable === false ? "misc_prompt" : "review");
 
+  async function getCurrentUserId() {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user?.id || null;
+  }
+
   const raymaMessage = analysis?.rayma_message || doc.notes || T("raymaAnalyzedMsg", "I've analyzed this document. Please review the extracted details below.");
 
   async function handleApprove() {
     setSaving(true);
     try {
+      const uid = await getCurrentUserId();
       if (folder === "payments" && fields.amount && fields.date) {
         const matchedLoan = loans.find(l =>
           fields.payee && l.name?.toLowerCase().includes(fields.payee?.toLowerCase())
         ) || loans[0];
         if (matchedLoan) {
-          const payment = await base44.entities.Payment.create({
+          const { data: paymentData, error: paymentError } = await supabase.from("payments").insert({
             loan_id: matchedLoan.id,
             amount: parseFloat(fields.amount),
             payment_date: fields.date,
             note: `Auto-logged from document: ${doc.file_name}`,
-          });
-          await base44.entities.Loan.update(matchedLoan.id, {
+            user_id: uid,
+          }).select();
+          if (paymentError) throw paymentError;
+          const payment = paymentData?.[0];
+          const { error: loanError } = await supabase.from("loans").update({
             current_balance: Math.max((matchedLoan.current_balance || 0) - parseFloat(fields.amount), 0)
-          });
+          }).eq("id", matchedLoan.id).eq("user_id", uid);
+          if (loanError) throw loanError;
           const { error } = await supabase.from('documents').update({
             status: "logged", folder, extracted_data: fields,
-            logged_entity_type: "payment", logged_entity_id: payment.id
+            logged_entity_type: "payment", logged_entity_id: payment?.id
           }).eq('id', doc.id);
           if (error) throw error;
         } else {
@@ -57,15 +66,18 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
           if (error) throw error;
         }
       } else if (folder === "bills" && fields.amount && fields.description) {
-        const bill = await base44.entities.Bill.create({
+        const { data: billData, error: billError } = await supabase.from("bills").insert({
           name: fields.description || fields.payee || "Imported Bill",
           amount: parseFloat(fields.amount),
           category: fields.category || "other",
           notes: `Imported from document: ${doc.file_name}`,
-        });
+          user_id: uid,
+        }).select();
+        if (billError) throw billError;
+        const bill = billData?.[0];
         const { error } = await supabase.from('documents').update({
           status: "logged", folder, extracted_data: fields,
-          logged_entity_type: "bill", logged_entity_id: bill.id
+          logged_entity_type: "bill", logged_entity_id: bill?.id
         }).eq('id', doc.id);
         if (error) throw error;
       } else {

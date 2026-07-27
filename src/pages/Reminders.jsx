@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -35,13 +36,19 @@ export default function Reminders() {
 async function loadData() {
     try {
       setLoading(true);
-      // Your existing data fetching logic here
-      const [l, me] = await Promise.all([
-        base44.entities.Loan.list("-created_date", 100),
+      const [{ data: { session } }, me] = await Promise.all([
+        supabase.auth.getSession(),
         base44.auth.me(),
       ]);
-      setLoans(l);
+      const uid = session?.user?.id;
       setUser(me);
+      if (!uid) return;
+      const [loansRes, billsRes] = await Promise.all([
+        supabase.from("loans").select("*").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
+        supabase.from("bills").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+      ]);
+      setLoans(loansRes.data || []);
+      setBills(billsRes.data || []);
     } catch (error) {
       console.error("Failed to load reminders:", error);
     } finally {
