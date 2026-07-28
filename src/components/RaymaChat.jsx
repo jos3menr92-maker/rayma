@@ -64,7 +64,7 @@ export default function RaymaChat({
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
   const navigate = useNavigate();
-  const { supaUser } = useFinancialData();
+  const { supaUser, reload } = useFinancialData();
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -222,6 +222,7 @@ export default function RaymaChat({
 
           const summary = parsedSplits.map(sp => `${formatCurrency(sp.amount)} ${sp.category}`).join(" + ");
           setMessages(prev => [...prev, { role: "assistant", content: T("splitLoggedSuccess", `✅ **Split Logged!** I recorded a ${formatCurrency(totalAmount)} transaction at ${merchant}, split into: ${summary}. Your budgets will update automatically.`) }]);
+          reload();
         } catch (err) {
           console.error("Split log error:", err.message);
           setMessages(prev => [...prev, { role: "assistant", content: T("splitLogError", `I tried to log your split transaction at ${merchant}, but encountered a database error. Please try again.`) }]);
@@ -240,27 +241,26 @@ export default function RaymaChat({
       const amount = parseFloat(paidMatch[1]);
       const target = paidMatch[2];
       
-      setTimeout(async () => {
-        if (!supaUser?.id) {
-           setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
-           setLoading(false);
-           return;
-        }
+      if (!supaUser?.id) {
+         setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
+         setLoading(false);
+         return;
+      }
 
-        try {
-          await supabase.from('payments').insert([{
-            user_id: supaUser.id, 
-            amount: amount, 
-            note: target,                  
-            payment_type: 'bill',     
-            payment_date: new Date().toISOString() 
-          }]);
-          setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your ${formatCurrency(amount)} payment to ${target} in your database. Your balances will update automatically.`) }]);
-        } catch (error) {
-          setMessages(prev => [...prev, { role: "assistant", content: T("paymentLogError", `I tried to log your payment to ${target}, but I couldn't connect to the database.`) }]);
-        }
-        setLoading(false);
-      }, 1000);
+      try {
+        await supabase.from('payments').insert([{
+          user_id: supaUser.id, 
+          amount: amount, 
+          note: target,                  
+          payment_type: 'bill',     
+          payment_date: new Date().toISOString().split("T")[0]
+        }]);
+        setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your ${formatCurrency(amount)} payment to ${target} in your database. Your balances will update automatically.`) }]);
+        reload();
+      } catch (error) {
+        setMessages(prev => [...prev, { role: "assistant", content: T("paymentLogError", `I tried to log your payment to ${target}, but I couldn't connect to the database.`) }]);
+      }
+      setLoading(false);
       return;
     }
 
@@ -273,29 +273,28 @@ export default function RaymaChat({
       const amount = parseFloat(spentMatch[1]);
       const merchant = spentMatch[2].trim();
       
-      setTimeout(async () => {
-        if (!supaUser?.id) {
-           setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
-           setLoading(false);
-           return;
-        }
-        try {
-          const todayISO = new Date().toISOString().split("T")[0];
-          await supabase.from('transactions').insert([{
-            user_id: supaUser.id,
-            date: todayISO,
-            description: merchant,
-            amount: -amount,
-            category: "other",
-            type: "debit"
-          }]);
-          setMessages(prev => [...prev, { role: "assistant", content: T("spentLoggedSuccess", `✅ **Transaction Logged!** I recorded a ${formatCurrency(amount)} transaction at ${merchant}. \n\n*💡 Tip: If you have a receipt, tap the scan button to upload it. It's not required, but it's a great habit for keeping your records bulletproof!*`) }]);
-        } catch (error) {
-          console.error("Spent log error:", error.message);
-          setMessages(prev => [...prev, { role: "assistant", content: T("spentLogError", `I tried to log your transaction at ${merchant}, but encountered a database error.`) }]);
-        }
-        setLoading(false);
-      }, 1000);
+      if (!supaUser?.id) {
+         setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
+         setLoading(false);
+         return;
+      }
+      try {
+        const todayISO = new Date().toISOString().split("T")[0];
+        await supabase.from('transactions').insert([{
+          user_id: supaUser.id,
+          date: todayISO,
+          description: merchant,
+          amount: -amount,
+          category: "other",
+          type: "debit"
+        }]);
+        setMessages(prev => [...prev, { role: "assistant", content: T("spentLoggedSuccess", `✅ **Transaction Logged!** I recorded a ${formatCurrency(amount)} transaction at ${merchant}. \n\n*💡 Tip: If you have a receipt, tap the scan button to upload it. It's not required, but it's a great habit for keeping your records bulletproof!*`) }]);
+        reload();
+      } catch (error) {
+        console.error("Spent log error:", error.message);
+        setMessages(prev => [...prev, { role: "assistant", content: T("spentLogError", `I tried to log your transaction at ${merchant}, but encountered a database error.`) }]);
+      }
+      setLoading(false);
       return;
     }
 
@@ -308,26 +307,26 @@ export default function RaymaChat({
       const billName = billMatch[1].trim();
       const amount = parseFloat(billMatch[2]);
       
-      setTimeout(async () => {
-        if (!supaUser?.id) {
-           setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
-           setLoading(false);
-           return;
-        }
-        try {
-          await supabase.from('bills').insert([{
-            user_id: supaUser.id,
-            name: billName,
-            amount: amount,
-            is_active: true
-          }]);
-          setMessages(prev => [...prev, { role: "assistant", content: T("billAddedSuccess", `✅ **Bill Added!** I successfully added ${billName} for $${amount.toFixed(2)} to your upcoming bills. \n\n*💡 Tip: You can always upload the PDF invoice if you want me to keep it on file!*`) }]);
-        } catch (error) {
-          console.error("Bill add error:", error.message);
-          setMessages(prev => [...prev, { role: "assistant", content: T("billAddError", `I tried to add the bill for ${billName}, but encountered a database error.`) }]);
-        }
-        setLoading(false);
-      }, 1000);
+      if (!supaUser?.id) {
+         setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
+         setLoading(false);
+         return;
+      }
+      try {
+        await supabase.from('bills').insert([{
+          user_id: supaUser.id,
+          name: billName,
+          amount: amount,
+          is_active: true,
+          payment_frequency: "monthly"
+        }]);
+        setMessages(prev => [...prev, { role: "assistant", content: T("billAddedSuccess", `✅ **Bill Added!** I successfully added ${billName} for ${formatCurrency(amount)} to your upcoming bills. \n\n*💡 Tip: You can always upload the PDF invoice if you want me to keep it on file!*`) }]);
+        reload();
+      } catch (error) {
+        console.error("Bill add error:", error.message);
+        setMessages(prev => [...prev, { role: "assistant", content: T("billAddError", `I tried to add the bill for ${billName}, but encountered a database error.`) }]);
+      }
+      setLoading(false);
       return;
     }
 

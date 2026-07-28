@@ -10,6 +10,7 @@ export function FinancialDataProvider({ children }) {
   const [bills, setBills] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
   // 🚀 Existing global containers
   const [assets, setAssets] = useState([]);
@@ -45,6 +46,7 @@ export function FinancialDataProvider({ children }) {
           setBills([]);
           setIncomes([]);
           setPayments([]);
+          setTransactions([]);
           setAssets([]);
           setSavingsGoals([]);
           setTransactionSplits([]);
@@ -61,6 +63,7 @@ export function FinancialDataProvider({ children }) {
         billsRes,
         incomesRes,
         paymentsRes,
+        transactionsRes,
         assetsRes,
         savingsRes,
         splitsRes,
@@ -70,6 +73,7 @@ export function FinancialDataProvider({ children }) {
         supabase.from("bills").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("incomes").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("payments").select("*").eq("user_id", uid).order("payment_date", { ascending: false }),
+        supabase.from("transactions").select("*").eq("user_id", uid).order("date", { ascending: false }),
         supabase.from("assets").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("savings_goals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("transaction_splits").select("*").eq("user_id", uid).order("date", { ascending: false }),
@@ -82,6 +86,7 @@ export function FinancialDataProvider({ children }) {
       setBills(billsRes.data || []);
       setIncomes(incomesRes.data || []);
       setPayments(paymentsRes.data || []);
+      setTransactions(transactionsRes.data || []);
       setAssets(assetsRes.data || []);
       setSavingsGoals(savingsRes.data || []);
       setTransactionSplits(splitsRes.data || []);
@@ -203,6 +208,7 @@ export function FinancialDataProvider({ children }) {
         setBills([]);
         setIncomes([]);
         setPayments([]);
+        setTransactions([]);
         setAssets([]);
         setSavingsGoals([]);
         setTransactionSplits([]);
@@ -220,6 +226,7 @@ export function FinancialDataProvider({ children }) {
         bills,
         incomes,
         payments,
+        transactions,
         assets,
         savingsGoals,
         transactionSplits,
