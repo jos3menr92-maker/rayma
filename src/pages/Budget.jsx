@@ -5,7 +5,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Plus, Trash2, Edit3, PiggyBank, ShieldAlert, Loader2, Trophy, Sparkles } from "lucide-react";
+import { Plus, Trash2, Edit3, PiggyBank, ShieldAlert, Loader2, Trophy, Sparkles, Calendar, Target, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ export default function Budget() {
   const [loading, setLoading] = useState(true);
   const [goalOpen, setGoalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
-  const [goalForm, setGoalForm] = useState({ name: "", target_amount: "", current_saved: "", notes: "" });
+  const [goalForm, setGoalForm] = useState({ name: "", target_amount: "", current_saved: "", notes: "", target_date: "", weekly_contribution: "" });
   const [savingGoal, setSavingGoal] = useState(false);
   const { supaUser, reload } = useFinancialData();
 
@@ -114,13 +114,13 @@ export default function Budget() {
 
   function openAddGoal() {
     setEditingGoal(null);
-    setGoalForm({ name: "", target_amount: "", current_saved: "", notes: "" });
+    setGoalForm({ name: "", target_amount: "", current_saved: "", notes: "", target_date: "", weekly_contribution: "" });
     setGoalOpen(true);
   }
 
   function openEditGoal(goal) {
     setEditingGoal(goal);
-    setGoalForm({ name: goal.name, target_amount: goal.target_amount, current_saved: goal.current_saved || 0, notes: goal.notes || "" });
+    setGoalForm({ name: goal.name, target_amount: goal.target_amount, current_saved: goal.current_saved || 0, notes: goal.notes || "", target_date: goal.target_date || "", weekly_contribution: goal.weekly_contribution || "" });
     setGoalOpen(true);
   }
 
@@ -137,6 +137,8 @@ export default function Budget() {
       target_amount: parseFloat(goalForm.target_amount) || 0,
       current_saved: parseFloat(goalForm.current_saved) || 0,
       notes: goalForm.notes,
+      target_date: goalForm.target_date || null,
+      weekly_contribution: parseFloat(goalForm.weekly_contribution) || null,
     };
 
     try {
@@ -197,6 +199,34 @@ export default function Budget() {
     return "bg-slate-400";
   };
 
+  const getGoalTimeline = (goal) => {
+    const info = { dateLabel: null, timeLabel: null, isOverdue: false, contribution: null, purpose: null };
+
+    if (goal.notes) info.purpose = goal.notes;
+    if (goal.weekly_contribution) info.contribution = fmt(goal.weekly_contribution);
+
+    if (goal.target_date) {
+      const target = new Date(goal.target_date);
+      const now = new Date();
+      const daysLeft = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+      info.dateLabel = T("targetDate", "Target Date");
+      const dateStr = target.toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      if (daysLeft < 0) { info.isOverdue = true; info.timeLabel = `${dateStr} · ${T("overdue", "Overdue")}`; }
+      else if (daysLeft === 0) { info.timeLabel = `${dateStr} · ${T("dueToday", "Due today")}`; }
+      else if (daysLeft <= 30) { info.timeLabel = `${dateStr} · ${T("daysLeft", "{n} days left").replace("{n}", daysLeft)}`; }
+      else { info.timeLabel = `${dateStr} · ${T("monthsLeft", "{n} months left").replace("{n}", Math.ceil(daysLeft / 30))}`; }
+    } else if (goal.weekly_contribution && Number(goal.target_amount) > Number(goal.current_saved)) {
+      const weeksLeft = Math.ceil((Number(goal.target_amount) - Number(goal.current_saved)) / Number(goal.weekly_contribution));
+      const estDate = new Date();
+      estDate.setDate(estDate.getDate() + weeksLeft * 7);
+      info.dateLabel = T("estimatedCompletion", "Est. Completion");
+      info.timeLabel = estDate.toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { month: 'short', year: 'numeric' });
+    }
+
+    return info;
+  };
+
   useEffect(() => {
     const nextShown = {};
 
@@ -251,6 +281,7 @@ export default function Budget() {
               const current = Number(goal.current_saved) || 0;
               const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
               const reachedBadges = shownMilestones[goal.id] || [];
+              const timeline = getGoalTimeline(goal);
 
               return (
                 <motion.div key={goal.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-3xl p-5 shadow-sm">
@@ -268,6 +299,26 @@ export default function Budget() {
                     <motion.div className={`h-full ${getProgressColor(progress)}`} initial={{ width: 0 }} animate={{ width: `${progress}%` }} />
                   </div>
                   <p className="text-xs font-bold text-primary">{progress.toFixed(0)}% {T("reached", "reached")}</p>
+
+                  {(timeline.dateLabel || timeline.contribution || timeline.purpose) && (
+                    <div className="mt-3 pt-3 border-t border-border/50 space-y-1.5">
+                      {timeline.dateLabel && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> {timeline.dateLabel}</span>
+                          <span className={`font-semibold text-right ${timeline.isOverdue ? "text-destructive" : "text-foreground"}`}>{timeline.timeLabel}</span>
+                        </div>
+                      )}
+                      {timeline.contribution && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {T("weekly", "Weekly")}</span>
+                          <span className="font-semibold text-foreground">{timeline.contribution}</span>
+                        </div>
+                      )}
+                      {timeline.purpose && (
+                        <p className="text-xs text-muted-foreground italic flex items-start gap-1 pt-0.5"><Target className="w-3 h-3 mt-0.5 shrink-0" /> {timeline.purpose}</p>
+                      )}
+                    </div>
+                  )}
 
                   {reachedBadges.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -346,6 +397,11 @@ export default function Budget() {
               <div><Label>{T("targetAmount", "Target Amount")}</Label><Input type="number" value={goalForm.target_amount} onChange={e => setGoalForm(f => ({...f, target_amount: e.target.value}))} required className="rounded-xl" /></div>
               <div><Label>{T("savedSoFar", "Saved So Far")}</Label><Input type="number" value={goalForm.current_saved} onChange={e => setGoalForm(f => ({...f, current_saved: e.target.value}))} className="rounded-xl" /></div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>{T("targetDate", "Target Date")}</Label><Input type="date" value={goalForm.target_date} onChange={e => setGoalForm(f => ({...f, target_date: e.target.value}))} className="rounded-xl" /></div>
+              <div><Label>{T("weeklyContribution", "Weekly Contribution")}</Label><Input type="number" value={goalForm.weekly_contribution} onChange={e => setGoalForm(f => ({...f, weekly_contribution: e.target.value}))} className="rounded-xl" /></div>
+            </div>
+            <div><Label>{T("goalPurpose", "What's it for?")}</Label><Input value={goalForm.notes} onChange={e => setGoalForm(f => ({...f, notes: e.target.value}))} placeholder={T("goalPurposePlaceholder", "e.g. Emergency fund, Vacation...")} className="rounded-xl" /></div>
             <Button type="submit" disabled={savingGoal} className="w-full rounded-xl">{savingGoal ? T("saving", "Saving...") : T("saveGoal", "Save Goal")}</Button>
           </form>
         </DialogContent>
