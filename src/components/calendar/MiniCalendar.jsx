@@ -121,7 +121,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
               key={day}
               onClick={() => setSelectedDay(isSelected ? null : day)}
               className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-[12px] font-bold transition-all
-                ${isSelected ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105 z-10" : isToday ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted/30 hover:bg-muted text-foreground"}
+                ${isSelected ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105 z-10" : isToday ? "border-2 border-primary text-primary" : "bg-muted/30 hover:bg-muted text-foreground"}
               `}
             >
               {day}

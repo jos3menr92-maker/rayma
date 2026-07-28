@@ -34,7 +34,7 @@ export default function CalendarMonthView({ cells, dayMap, payDays, selectedDay,
               onClick={() => onSelectDay(isSelected ? null : day)}
               className={`relative min-h-[60px] sm:min-h-[76px] flex flex-col items-start p-1 rounded-xl text-xs font-bold cursor-pointer transition-all
                 ${isSelected ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] z-10"
-                  : isToday ? "bg-primary/10 text-primary border border-primary/30"
+                  : isToday ? "border-2 border-primary text-primary"
                   : "bg-muted/30 hover:bg-muted text-foreground"}
               `}
             >
@@ -71,6 +71,7 @@ export default function CalendarMonthView({ cells, dayMap, payDays, selectedDay,
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500" /> {T("loans", "Loans")}</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> {T("income", "Income")}</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> {T("paydayLegend", "Payday")}</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border-2 border-primary bg-transparent" /> {T("todayLegend", "Today")}</span>
       </div>
     </div>
   );
