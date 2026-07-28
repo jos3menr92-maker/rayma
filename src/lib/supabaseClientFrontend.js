@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://vadbebezckuppusxukdx.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZGJlYmV6Y2t1cHB1c3h1a2R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzcwNzksImV4cCI6MjA5Njc1MzA3OX0.kbUULYfByVgmxkouuc-Jn96pqtGDffbjdnfNeMRNELc";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.warn("[Rayma AI] Supabase env vars not found in build — using fallback config. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in production for correct operation.");
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("[Rayma AI] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Set these environment variables before building.");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

@@ -219,6 +219,27 @@ export function FinancialDataProvider({ children }) {
     };
   }, []);
 
+  // 📡 Supabase Realtime — reload when any financial table changes (multi-device sync, agent writes, webhook updates)
+  useEffect(() => {
+    const tables = ["loans", "bills", "incomes", "payments", "transactions", "assets", "savings_goals", "transaction_splits", "profiles"];
+    const channel = supabase
+      .channel("financial-data-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "loans" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bills" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "incomes" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "savings_goals" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "transaction_splits" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => refreshUserProfile())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <FinancialDataContext.Provider
       value={{

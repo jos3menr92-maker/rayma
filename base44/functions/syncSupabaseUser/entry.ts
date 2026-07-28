@@ -43,29 +43,37 @@ Deno.serve(async (req) => {
 
     const rawBody = await createRes.text();
 
-    // 2. If user already exists (422), paginate to find them and update their password
+    // 2. If user already exists (422), use generate_link to find them by email (O(1) lookup)
+    //    This replaces the previous O(n) pagination loop that would break at scale.
     if (createRes.status === 422 || rawBody.includes("already been registered") || rawBody.includes("already exists")) {
-      let existingUser = null;
-      let page = 1;
+      const linkRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'recovery',
+          email: me.email
+        })
+      });
 
-      while (!existingUser) {
-        const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
-        if (listError) throw new Error(`ListUsers failed: ${listError.message || JSON.stringify(listError)}`);
+      if (linkRes.ok) {
+        const linkData = await linkRes.json();
+        const existingUserId = linkData?.user?.id || linkData?.id;
 
-        const users = listData?.users || [];
-        existingUser = users.find(u => u.email?.toLowerCase() === me.email?.toLowerCase());
-
-        if (existingUser || users.length === 0) break;
-        page++;
+        if (existingUserId) {
+          const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUserId, {
+            password: tempToken
+          });
+          if (updateError) throw new Error(`UpdateUser failed: ${updateError.message || JSON.stringify(updateError)}`);
+          return Response.json({ success: true, tempToken });
+        }
       }
 
-      if (existingUser) {
-        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-          password: tempToken
-        });
-        if (updateError) throw new Error(`UpdateUser failed: ${updateError.message || JSON.stringify(updateError)}`);
-        return Response.json({ success: true, tempToken });
-      }
+      const linkBody = await linkRes.text();
+      throw new Error(`GenerateLink failed (HTTP ${linkRes.status}): ${linkBody.substring(0, 300)}`);
     }
 
     // 3. Real error — surface the raw HTTP response
