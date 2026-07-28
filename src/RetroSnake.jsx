@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
+import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration';
 
 const GAME_ID = 'retro_snake';
 
@@ -11,6 +12,7 @@ export default function RetroSnake({ onUpdateScore }) {
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
+  const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const canvasRef = useRef(null);
@@ -28,6 +30,7 @@ export default function RetroSnake({ onUpdateScore }) {
     setGameOver(false);
     setScore(0);
     setIsPaused(false);
+    setRewardResult(null);
     setIsGameRunning(true);
   };
 
@@ -73,10 +76,13 @@ export default function RetroSnake({ onUpdateScore }) {
       }
 
       // Background API calls — don't block the game-over UI
-      saveArcadeScore(GAME_ID, finalScore).then(() => {
+      saveArcadeScore(GAME_ID, finalScore).then(async () => {
         const levelReached = Math.floor(finalScore / 50) + 1;
         if (levelReached >= 5) {
-          claimArcadeReward(GAME_ID, levelReached);
+          const result = await claimArcadeReward(GAME_ID, levelReached);
+          if (result.success && result.rewardGranted) {
+            setRewardResult({ amount: result.rewardAmount });
+          }
         }
       });
 
@@ -181,10 +187,13 @@ export default function RetroSnake({ onUpdateScore }) {
                   <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl">Play Again</button>
                   <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
                     <X className="w-5 h-5" /> Exit
-                  </button>
-                </div>
-             </div>
-          )}
+                    </button>
+                    </div>
+                    {rewardResult && (
+                    <ArcadeRewardCelebration amount={rewardResult.amount} onDismiss={() => setRewardResult(null)} />
+                    )}
+                    </div>
+                    )}
         </div>
       )}
     </div>
