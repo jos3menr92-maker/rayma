@@ -232,6 +232,11 @@ export function FinancialDataProvider({ children }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "savings_goals" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "transaction_splits" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bank_accounts" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "budget_categories" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "arcade_scores" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "net_worth_snapshots" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => refreshUserProfile())
       .subscribe();
 
