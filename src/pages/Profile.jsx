@@ -148,7 +148,7 @@ export default function Profile() {
       safePayload.auto_insights = form.auto_insights ?? true;
 
       // 1. Update Supabase profiles table
-      const { error: profileError } = await supabase.from('profiles').update(safePayload).eq('id', userProfile.id);
+      const { error: profileError } = await supabase.from('profiles').update(safePayload).eq('id', supaUser.id);
       if (profileError) throw profileError;
 
       // 2. Sync to Base44 User entity
@@ -255,7 +255,7 @@ export default function Profile() {
       }
 
       // 2. Hard wipe all financial data from Supabase (fail-safe: continues on table misses)
-      const tables = ['documents', 'arcade_scores', 'promo_redemptions', 'feedback', 'transactions', 'bank_accounts', 'payments', 'loan_adjustments', 'loans', 'bills', 'incomes', 'assets', 'saving_goals', 'notifications', 'profiles'];
+      const tables = ['transaction_splits', 'payments', 'loan_adjustments', 'promo_redemptions', 'arcade_scores', 'assets', 'bank_accounts', 'bills', 'budget_categories', 'documents', 'feedback', 'incomes', 'loans', 'net_worth_snapshots', 'savings_goals', 'transactions', 'user_memories', 'profiles'];
       for (const table of tables) {
         // 🛡️ Fail-Safe Key Mapping: profiles table primary key is 'id', others use 'user_id'
         const targetColumn = table === 'profiles' ? 'id' : 'user_id';

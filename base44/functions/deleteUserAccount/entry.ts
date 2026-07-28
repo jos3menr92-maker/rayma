@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     console.log(`Supabase auth user deleted: ${supabaseUserId} (email: ${user.email})`);
 
     // Wipe legacy Base44 entity data to ensure zero orphaned PII remains on Base44 servers
-    const legacyEntities = ['NetWorthSnapshot', 'UserMemory', 'ScannedDocument'];
+    const legacyEntities = ['NetWorthSnapshot', 'UserMemory', 'ScannedDocument', 'BankAccount', 'Loan', 'Bill', 'Payment', 'Transaction', 'Asset', 'SavingsGoal', 'BudgetCategory', 'LoanAdjustment', 'WeeklyIncome', 'Feedback'];
     for (const entity of legacyEntities) {
       try {
         await base44.asServiceRole.entities[entity].deleteMany({ created_by: user.email });
