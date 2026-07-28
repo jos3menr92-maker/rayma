@@ -33,9 +33,9 @@ Deno.serve(async (req) => {
 
     // --- Loans (columns: id, user_id, name, lender, original_amount, current_balance, interest_rate, monthly_payment, payment_frequency, start_date, status, created_at) ---
     const loans = [
-      { user_id: uid, name: 'Honda Civic Auto Loan', lender: 'Honda Financial', original_amount: 28000, current_balance: 18500, interest_rate: 5.9, monthly_payment: 480, payment_frequency: 'monthly', start_date: '2024-03-15', status: 'active' },
-      { user_id: uid, name: 'Sallie Mae Student Loan', lender: 'Sallie Mae', original_amount: 45000, current_balance: 32000, interest_rate: 6.8, monthly_payment: 380, payment_frequency: 'monthly', start_date: '2022-09-01', status: 'active' },
-      { user_id: uid, name: 'Discover Personal Loan', lender: 'Discover', original_amount: 8000, current_balance: 3200, interest_rate: 11.5, monthly_payment: 250, payment_frequency: 'monthly', start_date: '2025-01-10', status: 'active' },
+      { user_id: uid, name: 'Honda Civic Auto Loan', lender: 'Honda Financial', original_amount: 28000, current_balance: 18500, remaining_balance: 18500, interest_rate: 5.9, monthly_payment: 480, payment_frequency: 'monthly', start_date: '2024-03-15', status: 'active' },
+      { user_id: uid, name: 'Sallie Mae Student Loan', lender: 'Sallie Mae', original_amount: 45000, current_balance: 32000, remaining_balance: 32000, interest_rate: 6.8, monthly_payment: 380, payment_frequency: 'monthly', start_date: '2022-09-01', status: 'active' },
+      { user_id: uid, name: 'Discover Personal Loan', lender: 'Discover', original_amount: 8000, current_balance: 3200, remaining_balance: 3200, interest_rate: 11.5, monthly_payment: 250, payment_frequency: 'monthly', start_date: '2025-01-10', status: 'active' },
     ];
     const { error: lnErr } = await supabaseAdmin.from('loans').insert(loans);
     results.loans = lnErr ? `Error: ${lnErr.message}` : `${loans.length} rows inserted`;
