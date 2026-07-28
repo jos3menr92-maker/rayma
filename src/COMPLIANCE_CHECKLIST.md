@@ -1,4 +1,4 @@
-# RAYMA Compliance & Quality Assurance Checklist
+# Rayma AI Compliance & Quality Assurance Checklist
 
 **Last Updated:** May 31, 2026  
 **Status:** ✅ PHASE 1 & 2 COMPLETE | 📋 PHASE 3 (App Store Submission) PENDING
@@ -7,11 +7,11 @@
 
 ---
 
-## 🤖 RAYMA AGENT — TOOL AUDIT
+## 🤖 Rayma AI AGENT — TOOL AUDIT
 
 **Status: ✅ ALL TOOLS CONFIRMED ACTIVE**
 
-RAYMA has full read/create/update/delete access to all 13 entities:
+Rayma AI has full read/create/update/delete access to all 13 entities:
 - ✅ Loan, Bill, Payment, WeeklyIncome, SavingsGoal
 - ✅ Asset, NetWorthSnapshot, ScannedDocument, BankAccount
 - ✅ Transaction, BudgetCategory, UserMemory, LoanAdjustment
@@ -80,7 +80,7 @@ These require manual work by the app owner — cannot be done in code.
   - Usage data (analytics) → not linked to user
 - [ ] **App icon** — provide a proper 1024×1024 PNG (currently using a placeholder URL)
 - [ ] **Set PLAID_CLIENT_ID & PLAID_SECRET** — if offering bank linking in production
-- [ ] **Screenshots** — capture Dashboard, Loans, Bills, RAYMA AI chat (all on real device)
+- [ ] **Screenshots** — capture Dashboard, Loans, Bills, Rayma AI AI chat (all on real device)
 - [ ] **Store listing copy** — lead with "No bank login required", no forbidden language
 
 ### 🟡 MEDIUM — Quality
@@ -93,7 +93,7 @@ These require manual work by the app owner — cannot be done in code.
 
 ## 🏆 COMPETITIVE LANDSCAPE
 
-| Competitor | RAYMA Advantage |
+| Competitor | Rayma AI Advantage |
 |---|---|
 | Monarch Money | Free tier, AI advisor, no bank login |
 | YNAB | Less friction, cheaper, works offline |
@@ -119,7 +119,7 @@ These require manual work by the app owner — cannot be done in code.
 
 ### Quarterly
 - Run Security Audit page (`/security`)
-- Run RAYMA debug mode (`rayma debug mode` + password)
+- Run Rayma AI debug mode (`rayma debug mode` + password)
 - Update Privacy Policy if any data practices change
 
 ### Annually

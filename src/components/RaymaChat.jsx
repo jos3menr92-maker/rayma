@@ -24,6 +24,7 @@ import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // 🔒 PRIVACY COMPLIANCE: Strip tokens, account numbers, and PII before diagnostic dispatch
 const SENSITIVE_KEYS = ['token', 'access_token', 'plaid_access_token', 'account_number', 'account_id', 'routing_number', 'ssn', 'email', 'phone', 'password', 'api_key', 'secret', 'authorization'];
@@ -48,7 +49,7 @@ function sanitizeForDiagnostic(obj) {
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
   assets = [], savingsGoals = [], taxes = [], userProfile = null, 
-  currentPage = "", forceOpen, onClose, autoOpen 
+  currentPage = "", forceOpen, onClose, autoOpen, prefillPrompt = "", onPrefillConsumed 
 }) {
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -58,6 +59,7 @@ export default function RaymaChat({
   const [scanning, setScanning] = useState(false);
   const [tourTriggered, setTourTriggered] = useState(false);
   const { lang } = useLanguage();
+  const { formatCurrency } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
@@ -98,6 +100,22 @@ export default function RaymaChat({
     }
   }, [forceOpen, autoOpen, conversation, initializing]);
 
+  // Lock body scroll while chat panel is open
+  useEffect(() => {
+    if (forceOpen) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [forceOpen]);
+
+  // Prefill prompt from external triggers (e.g. quick-add menu)
+  useEffect(() => {
+    if (prefillPrompt && conversation) {
+      setInput(prefillPrompt);
+      onPrefillConsumed?.();
+    }
+  }, [prefillPrompt, conversation]);
+
   useEffect(() => {
     if (!conversation?.id) return;
     const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
@@ -133,7 +151,7 @@ export default function RaymaChat({
       setInput("");
       setLoading(true);
       setTimeout(() => {
-        const response = T("cashFlowSmootherResponse", `I analyzed your cash flow. You have **$${bills.reduce((a,b)=>a+b.amount,0)}** in bills, mostly concentrated in the first week of the month. \n\nI recommend shifting your **Netflix** and **Car Insurance** due dates to the 15th to align with your mid-month payday. \n\n*Script to use:* "Hi, I'm calling to align my billing cycle with my pay schedule. Can we permanently shift my monthly due date to the 15th?"`);
+        const response = T("cashFlowSmootherResponse", `I analyzed your cash flow. You have **${formatCurrency(bills.reduce((a,b)=>a+b.amount,0))}** in bills, mostly concentrated in the first week of the month. \n\nI recommend shifting your **Netflix** and **Car Insurance** due dates to the 15th to align with your mid-month payday. \n\n*Script to use:* "Hi, I'm calling to align my billing cycle with my pay schedule. Can we permanently shift my monthly due date to the 15th?"`);
         setMessages(prev => [...prev, { role: "assistant", content: response }]);
         setLoading(false);
       }, 800);
@@ -169,7 +187,7 @@ export default function RaymaChat({
 
         const splitSum = parsedSplits.reduce((s, sp) => s + sp.amount, 0);
         if (Math.abs(splitSum - totalAmount) > 0.01) {
-          setMessages(prev => [...prev, { role: "assistant", content: T("splitMismatch", `Your splits add up to $${splitSum.toFixed(2)}, but the transaction is $${totalAmount.toFixed(2)}. Please adjust and try again.`) }]);
+          setMessages(prev => [...prev, { role: "assistant", content: T("splitMismatch", `Your splits add up to ${formatCurrency(splitSum)}, but the transaction is ${formatCurrency(totalAmount)}. Please adjust and try again.`) }]);
           setLoading(false);
           return;
         }
@@ -202,8 +220,8 @@ export default function RaymaChat({
           const { error: splitError } = await supabase.from("transaction_splits").insert(splitRows);
           if (splitError) throw splitError;
 
-          const summary = parsedSplits.map(sp => `$${sp.amount.toFixed(2)} ${sp.category}`).join(" + ");
-          setMessages(prev => [...prev, { role: "assistant", content: T("splitLoggedSuccess", `✅ **Split Logged!** I recorded a $${totalAmount.toFixed(2)} transaction at ${merchant}, split into: ${summary}. Your budgets will update automatically.`) }]);
+          const summary = parsedSplits.map(sp => `${formatCurrency(sp.amount)} ${sp.category}`).join(" + ");
+          setMessages(prev => [...prev, { role: "assistant", content: T("splitLoggedSuccess", `✅ **Split Logged!** I recorded a ${formatCurrency(totalAmount)} transaction at ${merchant}, split into: ${summary}. Your budgets will update automatically.`) }]);
         } catch (err) {
           console.error("Split log error:", err.message);
           setMessages(prev => [...prev, { role: "assistant", content: T("splitLogError", `I tried to log your split transaction at ${merchant}, but encountered a database error. Please try again.`) }]);
@@ -237,7 +255,7 @@ export default function RaymaChat({
             payment_type: 'bill',     
             payment_date: new Date().toISOString() 
           }]);
-          setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your $${amount} payment to ${target} in your database. Your balances will update automatically.`) }]);
+          setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your ${formatCurrency(amount)} payment to ${target} in your database. Your balances will update automatically.`) }]);
         } catch (error) {
           setMessages(prev => [...prev, { role: "assistant", content: T("paymentLogError", `I tried to log your payment to ${target}, but I couldn't connect to the database.`) }]);
         }
@@ -271,7 +289,7 @@ export default function RaymaChat({
             category: "other",
             type: "debit"
           }]);
-          setMessages(prev => [...prev, { role: "assistant", content: T("spentLoggedSuccess", `✅ **Transaction Logged!** I recorded a $${amount.toFixed(2)} transaction at ${merchant}. \n\n*💡 Tip: If you have a receipt, tap the scan button to upload it. It's not required, but it's a great habit for keeping your records bulletproof!*`) }]);
+          setMessages(prev => [...prev, { role: "assistant", content: T("spentLoggedSuccess", `✅ **Transaction Logged!** I recorded a ${formatCurrency(amount)} transaction at ${merchant}. \n\n*💡 Tip: If you have a receipt, tap the scan button to upload it. It's not required, but it's a great habit for keeping your records bulletproof!*`) }]);
         } catch (error) {
           console.error("Spent log error:", error.message);
           setMessages(prev => [...prev, { role: "assistant", content: T("spentLogError", `I tried to log your transaction at ${merchant}, but encountered a database error.`) }]);
@@ -429,13 +447,10 @@ export default function RaymaChat({
 // --- 8. MAIN AI FALLBACK LOGIC (WITH BATTERY DRAIN) ---
     if (!input.trim() || loading || !conversation) return;
 
-    // 🔋 THE TOKEN TOLL BOOTH
-    // Calculate total available tokens (Free Energy + Purchased Coins)
-    const freeEnergy = userProfile?.energy_bars || 0;
-    const paidEnergy = userProfile?.purchased_energy || 0;
-    const totalEnergy = freeEnergy + paidEnergy;
+    // 🔋 THE TOKEN TOLL BOOTH — aligned with Store/Dashboard (ai_tokens)
+    const aiTokens = userProfile?.ai_tokens ?? userProfile?.ai_tokens_daily_limit ?? 0;
 
-    if (totalEnergy <= 0) {
+    if (aiTokens <= 0) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
       setInput("");
       setTimeout(() => {
@@ -444,25 +459,10 @@ export default function RaymaChat({
           content: T("outOfEnergy", "⚡ **Out of Energy!** \n\nI need a recharge to run this analysis. Head over to the **Arcade** to play a game and earn free tokens, or visit the **Store** for a quick recharge!") 
         }]);
       }, 500);
-      return; // Stop the AI from running
+      return;
     }
 
-    // Deduct 1 Token (Prioritize draining free daily energy first)
-    if (supaUser?.id) {
-      let updates = {};
-      if (freeEnergy > 0) {
-        updates = { energy_bars: freeEnergy - 1 };
-      } else if (paidEnergy > 0) {
-        updates = { purchased_energy: paidEnergy - 1 };
-      }
-      
-      // Fire the deduction to Supabase (using 'id' for profiles table based on your schema)
-      supabase.from('profiles').update(updates).eq('id', supaUser.id).then(({error}) => {
-        if (error) console.error("Failed to deduct token:", error.message);
-      });
-    }
-
-    // Proceed with sending the message to the AI
+    // Token consumption is handled natively by the Base44 agent platform via addMessage below
     const messageContent = input.trim(); 
     setInput("");
     setLoading(true);
@@ -516,16 +516,16 @@ export default function RaymaChat({
               <p className="text-xs text-muted-foreground">{T("aiFinancialAdvisor", "AI Financial Advisor")}</p>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleClear} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("clearConversation", "Clear conversation")}>
+              <button onClick={handleClear} aria-label={T("clearConversation", "Clear conversation")} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("clearConversation", "Clear conversation")}>
                 <Trash2 className="w-5 h-5 text-muted-foreground" />
               </button>
-              <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors">
+              <button onClick={onClose} aria-label={T("closeChat", "Close chat")} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors">
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Rayma AI conversation">
             {initializing ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -581,6 +581,7 @@ export default function RaymaChat({
             <button
               onClick={() => scanFileRef.current?.click()}
               disabled={loading || initializing || scanning}
+              aria-label={T("scanAnalyzeDoc", "Scan & analyze a document")}
               className="h-12 w-12 flex items-center justify-center bg-muted text-muted-foreground rounded-lg hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50 shrink-0"
               title={T("scanAnalyzeDoc", "Scan & analyze a document")}
             >
@@ -598,6 +599,7 @@ export default function RaymaChat({
             <button
               onClick={handleSend}
               disabled={!input.trim() || loading || initializing}
+              aria-label={T("sendMessage", "Send message")}
               className="h-12 w-12 flex items-center justify-center bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0"
             >
               <Send className="w-5 h-5" />
