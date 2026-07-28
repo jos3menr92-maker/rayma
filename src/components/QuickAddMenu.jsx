@@ -19,11 +19,11 @@ export default function QuickAddMenu({ open, onClose }) {
 
   const actions = [
     { key: "scan", icon: ScanLine, label: T("scanLogDocument", "Scan & Log Document"), color: "bg-primary/10 text-primary border-primary/20", badge: "AI", action: () => { onClose(); navigate("/documents"); } },
-    { key: "loan", icon: CreditCard, label: T("addLoan", "Add Loan"), color: "bg-blue-500/10 text-blue-600 border-blue-200", action: () => { onClose(); navigate("/add-loan"); } },
-    { key: "bill", icon: Receipt, label: T("addBill", "Add Bill"), color: "bg-orange-500/10 text-orange-600 border-orange-200", action: () => { onClose(); navigate("/bills"); } },
-    { key: "income", icon: DollarSign, label: T("logIncome", "Log Income"), color: "bg-green-500/10 text-green-600 border-green-200", action: () => { onClose(); navigate("/finance"); } },
-    { key: "savings", icon: PiggyBank, label: T("addSavingsGoal", "Add Savings Goal"), color: "bg-purple-500/10 text-purple-600 border-purple-200", action: () => { onClose(); navigate("/budget-dashboard"); } },
-    { key: "transaction", icon: ArrowLeftRight, label: T("logTransaction", "Log Transaction"), color: "bg-teal-500/10 text-teal-600 border-teal-200", action: () => { onClose(); navigate("/bank-accounts", { state: { autoOpenLog: true } }); } },
+    { key: "loan", icon: CreditCard, label: T("addLoan", "Add Loan"), color: "bg-primary/10 text-primary border-primary/20", action: () => { onClose(); navigate("/add-loan"); } },
+    { key: "bill", icon: Receipt, label: T("addBill", "Add Bill"), color: "bg-accent/10 text-accent border-accent/20", action: () => { onClose(); navigate("/bills"); } },
+    { key: "income", icon: DollarSign, label: T("logIncome", "Log Income"), color: "bg-primary/10 text-primary border-primary/20", action: () => { onClose(); navigate("/finance"); } },
+    { key: "savings", icon: PiggyBank, label: T("addSavingsGoal", "Add Savings Goal"), color: "bg-accent/10 text-accent border-accent/20", action: () => { onClose(); navigate("/budget-dashboard"); } },
+    { key: "transaction", icon: ArrowLeftRight, label: T("logTransaction", "Log Transaction"), color: "bg-primary/10 text-primary border-primary/20", action: () => { onClose(); navigate("/bank-accounts", { state: { autoOpenLog: true } }); } },
   ];
 
   return (
@@ -61,7 +61,7 @@ export default function QuickAddMenu({ open, onClose }) {
                     onClick={a.action}
                     className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl border text-left transition-all active:scale-[0.98] ${a.color}`}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/60">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-background/60">
                       <Icon className="w-5 h-5" />
                     </div>
                     <span className="font-semibold text-sm">{a.label}</span>
