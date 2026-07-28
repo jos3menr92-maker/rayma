@@ -161,6 +161,17 @@
   opacity: 0.9;
 }
 
+/* Arcade — force landscape on portrait devices */
+.game-landscape {
+  position: fixed !important;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  height: 100vw;
+  transform: translate(-50%, -50%) rotate(90deg);
+  z-index: 100;
+}
+
 /* Tour active state — blocks background interaction */
 body.tour-active #bottom-nav,
 body.tour-active #quick-add-button {
