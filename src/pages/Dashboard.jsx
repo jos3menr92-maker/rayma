@@ -307,6 +307,10 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Store className="w-4 h-4 text-primary" /></div>
           <div><p className="text-xs font-semibold text-foreground">{T("merchantInsights", "Merchant Insights")}</p><p className="text-[10px] text-muted-foreground">{T("spendingByMerchant", "Spending by merchant")}</p></div>
         </button>
+        <button onClick={() => navigate("/loans")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
+          <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0"><CreditCard className="w-4 h-4 text-destructive" /></div>
+          <div><p className="text-xs font-semibold text-foreground">{T("loans", "Loans & Debt")}</p><p className="text-[10px] text-muted-foreground">{T("manageActiveLoans", "Manage your active loans")}</p></div>
+        </button>
       </div>
 
       <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">

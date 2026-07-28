@@ -5,7 +5,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";
 
 // 🚀 FIXED: Merged all icons into one single, clean import line!
-import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, Download, MessageSquare, CreditCard,} from "lucide-react";
+import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp, BarChart2, CalendarDays, FileText, Bell, User, Heart, ShieldCheck, Trash2, Headset, Download, MessageSquare, CreditCard, Store } from "lucide-react";
 
 const moreItems = [
   { path: "/loans", icon: CreditCard, labelKey: "loans", labelFallback: "Loans & Debt", descKey: "manageActiveLoans", descFallback: "Manage your active loans" },
@@ -16,6 +16,7 @@ const moreItems = [
   { path: "/documents", icon: FolderOpen, labelKey: "documentVault", labelFallback: "Document Vault", descKey: "storeScanFinancialDocs", descFallback: "Store & scan financial docs" },
   { path: "/monthly-recap", icon: CalendarDays, labelKey: "monthlyRecap", labelFallback: "Monthly Recap", descKey: "summary", descFallback: "Income & spending summary" },
   { path: "/assets", icon: BarChart2, labelKey: "assetsAndNetWorth", labelFallback: "Assets & Net Worth", descKey: "trackWhatYouOwn", descFallback: "Track what you own" },
+  { path: "/merchants", icon: Store, labelKey: "merchantInsights", labelFallback: "Merchant Insights", descKey: "spendingByMerchant", descFallback: "Spending by merchant" },
   // 🛡️ ROUTED TO VAULT
   { path: "/profile", icon: Download, labelKey: "exportMyData", labelFallback: "Export Data", descKey: "goToSecurityVault", descFallback: "Go to Security Vault" }, 
   { path: "/trend", icon: TrendingUp, labelKey: "monthlyTrend", labelFallback: "Monthly Trend", descKey: "spendingTrendsOverTime", descFallback: "Spending trends over time" },
