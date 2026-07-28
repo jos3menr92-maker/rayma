@@ -36,8 +36,8 @@ export default function SideDrawer({ open, onClose }) {
 
   const tokenDisplay = () => {
     if (!user) return null;
-    const tokens = user.ai_tokens_remaining || 0;
-    const max = user.ai_tokens_daily_limit || 10;
+    const tokens = user.ai_tokens ?? user.ai_tokens_daily_limit ?? 10;
+    const max = user.ai_tokens_daily_limit ?? 10;
     const isInf = user.subscription_type === 'Generator' || tokens > 900;
     const pct = isInf ? 100 : Math.max(0, Math.min(100, (tokens / max) * 100));
     const color = isInf ? "bg-amber-400" : (pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-yellow-500" : "bg-destructive");

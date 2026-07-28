@@ -8,11 +8,13 @@ import { useT } from "@/lib/LanguageContext";
 import { isNativeMobileApp, getPlatform, triggerNativeIAP, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
 import { useAuth } from "@/lib/AuthContext";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Store() {
   const T = useT();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { refreshUserProfile } = useFinancialData();
+  const { userProfile, refreshUserProfile } = useFinancialData();
 
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState("");
@@ -170,6 +172,46 @@ export default function Store() {
             {T("powerStationDesc", "Every user gets an AA Battery (10 Energy Bars) every day for free. Need more juice to simulate heavy debt payoffs? Upgrade your capacity below.")}
           </p>
         </div>
+
+        {userProfile && (
+          <div className="mb-6 bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative w-8 h-4 border-2 border-muted-foreground/40 rounded-sm p-[1px] flex">
+                <div
+                  className={`h-full rounded-sm transition-all ${
+                    (userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10) > 900 || userProfile.subscription_type === 'Generator'
+                      ? "bg-amber-400"
+                      : ((userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10) / (userProfile.ai_tokens_daily_limit ?? 10)) * 100 > 50
+                      ? "bg-emerald-500"
+                      : ((userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10) / (userProfile.ai_tokens_daily_limit ?? 10)) * 100 > 20
+                      ? "bg-yellow-500"
+                      : "bg-destructive"
+                  }`}
+                  style={{
+                    width: `${
+                      (userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10) > 900 || userProfile.subscription_type === 'Generator'
+                        ? 100
+                        : Math.max(0, Math.min(100, ((userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10) / (userProfile.ai_tokens_daily_limit ?? 10)) * 100))
+                    }%`
+                  }}
+                />
+                <div className="absolute -right-[4px] top-0.5 w-[2px] h-1.5 bg-muted-foreground/40 rounded-r-sm" />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("batteryStatus", "Battery Status")}</p>
+                <p className="text-sm font-bold font-heading text-foreground">
+                  {(userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10) > 900 || userProfile.subscription_type === 'Generator'
+                    ? "∞ Unlimited"
+                    : `${userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10} / ${userProfile.ai_tokens_daily_limit ?? 10}`}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("currentPlan", "Current Plan")}</p>
+              <p className="text-sm font-semibold text-primary">{userProfile.subscription_type || "Free"}</p>
+            </div>
+          </div>
+        )}
 
         {(successType || promoSuccess) && (
           <div className="mb-6 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl p-4 flex items-center gap-3">
