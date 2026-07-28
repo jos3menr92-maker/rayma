@@ -21,21 +21,21 @@ Deno.serve(async (req) => {
     const isoDate = (d) => d.toISOString().split('T')[0];
     const results = {};
 
-    // --- Bank Accounts (columns: id, user_id, name, balance, created_at) ---
+    // --- Bank Accounts (columns: id, user_id, name, balance, institution, created_at) ---
     const bankAccounts = [
-      { user_id: uid, name: 'Chase Checking', balance: 4250.75 },
-      { user_id: uid, name: 'Ally Savings', balance: 18500.00 },
-      { user_id: uid, name: 'Amex Gold Card', balance: -1245.30 },
-      { user_id: uid, name: 'Fidelity Brokerage', balance: 32100.50 },
+      { user_id: uid, name: 'Chase Checking', balance: 4250.75, institution: 'Chase' },
+      { user_id: uid, name: 'Ally Savings', balance: 18500.00, institution: 'Ally Bank' },
+      { user_id: uid, name: 'Amex Gold Card', balance: -1245.30, institution: 'American Express' },
+      { user_id: uid, name: 'Fidelity Brokerage', balance: 32100.50, institution: 'Fidelity' },
     ];
     const { error: baErr } = await supabaseAdmin.from('bank_accounts').insert(bankAccounts);
     results.bank_accounts = baErr ? `Error: ${baErr.message}` : `${bankAccounts.length} rows inserted`;
 
-    // --- Loans (columns: id, user_id, name, original_amount, current_balance, interest_rate, monthly_payment, payment_frequency, start_date, status, created_at) ---
+    // --- Loans (columns: id, user_id, name, lender, original_amount, current_balance, interest_rate, monthly_payment, payment_frequency, start_date, status, created_at) ---
     const loans = [
-      { user_id: uid, name: 'Honda Civic Auto Loan', original_amount: 28000, remaining_balance: 18500, interest_rate: 5.9, monthly_payment: 480, payment_frequency: 'monthly', status: 'active' },
-      { user_id: uid, name: 'Sallie Mae Student Loan', original_amount: 45000, remaining_balance: 32000, interest_rate: 6.8, monthly_payment: 380, payment_frequency: 'monthly', status: 'active' },
-      { user_id: uid, name: 'Discover Personal Loan', original_amount: 8000, remaining_balance: 3200, interest_rate: 11.5, monthly_payment: 250, payment_frequency: 'monthly', status: 'active' },
+      { user_id: uid, name: 'Honda Civic Auto Loan', lender: 'Honda Financial', original_amount: 28000, current_balance: 18500, interest_rate: 5.9, monthly_payment: 480, payment_frequency: 'monthly', start_date: '2024-03-15', status: 'active' },
+      { user_id: uid, name: 'Sallie Mae Student Loan', lender: 'Sallie Mae', original_amount: 45000, current_balance: 32000, interest_rate: 6.8, monthly_payment: 380, payment_frequency: 'monthly', start_date: '2022-09-01', status: 'active' },
+      { user_id: uid, name: 'Discover Personal Loan', lender: 'Discover', original_amount: 8000, current_balance: 3200, interest_rate: 11.5, monthly_payment: 250, payment_frequency: 'monthly', start_date: '2025-01-10', status: 'active' },
     ];
     const { error: lnErr } = await supabaseAdmin.from('loans').insert(loans);
     results.loans = lnErr ? `Error: ${lnErr.message}` : `${loans.length} rows inserted`;
@@ -52,31 +52,33 @@ Deno.serve(async (req) => {
     const { error: blErr } = await supabaseAdmin.from('bills').insert(bills);
     results.bills = blErr ? `Error: ${blErr.message}` : `${bills.length} rows inserted`;
 
-    // --- Transactions (columns: id, user_id, description, amount, type, notes, created_at — NO date column) ---
+    // --- Transactions (columns: id, user_id, description, amount, date, type, notes, created_at) ---
     const txnData = [
-      { desc: 'Paycheck Deposit', amt: 2400, type: 'credit' },
-      { desc: 'Whole Foods', amt: -87.45, type: 'debit' },
-      { desc: 'Shell Gas Station', amt: -52.30, type: 'debit' },
-      { desc: 'Netflix', amt: -15.49, type: 'debit' },
-      { desc: 'Starbucks', amt: -6.75, type: 'debit' },
-      { desc: 'Amazon Purchase', amt: -34.99, type: 'debit' },
-      { desc: 'Electric Bill', amt: -125.00, type: 'debit' },
-      { desc: 'Paycheck Deposit', amt: 2400, type: 'credit' },
-      { desc: 'Chipotle', amt: -14.50, type: 'debit' },
-      { desc: 'Uber Ride', amt: -18.40, type: 'debit' },
-      { desc: 'Spotify', amt: -9.99, type: 'debit' },
-      { desc: 'Target', amt: -45.67, type: 'debit' },
-      { desc: 'CVS Pharmacy', amt: -22.15, type: 'debit' },
-      { desc: 'Rent Payment', amt: -1450, type: 'debit' },
-      { desc: 'Freelance Income', amt: 500, type: 'credit' },
-      { desc: 'AT&T Phone Bill', amt: -65.00, type: 'debit' },
-      { desc: 'Shell Gas Station', amt: -48.90, type: 'debit' },
-      { desc: 'Trader Joes', amt: -62.30, type: 'debit' },
-      { desc: 'Movie Tickets', amt: -28.00, type: 'debit' },
-      { desc: 'Car Insurance', amt: -95.00, type: 'debit' },
+      { desc: 'Paycheck Deposit', amt: 2400, type: 'credit', daysAgo: 1 },
+      { desc: 'Whole Foods', amt: -87.45, type: 'debit', daysAgo: 1 },
+      { desc: 'Shell Gas Station', amt: -52.30, type: 'debit', daysAgo: 2 },
+      { desc: 'Netflix', amt: -15.49, type: 'debit', daysAgo: 2 },
+      { desc: 'Starbucks', amt: -6.75, type: 'debit', daysAgo: 3 },
+      { desc: 'Amazon Purchase', amt: -34.99, type: 'debit', daysAgo: 3 },
+      { desc: 'Electric Bill', amt: -125.00, type: 'debit', daysAgo: 4 },
+      { desc: 'Paycheck Deposit', amt: 2400, type: 'credit', daysAgo: 5 },
+      { desc: 'Chipotle', amt: -14.50, type: 'debit', daysAgo: 6 },
+      { desc: 'Uber Ride', amt: -18.40, type: 'debit', daysAgo: 7 },
+      { desc: 'Spotify', amt: -9.99, type: 'debit', daysAgo: 8 },
+      { desc: 'Target', amt: -45.67, type: 'debit', daysAgo: 9 },
+      { desc: 'CVS Pharmacy', amt: -22.15, type: 'debit', daysAgo: 10 },
+      { desc: 'Rent Payment', amt: -1450, type: 'debit', daysAgo: 12 },
+      { desc: 'Freelance Income', amt: 500, type: 'credit', daysAgo: 14 },
+      { desc: 'AT&T Phone Bill', amt: -65.00, type: 'debit', daysAgo: 15 },
+      { desc: 'Shell Gas Station', amt: -48.90, type: 'debit', daysAgo: 17 },
+      { desc: 'Trader Joes', amt: -62.30, type: 'debit', daysAgo: 20 },
+      { desc: 'Movie Tickets', amt: -28.00, type: 'debit', daysAgo: 22 },
+      { desc: 'Car Insurance', amt: -95.00, type: 'debit', daysAgo: 25 },
     ];
     const transactions = txnData.map(t => ({
-      user_id: uid, description: t.desc, amount: t.amt
+      user_id: uid, description: t.desc, amount: t.amt, type: t.type,
+      date: isoDate(new Date(now.getTime() - t.daysAgo * 86400000)),
+      notes: 'Test transaction'
     }));
     const { error: txErr } = await supabaseAdmin.from('transactions').insert(transactions);
     results.transactions = txErr ? `Error: ${txErr.message}` : `${transactions.length} rows inserted`;
@@ -92,11 +94,11 @@ Deno.serve(async (req) => {
     const { error: asErr } = await supabaseAdmin.from('assets').insert(assets);
     results.assets = asErr ? `Error: ${asErr.message}` : `${assets.length} rows inserted`;
 
-    // --- Savings Goals (columns: id, created_at, name, target_amount, current_saved, notes — NO user_id) ---
+    // --- Savings Goals (columns: id, user_id, name, target_amount, current_saved, notes, created_at) ---
     const savingsGoals = [
-      { name: 'Emergency Fund', target_amount: 10000, current_saved: 6000, notes: 'Test goal' },
-      { name: 'Vacation to Japan', target_amount: 5000, current_saved: 1800, notes: 'Test goal' },
-      { name: 'New Laptop', target_amount: 2000, current_saved: 800, notes: 'Test goal' },
+      { user_id: uid, name: 'Emergency Fund', target_amount: 10000, current_saved: 6000, notes: 'Test goal' },
+      { user_id: uid, name: 'Vacation to Japan', target_amount: 5000, current_saved: 1800, notes: 'Test goal' },
+      { user_id: uid, name: 'New Laptop', target_amount: 2000, current_saved: 800, notes: 'Test goal' },
     ];
     const { error: sgErr } = await supabaseAdmin.from('savings_goals').insert(savingsGoals);
     results.savings_goals = sgErr ? `Error: ${sgErr.message}` : `${savingsGoals.length} rows inserted`;
