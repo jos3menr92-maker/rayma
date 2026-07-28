@@ -10,9 +10,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Initialize Supabase admin client
-    const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    // Initialize Supabase admin client (sanitize env vars — they may contain quotes/brackets)
+    const rawUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("VITE_SUPABASE_URL") || "";
+    const urlMatch = rawUrl.match(/https:\/\/[^\s"'<>\[\]]+/);
+    const supabaseUrl = urlMatch ? urlMatch[0] : "";
+    const rawKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const keyMatch = rawKey.match(/eyJ[A-Za-z0-9_\-.]+/);
+    const supabaseServiceKey = keyMatch ? keyMatch[0] : rawKey.trim().replace(/^["'\[\]]|["'\[\]]$/g, "");
     if (!supabaseUrl || !supabaseServiceKey) {
       return Response.json({ error: 'Supabase credentials not configured' }, { status: 500 });
     }

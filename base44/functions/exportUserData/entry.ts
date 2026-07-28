@@ -14,9 +14,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Instantiate Supabase admin client
-    const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    // Instantiate Supabase admin client (sanitize env vars — they may contain quotes/brackets)
+    const rawUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("VITE_SUPABASE_URL") || "";
+    const urlMatch = rawUrl.match(/https:\/\/[^\s"'<>\[\]]+/);
+    const supabaseUrl = urlMatch ? urlMatch[0] : "";
+    const rawKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const keyMatch = rawKey.match(/eyJ[A-Za-z0-9_\-.]+/);
+    const supabaseKey = keyMatch ? keyMatch[0] : rawKey.trim().replace(/^["'\[\]]|["'\[\]]$/g, "");
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error("Missing Supabase configuration secrets.");
