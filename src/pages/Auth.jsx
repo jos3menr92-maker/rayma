@@ -67,6 +67,11 @@ export default function Auth() {
       const errMsg = err.message?.toLowerCase() || "";
       if (errMsg.includes("verify") || errMsg.includes("not confirmed") || errMsg.includes("verification")) {
         setShowOtp(true);
+      } else if (!isLogin && (errMsg.includes("already") || errMsg.includes("exists") || errMsg.includes("registered"))) {
+        setError("");
+        setIsLogin(true);
+        setFormData({ ...formData, password: "" });
+        setError(T("accountExistsLoginInstead", "An account with this email already exists. Please sign in instead."));
       } else {
         setError(err.message || "Authentication failed. Please check your credentials.");
       }

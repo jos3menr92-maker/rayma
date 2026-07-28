@@ -1,6 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
-import { permanentlyDeleteUser } from '../../shared/accountWipe.js';
 
 Deno.serve(async (req) => {
   try {
@@ -32,19 +31,38 @@ Deno.serve(async (req) => {
     }
 
     if (supaUserData.user.email !== user.email) {
-      return Response.json({ error: 'Email mismatch — account deletion denied' }, { status: 403 });
+      return Response.json({ error: 'Email mismatch — deletion scheduling denied' }, { status: 403 });
     }
 
-    await permanentlyDeleteUser({
-      supabaseAdmin,
-      supabaseUserId,
-      email: user.email,
-      base44ServiceRole: base44.asServiceRole,
-    });
+    // Set deletion_scheduled_at to now() + 30 days
+    const deletionDate = new Date();
+    deletionDate.setDate(deletionDate.getDate() + 30);
+    const deletionDateISO = deletionDate.toISOString();
 
-    return Response.json({ success: true });
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ deletion_scheduled_at: deletionDateISO })
+      .eq('id', supabaseUserId);
+
+    if (updateError) {
+      console.error('Failed to set deletion_scheduled_at:', updateError.message);
+      throw updateError;
+    }
+
+    console.log(`Deletion scheduled for user ${supabaseUserId} (email: ${user.email}) on ${deletionDateISO}`);
+
+    // Revoke all active Supabase sessions for this user
+    const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(supabaseUserId, 'global');
+    if (signOutError) {
+      console.error('Failed to revoke sessions:', signOutError.message);
+      // Non-fatal — continue, the flag is already set
+    } else {
+      console.log(`All sessions revoked for user ${supabaseUserId}`);
+    }
+
+    return Response.json({ success: true, deletionDate: deletionDateISO });
   } catch (error) {
-    console.error('Account deletion error:', error.message);
+    console.error('Schedule account deletion error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

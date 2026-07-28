@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const [deletionCancelled, setDeletionCancelled] = useState(false);
 
   useEffect(() => {
     checkAppState();
@@ -108,6 +109,40 @@ export const AuthProvider = ({ children }) => {
             if (signInError) throw signInError;
           }
         }
+
+        // Grace-period check: after Supabase session is confirmed, check deletion flag
+        try {
+          const { data: { session: confirmedSession } } = await supabase.auth.getSession();
+          if (confirmedSession) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('deletion_scheduled_at')
+              .eq('id', confirmedSession.user.id)
+              .single();
+
+            if (profile?.deletion_scheduled_at) {
+              const deletionDate = new Date(profile.deletion_scheduled_at);
+              if (deletionDate > new Date()) {
+                // GRACE PERIOD ACTIVE — user logged back in, cancel the deletion
+                await supabase
+                  .from('profiles')
+                  .update({ deletion_scheduled_at: null })
+                  .eq('id', confirmedSession.user.id);
+                setDeletionCancelled(true);
+              } else {
+                // EXPIRED — account should have been wiped by cron, block login
+                await supabase.auth.signOut();
+                setAuthError({ type: 'auth_required', message: 'Account permanently deleted' });
+                setUser(null);
+                setIsAuthenticated(false);
+                return;
+              }
+            }
+          }
+        } catch (gracePeriodError) {
+          // Non-fatal: if profiles table is unreachable, do not block login
+          console.error('Grace period check failed (non-fatal):', gracePeriodError);
+        }
       } catch (syncError) {
         console.error('Supabase sync failed:', syncError);
         // Non-fatal: Base44 auth succeeded; Supabase will retry on next data fetch
@@ -170,6 +205,8 @@ export const AuthProvider = ({ children }) => {
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
+      deletionCancelled,
+      setDeletionCancelled,
       logout,
       navigateToLogin,
       checkAppState

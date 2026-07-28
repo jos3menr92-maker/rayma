@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useLanguage, useT } from "@/lib/LanguageContext"; 
 import { LANGUAGES } from "@/lib/i18n";
 import { base44 } from "@/api/base44Client";
@@ -61,6 +62,8 @@ export default function Profile() {
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [scheduledDeletionDate, setScheduledDeletionDate] = useState(null);
   
   // 🔒 Security Vault State - NOW FULLY WIRED
   const [showPasswordLock, setShowPasswordLock] = useState(false);
@@ -210,7 +213,8 @@ export default function Profile() {
       if (pendingAction === 'export') {
         await handleExport();
       } else if (pendingAction === 'delete') {
-        await handleDelete();
+        // Show the 30-day grace period confirmation dialog before scheduling
+        setShowDeleteConfirm(true);
       }
       
     } catch (err) {
@@ -241,46 +245,19 @@ export default function Profile() {
     setDeleting(true);
     try {
       const uid = supaUser?.id;
-      if (!uid) throw new Error("User ID missing. Cannot delete account.");
+      if (!uid) throw new Error("User ID missing. Cannot schedule account deletion.");
 
-      // 1. Delete Supabase Storage files (avatars)
-      if (userProfile?.avatar_id) {
-        await supabase.storage.from('avatars').remove([userProfile.avatar_id]).catch(e => console.warn("Avatar ID cleanup missed:", e.message));
-      }
-      if (userProfile?.avatar_photo_url) {
-        const fileName = userProfile.avatar_photo_url.split('/').pop();
-        if (fileName) {
-          await supabase.storage.from('avatars').remove([fileName]).catch(e => console.warn("Custom photo cleanup missed:", e.message));
-        }
+      const res = await base44.functions.invoke('scheduleAccountDeletion', { supabaseUserId: uid });
+
+      if (res?.data?.deletionDate) {
+        setScheduledDeletionDate(new Date(res.data.deletionDate));
       }
 
-      // 2. Hard wipe all financial data from Supabase (fail-safe: continues on table misses)
-      const tables = ['transaction_splits', 'payments', 'loan_adjustments', 'promo_redemptions', 'arcade_scores', 'assets', 'bank_accounts', 'bills', 'budget_categories', 'documents', 'feedback', 'incomes', 'loans', 'net_worth_snapshots', 'savings_goals', 'transactions', 'user_memories', 'profiles'];
-      for (const table of tables) {
-        // 🛡️ Fail-Safe Key Mapping: profiles table primary key is 'id', others use 'user_id'
-        const targetColumn = table === 'profiles' ? 'id' : 'user_id';
-        
-        const { error } = await supabase.from(table).delete().eq(targetColumn, supaUser.id);
-        if (error) {
-          console.warn(`Failed to wipe table ${table}, plowing forward...`, error.message);
-          continue;
-        }
-      }
-
-      // 2. Delete both Supabase auth user AND Base44 user record via backend function
-      //    (No client-side Base44 SDK method exists — must use service role server-side)
-      try {
-        await base44.functions.invoke('deleteUserAccount', { supabaseUserId: uid });
-      } catch (e) {
-        console.error('Account deletion failed:', e.message);
-        throw new Error(e.message || "Failed to delete account. Please try again.");
-      }
-
-      // 3. Terminate Supabase session and redirect
       await supabase.auth.signOut();
       window.location.href = "/auth";
     } catch (err) {
-      console.error(err);
+      console.error("Scheduling failed:", err.message);
+      setAuthError(T("deletionScheduleFailed", "Failed to schedule account deletion. Please try again."));
       setDeleting(false);
     }
   };
@@ -562,6 +539,45 @@ export default function Profile() {
           </motion.div>
         </div>
       )}
+
+      {/* 🗑️ DELETE ACCOUNT CONFIRMATION DIALOG */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              {T("deleteAccountTitle", "Delete Account")}
+            </DialogTitle>
+            <DialogDescription className="text-sm pt-2">
+              {T("deletionGracePeriodNotice", "Your account will be scheduled for permanent deletion in 30 days. If you log back in before then, your deletion will be cancelled and your data restored. After 30 days, all your data will be permanently erased and cannot be recovered.")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex-1"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleting}
+            >
+              {T("cancel", "Cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="flex-1"
+              onClick={async () => {
+                setShowDeleteConfirm(false);
+                await handleDelete();
+              }}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              {T("scheduleDeletion", "Schedule Deletion")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
