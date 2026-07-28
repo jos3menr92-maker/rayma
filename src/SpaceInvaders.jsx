@@ -45,6 +45,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
     const player = { x: canvas.width / 2 - 20, y: canvas.height - 50, width: 40, height: 20, speed: 5, dx: 0 };
     let bullets = [];
     let aliens = [];
+    let alienDirection = 1;
     
     const rows = 4;
     const cols = 8;
@@ -53,6 +54,8 @@ export default function SpaceInvaders({ onUpdateScore }) {
     const alienPadding = 20;
     const alienOffsetLeft = 50;
     const alienOffsetTop = 60;
+    const alienStepX = 2;
+    const alienDropY = 15;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -140,13 +143,43 @@ export default function SpaceInvaders({ onUpdateScore }) {
         if (b.y < 0) bullets.splice(bIdx, 1);
       });
 
-      // Maintain alien rendering logic for collision
+      // Move aliens horizontally as a group; drop + reverse at edges
+      const aliveAliens = aliens.filter(a => a.alive);
+      if (aliveAliens.length > 0) {
+        const aliveCount = aliveAliens.length;
+        // Speed up as fewer aliens remain
+        const speedMultiplier = 1 + (1 - aliveCount / (rows * cols)) * 2;
+        const step = alienStepX * speedMultiplier * alienDirection;
+
+        const minX = Math.min(...aliveAliens.map(a => a.x));
+        const maxX = Math.max(...aliveAliens.map(a => a.x + a.width));
+
+        let shouldDrop = false;
+        if (alienDirection > 0 && maxX + step > canvas.width) shouldDrop = true;
+        if (alienDirection < 0 && minX + step < 0) shouldDrop = true;
+
+        aliens.forEach((alien) => {
+          if (!alien.alive) return;
+          if (shouldDrop) {
+            alien.y += alienDropY;
+            alien.x -= step; // undo this frame's horizontal, reversed next frame
+          } else {
+            alien.x += step;
+          }
+        });
+        if (shouldDrop) alienDirection *= -1;
+      }
+
+      // Render + collision
       let allDead = true;
       aliens.forEach((alien) => {
         if (!alien.alive) return;
         allDead = false;
         ctx.fillStyle = '#10b981';
         ctx.fillRect(alien.x, alien.y, alien.width, alien.height);
+
+        // Aliens reached player's row → game over
+        if (alien.y + alien.height >= player.y) { triggerEnd(false); return; }
 
         bullets.forEach((b, bIdx) => {
           if (b.x > alien.x && b.x < alien.x + alien.width && b.y > alien.y && b.y < alien.y + alien.height) {
@@ -156,7 +189,6 @@ export default function SpaceInvaders({ onUpdateScore }) {
             setScore(currentScore);
           }
         });
-        if (alien.y + alien.height >= player.y) triggerEnd(false);
       });
 
       if (allDead) triggerEnd(true);

@@ -170,7 +170,7 @@ export default function SkyStriker({ onUpdateScore }) {
       window.removeEventListener('keyup', handleKeyUp);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, isPaused, onUpdateScore]); 
+  }, [isGameRunning, gameOver, isPaused]);
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">

@@ -1,4 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
 
 Deno.serve(async (req) => {
   try {
@@ -18,7 +19,28 @@ Deno.serve(async (req) => {
     const currentBars = user.energy_bars || 0;
     const newEnergyTotal = currentBars + 1;
 
+    // 1. Update Base44 User
     await base44.auth.updateMe({ energy_bars: newEnergyTotal });
+
+    // 2. Sync to Supabase profiles table (best-effort — prevents stale override in FinancialDataContext)
+    try {
+      const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || Deno.env.get("SUPABASE_URL") || "";
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+      if (supabaseUrl && supabaseKey) {
+        const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
+        if (!listError && users && users.length > 0) {
+          const supaUserId = users.find(u => u.email === user.email)?.id;
+          if (supaUserId) {
+            await supabaseAdmin.from('profiles').update({ energy_bars: newEnergyTotal }).eq('id', supaUserId);
+          }
+        }
+      }
+    } catch (syncErr) {
+      console.warn("[Base44] Energy bar Supabase sync failed (non-fatal):", syncErr.message);
+    }
+
+    console.log(`[Base44] Arcade reward granted: ${gameId} | Level ${level} | User ${user.email} | Energy bars: ${currentBars} → ${newEnergyTotal}`);
 
     return Response.json({
       success: true,
