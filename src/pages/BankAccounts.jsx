@@ -99,6 +99,7 @@ export default function BankAccounts() {
       }
     } catch (err) {
       console.error("BankAccounts Error:", err.message);
+      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     }
     setShowDialog(false);
     fetchAll();
@@ -137,12 +138,13 @@ export default function BankAccounts() {
   };
 
   const saveTx = async () => {
-    if (!txForm.bank_account_id) { alert(T("selectAccountPrompt", "Please select a bank account.")); return; }
+    if (!txForm.bank_account_id) { toast({ title: T("selectAccountPrompt", "Please select a bank account.") }); return; }
     try {
       const { error } = await supabase.from('transactions').insert([{ ...txForm, amount: parseFloat(txForm.amount) || 0, user_id: supaUser?.id }]);
       if (error) throw error;
     } catch (err) {
       console.error("BankAccounts Error:", err.message);
+      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     }
     setShowTxDialog(false);
     setTxForm(emptyTx);

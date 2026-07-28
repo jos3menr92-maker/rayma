@@ -9,6 +9,7 @@ import { t } from "@/lib/i18n";
 import { ChevronRight, DollarSign, Receipt, CreditCard, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 
 const STEPS = ["welcome", "income", "bill", "loan", "done"];
 
@@ -37,6 +38,7 @@ export default function Onboarding() {
 
   const [step, setStep] = useState("welcome");
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const [weeklyIncome, setWeeklyIncome] = useState("");
   const [billName, setBillName] = useState("");
@@ -64,6 +66,7 @@ export default function Onboarding() {
         if (error) throw error;
       } catch (err) {
         console.error("Onboarding Error:", err.message);
+        toast({ title: T("saveFailed", "Could not save"), description: err.message, variant: "destructive" });
       }
     }
     
@@ -88,6 +91,7 @@ export default function Onboarding() {
           if (error) throw error;
         } catch (err) {
           console.error("Onboarding Error:", err.message);
+        toast({ title: T("saveFailed", "Could not save"), description: err.message, variant: "destructive" });
         }
       }
       
@@ -116,6 +120,7 @@ export default function Onboarding() {
           await reload();
         } catch (err) {
           console.error("Onboarding Error:", err.message);
+        toast({ title: T("saveFailed", "Could not save"), description: err.message, variant: "destructive" });
         }
       }
       

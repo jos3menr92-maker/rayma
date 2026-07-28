@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { useToast } from "@/components/ui/use-toast";
 
 const TYPE_ICONS = { cash: "💵", investment: "📈", property: "🏠", savings: "🏦", other: "📦" };
 const TYPE_COLORS = {
@@ -50,6 +51,7 @@ export default function AssetDashboard() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const { toast } = useToast();
 
   // 🛡️ FAIL-SAFE: Ensure spinner stops if user session isn't found
   useEffect(() => { 
@@ -122,6 +124,7 @@ export default function AssetDashboard() {
       loadAssets();
     } catch (err) {
       console.error("Asset Error:", err.message);
+      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }

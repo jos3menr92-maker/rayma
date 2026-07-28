@@ -68,7 +68,7 @@ export default function Auth() {
       if (errMsg.includes("verify") || errMsg.includes("not confirmed") || errMsg.includes("verification")) {
         setShowOtp(true);
       } else {
-        setError(err.message || "Authentication failed. Please check your credentials.");
+        setError(err.message || T("authFailed", "Authentication failed. Please check your credentials."));
       }
     } finally {
       setLoading(false);
@@ -104,7 +104,7 @@ export default function Auth() {
       navigate("/", { replace: true });
       window.location.reload();
     } catch (err) {
-      setError(err.message || "Invalid verification code. Please try again.");
+      setError(err.message || T("invalidCode", "Invalid verification code. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -115,11 +115,11 @@ export default function Auth() {
     try {
       await base44.auth.resendOtp(formData.email);
       toast({
-        title: "Code sent",
-        description: "Check your email for the new code.",
+        title: T("codeSent", "Code sent"),
+        description: T("checkEmailCode", "Check your email for the new code."),
       });
     } catch (err) {
-      setError(err.message || "Failed to resend code");
+      setError(err.message || T("resendFailed", "Failed to resend code"));
     }
   };
 
@@ -151,7 +151,7 @@ const handleProviderSignIn = async (provider) => {
         await base44.auth.loginWithProvider(provider, "/");
       }
     } catch (err) {
-      setError(err.message || `${provider} authentication is not fully configured yet.`);
+      setError(err.message || T("providerNotConfigured", `${provider} authentication is not fully configured yet.`));
     } finally {
       setActiveProvider(null);
     }
