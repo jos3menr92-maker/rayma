@@ -22,6 +22,17 @@ const HUMAN_AVATARS = [
   { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
   { id: "face3", url: "https://i.pravatar.cc/150?img=14" },
   { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
+  { id: "face5", url: "https://i.pravatar.cc/150?img=33" },
+  { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
+  { id: "face7", url: "https://i.pravatar.cc/150?img=38" },
+  { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
+  { id: "face9", url: "https://i.pravatar.cc/150?img=49" },
+  { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
+  { id: "face11", url: "https://i.pravatar.cc/150?img=51" },
+  { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
+  { id: "face13", url: "https://i.pravatar.cc/150?img=56" },
+  { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
+  { id: "face15", url: "https://i.pravatar.cc/150?img=60" },
 ];
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))"];
