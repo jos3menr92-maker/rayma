@@ -87,8 +87,14 @@ export function FinancialDataProvider({ children }) {
       setTransactionSplits(splitsRes.data || []);
 
       // ✅ Unify profile: merge Supabase profile (tokens, energy_bars) with Base44 user
+      // Only override with non-null Supabase values — prevents null columns from
+      // hiding token updates made on the Base44 User (e.g. after promo redemption)
       const supaProfile = profileRes.data || {};
-      setUserProfile(prev => ({ ...prev, ...me, ...supaProfile }));
+      const mergedLoad = { ...me };
+      for (const [key, value] of Object.entries(supaProfile)) {
+        if (value !== null && value !== undefined) mergedLoad[key] = value;
+      }
+      setUserProfile(mergedLoad);
     } catch (e) {
       console.error("Failed to load financial data:", e);
       toast({
@@ -113,7 +119,10 @@ export function FinancialDataProvider({ children }) {
         const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
         supaProfile = data || {};
       }
-      const merged = { ...me, ...supaProfile };
+      const merged = { ...me };
+      for (const [key, value] of Object.entries(supaProfile)) {
+        if (value !== null && value !== undefined) merged[key] = value;
+      }
       setUserProfile(merged);
       setSupaUser(session?.user || null);
       return merged;

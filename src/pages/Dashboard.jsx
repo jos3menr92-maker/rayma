@@ -209,7 +209,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         </div>
         
         <div className="flex items-center gap-3">
-          {renderBattery(userProfile?.ai_tokens_remaining || 0, userProfile?.ai_tokens_daily_limit || 10, userProfile?.subscription_type)}
+          {renderBattery(userProfile?.ai_tokens ?? userProfile?.ai_tokens_daily_limit ?? 10, userProfile?.ai_tokens_daily_limit ?? 10, userProfile?.subscription_type)}
          <button 
           onClick={() => navigate("/profile")} 
           className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm overflow-hidden" 

@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/LanguageContext";
 import { isNativeMobileApp, getPlatform, triggerNativeIAP, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
 import { useAuth } from "@/lib/AuthContext";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 
 export default function Store() {
   const T = useT();
   const { user } = useAuth();
+  const { refreshUserProfile } = useFinancialData();
 
   const [loading, setLoading] = useState(null);
   const [error, setError] = useState("");
@@ -143,6 +145,7 @@ export default function Store() {
       if (res.data?.success) {
         setPromoSuccess(res.data.message || T("promoSuccess", "Promo code redeemed!"));
         setPromoCode("");
+        await refreshUserProfile();
         setTimeout(() => setPromoSuccess(null), 5000);
       } else {
         setError(res.data?.error || T("invalidPromo", "Invalid promo code."));
