@@ -30,7 +30,7 @@ export default function TaxSummary() {
     other: T("catOther", "Other"),
   };
 
-  const { loans, payments } = useFinancialData();
+  const { loans, payments, supaUser } = useFinancialData();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [transactions, setTransactions] = useState([]);
@@ -38,12 +38,14 @@ export default function TaxSummary() {
   const [expandedCats, setExpandedCats] = useState({});
 
   useEffect(() => {
-    supabase.from('transactions').select('*').order('date', { ascending: false }).limit(500).then(({ data, error }) => {
+    const uid = supaUser?.id;
+    if (!uid) return;
+    supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(500).then(({ data, error }) => {
       if (error) console.error("Transactions error:", error);
       setTransactions(data || []);
       setLoading(false);
     });
-  }, []);
+  }, [supaUser?.id]);
 
   const yearTxs = transactions.filter(t => t.date?.startsWith(String(year)));
   const yearPayments = payments.filter(p => p.payment_date?.startsWith(String(year)));

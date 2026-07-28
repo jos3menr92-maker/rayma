@@ -63,7 +63,8 @@ export function FinancialDataProvider({ children }) {
         paymentsRes,
         assetsRes,
         savingsRes,
-        splitsRes
+        splitsRes,
+        profileRes
       ] = await Promise.all([
         supabase.from("loans").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("bills").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
@@ -71,7 +72,8 @@ export function FinancialDataProvider({ children }) {
         supabase.from("payments").select("*").eq("user_id", uid).order("payment_date", { ascending: false }),
         supabase.from("assets").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("savings_goals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-        supabase.from("transaction_splits").select("*").eq("user_id", uid).order("date", { ascending: false })
+        supabase.from("transaction_splits").select("*").eq("user_id", uid).order("date", { ascending: false }),
+        supabase.from("profiles").select("*").eq("id", uid).single()
       ]);
 
       if (!isMounted) return;
@@ -83,6 +85,10 @@ export function FinancialDataProvider({ children }) {
       setAssets(assetsRes.data || []);
       setSavingsGoals(savingsRes.data || []);
       setTransactionSplits(splitsRes.data || []);
+
+      // ✅ Unify profile: merge Supabase profile (tokens, energy_bars) with Base44 user
+      const supaProfile = profileRes.data || {};
+      setUserProfile(prev => ({ ...prev, ...me, ...supaProfile }));
     } catch (e) {
       console.error("Failed to load financial data:", e);
       toast({
@@ -97,9 +103,20 @@ export function FinancialDataProvider({ children }) {
 
   async function refreshUserProfile() {
     try {
-      const me = await base44.auth.me();
-      setUserProfile(me || null);
-      return me;
+      const [me, { data: { session } }] = await Promise.all([
+        base44.auth.me().catch(() => null),
+        supabase.auth.getSession()
+      ]);
+      const uid = session?.user?.id;
+      let supaProfile = {};
+      if (uid) {
+        const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
+        supaProfile = data || {};
+      }
+      const merged = { ...me, ...supaProfile };
+      setUserProfile(merged);
+      setSupaUser(session?.user || null);
+      return merged;
     } catch (e) {
       console.error("Failed to refresh user profile:", e);
       return null;

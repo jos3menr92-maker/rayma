@@ -22,7 +22,7 @@ function ScorePillar({ label, score, max, color }) {
 
 export default function FinancialHealthScore() {
   const { lang } = useLanguage();
-  const { loans: ctxLoans, bills: ctxBills } = useFinancialData();
+  const { loans: ctxLoans, bills: ctxBills, savingsGoals: ctxGoals, supaUser } = useFinancialData();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const [data, setData] = useState(null);
 
@@ -38,16 +38,15 @@ export default function FinancialHealthScore() {
     async function compute() {
       const now = new Date();
       const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const [txRes, budRes, goalRes] = await Promise.all([
-        supabase.from('transactions').select('*').order('date', { ascending: false }).limit(200),
-        supabase.from('budget_categories').select('*'),
-        supabase.from('savings_goals').select('*'),
+      const [txRes, budRes] = await Promise.all([
+        supabase.from('transactions').select('*').eq('user_id', supaUser?.id).order('date', { ascending: false }).limit(200),
+        supabase.from('budget_categories').select('*').eq('user_id', supaUser?.id),
       ]);
       const loans = ctxLoans.filter(l => l.status === "active");
       const bills = ctxBills.filter(b => b.is_active !== false);
       const transactions = txRes.data || [];
       const budgets = budRes.data || [];
-      const goals = (goalRes.data || []).filter(g => g.status === "active");
+      const goals = ctxGoals.filter(g => g.status === "active");
 
       const monthTxs = transactions.filter(t => t.date?.startsWith(thisMonth));
       const income = monthTxs.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
@@ -103,7 +102,7 @@ export default function FinancialHealthScore() {
     }
     compute();
     return () => { cancelled = true; };
-  }, [ctxLoans, ctxBills]);
+  }, [ctxLoans, ctxBills, ctxGoals, supaUser?.id]);
 
   if (!data) return null;
 
