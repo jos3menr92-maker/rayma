@@ -6,7 +6,7 @@ import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
-import { Wallet, TrendingDown, TrendingUp, CreditCard, CalendarDays, BarChart2, RefreshCw, ChevronRight } from "lucide-react";
+import { Wallet, TrendingDown, TrendingUp, CreditCard, CalendarDays, BarChart2, RefreshCw, ChevronRight, Store } from "lucide-react";
 import { getInitialsColor } from "@/components/AvatarPicker";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
@@ -302,6 +302,10 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         <button onClick={() => navigate("/assets")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
           <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0"><BarChart2 className="w-4 h-4 text-accent" /></div>
           <div><p className="text-xs font-semibold text-foreground">{T("assets", "Assets")}</p><p className="text-[10px] text-muted-foreground">{T("netWorthTracker", "Net worth tracker")}</p></div>
+        </button>
+        <button onClick={() => navigate("/merchants")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Store className="w-4 h-4 text-primary" /></div>
+          <div><p className="text-xs font-semibold text-foreground">{T("merchantInsights", "Merchant Insights")}</p><p className="text-[10px] text-muted-foreground">{T("spendingByMerchant", "Spending by merchant")}</p></div>
         </button>
       </div>
 

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, ShieldAlert, Loader2, SplitSquareHorizontal } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { SplitTransactionDialog } from "@/components/transactions/SplitTransactionDialog";
+import AccountBalanceChart from "@/components/AccountBalanceChart";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -255,6 +256,12 @@ export default function BankAccounts() {
           })}
         </div>
       )}
+
+      {/* Balance History Chart (shown when an account is selected) */}
+      {selectedAccount && (() => {
+        const acc = accounts.find(a => a.id === selectedAccount);
+        return acc ? <AccountBalanceChart account={acc} transactions={transactions} /> : null;
+      })()}
 
       {/* Transactions Section */}
       <div>
