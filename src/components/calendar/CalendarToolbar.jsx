@@ -1,8 +1,14 @@
+import { useMemo } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Wallet, TrendingUp, AlertCircle } from "lucide-react";
 import { useT } from "@/lib/LanguageContext";
 
-export default function CalendarToolbar({ view, setView, periodLabel, onPrev, onNext, onToday, filters, toggleFilter, onAddEvent, monthIncome, monthBills, monthLoans, fmt }) {
+export default function CalendarToolbar({ view, setView, periodLabel, onPrev, onNext, onToday, filters, toggleFilter, onAddEvent, monthIncome, monthBills, monthLoans, fmt, today, locale }) {
   const T = useT();
+
+  const todayLabel = useMemo(() => {
+    if (!today) return "";
+    return today.toLocaleDateString(locale || "en-US", { weekday: "short", month: "short", day: "numeric" });
+  }, [today, locale]);
 
   const filterChips = [
     { key: "bills", label: T("bills", "Bills"), dot: "bg-destructive", active: "bg-destructive text-destructive-foreground" },
@@ -51,9 +57,14 @@ export default function CalendarToolbar({ view, setView, periodLabel, onPrev, on
             {T("weekView", "Week")}
           </button>
         </div>
-        <button onClick={onToday} className="text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-          {T("today", "Today")}
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground hidden sm:block">
+            {todayLabel}
+          </span>
+          <button onClick={onToday} className="text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+            {T("today", "Today")}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between mb-4">

@@ -260,7 +260,7 @@ export default function Calendar() {
           filters={filters} toggleFilter={toggleFilter}
           onAddEvent={() => setShowAddEvent(true)}
           monthIncome={monthIncome} monthBills={monthBills} monthLoans={monthLoans}
-          fmt={fmt}
+          fmt={fmt} today={today} locale={locale}
         />
 
         {view === "month" ? (
