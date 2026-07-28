@@ -8,6 +8,7 @@ import { getInitialsColor } from "@/components/AvatarPicker";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t, getDir } from "@/lib/i18n";
+import BatteryIndicator from "@/components/BatteryIndicator";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -40,15 +41,8 @@ export default function SideDrawer({ open, onClose }) {
     const max = user.ai_tokens_daily_limit ?? 10;
     const isInf = user.subscription_type === 'Generator' || tokens > 900;
     const pct = isInf ? 100 : Math.max(0, Math.min(100, (tokens / max) * 100));
-    const color = isInf ? "bg-amber-400" : (pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-yellow-500" : "bg-destructive");
     return (
-      <div className="flex items-center gap-2">
-        <div className="relative w-6 h-3 border-2 border-muted-foreground/40 rounded-sm p-[1px] flex">
-          <div className={`h-full rounded-sm transition-all ${color}`} style={{ width: `${pct}%` }} />
-          <div className="absolute -right-[3px] top-0.5 w-[2px] h-1 bg-muted-foreground/40 rounded-r-sm" />
-        </div>
-        <span>{isInf ? "∞" : tokens}</span>
-      </div>
+      <BatteryIndicator tokens={tokens} max={max} isInf={isInf} size="sm" />
     );
   };
 

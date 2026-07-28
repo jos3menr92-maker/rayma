@@ -13,6 +13,7 @@ import StatsCard from "../components/StatsCard";
 import DueThisWeek from "../components/DueThisWeek";
 import NetWorthChart from "../components/NetWorthChart";
 import { motion, AnimatePresence } from "framer-motion";
+import BatteryIndicator from "@/components/BatteryIndicator";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useT } from "@/lib/LanguageContext";
 import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
@@ -136,15 +137,9 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
 
   const renderBattery = (tokens, max, plan) => {
     const isInf = plan === 'Generator' || tokens > 900;
-    const pct = isInf ? 100 : Math.max(0, Math.min(100, (tokens / (max || 10)) * 100));
-    const color = isInf ? "bg-amber-400" : (pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-yellow-500" : "bg-destructive");
     return (
-      <div onClick={() => navigate("/store")} className="flex items-center gap-1.5 cursor-pointer bg-card border border-border px-2 py-1.5 rounded-lg shadow-sm active:scale-95 transition-transform">
-        <div className="relative w-6 h-3 border-2 border-muted-foreground/40 rounded-sm p-[1px] flex">
-          <div className={`h-full rounded-sm transition-all ${color}`} style={{ width: `${pct}%` }} />
-          <div className="absolute -right-[3px] top-0.5 w-[2px] h-1 bg-muted-foreground/40 rounded-r-sm" />
-        </div>
-        <span className="text-[10px] font-bold font-mono text-foreground">{isInf ? "∞" : tokens}</span>
+      <div onClick={() => navigate("/store")} className="flex items-center cursor-pointer bg-card border border-border px-2 py-1.5 rounded-lg shadow-sm active:scale-95 transition-transform">
+        <BatteryIndicator tokens={tokens} max={max} isInf={isInf} size="sm" />
       </div>
     );
   };
