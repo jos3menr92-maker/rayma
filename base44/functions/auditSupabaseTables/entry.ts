@@ -59,13 +59,15 @@ export default async function(req) {
     }
 
     const okCount = Object.values(tableResults).filter((r: any) => r.status === 'OK').length;
-    const errorTables = Object.entries(tableResults).filter(([, r]: [string, any]) => r.status === 'ERROR');
+    const errorTableMap = Object.entries(tableResults)
+      .filter(([, r]: [string, any]) => r.status === 'ERROR')
+      .reduce((acc, [name, r]: [string, any]) => { acc[name] = r; return acc; }, {});
 
     return Response.json({
       success: true,
-      summary: { total: tables.length, ok: okCount, errors: errorTables.length },
+      summary: { total: tables.length, ok: okCount, errors: Object.keys(errorTableMap).length },
       schemaResults,
-      tableResults,
+      errorTables: errorTableMap,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
