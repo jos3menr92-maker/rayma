@@ -9,7 +9,32 @@ export default async function(req) {
 
     const { client: supabase } = getSupabaseAdmin();
 
-    // Re-test the two fixed queries + verify all 19 tables load
+    // Column-level verification for previously-mismatched tables
+    const columnTests = {
+      budget_categories: ['user_id', 'created_at', 'category_key', 'monthly_limit', 'color', 'icon', 'name'],
+      loan_adjustments: ['user_id', 'created_at', 'loan_id', 'direction', 'date', 'amount'],
+      user_memories: ['user_id', 'created_at', 'memory_type', 'content'],
+      arcade_scores: ['user_id', 'created_at', 'score', 'game'],
+      promo_redemptions: ['user_id', 'redeemed_at', 'created_at', 'promo_code_id'],
+      bank_accounts: ['user_id', 'created_at', 'name', 'institution', 'account_type', 'balance', 'last_synced'],
+    };
+
+    const schemaResults = {};
+    for (const [table, columns] of Object.entries(columnTests)) {
+      schemaResults[table] = {};
+      for (const col of columns) {
+        const { error } = await supabase.from(table).select(col).limit(1);
+        if (error && error.code === '42703') {
+          schemaResults[table][col] = 'MISSING';
+        } else if (error && error.code === '42501') {
+          schemaResults[table][col] = 'RLS_BLOCKED';
+        } else {
+          schemaResults[table][col] = 'OK';
+        }
+      }
+    }
+
+    // Full 19-table connectivity check
     const tables = [
       'loans', 'bills', 'incomes', 'payments', 'transactions',
       'assets', 'savings_goals', 'transaction_splits', 'profiles',
@@ -19,7 +44,7 @@ export default async function(req) {
       'user_memories'
     ];
 
-    const results = {};
+    const tableResults = {};
     for (const table of tables) {
       const { data, error, count } = await supabase
         .from(table)
@@ -27,20 +52,20 @@ export default async function(req) {
         .limit(1);
       
       if (error) {
-        results[table] = { status: 'ERROR', error: error.message, code: error.code };
+        tableResults[table] = { status: 'ERROR', code: error.code, error: error.message };
       } else {
-        results[table] = { status: 'OK', rowCount: count, columns: data?.[0] ? Object.keys(data[0]).length : 0 };
+        tableResults[table] = { status: 'OK', rowCount: count, columnCount: data?.[0] ? Object.keys(data[0]).length : 0 };
       }
     }
 
-    const ok = Object.values(results).filter((r: any) => r.status === 'OK').length;
-    const errors = Object.entries(results).filter(([, r]: [string, any]) => r.status === 'ERROR');
+    const okCount = Object.values(tableResults).filter((r: any) => r.status === 'OK').length;
+    const errorTables = Object.entries(tableResults).filter(([, r]: [string, any]) => r.status === 'ERROR');
 
     return Response.json({
       success: true,
-      summary: { total: tables.length, ok, errors: errors.length },
-      errorDetails: errors.map(([name, r]: [string, any]) => ({ table: name, ...r })),
-      allTables: results,
+      summary: { total: tables.length, ok: okCount, errors: errorTables.length },
+      schemaResults,
+      tableResults,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
