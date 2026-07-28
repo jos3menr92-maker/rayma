@@ -76,7 +76,7 @@ export function FinancialDataProvider({ children }) {
         supabase.from("transactions").select("*").eq("user_id", uid).order("date", { ascending: false }),
         supabase.from("assets").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("savings_goals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-        supabase.from("transaction_splits").select("*").eq("user_id", uid).order("date", { ascending: false }),
+        supabase.from("transaction_splits").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("profiles").select("*").eq("id", uid).single()
       ]);
 
