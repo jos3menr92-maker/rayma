@@ -115,7 +115,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
       // Background API calls — don't block the game-over UI
       saveArcadeScore(GAME_ID, currentScore).then(() => {
         const levelReached = Math.floor(currentScore / 500) + 1;
-        if (levelReached >= 10) {
+        if (levelReached >= 5) {
           claimArcadeReward(GAME_ID, levelReached);
         }
       });
@@ -253,9 +253,9 @@ export default function SpaceInvaders({ onUpdateScore }) {
              <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center">
                 <div className={`font-black text-6xl mb-2 ${gameWon ? 'text-green-400' : 'text-red-500'}`}>{gameWon ? 'VICTORY' : 'INVADED'}</div>
                 <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
-                {score >= 4500 && (
+                {score >= 2000 && (
                   <div className="text-purple-400 font-black text-xl mb-8 animate-bounce tracking-widest">
-                    🎉 WAVE 10 REACHED: +1 ENERGY BAR!
+                    🎉 WAVE 5+ REACHED: +2 ENERGY BARS PER MILESTONE!
                   </div>
                 )}
                 <div className="flex gap-4">

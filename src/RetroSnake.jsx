@@ -75,7 +75,7 @@ export default function RetroSnake({ onUpdateScore }) {
       // Background API calls — don't block the game-over UI
       saveArcadeScore(GAME_ID, finalScore).then(() => {
         const levelReached = Math.floor(finalScore / 50) + 1;
-        if (levelReached >= 10) {
+        if (levelReached >= 5) {
           claimArcadeReward(GAME_ID, levelReached);
         }
       });
@@ -172,9 +172,9 @@ export default function RetroSnake({ onUpdateScore }) {
              <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center">
                 <div className="text-red-500 font-black text-6xl mb-2 animate-pulse">GAME OVER</div>
                 <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
-                {score >= 450 && (
+                {score >= 200 && (
                   <div className="text-lime-400 font-black text-xl mb-8 animate-bounce tracking-widest">
-                    🎉 LEVEL 10 REACHED: +1 ENERGY BAR!
+                    🎉 LEVEL 5+ REACHED: +2 ENERGY BARS PER MILESTONE!
                   </div>
                 )}
                 <div className="flex gap-4">

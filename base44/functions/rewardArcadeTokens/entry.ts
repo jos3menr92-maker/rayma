@@ -12,12 +12,15 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { gameId, level } = body;
 
-    if (!level || level < 10) {
-      return Response.json({ success: false, message: "Nice try! You must reach Level 10 to earn a reward." }, { status: 400 });
+    if (!level || level < 5) {
+      return Response.json({ success: false, message: "Reach Level 5 to earn your first Energy Bars!" }, { status: 400 });
     }
 
+    // 2 Energy Bars per 5-level milestone (Level 5 = 2, Level 10 = 4, Level 15 = 6, etc.)
+    const milestones = Math.floor(level / 5);
+    const rewardAmount = milestones * 2;
     const currentBars = user.energy_bars || 0;
-    const newEnergyTotal = currentBars + 1;
+    const newEnergyTotal = currentBars + rewardAmount;
 
     // 1. Update Base44 User
     await base44.auth.updateMe({ energy_bars: newEnergyTotal });
@@ -35,17 +38,20 @@ Deno.serve(async (req) => {
             await supabaseAdmin.from('profiles').update({ energy_bars: newEnergyTotal }).eq('id', supaUserId);
           }
         }
+        // eslint-disable-next-line no-unused-vars
       }
     } catch (syncErr) {
       console.warn("[Base44] Energy bar Supabase sync failed (non-fatal):", syncErr.message);
     }
 
-    console.log(`[Base44] Arcade reward granted: ${gameId} | Level ${level} | User ${user.email} | Energy bars: ${currentBars} → ${newEnergyTotal}`);
+    console.log(`[Base44] Arcade reward granted: ${gameId} | Level ${level} | ${milestones} milestone(s) | +${rewardAmount} Energy Bars | User ${user.email} | Total: ${currentBars} → ${newEnergyTotal}`);
 
     return Response.json({
       success: true,
       rewardGranted: true,
-      message: `Congratulations! You beat Level 10 in ${gameId} and earned 1 Energy Bar.`
+      rewardAmount,
+      milestones,
+      message: `Congratulations! You reached Level ${level} in ${gameId} and earned ${rewardAmount} Energy Bars!`
     });
 
   } catch (error) {
