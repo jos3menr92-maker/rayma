@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -61,6 +62,9 @@ export default function AssetDashboard() {
       setLocalLoading(false);
     }
   }, [supaUser?.id]);
+
+  // 🔄 Realtime: reload when assets change
+  useSupabaseRealtime(['assets'], loadAssets, [supaUser?.id]);
 
   // 🛡️ FAIL-SAFE: Wrapped in try/catch/finally to guarantee UI unlocks
   async function loadAssets() {

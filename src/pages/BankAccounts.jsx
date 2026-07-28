@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,9 @@ export default function BankAccounts() {
       fetchAll();
     }
   }, [supaUser?.id]);
+
+  // 🔄 Realtime: reload when accounts or transactions change
+  useSupabaseRealtime(['bank_accounts', 'transactions'], fetchAll, [supaUser?.id]);
 
   const fetchAll = async () => {
     setLoading(true);

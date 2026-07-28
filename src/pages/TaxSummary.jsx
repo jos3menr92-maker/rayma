@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -44,6 +45,16 @@ export default function TaxSummary() {
       if (error) console.error("Transactions error:", error);
       setTransactions(data || []);
       setLoading(false);
+    });
+  }, [supaUser?.id]);
+
+  // 🔄 Realtime: reload when transactions change
+  useSupabaseRealtime(['transactions'], () => {
+    const uid = supaUser?.id;
+    if (!uid) return;
+    supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(500).then(({ data, error }) => {
+      if (error) console.error("Transactions error:", error);
+      setTransactions(data || []);
     });
   }, [supaUser?.id]);
 

@@ -5,7 +5,8 @@ import { FolderOpen, Sparkles, Clock } from "lucide-react";
 // Removed base44 import as we now fetch from Supabase
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
-import { useFinancialData } from "@/lib/FinancialDataContext"; 
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import DocumentUploader from "../components/documents/DocumentUploader";
 import DocumentCard from "../components/documents/DocumentCard";
 import DocumentReviewModal from "../components/documents/DocumentReviewModal";
@@ -47,6 +48,9 @@ export default function DocumentVault() {
       setLoading(false);
     }
   }, [supaUser?.id]);
+
+  // 🔄 Realtime: reload when documents change on any device
+  useSupabaseRealtime(['documents'], loadData, [supaUser?.id]);
 
   // 🚀 FIXED: Fetching from Supabase 'documents' table instead of Base44 entities
   async function loadData() {

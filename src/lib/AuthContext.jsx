@@ -144,10 +144,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = async (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
-    
+
+    // Clear the Supabase session so no orphaned token remains
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Supabase sign-out failed:', e);
+    }
+
     if (shouldRedirect) {
       // Use the SDK's logout method which handles token cleanup and redirect
       base44.auth.logout(window.location.href);

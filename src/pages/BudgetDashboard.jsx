@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,6 +52,9 @@ export default function BudgetDashboard() {
   useEffect(() => {
     fetchAll();
   }, [supaUser?.id]);
+
+  // 🔄 Realtime: reload when budgets or transactions change
+  useSupabaseRealtime(['budget_categories', 'transactions'], fetchAll, [supaUser?.id]);
 
   const fetchAll = async () => {
     setLoading(true);

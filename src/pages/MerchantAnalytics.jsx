@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useT } from "@/lib/LanguageContext";
 import { motion } from "framer-motion";
@@ -22,6 +23,9 @@ export default function MerchantAnalytics() {
     if (!supaUser?.id) return;
     fetchTransactions();
   }, [supaUser?.id, period]);
+
+  // 🔄 Realtime: reload when transactions change
+  useSupabaseRealtime(['transactions'], fetchTransactions, [supaUser?.id, period]);
 
   const fetchTransactions = async () => {
     setLoading(true);
