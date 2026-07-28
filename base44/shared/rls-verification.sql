@@ -21,7 +21,7 @@ ALTER TABLE bills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE savings_goals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE weekly_incomes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE incomes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE loan_adjustments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE net_worth_snapshots ENABLE ROW LEVEL SECURITY;
@@ -32,7 +32,7 @@ ALTER TABLE user_memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promo_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE arcade_scores ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bill_price_alerts ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
@@ -58,10 +58,10 @@ DECLARE
   tbl TEXT;
   tables TEXT[] := ARRAY[
     'bank_accounts', 'loans', 'bills', 'transactions', 'assets',
-    'savings_goals', 'weekly_incomes', 'payments', 'loan_adjustments',
+    'savings_goals', 'incomes', 'payments', 'loan_adjustments',
     'net_worth_snapshots', 'budget_categories', 'documents',
     'transaction_splits', 'user_memories', 'feedback',
-    'arcade_scores', 'user_profiles', 'bill_price_alerts'
+    'arcade_scores', 'profiles', 'bill_price_alerts'
   ];
 BEGIN
   FOREACH tbl IN ARRAY tables LOOP

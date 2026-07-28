@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend"; // 🚀 NEW: Added Supabase client
 import { motion } from "framer-motion";
 import { FolderOpen, Sparkles, Clock } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 // Removed base44 import as we now fetch from Supabase
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -31,6 +32,7 @@ export default function DocumentVault() {
 
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const [activeFolder, setActiveFolder] = useState("all");
   const [reviewingDoc, setReviewingDoc] = useState(null);
   const [reviewAnalysis, setReviewAnalysis] = useState(null);
@@ -66,6 +68,7 @@ export default function DocumentVault() {
       setDocs(data || []);
     } catch (err) {
       console.error("Failed to load documents:", err.message);
+      toast({ title: T("loadFailed", "Failed to load documents"), description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

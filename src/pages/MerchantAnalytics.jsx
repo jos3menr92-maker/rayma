@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Store, TrendingDown, Receipt, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
@@ -15,6 +16,7 @@ export default function MerchantAnalytics() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
   const { supaUser } = useFinancialData();
+  const { toast } = useToast();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("month");
@@ -29,6 +31,7 @@ export default function MerchantAnalytics() {
 
   const fetchTransactions = async () => {
     setLoading(true);
+    try {
     const uid = supaUser?.id;
     let query = supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false });
 
@@ -41,10 +44,16 @@ export default function MerchantAnalytics() {
     }
 
     const { data, error } = await query;
-    if (error) console.error("Error fetching transactions:", error);
+    if (error) throw error;
     setTransactions(data || []);
     setLoading(false);
-  };
+  } catch (err) {
+    console.error("Error fetching transactions:", err.message);
+    toast({ title: T("loadFailed", "Failed to load transactions"), description: err.message, variant: "destructive" });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const merchantData = useMemo(() => {
     const expenses = transactions.filter(t => t.amount < 0);

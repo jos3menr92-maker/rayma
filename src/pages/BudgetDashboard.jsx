@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, TrendingDown } from "lucide-react";
 import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 
 const CATEGORY_COLORS = {
   food: "#f59e0b", transport: "#3b82f6", utilities: "#8b5cf6", subscriptions: "#ec4899",
@@ -37,6 +38,7 @@ export default function BudgetDashboard() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
   const { bills, loans, supaUser, transactionSplits } = useFinancialData();
+  const { toast } = useToast();
 
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -67,24 +69,30 @@ export default function BudgetDashboard() {
       return;
     }
 
-    const { data: catData, error: catErr } = await supabase
-      .from("budget_categories")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
-    if (catErr) throw catErr;
+    try {
+      const { data: catData, error: catErr } = await supabase
+        .from("budget_categories")
+        .select("*")
+        .eq("user_id", uid)
+        .order("created_at", { ascending: false });
+      if (catErr) throw catErr;
 
-    const { data: txData, error: txErr } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", uid)
-      .order("date", { ascending: false })
-      .limit(500);
-    if (txErr) throw txErr;
+      const { data: txData, error: txErr } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", uid)
+        .order("date", { ascending: false })
+        .limit(500);
+      if (txErr) throw txErr;
 
-    setBudgets(catData || []);
-    setTransactions(txData || []);
-    setLoading(false);
+      setBudgets(catData || []);
+      setTransactions(txData || []);
+    } catch (err) {
+      console.error("BudgetDashboard load error:", err.message);
+      toast({ title: T("loadFailed", "Failed to load data"), description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openAdd = () => {
@@ -111,14 +119,19 @@ export default function BudgetDashboard() {
       color: CATEGORY_COLORS[form.category_key] || "#64748b",
     };
 
-    if (editing) {
-      await supabase.from("budget_categories").update(data).eq("id", editing.id);
-    } else {
-      await supabase.from("budget_categories").insert([{ ...data, user_id: supaUser?.id }]);
+    try {
+      if (editing) {
+        const { error } = await supabase.from("budget_categories").update(data).eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("budget_categories").insert([{ ...data, user_id: supaUser?.id }]);
+        if (error) throw error;
+      }
+      setShowDialog(false);
+      fetchAll();
+    } catch (err) {
+      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     }
-
-    setShowDialog(false);
-    fetchAll();
   };
 
   // split rows = source of truth; parent tx is fallback only when that tx has zero splits

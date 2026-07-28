@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { FileText, Download, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const DEDUCTIBLE = ["health", "insurance", "loan_payment", "utilities"];
 
@@ -32,6 +33,7 @@ export default function TaxSummary() {
   };
 
   const { loans, payments, supaUser } = useFinancialData();
+  const { toast } = useToast();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [transactions, setTransactions] = useState([]);
@@ -42,7 +44,10 @@ export default function TaxSummary() {
     const uid = supaUser?.id;
     if (!uid) return;
     supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(500).then(({ data, error }) => {
-      if (error) console.error("Transactions error:", error);
+      if (error) {
+        console.error("Transactions error:", error);
+        toast({ title: T("loadFailed", "Failed to load transactions"), description: error.message, variant: "destructive" });
+      }
       setTransactions(data || []);
       setLoading(false);
     });
