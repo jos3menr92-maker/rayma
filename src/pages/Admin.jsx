@@ -19,6 +19,9 @@ export default function Admin() {
   const [promoCodes, setPromoCodes] = useState([]);
   const [recentFeedback, setRecentFeedback] = useState([]);
   const [newCode, setNewCode] = useState("");
+  const [rewardType, setRewardType] = useState("tokens");
+  const [rewardValue, setRewardValue] = useState(100);
+  const [maxUses, setMaxUses] = useState("");
 
   function StatCard({ icon: Icon, label, value, sub, color = "primary" }) {
     return (
@@ -48,14 +51,14 @@ export default function Admin() {
 
     const [allUsers, allPromoCodes, allFeedback, loansRes, billsRes, transactionsRes] = await Promise.all([
       base44.entities.User.list(),
-      supabase.from("promo_codes").select("*"),
+      base44.entities.PromoCode.list("-created_date", 50),
       base44.entities.Feedback.list("-created_date", 10),
       supabase.from("loans").select("id"),
       supabase.from("bills").select("id"),
       supabase.from("transactions").select("id").order("created_at", { ascending: false }).limit(500),
     ]);
 
-    const allPromoCodes_data = allPromoCodes.data || [];
+    const allPromoCodes_data = allPromoCodes || [];
     const allLoans = loansRes.data || [];
     const allBills = billsRes.data || [];
     const allTransactions = transactionsRes.data || [];
@@ -86,16 +89,22 @@ export default function Admin() {
   const handleCreateCode = async () => {
     if (!newCode) return;
     try {
-      await supabase.from("promo_codes").insert({ 
-        code: newCode, 
-        is_active: true, 
-        created_by_role: "admin" 
+      await base44.entities.PromoCode.create({
+        code: newCode.toUpperCase().trim(),
+        reward_type: rewardType,
+        reward_value: rewardType === "tokens" ? Number(rewardValue) : null,
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        max_uses: maxUses ? Number(maxUses) : null,
+        is_active: true,
+        times_used: 0,
+        redeemed_by: []
       });
       setNewCode("");
-      alert("Code created successfully!");
+      setRewardValue(100);
+      setMaxUses("");
       loadData();
     } catch (error) {
-      alert("Error creating code.");
+      alert("Error creating code: " + (error.message || "Unknown error"));
     }
   };
 
@@ -140,6 +149,32 @@ export default function Admin() {
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
             />
+            <div className="flex gap-2">
+              <select
+                className="bg-background border border-border rounded-xl px-3 py-3 text-sm flex-1"
+                value={rewardType}
+                onChange={(e) => setRewardType(e.target.value)}
+              >
+                <option value="tokens">Tokens</option>
+                <option value="annual_pass">Annual Pass</option>
+              </select>
+              {rewardType === "tokens" && (
+                <input
+                  type="number"
+                  placeholder="Tokens"
+                  className="bg-background border border-border rounded-xl px-3 py-3 text-sm w-28"
+                  value={rewardValue}
+                  onChange={(e) => setRewardValue(e.target.value)}
+                />
+              )}
+            </div>
+            <input
+              type="number"
+              placeholder="Max uses (blank = unlimited)"
+              className="bg-background border border-border rounded-xl px-4 py-3 w-full text-sm"
+              value={maxUses}
+              onChange={(e) => setMaxUses(e.target.value)}
+            />
             <Button onClick={handleCreateCode} className="w-full rounded-xl h-12 font-semibold">
               {T("createCode", "Create Code")}
             </Button>
@@ -168,6 +203,10 @@ export default function Admin() {
                 <Gift className="w-4 h-4 text-primary shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-foreground font-mono">{code.code}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {code.reward_type === "annual_pass" ? "Annual Pass" : `${code.reward_value || 0} tokens`}
+                    {code.max_uses ? ` · ${code.times_used || 0}/${code.max_uses} used` : ` · ${code.times_used || 0} used`}
+                  </p>
                 </div>
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${code.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
