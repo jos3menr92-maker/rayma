@@ -8,8 +8,12 @@ Deno.serve(async (req) => {
     
     if (!me) return Response.json({ error: 'Unauthorized', reason: 'Base44 auth failed' }, { status: 401 });
 
-    const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const rawUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("VITE_SUPABASE_URL") || "";
+    const urlMatch = rawUrl.match(/https:\/\/[^\s"'<>\[\]]+/);
+    const supabaseUrl = urlMatch ? urlMatch[0] : "";
+    const rawKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const keyMatch = rawKey.match(/eyJ[A-Za-z0-9_\-.]+/);
+    const supabaseKey = keyMatch ? keyMatch[0] : rawKey.trim().replace(/^["'\[\]]|["'\[\]]$/g, "");
 
     if (!supabaseUrl || !supabaseKey) {
         throw new Error("Missing Supabase configuration secrets (URL or SERVICE_ROLE_KEY).");
@@ -18,45 +22,54 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
     const tempToken = "R@" + crypto.randomUUID();
 
-    // 1. Try to create the user in Supabase
-    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: me.email,
-      email_confirm: true,
-      password: tempToken
+    // 1. Try to create the user via direct fetch (bypasses SDK to see raw server response)
+    const createRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: me.email,
+        email_confirm: true,
+        password: tempToken
+      })
     });
 
-    if (createError) {
-      // 2. If user exists, paginate through the user list until we find them
+    if (createRes.ok) {
+      return Response.json({ success: true, tempToken });
+    }
+
+    const rawBody = await createRes.text();
+
+    // 2. If user already exists (422), paginate to find them and update their password
+    if (createRes.status === 422 || rawBody.includes("already been registered") || rawBody.includes("already exists")) {
       let existingUser = null;
       let page = 1;
-      
+
       while (!existingUser) {
-        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 50 });
+        const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
         if (listError) throw new Error(`ListUsers failed: ${listError.message || JSON.stringify(listError)}`);
-        
-        // Case-insensitive match to be perfectly safe
-        existingUser = users.find(u => u.email.toLowerCase() === me.email.toLowerCase());
-        
-        // Break if we found them, or if we hit the end of the database
-        if (existingUser || users.length === 0) {
-          break;
-        }
+
+        const users = listData?.users || [];
+        existingUser = users.find(u => u.email?.toLowerCase() === me.email?.toLowerCase());
+
+        if (existingUser || users.length === 0) break;
         page++;
       }
 
       if (existingUser) {
-        // 3. We found the ID! Update their password.
-        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { 
-            password: tempToken 
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+          password: tempToken
         });
         if (updateError) throw new Error(`UpdateUser failed: ${updateError.message || JSON.stringify(updateError)}`);
-      } else {
-        // If they still aren't found, throw the original createError
-        throw new Error(`CreateUser failed: ${createError.message || JSON.stringify(createError)}`);
+        return Response.json({ success: true, tempToken });
       }
     }
 
-    return Response.json({ success: true, tempToken });
+    // 3. Real error — surface the raw HTTP response
+    throw new Error(`CreateUser HTTP ${createRes.status}: ${rawBody.substring(0, 300)}`);
   } catch (error) {
     // 🚨 FALLBACK: Safely extract the exact error reason, even if Supabase sends a weird object
     const errorMessage = error instanceof Error ? error.message : (error?.message || JSON.stringify(error));
