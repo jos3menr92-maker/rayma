@@ -5,7 +5,7 @@
  *
  * Pulls preferred_currency from FinancialDataContext.userProfile — no redundant base44.auth.me() calls.
  */
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { formatCurrency, formatCurrencyNoDecimals } from "@/utils/formatLocalized";
@@ -17,10 +17,12 @@ export function useCurrency() {
   const { userProfile } = useFinancialData();
   const currency = userProfile?.preferred_currency || localStorage.getItem(CACHE_KEY) || "USD";
 
-  // Keep localStorage in sync so pages without FinancialDataContext still have a fallback
-  if (typeof window !== "undefined" && userProfile?.preferred_currency) {
-    localStorage.setItem(CACHE_KEY, userProfile.preferred_currency);
-  }
+  // Keep localStorage in sync via useEffect (not during render — avoids StrictMode issues)
+  useEffect(() => {
+    if (userProfile?.preferred_currency) {
+      localStorage.setItem(CACHE_KEY, userProfile.preferred_currency);
+    }
+  }, [userProfile?.preferred_currency]);
 
   const fmt = useCallback((amount) => {
     return formatCurrency(amount, locale, currency);
