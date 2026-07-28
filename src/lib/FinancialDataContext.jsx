@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "./supabaseClientFrontend";
 import { toast } from "@/components/ui/use-toast";
@@ -23,8 +23,16 @@ export function FinancialDataProvider({ children }) {
   const [supaUser, setSupaUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const loadInFlight = useRef(false);
+  const mountedRef = useRef(true);
+  const pendingReload = useRef(false);
+
   async function loadAll() {
-    let isMounted = true;
+    if (loadInFlight.current) {
+      pendingReload.current = true;
+      return;
+    }
+    loadInFlight.current = true;
     setLoading(true);
 
     try {
@@ -35,13 +43,13 @@ export function FinancialDataProvider({ children }) {
 
       const currentSupaUser = session?.user || null;
 
-      if (isMounted) {
+      if (mountedRef.current) {
         setUserProfile(me || null);
         setSupaUser(currentSupaUser);
       }
 
       if (!currentSupaUser?.id) {
-        if (isMounted) {
+        if (mountedRef.current) {
           setLoans([]);
           setBills([]);
           setIncomes([]);
@@ -52,6 +60,7 @@ export function FinancialDataProvider({ children }) {
           setTransactionSplits([]);
           setLoading(false);
         }
+        loadInFlight.current = false;
         return;
       }
 
@@ -80,7 +89,7 @@ export function FinancialDataProvider({ children }) {
         supabase.from("profiles").select("*").eq("id", uid).single()
       ]);
 
-      if (!isMounted) return;
+      if (!mountedRef.current) return;
 
       setLoans(loansRes.data || []);
       setBills(billsRes.data || []);
@@ -108,7 +117,12 @@ export function FinancialDataProvider({ children }) {
         variant: "destructive"
       });
     } finally {
-      if (isMounted) setLoading(false);
+      if (mountedRef.current) setLoading(false);
+      loadInFlight.current = false;
+      if (pendingReload.current) {
+        pendingReload.current = false;
+        loadAll();
+      }
     }
   }
 
@@ -215,13 +229,13 @@ export function FinancialDataProvider({ children }) {
       }
     });
     return () => {
+      mountedRef.current = false;
       authListener.subscription.unsubscribe();
     };
   }, []);
 
-  // 📡 Supabase Realtime — reload when any financial table changes (multi-device sync, agent writes, webhook updates)
+  // 📡 Supabase Realtime — only subscribe to tables loaded by loadAll()
   useEffect(() => {
-    const tables = ["loans", "bills", "incomes", "payments", "transactions", "assets", "savings_goals", "transaction_splits", "profiles"];
     const channel = supabase
       .channel("financial-data-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "loans" }, () => loadAll())
@@ -232,16 +246,6 @@ export function FinancialDataProvider({ children }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "savings_goals" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "transaction_splits" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "bank_accounts" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "budget_categories" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "arcade_scores" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "net_worth_snapshots" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "feedback" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "promo_codes" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "promo_redemptions" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "loan_adjustments" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_memories" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => refreshUserProfile())
       .subscribe();
 
