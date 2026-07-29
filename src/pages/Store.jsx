@@ -5,7 +5,7 @@ import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift } 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/LanguageContext";
-import { isNativeMobileApp, getPlatform, triggerNativeIAP, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
+import { isNativeMobileApp, getPlatform, triggerNativeIAP, restoreNativePurchases, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
 import { useAuth } from "@/lib/AuthContext";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +23,7 @@ export default function Store() {
   const [promoCode, setPromoCode] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoSuccess, setPromoSuccess] = useState(null);
+  const [restoring, setRestoring] = useState(false);
 
   const nativeApp = isNativeMobileApp();
   const platform = getPlatform();
@@ -127,14 +128,21 @@ export default function Store() {
   }
 
   const handleRestorePurchases = async () => {
+    setRestoring(true);
+    setError("");
     try {
-      if (window.RAYMA_IAP && window.RAYMA_IAP.restore) {
-        await window.RAYMA_IAP.restore();
+      const result = await restoreNativePurchases();
+      if (result?.success) {
+        setPromoSuccess(T("restoreSuccess", "Purchases restored successfully."));
+        await refreshUserProfile();
+        setTimeout(() => setPromoSuccess(null), 4000);
       } else {
-        console.warn("Native IAP bridge not available for restore.");
+        setError(result?.error || T("restoreFailed", "Could not restore purchases. Please try again later."));
       }
-    } catch (error) {
-      console.error("Restore failed:", error.message);
+    } catch (err) {
+      setError(err.message || T("restoreFailed", "Could not restore purchases."));
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -314,9 +322,11 @@ export default function Store() {
           <div className="mt-8 text-center pb-6">
             <button
               onClick={handleRestorePurchases}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground underline transition-colors"
+              disabled={restoring}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground underline transition-colors disabled:opacity-50 flex items-center gap-1.5 mx-auto"
             >
-              {T ? T("restorePurchases", "Restore Purchases") : "Restore Purchases"}
+              {restoring ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              {T("restorePurchases", "Restore Purchases")}
             </button>
           </div>
         )}

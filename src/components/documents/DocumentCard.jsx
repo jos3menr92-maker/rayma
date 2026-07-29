@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useMemo } from "react";
+import { useDisplayUrl } from "@/hooks/useDisplayUrl";
 
 const folderEmoji = {
   payments: "💳",
@@ -16,6 +17,7 @@ const folderEmoji = {
 export default function DocumentCard({ doc, index, onDelete, onReview }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+  const { url: displayUrl } = useDisplayUrl(doc.file_url);
 
   const statusConfig = {
     pending_review: { label: T("pendingReview", "Pending Review"), class: "bg-amber-400/10 text-amber-400", icon: Clock },
@@ -45,8 +47,8 @@ export default function DocumentCard({ doc, index, onDelete, onReview }) {
       className="bg-card border border-border rounded-2xl overflow-hidden"
     >
       <div className="flex gap-3 p-3">
-        {doc.file_url ? (
-          <img src={doc.file_url} alt="doc" className="w-14 h-14 rounded-xl object-cover shrink-0 bg-muted" />
+        {displayUrl ? (
+          <img src={displayUrl} alt="doc" className="w-14 h-14 rounded-xl object-cover shrink-0 bg-muted" />
         ) : (
           <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6 text-muted-foreground" />
@@ -73,8 +75,8 @@ export default function DocumentCard({ doc, index, onDelete, onReview }) {
                 <Eye className="w-3 h-3" /> {T("review", "Review")}
               </button>
             )}
-            {doc.file_url && (
-              <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+            {displayUrl && (
+              <a href={displayUrl} target="_blank" rel="noopener noreferrer"
                 className="text-xs px-2.5 py-1 rounded-lg bg-muted text-muted-foreground font-medium flex items-center gap-1 hover:text-foreground transition-colors">
                 <ExternalLink className="w-3 h-3" /> {T("view", "View")}
               </a>

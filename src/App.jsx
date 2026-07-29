@@ -83,8 +83,7 @@ const AuthenticatedApp = () => {
           <Route path="/budget" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Budget /></Suspense></ProtectedLayout>} />
           <Route path="/store" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Store /></Suspense></ProtectedLayout>} />
           <Route path="/security" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense></ProtectedLayout>} />
-          <Route path="/privacy" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense></ProtectedLayout>} />
-          <Route path="/terms" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><TermsOfService /></Suspense></ProtectedLayout>} />
+
           <Route path="/admin" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Admin /></Suspense></ProtectedLayout>} />
           <Route path="/arcade" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Arcade /></Suspense></ProtectedLayout>} />
           <Route path="/feedback" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Feedback /></Suspense></ProtectedLayout>} /> 
@@ -132,6 +131,8 @@ export default function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
               <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
+              <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
+              <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
               <Route path="/*" element={<AuthenticatedApp />} />
             </Routes>
           </Router>

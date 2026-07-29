@@ -65,27 +65,66 @@ export async function triggerNativeIAP(productId) {
     return { success: false, error: "Not a native app" };
   }
 
+  // Direct bridge (injected by native wrapper)
   if (typeof window.RAYMA_IAP?.purchase === "function") {
     return await window.RAYMA_IAP.purchase(productId);
   }
 
-  // Fallback: post message to React Native
-  return new Promise((resolve) => {
-    const handler = (event) => {
-      if (event.data?.type === "IAP_RESULT" && event.data?.productId === productId) {
+  // postMessage bridge to React Native
+  if (typeof window.ReactNativeWebView?.postMessage === "function") {
+    return new Promise((resolve) => {
+      const handler = (event) => {
+        if (event.data?.type === "IAP_RESULT" && event.data?.productId === productId) {
+          window.removeEventListener("message", handler);
+          resolve(event.data.result);
+        }
+      };
+      window.addEventListener("message", handler);
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: "IAP_PURCHASE", productId }));
+      setTimeout(() => {
         window.removeEventListener("message", handler);
-        resolve(event.data.result);
-      }
-    };
-    window.addEventListener("message", handler);
-    window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "IAP_PURCHASE", productId }));
+        resolve({ success: false, error: "Purchase timed out" });
+      }, 60000);
+    });
+  }
 
-    // Timeout after 60 seconds
-    setTimeout(() => {
-      window.removeEventListener("message", handler);
-      resolve({ success: false, error: "Purchase timed out" });
-    }, 60000);
-  });
+  // No native bridge available — Base44 native IAP not yet injected
+  return { success: false, error: "In-app purchases are not yet available on this device." };
+}
+
+/**
+ * Restores previous in-app purchases on iOS/Android.
+ * The native wrapper must implement window.RAYMA_IAP.restore().
+ *
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function restoreNativePurchases() {
+  if (!isNativeMobileApp()) {
+    return { success: false, error: "Not a native app" };
+  }
+
+  if (typeof window.RAYMA_IAP?.restore === "function") {
+    return await window.RAYMA_IAP.restore();
+  }
+
+  if (typeof window.ReactNativeWebView?.postMessage === "function") {
+    return new Promise((resolve) => {
+      const handler = (event) => {
+        if (event.data?.type === "IAP_RESTORE_RESULT") {
+          window.removeEventListener("message", handler);
+          resolve(event.data.result || { success: true });
+        }
+      };
+      window.addEventListener("message", handler);
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: "IAP_RESTORE" }));
+      setTimeout(() => {
+        window.removeEventListener("message", handler);
+        resolve({ success: false, error: "Restore timed out" });
+      }, 30000);
+    });
+  }
+
+  return { success: false, error: "Restore is not yet available on this device." };
 }
 
 /**

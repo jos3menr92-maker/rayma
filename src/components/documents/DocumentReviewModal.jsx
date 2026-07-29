@@ -9,10 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { useDisplayUrl } from "@/hooks/useDisplayUrl";
 
 export default function DocumentReviewModal({ doc, analysis, loans, bills, onClose, onDone }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+  const { url: displayUrl } = useDisplayUrl(doc.file_url);
 
   const folderLabels = {
     payments: T("folderPayments", "💳 Payments"),
@@ -155,8 +157,8 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
           <p className="text-xs text-foreground leading-relaxed">{raymaMessage}</p>
         </div>
 
-        {doc.file_url && (
-          <img src={doc.file_url} alt="Document" className="w-full rounded-xl object-cover max-h-40" />
+        {displayUrl && (
+          <img src={displayUrl} alt="Document" className="w-full rounded-xl object-cover max-h-40" />
         )}
 
         {step === "misc_prompt" ? (

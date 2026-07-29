@@ -19,7 +19,10 @@ export default function DocumentUploader({ onDocumentScanned }) {
     if (!file) return;
     setUploading(true);
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    // Upload to private storage — sensitive tax/financial docs must not be publicly accessible
+    const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+    // Generate a short-lived signed URL for AI analysis (expires in 10 min)
+    const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri, expires_in: 600 });
 
     const today = new Date().toISOString().split("T")[0];
     const analysis = await base44.integrations.Core.InvokeLLM({
@@ -32,7 +35,7 @@ Determine:
 4. Extract all financial data found
 
 Today's date: ${today}`,
-      file_urls: [file_url],
+      file_urls: [signed_url],
       model: "claude_sonnet_4_6",
       response_json_schema: {
         type: "object",
@@ -65,7 +68,7 @@ Today's date: ${today}`,
 
     try {
       const { data, error } = await supabase.from('documents').insert({
-        file_url,
+        file_url: file_uri,
         file_name: file.name,
         folder: analysis.folder || "misc",
         status: "pending_review",
