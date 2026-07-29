@@ -1,13 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend"; // 🚀 NEW: Added Supabase client
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { FolderOpen, Sparkles, Clock } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-// Removed base44 import as we now fetch from Supabase
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import DocumentUploader from "../components/documents/DocumentUploader";
 import DocumentCard from "../components/documents/DocumentCard";
 import DocumentReviewModal from "../components/documents/DocumentReviewModal";
@@ -25,14 +21,10 @@ const FOLDERS_STATIC = [
 export default function DocumentVault() {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
-  
-  // 🚀 Grab supaUser for strict RLS filtering
-  const { loans, bills, supaUser } = useFinancialData(); 
+
+  const { loans, bills, documents, loading, reload } = useFinancialData();
   const activeLoans = useMemo(() => loans.filter(x => x.status !== "paid_off"), [loans]);
 
-  const [docs, setDocs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
   const [activeFolder, setActiveFolder] = useState("all");
   const [reviewingDoc, setReviewingDoc] = useState(null);
   const [reviewAnalysis, setReviewAnalysis] = useState(null);
@@ -42,46 +34,14 @@ export default function DocumentVault() {
     label: T(f.labelKey, f.labelKey === "pending" ? "Pending" : f.labelKey.charAt(0).toUpperCase() + f.labelKey.slice(1))
   }));
 
-  // 🛡️ FAIL-SAFE: Wait for Supabase session before fetching
-  useEffect(() => { 
-    if (supaUser?.id) {
-      loadData(); 
-    } else {
-      setLoading(false);
-    }
-  }, [supaUser?.id]);
-
-  // 🔄 Realtime: reload when documents change on any device
-  useSupabaseRealtime(['documents'], loadData, [supaUser?.id]);
-
-  // 🚀 FIXED: Fetching from Supabase 'documents' table instead of Base44 entities
-  async function loadData() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('user_id', supaUser.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDocs(data || []);
-    } catch (err) {
-      console.error("Failed to load documents:", err.message);
-      toast({ title: T("loadFailed", "Failed to load documents"), description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  }
-
   function handleDocumentScanned(doc) {
-    setDocs(prev => [doc, ...prev]);
+    reload();
     setReviewingDoc(doc);
     setReviewAnalysis(doc._analysis);
   }
 
   function handleDelete(id) {
-    setDocs(prev => prev.filter(d => d.id !== id));
+    reload();
   }
 
   function handleReview(doc) {
@@ -92,16 +52,16 @@ export default function DocumentVault() {
   async function handleReviewDone() {
     setReviewingDoc(null);
     setReviewAnalysis(null);
-    await loadData();
+    await reload();
   }
 
-  const filtered = docs.filter(d => {
+  const filtered = documents.filter(d => {
     if (activeFolder === "all") return true;
     if (activeFolder === "pending_review") return d.status === "pending_review";
     return d.folder === activeFolder;
   });
 
-  const pendingCount = docs.filter(d => d.status === "pending_review").length;
+  const pendingCount = documents.filter(d => d.status === "pending_review").length;
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -183,8 +143,8 @@ export default function DocumentVault() {
         <DocumentReviewModal
           doc={reviewingDoc}
           analysis={reviewAnalysis}
-          loans={activeLoans} 
-          bills={bills}       
+          loans={activeLoans}
+          bills={bills}
           onClose={() => setReviewingDoc(null)}
           onDone={handleReviewDone}
         />

@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     const [
       loansRes, billsRes, paymentsRes, incomesRes, assetsRes,
       savingsGoalsRes, bankAccountsRes, transactionsRes, netWorthRes,
-      budgetCategoriesRes, loanAdjustmentsRes
+      budgetCategoriesRes, loanAdjustmentsRes, documentsRes
     ] = await Promise.all([
       supabaseAdmin.from('loans').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabaseAdmin.from('bills').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
       supabaseAdmin.from('net_worth_snapshots').select('*').eq('user_id', uid).order('snapshot_date', { ascending: false }).limit(12),
       supabaseAdmin.from('budget_categories').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabaseAdmin.from('loan_adjustments').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(50),
+      supabaseAdmin.from('documents').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
     ]);
 
     return Response.json({
@@ -51,6 +52,7 @@ Deno.serve(async (req) => {
       net_worth_snapshots: netWorthRes.data || [],
       budget_categories: budgetCategoriesRes.data || [],
       loan_adjustments: loanAdjustmentsRes.data || [],
+      documents: documentsRes.data || [],
     });
   } catch (error) {
     console.error('[getFinancialData] Error:', error.message);

@@ -1,62 +1,34 @@
-import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { useMemo, useState } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useT } from "@/lib/LanguageContext";
 import { motion } from "framer-motion";
 import { Store, TrendingDown, Receipt, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export default function MerchantAnalytics() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const { supaUser } = useFinancialData();
-  const { toast } = useToast();
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { transactions, loading } = useFinancialData();
+
   const [period, setPeriod] = useState("month");
 
-  const fetchTransactions = async () => {
-    setLoading(true);
-    try {
-    const uid = supaUser?.id;
-    let query = supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false });
-
+  const filteredTransactions = useMemo(() => {
+    if (period === "all") return transactions;
+    let start;
     if (period === "month") {
-      const start = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), "yyyy-MM-dd");
-      query = query.gte('date', start);
-    } else if (period === "3months") {
-      const start = format(new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1), "yyyy-MM-dd");
-      query = query.gte('date', start);
+      start = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), "yyyy-MM-dd");
+    } else {
+      start = format(new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1), "yyyy-MM-dd");
     }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    setTransactions(data || []);
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching transactions:", err.message);
-    toast({ title: T("loadFailed", "Failed to load transactions"), description: err.message, variant: "destructive" });
-  } finally {
-    setLoading(false);
-  }
-};
-
-  useEffect(() => {
-    if (!supaUser?.id) return;
-    fetchTransactions();
-  }, [supaUser?.id, period]);
-
-  // 🔄 Realtime: reload when transactions change
-  useSupabaseRealtime(['transactions'], fetchTransactions, [supaUser?.id, period]);
+    return transactions.filter(t => t.date && t.date >= start);
+  }, [transactions, period]);
 
   const merchantData = useMemo(() => {
-    const expenses = transactions.filter(t => t.amount < 0);
+    const expenses = filteredTransactions.filter(t => t.amount < 0);
     const grouped = {};
     expenses.forEach(t => {
       const merchant = t.description?.trim() || T("unknown", "Unknown");
@@ -65,7 +37,7 @@ export default function MerchantAnalytics() {
       grouped[merchant].count += 1;
     });
     return Object.values(grouped).sort((a, b) => b.total - a.total);
-  }, [transactions, T]);
+  }, [filteredTransactions, T]);
 
   const topMerchants = merchantData.slice(0, 10);
   const totalSpending = merchantData.reduce((s, m) => s + m.total, 0);
