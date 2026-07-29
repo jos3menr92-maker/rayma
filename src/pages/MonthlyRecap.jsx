@@ -61,9 +61,9 @@ export default function MonthlyRecap() {
     return {
       month: getMonthName(m, locale, "short"),
       income: monthIncomes.reduce((s, x) => s + (x.amount || 0), 0),
-      expenses: monthPayments.length > 0
-        ? monthPayments.reduce((s, x) => s + (x.amount || 0), 0)
-        : (m === currentMonth && y === currentYear ? monthlyExpenses : 0),
+      expenses: (m === currentMonth && y === currentYear)
+        ? monthlyExpenses
+        : monthPayments.reduce((s, x) => s + (x.amount || 0), 0),
     };
   }), [incomes, payments, currentMonth, currentYear, monthlyExpenses, locale]);
 

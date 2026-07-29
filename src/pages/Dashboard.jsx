@@ -108,7 +108,7 @@ export default function Dashboard() {
     const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || l.remaining_balance || 0), 0);
     const totalPaid = totalDebt - totalRemaining;
     const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
-    const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
+    const monthlyBills = bills.filter((b) => b.is_active !== false).reduce((s, b) => s + (b.amount || 0), 0);
     const monthlyTotal = monthlyLoans + monthlyBills;
     
     return { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal,
@@ -119,7 +119,13 @@ export default function Dashboard() {
 
   const monthlyIncome = useMemo(() => {
     if (incomes.length === 0) return 0;
-    return (incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length) * 4.33;
+    const now = new Date();
+    const thisMonthIncomes = incomes.filter((i) => {
+      if (!i.week_start) return false;
+      const d = new Date(i.week_start + "T00:00:00");
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    return thisMonthIncomes.reduce((s, i) => s + (i.amount || 0), 0);
   }, [incomes]);
   const cashLeft = monthlyIncome - (monthlyTotal || 0);
 
@@ -266,7 +272,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
             <div key={loan.id} onClick={() => navigate(`/loan/${loan.id}`)} className="min-w-[145px] w-[145px] bg-card border border-border rounded-2xl p-3 snap-start shrink-0 shadow-sm cursor-pointer active:scale-95 transition-transform">
                <div className="flex justify-between items-start mb-2">
                  <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-base">{iconMap[loan.category] || "💳"}</div>
-                 <span className="text-[10px] font-bold text-primary">{Math.min(((loan.original_amount - loan.current_balance) / loan.original_amount) * 100, 100).toFixed(0)}%</span>
+                 <span className="text-[10px] font-bold text-primary">{loan.original_amount > 0 ? Math.min(Math.max(((loan.original_amount - loan.current_balance) / loan.original_amount) * 100, 0), 100).toFixed(0) : 0}%</span>
                </div>
                <p className="text-xs font-semibold text-foreground truncate">{loan.name}</p>
                <p className="text-base font-bold font-heading">{formatCurrency(loan.current_balance)}</p>
