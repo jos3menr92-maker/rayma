@@ -1,13 +1,16 @@
 import { motion } from "framer-motion";
-import { Headset } from "lucide-react";
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
-import { useMemo } from "react";
+import { Headset, Database, FlaskConical, CheckCircle2 } from "lucide-react";
+import { useT } from "@/lib/LanguageContext";
 import DiagnosticsConsole from "@/components/diagnostics/DiagnosticsConsole";
 
+const STEPS = [
+  { icon: Database, key: "stepScan", fallback: "Scan Tables" },
+  { icon: FlaskConical, key: "stepSeed", fallback: "Seed Test Data" },
+  { icon: CheckCircle2, key: "stepConfirm", fallback: "Confirm Connection" },
+];
+
 export default function RemoteSupport() {
-  const { lang } = useLanguage();
-  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+  const T = useT();
 
   return (
     <div className="max-w-xl mx-auto px-4 pt-6 pb-24">
@@ -15,18 +18,39 @@ export default function RemoteSupport() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-            <Headset className="w-7 h-7 text-primary" />
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Headset className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold font-heading text-foreground mb-2">{T("liveRemoteAssistance", "Live Remote Assistance")}</h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {T("remoteAssistanceDesc", "Need hands-on help? Generate a secure PIN below to grant our developer team temporary access to troubleshoot your account safely.")}
+          <h1 className="text-3xl font-bold font-heading text-foreground mb-3">
+            {T("diagnosticsRepairTitle", "Diagnostics & Repair")}
+          </h1>
+          <p className="text-base text-muted-foreground leading-relaxed">
+            {T("diagnosticsRepairDesc", "Scan your data tables, seed test records, and verify your Supabase connection — all in one secure console.")}
           </p>
         </div>
-{/* Diagnostics Console */}
-<div className="flex justify-center">
-    <DiagnosticsConsole />
-</div>
+
+        {/* 3-Step Indicator */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          {STEPS.map((step, i) => {
+            const Icon = step.icon;
+            return (
+              <div key={i} className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">{T(step.key, step.fallback)}</span>
+                </div>
+                {i < STEPS.length - 1 && <div className="w-6 h-px bg-border mt-[-18px]" />}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Diagnostics Console */}
+        <div className="flex justify-center">
+          <DiagnosticsConsole />
+        </div>
 
       </motion.div>
     </div>

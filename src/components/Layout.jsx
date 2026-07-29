@@ -7,6 +7,7 @@ import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import MoreMenu from "./MoreMenu";
 import PushNotificationPrompt from "./PushNotificationPrompt";
+import AppTour from "./AppTour";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { getInitialsColor } from "@/components/AvatarPicker";
 import { useT } from "@/lib/LanguageContext";
@@ -128,6 +129,7 @@ export default function Layout() {
       </motion.button>
 
       <PushNotificationPrompt />
+      <AppTour />
       
       <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">

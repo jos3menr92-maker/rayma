@@ -26,7 +26,7 @@ const moreItems = [
   { path: "/security", icon: ShieldCheck, labelKey: "securityAudit", labelFallback: "Security Audit", descKey: "verifyDataSafetyDefenses", descFallback: "Verify data safety & defenses" },
   { path: "/store", icon: Heart, labelKey: "store", labelFallback: "Store", descKey: "annualPassOrTokens", descFallback: "Get Annual Pass or AI token packs", highlight: true },
   { path: "/admin", icon: ShieldCheck, labelKey: "adminPanel", labelFallback: "Admin Panel", descKey: "appOversightMetrics", descFallback: "App oversight & metrics", adminOnly: true },
-  { path: "/remote-support", icon: Headset, labelKey: "liveRemoteAssistance", labelFallback: "Live Remote Assistance", descKey: "securePinSupport", descFallback: "Generate a secure pin for developer support" },
+  { path: "/remote-support", icon: Headset, labelKey: "diagnosticsRepair", labelFallback: "Diagnostics & Repair", descKey: "scanAndRepairDesc", descFallback: "Scan tables, seed test data & verify connection" },
   { path: "/feedback", icon: MessageSquare, labelKey: "submitFeedback", labelFallback: "Submit Feedback", descKey: "reportBugsSuggestFeatures", descFallback: "Report bugs or suggest features" },
   // 🛡️ ROUTED TO VAULT
   { path: "/profile", icon: Trash2, labelKey: "deleteAccountLabel", labelFallback: "Delete Account", descKey: "goToSecurityVault", descFallback: "Go to Security Vault", isDelete: true }
