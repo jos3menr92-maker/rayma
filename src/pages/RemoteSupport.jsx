@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Headset, Database, FlaskConical, CheckCircle2 } from "lucide-react";
+import { Headset, Database, FlaskConical, CheckCircle2, Bug } from "lucide-react";
 import { useT } from "@/lib/LanguageContext";
 import DiagnosticsConsole from "@/components/diagnostics/DiagnosticsConsole";
+import BugCodeSubmission from "@/components/diagnostics/BugCodeSubmission";
 
 const STEPS = [
   { icon: Database, key: "stepScan", fallback: "Scan Tables" },
@@ -50,6 +51,17 @@ export default function RemoteSupport() {
         {/* Diagnostics Console */}
         <div className="flex justify-center">
           <DiagnosticsConsole />
+        </div>
+
+        {/* Bug Code Submission */}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Bug className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold font-heading text-foreground">
+              {T("submitBugCodeTitle", "Submit Bug Code")}
+            </h2>
+          </div>
+          <BugCodeSubmission />
         </div>
 
       </motion.div>

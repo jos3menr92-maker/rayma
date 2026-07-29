@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Users, Zap, DollarSign, ShieldCheck, Gift, TrendingUp, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import AdminEmailManager from "@/components/admin/AdminEmailManager";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -180,6 +181,9 @@ export default function Admin() {
             </Button>
           </div>
         </div>
+
+        {/* Support Email Management */}
+        <AdminEmailManager />
 
         {/* Key Stats */}
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">{T("overview", "Overview")}</h2>
