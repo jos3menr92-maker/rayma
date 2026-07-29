@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Button } from "@/components/ui/button";
@@ -35,17 +34,14 @@ const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), d
 export default function BankAccounts() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const { userProfile, supaUser } = useFinancialData();
+  const { userProfile, supaUser, bankAccounts: accounts, transactions, loading, reload } = useFinancialData();
   const location = useLocation();
   const navigate = useNavigate();
-  const [accounts, setAccounts] = useState([]);
-  const [transactions, setTransactions] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [showTxDialog, setShowTxDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [txForm, setTxForm] = useState(emptyTx);
-  const [loading, setLoading] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [splitTx, setSplitTx] = useState(null);
   const { toast } = useToast();
@@ -61,29 +57,6 @@ export default function BankAccounts() {
       navigate("/bank-accounts", { replace: true, state: {} });
     }
   }, [location.state, navigate]);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    const uid = supaUser?.id;
-    const [accsRes, txsRes] = await Promise.all([
-      supabase.from('bank_accounts').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-      supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(100),
-    ]);
-    if (accsRes.error) console.error("Bank accounts error:", accsRes.error);
-    if (txsRes.error) console.error("Transactions error:", txsRes.error);
-    setAccounts(accsRes.data || []);
-    setTransactions(txsRes.data || []);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (supaUser?.id) {
-      fetchAll();
-    }
-  }, [supaUser?.id]);
-
-  // 🔄 Realtime: reload when accounts or transactions change
-  useSupabaseRealtime(['bank_accounts', 'transactions'], fetchAll, [supaUser?.id]);
 
   const openAdd = () => { setEditing(null); setForm(emptyForm); setShowDialog(true); };
   const openEdit = (acc) => { setEditing(acc); setForm({ ...acc }); setShowDialog(true); };
@@ -103,7 +76,7 @@ export default function BankAccounts() {
       toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     }
     setShowDialog(false);
-    fetchAll();
+    reload();
   };
 
   const deleteAccount = (id) => {
@@ -119,7 +92,7 @@ export default function BankAccounts() {
     }
     setAccountToDelete(null);
     setShowConfirm(false);
-    fetchAll();
+    reload();
   };
 
   const saveTx = async () => {
@@ -133,7 +106,7 @@ export default function BankAccounts() {
     }
     setShowTxDialog(false);
     setTxForm(emptyTx);
-    fetchAll();
+    reload();
   };
 
   const exportCSV = () => {
@@ -373,7 +346,7 @@ export default function BankAccounts() {
           onSaved={async (parentTxId) => {
             toast({ title: T("splitSaved", "Transaction split saved!") });
             setSplitTx(null);
-            fetchAll();
+            reload();
           }}
           onError={(msg) => toast({ title: T("splitError", "Split failed"), description: msg, variant: "destructive" })}
         />

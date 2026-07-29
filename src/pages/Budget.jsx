@@ -5,12 +5,13 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Plus, Trash2, Edit3, PiggyBank, ShieldAlert, Loader2, Trophy, Sparkles, Calendar, Target, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Edit3, PiggyBank, Trophy, Sparkles, Calendar, Target, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const MILESTONES = [25, 50, 75, 100];
 
@@ -18,20 +19,14 @@ export default function Budget() {
   const { lang } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [goalOpen, setGoalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({ name: "", target_amount: "", current_saved: "", notes: "", target_date: "", weekly_contribution: "" });
   const [savingGoal, setSavingGoal] = useState(false);
-  const { supaUser, reload } = useFinancialData();
+  const { supaUser, savingsGoals: goals, loading, reload } = useFinancialData();
 
-  // 🔐 Security Vault State
-  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [goalToDelete, setGoalToDelete] = useState(null);
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
 
   // 🎉 Goal Milestone Celebration State
   const [winOverlay, setWinOverlay] = useState(null);
@@ -89,29 +84,6 @@ export default function Budget() {
     });
   }, [T, triggerRaymaConfetti]);
 
-  // 🛡️ FAIL-SAFE: Ensure spinner stops if user session isn't found
-  useEffect(() => {
-    if (supaUser?.id) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
-  }, [supaUser?.id]);
-
-  // 🛡️ FAIL-SAFE: Wrapped in try/catch/finally to guarantee UI unlocks
-  async function loadData() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.from('savings_goals').select('*').eq('user_id', supaUser.id).order('created_at', { ascending: false });
-      if (error) throw error;
-      setGoals(data || []);
-    } catch (err) {
-      console.error("Failed to load goals:", err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   function openAddGoal() {
     setEditingGoal(null);
     setGoalForm({ name: "", target_amount: "", current_saved: "", notes: "", target_date: "", weekly_contribution: "" });
@@ -152,7 +124,6 @@ export default function Budget() {
       
       await reload(); 
       setGoalOpen(false); 
-      await loadData();
     } catch (err) {
       console.error("Failed to save savings goal:", err.message);
     } finally {
@@ -162,35 +133,17 @@ export default function Budget() {
 
   const handleDeleteGoal = (id) => {
     setGoalToDelete(id);
-    setPassword("");
-    setAuthError("");
-    setShowPasswordLock(true);
+    setShowConfirm(true);
   };
 
-  const verifyAndExecute = async () => {
-    setAuthError("");
-    setIsVerifying(true);
-    try {
-      await executeDeleteGoal(password, goalToDelete);
-      setShowPasswordLock(false);
-    } catch (err) {
-      setAuthError(T("invalidPassword", "Invalid password. Please try again."));
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  async function executeDeleteGoal(password, id) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) throw new Error("Could not verify user identity.");
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
-    if (signInError) throw signInError;
-
-    const { error } = await supabase.from('savings_goals').delete().eq('id', id);
-    if (error) throw error;
+  const confirmDeleteGoal = async () => {
+    if (!goalToDelete) return;
+    const { error } = await supabase.from('savings_goals').delete().eq('id', goalToDelete);
+    if (error) console.error("Failed to delete goal:", error.message);
     setGoalToDelete(null);
-    loadData();
-  }
+    setShowConfirm(false);
+    reload();
+  };
 
   const getProgressColor = (p) => {
     if (p >= 100) return "bg-amber-500";
@@ -407,26 +360,16 @@ export default function Budget() {
         </DialogContent>
       </Dialog>
 
-      {/* 🔐 SECURITY MODAL (The Vault) */}
-      {showPasswordLock && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-amber-500">
-              <ShieldAlert className="w-6 h-6" />
-              <h3 className="font-bold text-lg text-foreground">{T("verifyPassword", "Verify Password")}</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">{T("deleteGoalConfirm", "Enter your password to permanently delete this goal.")}</p>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={T("enterPassword", "Enter password...")} />
-            {authError && <p className="text-xs text-destructive">{authError}</p>}
-            <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>{T("cancel", "Cancel")}</Button>
-              <Button className="flex-1" onClick={verifyAndExecute} disabled={isVerifying || !password}>
-                {isVerifying ? <Loader2 className="animate-spin" /> : T("confirm", "Confirm")}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title={T("deleteGoal", "Delete Goal")}
+        description={T("deleteGoalConfirmSimple", "Are you sure you want to delete this savings goal? This cannot be undone.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={confirmDeleteGoal}
+      />
     </div>
   );
 }

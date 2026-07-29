@@ -15,6 +15,7 @@ export function FinancialDataProvider({ children }) {
   // 🚀 Existing global containers
   const [assets, setAssets] = useState([]);
   const [savingsGoals, setSavingsGoals] = useState([]);
+  const [bankAccounts, setBankAccounts] = useState([]);
 
   // ✅ NEW: Global split transaction container
   const [transactionSplits, setTransactionSplits] = useState([]);
@@ -64,6 +65,7 @@ export function FinancialDataProvider({ children }) {
             setTransactions(d.transactions || []);
             setAssets(d.assets || []);
             setSavingsGoals(d.savings_goals || []);
+            setBankAccounts(d.bank_accounts || []);
             setTransactionSplits([]);
             setUserProfile(me);
           } catch (fallbackErr) {
@@ -76,6 +78,7 @@ export function FinancialDataProvider({ children }) {
               setTransactions([]);
               setAssets([]);
               setSavingsGoals([]);
+              setBankAccounts([]);
               setTransactionSplits([]);
             }
           } finally {
@@ -97,6 +100,7 @@ export function FinancialDataProvider({ children }) {
           setTransactions([]);
           setAssets([]);
           setSavingsGoals([]);
+          setBankAccounts([]);
           setTransactionSplits([]);
           setLoading(false);
         }
@@ -115,6 +119,7 @@ export function FinancialDataProvider({ children }) {
         transactionsRes,
         assetsRes,
         savingsRes,
+        bankAccountsRes,
         splitsRes,
         profileRes
       ] = await Promise.all([
@@ -125,6 +130,7 @@ export function FinancialDataProvider({ children }) {
         supabase.from("transactions").select("*").eq("user_id", uid).order("date", { ascending: false }),
         supabase.from("assets").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("savings_goals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("bank_accounts").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("transaction_splits").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("profiles").select("*").eq("id", uid).single()
       ]);
@@ -138,6 +144,7 @@ export function FinancialDataProvider({ children }) {
       setTransactions(transactionsRes.data || []);
       setAssets(assetsRes.data || []);
       setSavingsGoals(savingsRes.data || []);
+      setBankAccounts(bankAccountsRes.data || []);
       setTransactionSplits(splitsRes.data || []);
 
       // ✅ Unify profile: merge Supabase profile (tokens, energy_bars) with Base44 user
@@ -265,6 +272,7 @@ export function FinancialDataProvider({ children }) {
         setTransactions([]);
         setAssets([]);
         setSavingsGoals([]);
+        setBankAccounts([]);
         setTransactionSplits([]);
       }
     });
@@ -285,6 +293,7 @@ export function FinancialDataProvider({ children }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "savings_goals" }, () => loadAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bank_accounts" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "transaction_splits" }, () => loadAll())
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => refreshUserProfile())
       .subscribe();
@@ -304,6 +313,7 @@ export function FinancialDataProvider({ children }) {
         transactions,
         assets,
         savingsGoals,
+        bankAccounts,
         transactionSplits,
         userProfile,
         supaUser,
