@@ -33,27 +33,6 @@ export const AuthProvider = ({ children }) => {
         ),
       ]);
 
-      // Await full Supabase session sync BEFORE releasing the loading state.
-      // Only invoke syncSupabaseUser + signInWithPassword when no valid
-      // Supabase session already exists — prevents brute-force rate-limit (429).
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          const syncRes = await base44.functions.invoke('syncSupabaseUser');
-          if (syncRes?.data?.tempToken) {
-            const { error: signInError } = await supabase.auth.signInWithPassword({
-              email: me.email,
-              password: syncRes.data.tempToken,
-            });
-            if (signInError) throw signInError;
-          }
-        }
-      } catch (syncError) {
-        console.error('Supabase sync failed:', syncError);
-        // Non-fatal: Base44 auth succeeded; Supabase will retry on next data fetch
-      }
-
-      // ONLY unlock the UI after both Base44 + Supabase sessions are confirmed
       setUser(me);
       setIsAuthenticated(true);
     } catch (error) {
