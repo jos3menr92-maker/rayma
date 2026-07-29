@@ -108,7 +108,7 @@ export default function Profile() {
     setUploadingPhoto(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${supaUser.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${userProfile.id || Date.now()}-${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file);
       if (uploadError) throw uploadError;
@@ -147,9 +147,12 @@ export default function Profile() {
       safePayload.smart_alerts = form.smart_alerts ?? true;
       safePayload.auto_insights = form.auto_insights ?? true;
 
-      // 1. Update Supabase profiles table
-      const { error: profileError } = await supabase.from('profiles').update(safePayload).eq('id', supaUser.id);
-      if (profileError) throw profileError;
+      // 1. Update Supabase profiles table via backend function (resilient to expired browser session)
+      await base44.functions.invoke('manageFinancialRecord', { 
+        action: 'update', 
+        table: 'profiles', 
+        data: safePayload 
+      });
 
       // 2. Sync to Base44 User entity
       try {

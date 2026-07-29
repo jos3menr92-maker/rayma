@@ -14,6 +14,7 @@ const ALLOWED_TABLES = {
   budget_categories: ['name', 'category_key', 'monthly_limit', 'color', 'icon', 'description'],
   loan_adjustments: ['loan_id', 'amount', 'direction', 'reason', 'date', 'description'],
   net_worth_snapshots: ['snapshot_date', 'total_assets', 'total_liabilities', 'net_worth', 'description'],
+  profiles: ['preferred_name', 'avatar_id', 'avatar_emoji', 'avatar_photo_url', 'preferred_currency', 'preferred_language', 'pay_frequency', 'pay_day', 'compact_mode', 'smart_alerts', 'auto_insights', 'subscription_type', 'ai_tokens_daily_limit'],
 };
 
 Deno.serve(async (req) => {
@@ -59,13 +60,21 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'update') {
-      if (!record_id || !data) return Response.json({ error: 'record_id and data are required for update' }, { status: 400 });
+      if (!data) return Response.json({ error: 'data is required for update' }, { status: 400 });
       const allowedFields = ALLOWED_TABLES[table];
       const sanitized = {};
       for (const field of allowedFields) {
         if (data[field] !== undefined) sanitized[field] = data[field];
       }
-      const { data: result, error } = await supabaseAdmin.from(table).update(sanitized).eq('id', record_id).eq('user_id', uid).select().single();
+      let query;
+      if (table === 'profiles') {
+        // profiles table uses 'id' as the user ID column (no separate user_id)
+        query = supabaseAdmin.from(table).update(sanitized).eq('id', uid);
+      } else {
+        if (!record_id) return Response.json({ error: 'record_id is required for update' }, { status: 400 });
+        query = supabaseAdmin.from(table).update(sanitized).eq('id', record_id).eq('user_id', uid);
+      }
+      const { data: result, error } = await query.select().single();
       if (error) throw error;
       return Response.json({ success: true, record: result });
     }
