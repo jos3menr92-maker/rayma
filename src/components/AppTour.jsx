@@ -57,6 +57,17 @@ export default function AppTour() {
       setStep(0);
     };
     window.addEventListener("trigger-rayma-tour", handler);
+
+    // Auto-start for first-time users
+    const completed = localStorage.getItem("rayma_tour_completed");
+    if (!completed) {
+      const timer = setTimeout(() => setActive(true), 1200);
+      return () => {
+        window.removeEventListener("trigger-rayma-tour", handler);
+        clearTimeout(timer);
+      };
+    }
+
     return () => window.removeEventListener("trigger-rayma-tour", handler);
   }, []);
 
@@ -68,6 +79,7 @@ export default function AppTour() {
   }, [active]);
 
   const handleClose = () => {
+    localStorage.setItem("rayma_tour_completed", "true");
     setActive(false);
     setStep(0);
   };
