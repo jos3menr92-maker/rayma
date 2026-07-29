@@ -4,11 +4,15 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage, useT } from "@/lib/LanguageContext";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt, Trash2, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import CashFlowForecast from "../components/CashFlowForecast";
 import { getWeekdayNames } from "@/utils/formatLocalized";
 
@@ -32,8 +36,9 @@ export default function Finance() {
 
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
-  const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "" });
+  const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "", is_recurring: false, recurring_frequency: "weekly" });
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // --- Financial Calculations ---
   const activeBills = useMemo(() => bills.filter(b => b.is_active !== false), [bills]);
@@ -67,14 +72,16 @@ export default function Finance() {
     e.preventDefault();
     setSaving(true);
     
-    // 🔒 SECURE PAYLOAD
-const payload = { 
+    const payload = { 
       amount: parseFloat(incomeForm.amount) || 0, 
       week_start: incomeForm.week_start, 
       note: incomeForm.note, 
-      source: incomeForm.note || "Manual Log", // 🚀 THIS FIXES THE CRASH!
+      source: incomeForm.note || "Manual Log",
       user_id: supaUser?.id,
-      is_active: true
+      is_active: true,
+      is_recurring: incomeForm.is_recurring || false,
+      recurring_frequency: incomeForm.recurring_frequency || "weekly",
+      recurring_active: incomeForm.is_recurring ? true : false
     };
     
     try {
@@ -94,8 +101,21 @@ const payload = {
 
   function openAdd() {
     setEditingIncome(null);
-    setIncomeForm({ amount: incomes.length > 0 ? incomes[0].amount : "", week_start: startOfWeek(), note: "" });
+    setIncomeForm({ amount: incomes.length > 0 ? incomes[0].amount : "", week_start: startOfWeek(), note: "", is_recurring: false, recurring_frequency: "weekly" });
     setIncomeDialog(true);
+  }
+
+  async function handleDeleteIncome() {
+    if (!deleteTarget) return;
+    try {
+      const { error } = await supabase.from('incomes').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      await reload();
+    } catch (err) {
+      console.error("Delete income error:", err);
+    } finally {
+      setDeleteTarget(null);
+    }
   }
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
@@ -170,18 +190,37 @@ const payload = {
               </div>
             ) : (
               incomes.map((inc) => (
-                <div key={inc.id} className="flex justify-between items-center p-4 bg-card border border-border rounded-2xl shadow-sm hover:border-primary/30 transition-colors cursor-pointer" onClick={() => { setEditingIncome(inc); setIncomeForm({ amount: inc.amount, week_start: inc.week_start || startOfWeek(), note: inc.note || "" }); setIncomeDialog(true); }}>
-                  <div className="flex gap-3 items-center">
-                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
-                      <DollarSign className="w-5 h-5 text-green-500" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{inc.note || T("incomeLogged", "Income Logged")}</p>
-                      <p className="text-xs text-muted-foreground">{T("weekOf", "Week of")} {getWeekLabel(inc.week_start, locale)}</p>
-                    </div>
-                  </div>
-                  <p className="font-bold text-foreground text-sm">{fmt(inc.amount)}</p>
-                </div>
+                <div key={inc.id} className="flex justify-between items-center p-4 bg-card border border-border rounded-2xl shadow-sm hover:border-primary/30 transition-colors cursor-pointer" onClick={() => { setEditingIncome(inc); setIncomeForm({ amount: inc.amount, week_start: inc.week_start || startOfWeek(), note: inc.note || "", is_recurring: inc.is_recurring || false, recurring_frequency: inc.recurring_frequency || "weekly" }); setIncomeDialog(true); }}>
+                   <div className="flex gap-3 items-center">
+                     <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+                       <DollarSign className="w-5 h-5 text-green-500" />
+                     </div>
+                     <div>
+                       <div className="flex items-center gap-1.5">
+                         <p className="font-semibold text-sm text-foreground">{inc.note || T("incomeLogged", "Income Logged")}</p>
+                         {inc.is_recurring && inc.recurring_active && (
+                           <Badge variant="secondary" className="text-[9px] py-0 px-1.5 gap-0.5 shrink-0">
+                             <Repeat className="w-2.5 h-2.5" /> {inc.recurring_frequency || "weekly"}
+                           </Badge>
+                         )}
+                         {inc.recurring_source_id && (
+                           <Badge variant="outline" className="text-[9px] py-0 px-1.5 shrink-0">{T("auto", "Auto")}</Badge>
+                         )}
+                       </div>
+                       <p className="text-xs text-muted-foreground">{T("weekOf", "Week of")} {getWeekLabel(inc.week_start, locale)}</p>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <p className="font-bold text-foreground text-sm">{fmt(inc.amount)}</p>
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setDeleteTarget(inc); }}
+                       className="p-1.5 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                       aria-label={T("deleteIncome", "Delete income entry")}
+                     >
+                       <Trash2 className="w-4 h-4" />
+                     </button>
+                   </div>
+                 </div>
               ))
             )}
           </div>
@@ -216,6 +255,41 @@ const payload = {
                 <Label className="text-xs text-muted-foreground ml-1">{T("dateLabel", "Date")}</Label>
                 <Input type="date" value={incomeForm.week_start} onChange={e => setIncomeForm(f => ({...f, week_start: e.target.value}))} required className="rounded-xl" />
               </div>
+
+              {!editingIncome?.recurring_source_id && (
+                <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Repeat className="w-4 h-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground">{T("keepLogging", "Keep logging automatically")}</p>
+                        <p className="text-[11px] text-muted-foreground">{T("keepLoggingDesc", "Auto-log this pay until you stop it")}</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={incomeForm.is_recurring}
+                      onCheckedChange={(v) => setIncomeForm(f => ({...f, is_recurring: v}))}
+                    />
+                  </div>
+                  {incomeForm.is_recurring && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground ml-1">{T("frequency", "Frequency")}</Label>
+                      <Select value={incomeForm.recurring_frequency} onValueChange={(v) => setIncomeForm(f => ({...f, recurring_frequency: v}))}>
+                        <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly">{T("weekly", "Weekly")}</SelectItem>
+                          <SelectItem value="biweekly">{T("biweekly", "Biweekly")}</SelectItem>
+                          <SelectItem value="monthly">{T("monthly", "Monthly")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {editingIncome?.is_recurring && editingIncome?.recurring_active && (
+                    <p className="text-[11px] text-amber-500">{T("turnOffRecurringNote", "Uncheck to stop future auto-logs. This entry stays.")}</p>
+                  )}
+                </div>
+              )}
+
               <Button type="submit" disabled={saving} className="w-full rounded-xl shadow-lg mt-2">
                 {saving ? T("saving", "Saving...") : T("saveIncome", "Save Income")}
               </Button>
@@ -223,6 +297,17 @@ const payload = {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title={T("deleteIncomeEntry", "Delete Income Entry")}
+        description={T("deleteIncomeConfirm", "Are you sure you want to delete this income entry? This cannot be undone.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={handleDeleteIncome}
+      />
     </div>
   );
 }

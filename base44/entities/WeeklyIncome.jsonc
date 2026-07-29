@@ -15,6 +15,34 @@
       "type": "string",
       "description": "Optional note"
     },
+    "source": {
+      "type": "string",
+      "description": "Source label (e.g. Weekly Paycheck, Auto-logged)"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a recurring template that auto-logs future entries"
+    },
+    "recurring_frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "biweekly",
+        "monthly"
+      ],
+      "default": "weekly",
+      "description": "How often to auto-log this recurring income"
+    },
+    "recurring_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether auto-logging is still active (set false to stop recurring)"
+    },
+    "recurring_source_id": {
+      "type": "string",
+      "description": "For auto-generated entries: ID of the recurring template this was created from"
+    },
     "description": {
       "type": "string",
       "maxLength": 1000,
