@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, TrendingUp, PieChart as PieIcon, ShieldAlert, Loader2 } from "lucide-react";
+import { Plus, Trash2, Edit3, TrendingUp, PieChart as PieIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const TYPE_ICONS = { cash: "💵", investment: "📈", property: "🏠", savings: "🏦", other: "📦" };
 const TYPE_COLORS = {
@@ -42,12 +43,8 @@ export default function AssetDashboard() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  // 🔐 Security Vault State
-  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState(null);
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
   const { toast } = useToast();
 
   // 🧮 Net Worth Math
@@ -101,35 +98,19 @@ export default function AssetDashboard() {
 
   const handleDelete = (id) => {
     setAssetToDelete(id);
-    setPassword("");
-    setAuthError("");
-    setShowPasswordLock(true);
+    setShowConfirm(true);
   };
 
-  const verifyAndExecute = async () => {
-    setAuthError("");
-    setIsVerifying(true);
-    try {
-      await executeDeleteAsset(password, assetToDelete);
-      setShowPasswordLock(false);
-    } catch (err) {
-      setAuthError(T("invalidPassword", "Invalid password. Please try again."));
-    } finally {
-      setIsVerifying(false);
+  const confirmDelete = async () => {
+    if (!assetToDelete) return;
+    const { error } = await supabase.from('assets').delete().eq('id', assetToDelete);
+    if (error) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: error.message, variant: "destructive" });
     }
-  };
-
-  async function executeDeleteAsset(password, id) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) throw new Error("Could not verify user identity.");
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
-    if (signInError) throw signInError;
-
-    const { error } = await supabase.from('assets').delete().eq('id', id);
-    if (error) throw error;
     setAssetToDelete(null);
+    setShowConfirm(false);
     reload();
-  }
+  };
 
   if (contextLoading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -266,26 +247,16 @@ export default function AssetDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* 🔐 SECURITY MODAL (The Vault) */}
-      {showPasswordLock && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-amber-500">
-              <ShieldAlert className="w-6 h-6" />
-              <h3 className="font-bold text-lg text-foreground">{T("verifyPassword", "Verify Password")}</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">{T("deleteAssetConfirm", "Enter your password to permanently delete this asset.")}</p>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={T("enterPassword", "Enter password...")} />
-            {authError && <p className="text-xs text-destructive">{authError}</p>}
-            <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>{T("cancel", "Cancel")}</Button>
-              <Button className="flex-1" onClick={verifyAndExecute} disabled={isVerifying || !password}>
-                {isVerifying ? <Loader2 className="animate-spin" /> : T("confirm", "Confirm")}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title={T("deleteAsset", "Delete Asset")}
+        description={T("deleteAssetConfirmSimple", "Are you sure you want to delete this asset? This cannot be undone.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

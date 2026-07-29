@@ -8,7 +8,7 @@ import { t } from "@/lib/i18n";
 import { motion } from "framer-motion"; 
 import { 
   ArrowLeft, Edit3, Trash2, Plus, Calendar, Percent, Building, 
-  ShieldAlert, Loader2 
+  Loader2 
 } from "lucide-react"; 
 import { Button } from "@/components/ui/button"; 
 import { Input } from "@/components/ui/input"; 
@@ -18,6 +18,7 @@ import ProgressRing from "../components/ProgressRing";
 import LatePaymentLog from "../components/LatePaymentLog";
 import PaymentItem from "../components/PaymentItem";
 import EditLoanForm from "../components/EditLoanForm";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const categoryIcons = {
   mortgage: "🏠", auto: "🚗", student: "🎓", personal: "💰",
@@ -41,12 +42,8 @@ export default function LoanDetail() {
   const [payForm, setPayForm] = useState({ amount: "", payment_date: new Date().toISOString().split("T")[0], note: "" }); 
   const [saving, setSaving] = useState(false); 
 
-  // 🔐 Security Vault State
-  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => { 
     if (supaUser?.id) {
@@ -73,34 +70,16 @@ export default function LoanDetail() {
     }
   }
 
-  // ---------------------------------------------------------
-  // 🛡️ SECURE ACTIONS (The Vault)
-  // ---------------------------------------------------------
-
-  const triggerSecurityCheck = (action, meta = {}) => {
+  const triggerConfirm = (action, meta = {}) => {
     setPendingAction({ type: action, meta });
-    setPassword("");
-    setAuthError("");
-    setShowPasswordLock(true);
+    setShowConfirm(true);
   };
 
-  const verifyAndExecute = async () => {
-    setAuthError("");
-    setIsVerifying(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) throw new Error("Could not verify user identity.");
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
-      if (signInError) throw new Error("Invalid password");
-
-      setShowPasswordLock(false);
-      if (pendingAction.type === 'delete_loan') await executeDeleteLoan();
-      else if (pendingAction.type === 'delete_payment') await executeDeletePayment(pendingAction.meta.paymentId);
-    } catch (err) {
-      setAuthError(T("invalidPassword", "Invalid password. Please try again."));
-    } finally {
-      setIsVerifying(false);
-    }
+  const confirmAction = async () => {
+    setShowConfirm(false);
+    if (pendingAction?.type === 'delete_loan') await executeDeleteLoan();
+    else if (pendingAction?.type === 'delete_payment') await executeDeletePayment(pendingAction.meta.paymentId);
+    setPendingAction(null);
   };
 
   async function executeDeleteLoan() {
@@ -274,7 +253,7 @@ export default function LoanDetail() {
         <Button onClick={() => setPaymentOpen(true)} className="rounded-xl">
           <Plus className="w-4 h-4" /> {T("addPayment", "Add Payment")}
         </Button>
-        <Button variant="destructive" onClick={() => triggerSecurityCheck('delete_loan')} className="rounded-xl">
+        <Button variant="destructive" onClick={() => triggerConfirm('delete_loan')} className="rounded-xl">
           <Trash2 className="w-4 h-4" /> {T("deleteLoan", "Delete Loan")}
         </Button>
       </div>
@@ -286,7 +265,7 @@ export default function LoanDetail() {
           <p className="text-xs text-muted-foreground text-center py-6">{T("noPayments", "No payments logged yet")}</p>
         ) : (
           payments.map((p, i) => (
-            <PaymentItem key={p.id} payment={p} index={i} onDelete={(paymentId) => triggerSecurityCheck('delete_payment', { paymentId })} />
+            <PaymentItem key={p.id} payment={p} index={i} onDelete={(paymentId) => triggerConfirm('delete_payment', { paymentId })} />
           ))
         )}
       </div>
@@ -332,28 +311,18 @@ export default function LoanDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* 🔐 SECURITY MODAL (The Vault) */}
-      {showPasswordLock && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-amber-500">
-              <ShieldAlert className="w-6 h-6" />
-              <h3 className="font-bold text-lg text-foreground">{T("verifyPassword", "Verify Password")}</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {pendingAction?.type === 'delete_loan' ? T("deleteLoanConfirm", "Enter your password to permanently delete this loan and all its payments.") : T("deletePaymentConfirm", "Enter your password to delete this payment.")}
-            </p>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={T("enterPassword", "Enter password...")} />
-            {authError && <p className="text-xs text-destructive">{authError}</p>}
-            <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>{T("cancel", "Cancel")}</Button>
-              <Button className="flex-1" onClick={verifyAndExecute} disabled={isVerifying || !password}>
-                {isVerifying ? <Loader2 className="animate-spin" /> : T("confirm", "Confirm")}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title={pendingAction?.type === 'delete_loan' ? T("deleteLoan", "Delete Loan") : T("deletePayment", "Delete Payment")}
+        description={pendingAction?.type === 'delete_loan'
+          ? T("deleteLoanConfirmSimple", "Are you sure you want to delete this loan and all its payments? This cannot be undone.")
+          : T("deletePaymentConfirmSimple", "Are you sure you want to delete this payment? The loan balance will be adjusted.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={confirmAction}
+      />
     </div>
   );
 }

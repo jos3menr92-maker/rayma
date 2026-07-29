@@ -10,10 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, ShieldAlert, Loader2, SplitSquareHorizontal } from "lucide-react";
+import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, SplitSquareHorizontal } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { SplitTransactionDialog } from "@/components/transactions/SplitTransactionDialog";
 import AccountBalanceChart from "@/components/AccountBalanceChart";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -50,12 +51,8 @@ export default function BankAccounts() {
   const { toast } = useToast();
   const typeConfig = useMemo(() => buildTypeConfig(T), [T]);
 
-  // 🔐 Security Vault State
-  const [showPasswordLock, setShowPasswordLock] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
 
   // Auto-open transaction modal when navigated with autoOpenLog state
   useEffect(() => {
@@ -111,33 +108,17 @@ export default function BankAccounts() {
 
   const deleteAccount = (id) => {
     setAccountToDelete(id);
-    setPassword("");
-    setAuthError("");
-    setShowPasswordLock(true);
+    setShowConfirm(true);
   };
 
-  const verifyAndExecute = async () => {
-    setAuthError("");
-    setIsVerifying(true);
-    try {
-      await executeDeleteAccount(password, accountToDelete);
-      setShowPasswordLock(false);
-    } catch (err) {
-      setAuthError(T("invalidPassword", "Invalid password. Please try again."));
-    } finally {
-      setIsVerifying(false);
+  const confirmDelete = async () => {
+    if (!accountToDelete) return;
+    const { error } = await supabase.from('bank_accounts').delete().eq('id', accountToDelete);
+    if (error) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: error.message, variant: "destructive" });
     }
-  };
-
-  const executeDeleteAccount = async (password, id) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) throw new Error("Could not verify user identity.");
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password });
-    if (signInError) throw signInError;
-
-    const { error } = await supabase.from('bank_accounts').delete().eq('id', id);
-    if (error) throw error;
     setAccountToDelete(null);
+    setShowConfirm(false);
     fetchAll();
   };
 
@@ -398,26 +379,16 @@ export default function BankAccounts() {
         />
       )}
 
-      {/* 🔐 SECURITY MODAL (The Vault) */}
-      {showPasswordLock && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-background border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-amber-500">
-              <ShieldAlert className="w-6 h-6" />
-              <h3 className="font-bold text-lg text-foreground">{T("verifyPassword", "Verify Password")}</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">{T("deleteAccountVault", "Enter your password to permanently delete this account.")}</p>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={T("enterPassword", "Enter password...")} />
-            {authError && <p className="text-xs text-destructive">{authError}</p>}
-            <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setShowPasswordLock(false)}>{T("cancel", "Cancel")}</Button>
-              <Button className="flex-1" onClick={verifyAndExecute} disabled={isVerifying || !password}>
-                {isVerifying ? <Loader2 className="animate-spin" /> : T("confirm", "Confirm")}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title={T("deleteAccount", "Delete Account")}
+        description={T("deleteAccountConfirmSimple", "Are you sure you want to delete this bank account? This cannot be undone.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
