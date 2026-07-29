@@ -51,13 +51,6 @@ export default function BudgetDashboard() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  useEffect(() => {
-    fetchAll();
-  }, [supaUser?.id]);
-
-  // 🔄 Realtime: reload when budgets or transactions change
-  useSupabaseRealtime(['budget_categories', 'transactions'], fetchAll, [supaUser?.id]);
-
   const fetchAll = async () => {
     setLoading(true);
     const uid = supaUser?.id;
@@ -94,6 +87,13 @@ export default function BudgetDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAll();
+  }, [supaUser?.id]);
+
+  // 🔄 Realtime: reload when budgets or transactions change
+  useSupabaseRealtime(['budget_categories', 'transactions'], fetchAll, [supaUser?.id]);
 
   const openAdd = () => {
     setEditing(null);
