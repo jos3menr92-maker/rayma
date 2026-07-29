@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { runConnectionTrap } from '@/lib/supabaseClientFrontend';
 import RemoteSupport from './pages/RemoteSupport';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -158,11 +157,6 @@ export default function App() {
       document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
     }
-  }, []);
-
-  // 2. Spring the Diagnostic Trap on App Load!
-  useEffect(() => {
-    runConnectionTrap();
   }, []);
 
   return (
