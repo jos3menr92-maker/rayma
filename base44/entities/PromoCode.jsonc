@@ -4,19 +4,20 @@
   "properties": {
     "code": {
       "type": "string",
-      "description": "The promo code (e.g., SPONSOR2024)"
+      "description": "The promo/diagnostic code (e.g., SPONSOR2024 or 482-913)"
     },
     "reward_type": {
       "type": "string",
       "enum": [
         "tokens",
-        "annual_pass"
+        "annual_pass",
+        "diagnostic_access"
       ],
-      "description": "What this code grants"
+      "description": "What this code grants: tokens, annual pass, or one-time diagnostic console access"
     },
     "reward_value": {
       "type": "number",
-      "description": "Number of tokens (if tokens) or null (if annual_pass)"
+      "description": "Number of tokens (if tokens) or null (if annual_pass/diagnostic_access)"
     },
     "expires_at": {
       "type": "string",
@@ -46,7 +47,7 @@
     },
     "notes": {
       "type": "string",
-      "description": "Internal notes (e.g., 'Employee discount', 'Early sponsor')"
+      "description": "Internal notes (e.g., 'Employee discount', 'Early sponsor', 'Diagnostic session for user X')"
     }
   },
   "required": [
