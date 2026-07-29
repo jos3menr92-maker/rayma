@@ -91,7 +91,13 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
-      const me = await base44.auth.me();
+      // Timeout guard — prevents infinite blank spinner if the auth API hangs
+      const me = await Promise.race([
+        base44.auth.me(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Authentication timed out')), 15000)
+        ),
+      ]);
 
       // Await full Supabase session sync BEFORE releasing the loading state.
       // Only invoke syncSupabaseUser + signInWithPassword when no valid
