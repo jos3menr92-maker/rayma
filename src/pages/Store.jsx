@@ -11,6 +11,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useNavigate } from "react-router-dom";
 
 import BatteryIndicator from "@/components/BatteryIndicator";
+import PlanBadge from "@/components/PlanBadge";
 
 export default function Store() {
   const T = useT();
@@ -39,39 +40,39 @@ export default function Store() {
     {
       id: "power_insert_coin",
       label: T("insertCoin", "Insert Coin (Instant Charge)"),
-      desc: T("insertCoinDesc", "Instantly restores your AI battery to 100%. No subscription."),
+      desc: T("insertCoinDesc", "Instantly adds +100 Energy Bars to your battery. No subscription — a one-time top-up."),
       icon: <Zap className="w-5 h-5 text-amber-500" />,
       color: "border-border",
       isSubscription: false,
-      price: "$1.99",
+      price: "$2.99",
       purchaseId: "power_insert_coin",
     },
     {
       id: "power_lithium",
       label: T("lithiumUpgrade", "Lithium Upgrade"),
-      desc: T("lithiumDesc", "Upgrades your daily capacity to 50 Energy Bars."),
+      desc: T("lithiumDesc", "Upgrades your daily capacity to 50 Energy Bars / day."),
       icon: <BatteryCharging className="w-5 h-5 text-blue-500" />,
       color: "border-blue-500",
       badge: T("popular", "POPULAR"),
       isSubscription: true,
       monthlyId: "power_lithium_monthly",
-      monthlyPrice: "$5.99 / mo",
+      monthlyPrice: "$8.99 / mo",
       annualId: "power_lithium_annual",
-      annualPrice: "$49.99 / yr",
+      annualPrice: "$74.99 / yr",
       annualSavings: T("save30", "Save 30%"),
     },
     {
       id: "power_generator",
       label: T("arcadeGenerator", "Arcade Generator"),
-      desc: T("generatorDesc", "200 daily Energy Bars + Gold Sponsor Badge."),
+      desc: T("generatorDesc", "200 Energy Bars / day + a Gold Sponsor Badge showing your support."),
       icon: <Gamepad2 className="w-5 h-5 text-primary" />,
       color: "border-primary",
       badge: T("sponsorTier", "SPONSOR TIER"),
       isSubscription: true,
       monthlyId: "power_generator_monthly",
-      monthlyPrice: "$11.99 / mo",
+      monthlyPrice: "$16.99 / mo",
       annualId: "power_generator_annual",
-      annualPrice: "$95.99 / yr",
+      annualPrice: "$135.99 / yr",
       annualSavings: T("save33", "Save 33%"),
     },
   ];
@@ -206,8 +207,8 @@ export default function Store() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("currentPlan", "Current Plan")}</p>
-              <p className="text-sm font-semibold text-primary">{userProfile.subscription_type || "Free"}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">{T("currentPlan", "Current Plan")}</p>
+              <PlanBadge subscriptionType={userProfile.subscription_type} />
             </div>
           </div>
         )}

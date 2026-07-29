@@ -16,11 +16,11 @@ import Stripe from 'npm:stripe@14.21.0';
  */
 
 const PRICE_IDS = {
-  power_insert_coin:       { price: 'price_1TngnKIer8UHtVVlwOvzMNxm', mode: 'payment'       },
-  power_lithium_monthly:   { price: 'price_1TngnKIer8UHtVVl62W0MUwV', mode: 'subscription' },
-  power_lithium_annual:    { price: 'price_1TngnKIer8UHtVVlKajZUkXx', mode: 'subscription' },
-  power_generator_monthly: { price: 'price_1TngnKIer8UHtVVlEMHICLqz', mode: 'subscription' },
-  power_generator_annual:  { price: 'price_1TngnKIer8UHtVVlrvpDn7Xw', mode: 'subscription' },
+  power_insert_coin:       { price: 'price_1Tyg6YIer8UHtVVls17tvIB2', mode: 'payment'       },
+  power_lithium_monthly:   { price: 'price_1Tyg6YIer8UHtVVldvSNEBUg', mode: 'subscription' },
+  power_lithium_annual:    { price: 'price_1Tyg6YIer8UHtVVlnCzDVSUm', mode: 'subscription' },
+  power_generator_monthly: { price: 'price_1Tyg6YIer8UHtVVl3Kv0r0AP', mode: 'subscription' },
+  power_generator_annual:  { price: 'price_1Tyg6YIer8UHtVVlXkG95Bou', mode: 'subscription' },
 };
 
 Deno.serve(async (req) => {
