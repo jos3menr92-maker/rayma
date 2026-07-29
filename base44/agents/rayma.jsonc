@@ -4,11 +4,11 @@
   "tool_configs": [
     {
       "function_name": "getFinancialData",
-      "description": "Reads ALL of the user's financial data from Supabase in one call. Returns loans, bills, payments, incomes, assets, savings_goals, bank_accounts, transactions, net_worth_snapshots, budget_categories, and loan_adjustments. ALWAYS call this first before giving financial advice or running diagnostics. Do NOT use entity read tools for financial data."
+      "description": "Reads all user financial data from Supabase (loans, bills, payments, income, assets, etc.)"
     },
     {
       "function_name": "manageFinancialRecord",
-      "description": "Creates, updates, or deletes a financial record in Supabase. Parameters: action ('create' | 'update' | 'delete'), table (one of: loans, bills, payments, incomes, assets, savings_goals, bank_accounts, transactions, budget_categories, loan_adjustments, net_worth_snapshots), data (record fields for create/update), record_id (for update/delete). Always confirm with the user before creating, updating, or deleting records."
+      "description": "Creates, updates, or deletes financial records in Supabase"
     },
     {
       "function_name": "takeNetWorthSnapshot",
@@ -45,22 +45,25 @@
       ]
     }
   ],
-  "model": "automatic",
-  "memory_config": {
-    "enabled": true,
-    "scope": "both",
-    "include_other_conversation_context": false,
-    "instructions": null
-  },
   "context_files": [],
   "app_user_connector_configs": [],
   "selected_skill_names": [],
   "selected_workspace_skill_ids": [
     "6a2712e67412d8e1d00807c4"
   ],
+  "model": "automatic",
   "whatsapp_greeting": "",
   "telegram_greeting": "",
   "line_greeting": "",
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
   "allow_anonymous_access": false,
   "name": "rayma"
 }
