@@ -79,10 +79,9 @@ export default function Dashboard() {
   const [pullDistance, setPullDistance] = useState(0);
 
   useEffect(() => {
-    if (!loading && !userProfile) {
-      navigate("/auth", { replace: true });
-      return;
-    }
+    // Don't redirect to /auth here — ProtectedLayout already guards auth.
+    // userProfile can briefly be null while the Supabase session syncs;
+    // the loading spinner below handles that instead of bouncing to /auth.
     if (userProfile && userProfile.onboarding_complete === false) {
       navigate("/onboarding");
     }
