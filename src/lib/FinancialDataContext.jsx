@@ -49,6 +49,46 @@ export function FinancialDataProvider({ children }) {
       }
 
       if (!currentSupaUser?.id) {
+        // Fallback: Base44 user is authenticated but Supabase browser session is
+        // missing/expired. Use the getFinancialData backend function which resolves
+        // the Supabase user via the admin API (bypasses RLS, always works).
+        if (me?.email) {
+          try {
+            const res = await base44.functions.invoke("getFinancialData", {});
+            const d = res.data || {};
+            if (!mountedRef.current) return;
+            setLoans(d.loans || []);
+            setBills(d.bills || []);
+            setIncomes(d.incomes || []);
+            setPayments(d.payments || []);
+            setTransactions(d.transactions || []);
+            setAssets(d.assets || []);
+            setSavingsGoals(d.savings_goals || []);
+            setTransactionSplits([]);
+            setUserProfile(me);
+          } catch (fallbackErr) {
+            console.error("Fallback data load failed:", fallbackErr);
+            if (mountedRef.current) {
+              setLoans([]);
+              setBills([]);
+              setIncomes([]);
+              setPayments([]);
+              setTransactions([]);
+              setAssets([]);
+              setSavingsGoals([]);
+              setTransactionSplits([]);
+            }
+          } finally {
+            if (mountedRef.current) setLoading(false);
+            loadInFlight.current = false;
+            if (pendingReload.current) {
+              pendingReload.current = false;
+              loadAll();
+            }
+          }
+          return;
+        }
+        // No Base44 user either — show empty state
         if (mountedRef.current) {
           setLoans([]);
           setBills([]);
