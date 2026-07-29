@@ -43,13 +43,18 @@ export default function Finance() {
   const monthlyExpenses = monthlyBills + monthlyLoans;
 
   const payFreq = userProfile?.pay_frequency || "weekly";
-  const totalIncomeLogged = incomes.reduce((s, i) => s + (i.amount || 0), 0);
-  const avgIncome = incomes.length > 0 ? totalIncomeLogged / incomes.length : 0;
 
-  let monthlyIncome = avgIncome;
-  if (payFreq === "weekly") monthlyIncome = avgIncome * 4.33;
-  else if (payFreq === "biweekly") monthlyIncome = avgIncome * 2.16;
-  else if (payFreq === "quarterly") monthlyIncome = avgIncome / 3;
+  // Use this month's actual logged income — consistent with Dashboard & MonthlyRecap
+  const monthlyIncome = useMemo(() => {
+    const now = new Date();
+    return incomes
+      .filter((i) => {
+        if (!i.week_start) return false;
+        const d = new Date(i.week_start + "T00:00:00");
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((s, i) => s + (i.amount || 0), 0);
+  }, [incomes]);
 
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
 
