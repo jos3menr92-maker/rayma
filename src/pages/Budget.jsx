@@ -304,11 +304,11 @@ export default function Budget() {
               onClick={() => setWinOverlay(null)}
             />
             <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 16, scale: 0.98 }}
+              initial={{ opacity: 0, x: "-50%", y: "-40%", scale: 0.96 }}
+              animate={{ opacity: 1, x: "-50%", y: "-50%", scale: 1 }}
+              exit={{ opacity: 0, x: "-50%", y: "-50%", scale: 0.98 }}
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
-              className="fixed left-1/2 top-1/2 w-[92%] max-w-sm -translate-x-1/2 -translate-y-1/2 z-[1001]"
+              className="fixed left-1/2 top-1/2 w-[92%] max-w-sm z-[1001]"
             >
               <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-yellow-50 to-white p-5 shadow-2xl">
                 <div className="mb-4 flex items-center justify-between">
