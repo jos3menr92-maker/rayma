@@ -66,6 +66,7 @@ export default async function(req) {
     return Response.json({
       success: true,
       summary: { total: tables.length, ok: okCount, errors: Object.keys(errorTableMap).length },
+      tableResults,
       schemaResults,
       errorTables: errorTableMap,
     });

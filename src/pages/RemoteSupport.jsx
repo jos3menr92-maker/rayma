@@ -3,7 +3,7 @@ import { Headset } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useMemo } from "react";
-import RemoteAssistanceCard from "@/components/ui/RemoteAssistanceCard";
+import DiagnosticsConsole from "@/components/diagnostics/DiagnosticsConsole";
 
 export default function RemoteSupport() {
   const { lang } = useLanguage();
@@ -23,10 +23,10 @@ export default function RemoteSupport() {
             {T("remoteAssistanceDesc", "Need hands-on help? Generate a secure PIN below to grant our developer team temporary access to troubleshoot your account safely.")}
           </p>
         </div>
-{/* Remote Assistance Card Component */}
-        <div className="flex justify-center">
-            <RemoteAssistanceCard />
-        </div>
+{/* Diagnostics Console */}
+<div className="flex justify-center">
+    <DiagnosticsConsole />
+</div>
 
       </motion.div>
     </div>
