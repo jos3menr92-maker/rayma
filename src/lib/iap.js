@@ -140,6 +140,25 @@ export const APPLE_PRODUCT_IDS = {
 };
 
 /**
+ * Logs the native bridge status to the console for debugging.
+ * Call on Store mount to confirm whether your wrapper injected the bridge.
+ */
+export function logBridgeStatus() {
+  const ua = navigator.userAgent || "";
+  console.group("%c[IAP Bridge Check]", "color: #14b8a6; font-weight: bold");
+  console.log("User Agent:", ua);
+  console.log("Detected platform:", getPlatform());
+  console.log("isNativeMobileApp:", isNativeMobileApp());
+  console.log("window.__RAYMA_PLATFORM:", window.__RAYMA_PLATFORM);
+  console.log("window.RAYMA_IAP:", window.RAYMA_IAP);
+  console.log("  - purchase (fn?):", typeof window.RAYMA_IAP?.purchase === "function");
+  console.log("  - restore (fn?):", typeof window.RAYMA_IAP?.restore === "function");
+  console.log("window.ReactNativeWebView:", window.ReactNativeWebView);
+  console.log("  - postMessage (fn?):", typeof window.ReactNativeWebView?.postMessage === "function");
+  console.groupEnd();
+}
+
+/**
  * Google Play product IDs
  * These must match exactly what's configured in Google Play Console
  */

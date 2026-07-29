@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/LanguageContext";
-import { isNativeMobileApp, getPlatform, triggerNativeIAP, restoreNativePurchases, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
+import { isNativeMobileApp, getPlatform, triggerNativeIAP, restoreNativePurchases, logBridgeStatus, APPLE_PRODUCT_IDS, GOOGLE_PRODUCT_IDS } from "@/lib/iap";
 import { useAuth } from "@/lib/AuthContext";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +27,9 @@ export default function Store() {
 
   const nativeApp = isNativeMobileApp();
   const platform = getPlatform();
+
+  // Debug: log native bridge presence so you can confirm injection inside your wrapper
+  useEffect(() => { logBridgeStatus(); }, []);
 
   const urlParams = new URLSearchParams(window.location.search);
   const successType = urlParams.get("success") === "true" ? urlParams.get("type") : null;
