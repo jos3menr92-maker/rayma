@@ -133,6 +133,7 @@ const payload = {
               <p className="text-[9px] uppercase tracking-wider font-bold">{T("income", "Income")}</p>
             </div>
             <p className="text-sm font-bold text-foreground">{fmt(monthlyIncome)}</p>
+            <p className="text-[8px] text-muted-foreground mt-0.5">{T("thisMonth", "This month")}</p>
           </div>
           
           <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
