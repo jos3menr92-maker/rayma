@@ -7,27 +7,44 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useToast } from "@/components/ui/use-toast";
+import { compressImage } from "@/utils/compressImage";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit before compression
 
 export default function DocumentUploader({ onDocumentScanned }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadStep, setUploadStep] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const { supaUser } = useFinancialData();
   const { toast } = useToast();
 
-  async function processFile(file) {
-    if (!file) return;
+  async function processFile(rawFile) {
+    if (!rawFile) return;
+
+    // Validate file size
+    if (rawFile.size > MAX_FILE_SIZE) {
+      toast({ title: T("uploadFailed", "Upload failed"), description: T("fileTooLarge", "File too large (max 10MB). Try a smaller photo."), variant: "destructive" });
+      return;
+    }
+
     setUploading(true);
 
     try {
-    // Upload to private storage — sensitive tax/financial docs must not be publicly accessible
-    const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
-    // Generate a short-lived signed URL for AI analysis (expires in 10 min)
-    const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri, expires_in: 600 });
+      // Compress images to prevent upload/analysis timeouts ("Failed to fetch")
+      setUploadStep(T("preparing", "Preparing…"));
+      const file = await compressImage(rawFile);
+
+      // Upload to private storage — sensitive tax/financial docs must not be publicly accessible
+      setUploadStep(T("uploading", "Uploading…"));
+      const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+      // Generate a short-lived signed URL for AI analysis (expires in 10 min)
+      const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri, expires_in: 600 });
 
     const today = new Date().toISOString().split("T")[0];
+    setUploadStep(T("analyzing", "Analyzing…"));
     const analysis = await base44.integrations.Core.InvokeLLM({
       prompt: `You are Rayma AI, a financial document analyzer. Analyze this financial document image and extract all relevant information.
 
@@ -86,15 +103,21 @@ Today's date: ${today}`,
       onDocumentScanned({ ...doc, _analysis: analysis });
     } catch (err) {
       console.error('Document upload failed:', err);
-      toast({ title: T("uploadFailed", "Upload failed"), description: err.message || T("tryAgain", "Please try again"), variant: "destructive" });
+      const isFetchErr = err?.message?.includes("Failed to fetch") || err?.name === "TypeError";
+      const desc = isFetchErr
+        ? T("uploadTimeout", "Network timeout — the file may be too large or the connection is slow. Try a smaller photo.")
+        : (err?.message || T("tryAgain", "Please try again"));
+      toast({ title: T("uploadFailed", "Upload failed"), description: desc, variant: "destructive" });
     } finally {
       setUploading(false);
+      setUploadStep("");
     }
   }
 
   function handleFiles(files) {
     if (files[0]) processFile(files[0]);
   }
+
 
   return (
     <div>
@@ -111,7 +134,7 @@ Today's date: ${today}`,
         {uploading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <p className="text-sm font-medium text-foreground">{T("raymaAnalyzing", "Rayma AI is analyzing your document…")}</p>
+            <p className="text-sm font-medium text-foreground">{uploadStep || T("raymaAnalyzing", "Rayma AI is analyzing your document…")}</p>
             <p className="text-xs text-muted-foreground">{T("extractingData", "Extracting financial data")}</p>
           </div>
         ) : (
