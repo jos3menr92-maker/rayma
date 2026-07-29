@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -27,7 +26,7 @@ const TYPE_COLORS = {
 const emptyForm = { name: "", amount: "", type: "cash", notes: "" };
 
 export default function AssetDashboard() {
-  const { loans, userProfile, supaUser, loading: contextLoading } = useFinancialData();
+  const { loans, assets, reload, userProfile, supaUser, loading: contextLoading } = useFinancialData();
   const { lang } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
 
@@ -38,9 +37,6 @@ export default function AssetDashboard() {
     },
     [lang]
   );
-  const [assets, setAssets] = useState([]);
-  const [localLoading, setLocalLoading] = useState(true);
-  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -53,37 +49,6 @@ export default function AssetDashboard() {
   const [authError, setAuthError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const { toast } = useToast();
-
-  // 🛡️ FAIL-SAFE: Ensure spinner stops if user session isn't found
-  useEffect(() => { 
-    if (supaUser?.id) {
-      loadAssets(); 
-    } else {
-      setLocalLoading(false);
-    }
-  }, [supaUser?.id]);
-
-  // 🔄 Realtime: reload when assets change
-  useSupabaseRealtime(['assets'], loadAssets, [supaUser?.id]);
-
-  // 🛡️ FAIL-SAFE: Wrapped in try/catch/finally to guarantee UI unlocks
-  async function loadAssets() {
-    try {
-      setLocalLoading(true);
-      const { data, error } = await supabase
-        .from('assets')
-        .select('*')
-        .eq('user_id', supaUser.id) // 🔒 Security lock!
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      setAssets(data || []);
-    } catch (err) {
-      console.error("Failed to load assets:", err.message);
-    } finally {
-      setLocalLoading(false);
-    }
-  }
 
   // 🧮 Net Worth Math
   const activeLoans = loans.filter(x => x.status !== "paid_off");
@@ -125,7 +90,7 @@ export default function AssetDashboard() {
       }
       
       setDialogOpen(false);
-      loadAssets();
+      reload();
     } catch (err) {
       console.error("Asset Error:", err.message);
       toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
@@ -163,10 +128,10 @@ export default function AssetDashboard() {
     const { error } = await supabase.from('assets').delete().eq('id', id);
     if (error) throw error;
     setAssetToDelete(null);
-    loadAssets();
+    reload();
   }
 
-  if (contextLoading || localLoading) return (
+  if (contextLoading) return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
     </div>
