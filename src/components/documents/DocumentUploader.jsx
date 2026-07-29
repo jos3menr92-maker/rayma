@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function DocumentUploader({ onDocumentScanned }) {
   const { lang } = useLanguage();
@@ -14,11 +15,13 @@ export default function DocumentUploader({ onDocumentScanned }) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const { supaUser } = useFinancialData();
+  const { toast } = useToast();
 
   async function processFile(file) {
     if (!file) return;
     setUploading(true);
 
+    try {
     // Upload to private storage — sensitive tax/financial docs must not be publicly accessible
     const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
     // Generate a short-lived signed URL for AI analysis (expires in 10 min)
@@ -66,7 +69,6 @@ Today's date: ${today}`,
       }
     });
 
-    try {
       const { data, error } = await supabase.from('documents').insert({
         file_url: file_uri,
         file_name: file.name,
@@ -83,7 +85,8 @@ Today's date: ${today}`,
       const doc = data[0];
       onDocumentScanned({ ...doc, _analysis: analysis });
     } catch (err) {
-      console.error('Failed to save document to Supabase:', err);
+      console.error('Document upload failed:', err);
+      toast({ title: T("uploadFailed", "Upload failed"), description: err.message || T("tryAgain", "Please try again"), variant: "destructive" });
     } finally {
       setUploading(false);
     }

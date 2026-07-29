@@ -1,7 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { useState, useMemo } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -32,36 +30,10 @@ export default function TaxSummary() {
     other: T("catOther", "Other"),
   };
 
-  const { loans, payments, supaUser } = useFinancialData();
-  const { toast } = useToast();
+  const { loans, payments, transactions, loading } = useFinancialData();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [expandedCats, setExpandedCats] = useState({});
-
-  useEffect(() => {
-    const uid = supaUser?.id;
-    if (!uid) return;
-    supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(500).then(({ data, error }) => {
-      if (error) {
-        console.error("Transactions error:", error);
-        toast({ title: T("loadFailed", "Failed to load transactions"), description: error.message, variant: "destructive" });
-      }
-      setTransactions(data || []);
-      setLoading(false);
-    });
-  }, [supaUser?.id]);
-
-  // 🔄 Realtime: reload when transactions change
-  useSupabaseRealtime(['transactions'], () => {
-    const uid = supaUser?.id;
-    if (!uid) return;
-    supabase.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(500).then(({ data, error }) => {
-      if (error) console.error("Transactions error:", error);
-      setTransactions(data || []);
-    });
-  }, [supaUser?.id]);
 
   const yearTxs = transactions.filter(t => t.date?.startsWith(String(year)));
   const yearPayments = payments.filter(p => p.payment_date?.startsWith(String(year)));
