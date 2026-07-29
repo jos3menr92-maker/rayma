@@ -54,7 +54,7 @@ const PageLoader = () => (
 );
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -62,43 +62,6 @@ const AuthenticatedApp = () => {
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
       </div>
     );
-  }
-
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      window.location.href = '/auth';
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            <p className="text-sm font-medium text-muted-foreground animate-pulse">
-              Redirecting to secure login...
-            </p>
-          </div>
-        </div>
-      );
-    } else {
-      // Handle connection_error, rate_limited, unknown — show error instead of blank screen
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-background z-50 px-6">
-          <div className="flex flex-col items-center gap-4 text-center max-w-sm">
-            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-              <span className="text-2xl">⚠️</span>
-            </div>
-            <h2 className="text-lg font-bold text-foreground">Connection Error</h2>
-            <p className="text-sm text-muted-foreground">{authError.message || 'Could not connect to the server. Please check your internet connection and try again.'}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      );
-    }
   }
 
   return (
