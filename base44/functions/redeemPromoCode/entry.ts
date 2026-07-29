@@ -78,6 +78,15 @@ Deno.serve(async (req) => {
       baseDate.setFullYear(baseDate.getFullYear() + 1);
       updatedFields = { annual_pass_expires_at: baseDate.toISOString().split('T')[0] };
       rewardMessage = `You've been granted the Annual Pass! 🎉`;
+    } else if (promoCode.reward_type === 'game_access') {
+      let baseDate = new Date();
+      if (userRecord.game_access_expires_at) {
+        const currentExpiry = new Date(userRecord.game_access_expires_at);
+        if (currentExpiry > baseDate) baseDate = currentExpiry;
+      }
+      baseDate.setDate(baseDate.getDate() + 30);
+      updatedFields = { game_access_expires_at: baseDate.toISOString().split('T')[0] };
+      rewardMessage = `You've been granted 30 days of sponsor game access! 🎮`;
     } else {
       // Unsupported type — roll back the redemption lock
       await base44.asServiceRole.entities.PromoCode.update(promoCode.id, {

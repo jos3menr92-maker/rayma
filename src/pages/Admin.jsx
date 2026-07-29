@@ -94,7 +94,25 @@ export default function Admin() {
     return `${num.substring(0, 3)}-${num.substring(3, 6)}`;
   };
 
+  const deactivateCode = async (codeId) => {
+    try {
+      await base44.entities.PromoCode.update(codeId, { is_active: false });
+      loadData();
+    } catch (error) {
+      alert("Error deactivating code: " + (error.message || "Unknown error"));
+    }
+  };
+
   const handleCreateCode = async () => {
+    // Enforce max 50 active promo codes at a time
+    try {
+      const activeCodes = await base44.entities.PromoCode.filter({ is_active: true }, '-created_date', 100);
+      if (activeCodes.length >= 50) {
+        alert(T("maxCodesReached", "Maximum of 50 active codes. Deactivate old ones first."));
+        return;
+      }
+    } catch (e) { /* non-fatal — proceed */ }
+
     if (codeMode === "diagnostic") {
       // Auto-generate a one-time, 30-minute diagnostic code
       const diagCode = generateDiagnosticCode();
@@ -172,7 +190,7 @@ export default function Admin() {
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <h2 className="text-lg font-bold mb-1">{T("codeManagement", "Code Management")}</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            {T("codeManagementDesc", "Create promo codes (tokens/annual pass) or generate one-time diagnostic codes for user troubleshooting.")}
+            {T("codeManagementDesc", "Create promo codes (tokens, annual pass, 30-day game access) or generate one-time diagnostic codes. Max 50 active codes at a time. Deactivate any code to cancel it.")}
           </p>
 
           {/* Mode Toggle */}
@@ -208,6 +226,7 @@ export default function Admin() {
                 >
                   <option value="tokens">Tokens</option>
                   <option value="annual_pass">Annual Pass</option>
+                  <option value="game_access">{T("gameAccess30d", "Game Access (30 days)")}</option>
                 </select>
                 {rewardType === "tokens" && (
                   <input
@@ -275,6 +294,7 @@ export default function Admin() {
                   <p className="text-sm font-semibold text-foreground font-mono">{code.code}</p>
                   <p className="text-[10px] text-muted-foreground">
                     {code.reward_type === "annual_pass" ? "Annual Pass" 
+                      : code.reward_type === "game_access" ? T("gameAccess30d", "Game Access (30 days)")
                       : code.reward_type === "diagnostic_access" ? "Diagnostic Access" 
                       : `${code.reward_value || 0} tokens`}
                     {code.max_uses ? ` · ${code.times_used || 0}/${code.max_uses} used` : ` · ${code.times_used || 0} used`}
@@ -282,9 +302,19 @@ export default function Admin() {
                   </p>
                 </div>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${code.is_active && new Date(code.expires_at) > new Date() ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
-                {code.is_active && new Date(code.expires_at) > new Date() ? T("active", "Active") : T("inactive", "Inactive")}
-              </span>
+              <div className="flex items-center gap-2">
+                {code.is_active && (
+                  <button
+                    onClick={() => deactivateCode(code.id)}
+                    className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                  >
+                    {T("deactivate", "Deactivate")}
+                  </button>
+                )}
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${code.is_active && new Date(code.expires_at) > new Date() ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
+                  {code.is_active && new Date(code.expires_at) > new Date() ? T("active", "Active") : T("inactive", "Inactive")}
+                </span>
+              </div>
             </div>
           ))}
         </div>

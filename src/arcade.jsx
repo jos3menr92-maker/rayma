@@ -98,11 +98,13 @@ const Arcade = () => {
     }
   };
 
-  const isGenerator = userProfile?.subscription_type === 'power_generator';
+  const hasGameAccess = userProfile?.subscription_tier === 'power_generator'
+    || userProfile?.subscription_type === 'power_generator'
+    || (userProfile?.game_access_expires_at && new Date(userProfile.game_access_expires_at) > new Date());
 
   const renderActiveGame = () => {
     const game = GAMES_REGISTRY[activeGame];
-    if (game?.premium && !isGenerator) {
+    if (game?.premium && !hasGameAccess) {
       return <PremiumGameLock gameTitle={game.title} onUpgrade={() => { window.location.href = '/store'; }} />;
     }
     switch(activeGame) {
@@ -186,7 +188,7 @@ const Arcade = () => {
                   <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
                     {game.title}
                   </span>
-                  {!isGenerator && (
+                  {!hasGameAccess && (
                     <span className="text-[9px] font-bold text-primary/60 uppercase tracking-widest mt-0.5">{T('locked', 'Locked')}</span>
                   )}
                 </div>

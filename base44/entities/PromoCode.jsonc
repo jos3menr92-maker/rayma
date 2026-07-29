@@ -11,13 +11,14 @@
       "enum": [
         "tokens",
         "annual_pass",
-        "diagnostic_access"
+        "diagnostic_access",
+        "game_access"
       ],
-      "description": "What this code grants: tokens, annual pass, or one-time diagnostic console access"
+      "description": "What this code grants: tokens, annual pass, one-time diagnostic console access, or 30-day sponsor-only game access"
     },
     "reward_value": {
       "type": "number",
-      "description": "Number of tokens (if tokens) or null (if annual_pass/diagnostic_access)"
+      "description": "Number of tokens (if tokens) or null (if annual_pass/diagnostic_access/game_access)"
     },
     "expires_at": {
       "type": "string",
@@ -36,14 +37,14 @@
     "is_active": {
       "type": "boolean",
       "default": true,
-      "description": "Whether this code is currently active"
+      "description": "Whether this code is currently active. Set false to cancel/revoke a code."
     },
     "redeemed_by": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "List of user IDs who have redeemed this code"
+      "description": "List of user IDs who have redeemed this code (prevents reuse by same user)"
     },
     "notes": {
       "type": "string",

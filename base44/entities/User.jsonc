@@ -75,6 +75,11 @@
       "format": "date",
       "description": "Date when annual pass expires. If set and in future, unlimited AI."
     },
+    "game_access_expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when sponsor-only arcade game access expires. If set and in future, unlocks the 3 sponsor-only games. Granted via game_access promo codes (30 days each, stacks)."
+    },
     "is_sponsor": {
       "type": "boolean",
       "default": false,
