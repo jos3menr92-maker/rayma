@@ -1,81 +1,90 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-
-    // Allow admin users OR the internal scheduler (no user = service-level call)
     const user = await base44.auth.me().catch(() => null);
-    if (user && user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
 
+    // Allow admin batch run OR single-user call from the agent
+    const isBatchAdmin = user && user.role === 'admin';
+    const isSingleUser = user && user.role !== 'admin';
+
+    const { client: supabaseAdmin } = getSupabaseAdmin();
     const today = new Date().toISOString().split("T")[0];
-
-    // Paginate through all users in batches of 50 to avoid memory/timeout issues
-    let page = 0;
-    const PAGE_SIZE = 50;
     let snapshotsTaken = 0;
     let usersProcessed = 0;
-    let hasMore = true;
 
-    while (hasMore) {
-      const users = await base44.asServiceRole.entities.User.list(
-        "created_date",
-        PAGE_SIZE,
-        page * PAGE_SIZE
-      );
-
-      if (!users || users.length === 0) break;
-      if (users.length < PAGE_SIZE) hasMore = false;
-      page++;
-
-      // Process all users in this batch in PARALLEL (not sequentially)
-      await Promise.allSettled(
-        users.map(async (member) => {
-          try {
-            // Check if snapshot already exists for today — skip early to save reads
-            const existing = await base44.asServiceRole.entities.NetWorthSnapshot.filter({
-              created_by: member.email,
-              snapshot_date: today,
-            });
-            if (existing.length > 0) return;
-
-            // Fetch assets and loans in parallel
-            const [assets, loans] = await Promise.all([
-              base44.asServiceRole.entities.Asset.filter({ created_by: member.email }),
-              base44.asServiceRole.entities.Loan.filter({ created_by: member.email }),
-            ]);
-
-            const totalAssets = assets.reduce((sum, a) => sum + (a.amount || 0), 0);
-            const totalLiabilities = loans
-              .filter((l) => l.status === "active")
-              .reduce((sum, l) => sum + (l.current_balance || 0), 0);
-            const netWorth = totalAssets - totalLiabilities;
-
-            await base44.asServiceRole.entities.NetWorthSnapshot.create({
-              snapshot_date: today,
-              total_assets: totalAssets,
-              total_liabilities: totalLiabilities,
-              net_worth: netWorth,
-              created_by: member.email,
-            });
-
-            snapshotsTaken++;
-          } catch (userErr) {
-            console.warn(`Skipped user ${member.email}:`, userErr.message);
-          }
-        })
-      );
-
-      usersProcessed += users.length;
-      console.log(`Processed batch ${page}: ${users.length} users (total so far: ${usersProcessed})`);
+    // Determine which users to process
+    let targetUsers = [];
+    if (isSingleUser) {
+      // Agent call — snapshot just this user
+      const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
+      if (error) throw error;
+      const supaUser = users.find(u => u.email === user.email);
+      if (!supaUser) return Response.json({ error: 'Supabase user not found' }, { status: 404 });
+      targetUsers = [supaUser];
+    } else {
+      // Admin/scheduler batch — paginate all users
+      let page = 0;
+      const PAGE_SIZE = 50;
+      let hasMore = true;
+      while (hasMore) {
+        const b44Users = await base44.asServiceRole.entities.User.list("created_date", PAGE_SIZE, page * PAGE_SIZE);
+        if (!b44Users || b44Users.length === 0) break;
+        if (b44Users.length < PAGE_SIZE) hasMore = false;
+        page++;
+        for (const b44User of b44Users) {
+          const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ search: b44User.email });
+          if (error) continue;
+          const supaUser = users.find(u => u.email === b44User.email);
+          if (supaUser) targetUsers.push(supaUser);
+        }
+      }
     }
 
-    console.log(`Snapshot run complete: ${snapshotsTaken} snapshots taken across ${usersProcessed} users.`);
+    for (const supaUser of targetUsers) {
+      try {
+        const uid = supaUser.id;
+
+        // Check if snapshot already exists for today in Supabase
+        const { data: existing } = await supabaseAdmin.from('net_worth_snapshots')
+          .select('id')
+          .eq('user_id', uid)
+          .eq('snapshot_date', today)
+          .limit(1);
+        if (existing && existing.length > 0) continue;
+
+        // Read assets and loans from Supabase
+        const [assetsRes, loansRes] = await Promise.all([
+          supabaseAdmin.from('assets').select('amount').eq('user_id', uid),
+          supabaseAdmin.from('loans').select('current_balance, status').eq('user_id', uid),
+        ]);
+
+        const totalAssets = (assetsRes.data || []).reduce((sum, a) => sum + (a.amount || 0), 0);
+        const totalLiabilities = (loansRes.data || [])
+          .filter(l => l.status === 'active')
+          .reduce((sum, l) => sum + (l.current_balance || 0), 0);
+        const netWorth = totalAssets - totalLiabilities;
+
+        await supabaseAdmin.from('net_worth_snapshots').insert([{
+          user_id: uid,
+          snapshot_date: today,
+          total_assets: totalAssets,
+          total_liabilities: totalLiabilities,
+          net_worth: netWorth,
+        }]);
+
+        snapshotsTaken++;
+        usersProcessed++;
+      } catch (userErr) {
+        console.warn(`Skipped user ${supaUser.email}:`, userErr.message);
+      }
+    }
+
     return Response.json({ success: true, snapshots_taken: snapshotsTaken, users_processed: usersProcessed });
   } catch (error) {
-    console.error('takeNetWorthSnapshot error:', error.message);
+    console.error('[takeNetWorthSnapshot] Error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
