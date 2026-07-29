@@ -21,14 +21,6 @@ export default function MerchantAnalytics() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("month");
 
-  useEffect(() => {
-    if (!supaUser?.id) return;
-    fetchTransactions();
-  }, [supaUser?.id, period]);
-
-  // 🔄 Realtime: reload when transactions change
-  useSupabaseRealtime(['transactions'], fetchTransactions, [supaUser?.id, period]);
-
   const fetchTransactions = async () => {
     setLoading(true);
     try {
@@ -54,6 +46,14 @@ export default function MerchantAnalytics() {
     setLoading(false);
   }
 };
+
+  useEffect(() => {
+    if (!supaUser?.id) return;
+    fetchTransactions();
+  }, [supaUser?.id, period]);
+
+  // 🔄 Realtime: reload when transactions change
+  useSupabaseRealtime(['transactions'], fetchTransactions, [supaUser?.id, period]);
 
   const merchantData = useMemo(() => {
     const expenses = transactions.filter(t => t.amount < 0);
