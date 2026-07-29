@@ -4,7 +4,7 @@
  * preventing "Failed to fetch" timeouts during upload and LLM analysis.
  * Non-image files (PDFs) are returned as-is.
  */
-export async function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
+export async function compressImage(file, maxWidth = 1024, maxHeight = 1024, quality = 0.72) {
   if (!file.type.startsWith("image/")) return file;
 
   return new Promise((resolve) => {

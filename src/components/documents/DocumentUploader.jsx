@@ -44,9 +44,14 @@ export default function DocumentUploader({ onDocumentScanned }) {
       const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri, expires_in: 600 });
 
     const today = new Date().toISOString().split("T")[0];
-    setUploadStep(T("analyzing", "Analyzing…"));
-    const analysis = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are Rayma AI, a financial document analyzer. Analyze this financial document image and extract all relevant information.
+
+      // --- AI Analysis (resilient: if this times out, still save the document ---
+      // so the user's upload is never lost. They can review it manually later.)
+      let analysis;
+      try {
+        setUploadStep(T("analyzing", "Analyzing…"));
+        analysis = await base44.integrations.Core.InvokeLLM({
+          prompt: `You are Rayma AI, a financial document analyzer. Analyze this financial document image and extract all relevant information.
 
 Determine:
 1. What type of document this is (receipt, invoice, tax form W-2/1099, loan statement, bill/utility, bank statement, pay stub, insurance, other)
@@ -55,37 +60,49 @@ Determine:
 4. Extract all financial data found
 
 Today's date: ${today}`,
-      file_urls: [signed_url],
-      model: "claude_sonnet_4_6",
-      response_json_schema: {
-        type: "object",
-        properties: {
-          document_type: { type: "string" },
-          folder: { type: "string", enum: ["payments", "loans", "bills", "tax", "misc"] },
-          loggable: { type: "boolean" },
-          summary: { type: "string" },
-          rayma_message: { type: "string" },
-          extracted_data: {
+          file_urls: [signed_url],
+          model: "gemini_3_flash",
+          response_json_schema: {
             type: "object",
             properties: {
-              amount: { type: "number" },
-              date: { type: "string" },
-              payee: { type: "string" },
-              description: { type: "string" },
-              account_number: { type: "string" },
-              due_date: { type: "string" },
-              interest_rate: { type: "number" },
-              balance: { type: "number" },
-              tax_year: { type: "string" },
-              employer: { type: "string" },
-              income_amount: { type: "number" },
-              category: { type: "string" }
+              document_type: { type: "string" },
+              folder: { type: "string", enum: ["payments", "loans", "bills", "tax", "misc"] },
+              loggable: { type: "boolean" },
+              summary: { type: "string" },
+              rayma_message: { type: "string" },
+              extracted_data: {
+                type: "object",
+                properties: {
+                  amount: { type: "number" },
+                  date: { type: "string" },
+                  payee: { type: "string" },
+                  description: { type: "string" },
+                  account_number: { type: "string" },
+                  due_date: { type: "string" },
+                  interest_rate: { type: "number" },
+                  balance: { type: "number" },
+                  tax_year: { type: "string" },
+                  employer: { type: "string" },
+                  income_amount: { type: "number" },
+                  category: { type: "string" }
+                }
+              }
             }
           }
-        }
+        });
+      } catch (analysisErr) {
+        console.warn('[DocumentUploader] AI analysis failed, saving document for manual review:', analysisErr?.message);
+        analysis = {
+          document_type: "unknown",
+          folder: "misc",
+          loggable: false,
+          rayma_message: "Analysis timed out — saved for manual review.",
+          extracted_data: {},
+        };
       }
-    });
 
+      // --- Save the document (always runs, even if analysis timed out) ---
+      setUploadStep(T("saving", "Saving…"));
       const { data, error } = await supabase.from('documents').insert({
         file_url: file_uri,
         file_name: file.name,
