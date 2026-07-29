@@ -1,10 +1,16 @@
 import React, { useState, Suspense, lazy, useEffect } from 'react';
+import { Crown } from 'lucide-react';
 import { useFinancialData } from '@/lib/FinancialDataContext';
 import { getAllHighScores } from '@/api/arcadeGamesApi';
+import { useT } from '@/lib/LanguageContext';
 
 const RetroSnake = lazy(() => import('./RetroSnake'));
 const SpaceInvaders = lazy(() => import('./SpaceInvaders'));
 const SkyStriker = lazy(() => import('./SkyStriker'));
+const NeonDrift = lazy(() => import('./NeonDrift'));
+const CrystalCrusher = lazy(() => import('./CrystalCrusher'));
+const MeteorStorm = lazy(() => import('./MeteorStorm'));
+const PremiumGameLock = lazy(() => import('@/components/arcade/PremiumGameLock'));
 
 const GAMES_REGISTRY = {
   space_invaders: {
@@ -24,6 +30,27 @@ const GAMES_REGISTRY = {
     title: 'Sky Striker',
     description: 'Take to the skies! Dogfight through market volatility.',
     accentColor: 'text-cyan-400'
+  },
+  neon_drift: {
+    id: 'neon_drift',
+    title: 'Neon Drift',
+    description: 'Synthwave highway. Dodge, collect, survive.',
+    accentColor: 'text-cyan-400',
+    premium: true,
+  },
+  crystal_crusher: {
+    id: 'crystal_crusher',
+    title: 'Crystal Crusher',
+    description: 'Shatter every crystal. Power-ups await.',
+    accentColor: 'text-pink-400',
+    premium: true,
+  },
+  meteor_storm: {
+    id: 'meteor_storm',
+    title: 'Meteor Storm',
+    description: 'Blast the meteors before they hit you.',
+    accentColor: 'text-pink-400',
+    premium: true,
   }
 };
 
@@ -43,6 +70,7 @@ const LoadingScreen = () => (
 );
 
 const Arcade = () => {
+  const T = useT();
   const { userProfile } = useFinancialData();
   const [activeGame, setActiveGame] = useState('space_invaders');
 
@@ -70,11 +98,20 @@ const Arcade = () => {
     }
   };
 
+  const isGenerator = userProfile?.subscription_type === 'power_generator';
+
   const renderActiveGame = () => {
+    const game = GAMES_REGISTRY[activeGame];
+    if (game?.premium && !isGenerator) {
+      return <PremiumGameLock gameTitle={game.title} onUpgrade={() => { window.location.href = '/store'; }} />;
+    }
     switch(activeGame) {
       case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} />;
       case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} />;
       case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} />;
+      case 'neon_drift': return <NeonDrift onUpdateScore={handleUpdateScore} />;
+      case 'crystal_crusher': return <CrystalCrusher onUpdateScore={handleUpdateScore} />;
+      case 'meteor_storm': return <MeteorStorm onUpdateScore={handleUpdateScore} />;
       default: return <PlaceholderGame title="Unknown Terminal" description="Signal lost." />;
     }
   };
@@ -88,7 +125,7 @@ const Arcade = () => {
             <span className="text-xs font-black uppercase tracking-widest text-purple-500">System Online</span>
           </div>
           <h1 className="text-6xl font-black italic uppercase tracking-tighter leading-none">
-            RAYMA <span className="text-purple-500">Arcade</span>
+            Rayma AI <span className="text-purple-500">Arcade</span>
           </h1>
         </div>
         <div className="text-right hidden md:block">
@@ -99,25 +136,59 @@ const Arcade = () => {
 
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
         <nav className="lg:col-span-1 space-y-4">
-          <div className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 px-4">Select Terminal</div>
-          {Object.values(GAMES_REGISTRY).map((game) => {
-            const colorMap = { 'text-purple-500': 'purple', 'text-lime-500': 'lime', 'text-cyan-400': 'cyan' };
-            const color = colorMap[game.accentColor] || 'slate';
+          <div className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 px-4">{T('freeGames', 'Free Games')}</div>
+          {Object.values(GAMES_REGISTRY).filter(g => !g.premium).map((game, idx) => {
+            const borderActive = {
+              'text-purple-500': 'border-purple-500',
+              'text-lime-500': 'border-lime-500',
+              'text-cyan-400': 'border-cyan-400',
+            }[game.accentColor] || 'border-slate-600';
             return (
               <button
                 key={game.id}
                 onClick={() => setActiveGame(game.id)}
                 className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
-                  activeGame === game.id ? `bg-slate-900 border-${color}-500` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
+                  activeGame === game.id ? `bg-slate-900 ${borderActive}` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
                 }`}
               >
                 <div className="flex flex-col items-start">
                   <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${activeGame === game.id ? game.accentColor : 'text-slate-500'}`}>
-                    Terminal {game.id === 'space_invaders' ? '01' : game.id === 'retro_snake' ? '02' : '03'}
+                    Terminal {String(idx + 1).padStart(2, '0')}
                   </span>
                   <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
                     {game.title}
                   </span>
+                </div>
+              </button>
+            );
+          })}
+          <div className="text-xs font-black text-primary/70 uppercase tracking-widest mb-4 px-4 pt-4 flex items-center gap-1.5">
+            <Crown className="w-3 h-3" /> {T('sponsorGames', 'Sponsor Games')}
+          </div>
+          {Object.values(GAMES_REGISTRY).filter(g => g.premium).map((game, idx) => {
+            const borderActive = {
+              'text-cyan-400': 'border-cyan-400',
+              'text-pink-400': 'border-pink-400',
+            }[game.accentColor] || 'border-primary';
+            return (
+              <button
+                key={game.id}
+                onClick={() => setActiveGame(game.id)}
+                className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
+                  activeGame === game.id ? `bg-slate-900 ${borderActive}` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex flex-col items-start">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1 ${activeGame === game.id ? game.accentColor : 'text-slate-500'}`}>
+                    Terminal {String(idx + 4).padStart(2, '0')}
+                    <Crown className="w-2.5 h-2.5" />
+                  </span>
+                  <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
+                    {game.title}
+                  </span>
+                  {!isGenerator && (
+                    <span className="text-[9px] font-bold text-primary/60 uppercase tracking-widest mt-0.5">{T('locked', 'Locked')}</span>
+                  )}
                 </div>
               </button>
             );
