@@ -65,15 +65,6 @@ export default function BankAccounts() {
     }
   }, [location.state, navigate]);
 
-  useEffect(() => {
-    if (supaUser?.id) {
-      fetchAll();
-    }
-  }, [supaUser?.id]);
-
-  // 🔄 Realtime: reload when accounts or transactions change
-  useSupabaseRealtime(['bank_accounts', 'transactions'], fetchAll, [supaUser?.id]);
-
   const fetchAll = async () => {
     setLoading(true);
     const uid = supaUser?.id;
@@ -87,6 +78,15 @@ export default function BankAccounts() {
     setTransactions(txsRes.data || []);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (supaUser?.id) {
+      fetchAll();
+    }
+  }, [supaUser?.id]);
+
+  // 🔄 Realtime: reload when accounts or transactions change
+  useSupabaseRealtime(['bank_accounts', 'transactions'], fetchAll, [supaUser?.id]);
 
   const openAdd = () => { setEditing(null); setForm(emptyForm); setShowDialog(true); };
   const openEdit = (acc) => { setEditing(acc); setForm({ ...acc }); setShowDialog(true); };
