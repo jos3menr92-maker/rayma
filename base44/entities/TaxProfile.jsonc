@@ -1,0 +1,71 @@
+{
+  "name": "TaxProfile",
+  "type": "object",
+  "properties": {
+    "filing_status": {
+      "type": "string",
+      "enum": [
+        "single",
+        "married",
+        "head_of_household"
+      ],
+      "default": "single",
+      "description": "Tax filing status"
+    },
+    "dependents": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of dependent children under 17"
+    },
+    "tax_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "solar",
+              "ev_purchase",
+              "education",
+              "energy_efficient",
+              "first_home",
+              "charitable",
+              "medical_large",
+              "other"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Major purchases or events that affect tax credits or deductions"
+    }
+  },
+  "required": [
+    "filing_status"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
