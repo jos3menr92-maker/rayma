@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Bug, ChevronDown, ChevronUp, Loader2, Inbox, Clock, CheckCircle2, Eye } from "lucide-react";
+import CopyButton from "@/components/CopyButton";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -91,7 +92,7 @@ export default function BugReportViewer() {
                     {report.description && (
                       <div>
                         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">{T("description", "Description")}</p>
-                        <p className="text-sm text-foreground">{report.description}</p>
+                        <p className="text-sm text-foreground selectable">{report.description}</p>
                       </div>
                     )}
                     {report.page_url && (
@@ -101,8 +102,11 @@ export default function BugReportViewer() {
                       </div>
                     )}
                     <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">{T("codeSnippet", "Code Snippet")}</p>
-                      <pre className="bg-slate-900 dark:bg-slate-950 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs font-mono leading-relaxed">{report.code_snippet}</pre>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{T("codeSnippet", "Code Snippet")}</p>
+                        <CopyButton text={report.code_snippet} />
+                      </div>
+                      <pre data-copyable className="selectable bg-slate-900 dark:bg-slate-950 text-slate-100 p-3 rounded-lg overflow-x-auto text-xs font-mono leading-relaxed">{report.code_snippet}</pre>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{T("status", "Status")}:</span>

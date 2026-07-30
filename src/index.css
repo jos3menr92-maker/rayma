@@ -111,6 +111,17 @@
     user-select: none;
     -webkit-user-select: none;
   }
+
+  /* Allow text selection & copy-paste in content areas (chat, code, bug reports) */
+  #rayma-chat-panel,
+  .prose, .prose *,
+  pre, code,
+  textarea, input,
+  .selectable,
+  [data-copyable] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
 }
 
 /* --- RAYMA Tour Active State --- */

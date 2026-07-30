@@ -1,6 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
 
+// Table-specific defaults for NOT NULL fields that should be optional
+const TABLE_DEFAULTS = {
+  assets: { notes: '' },
+};
+
 // Whitelist of tables the agent can manage
 const ALLOWED_TABLES = {
   loans: ['name', 'lender', 'original_amount', 'current_balance', 'remaining_balance', 'interest_rate', 'monthly_payment', 'payment_frequency', 'total_payments', 'due_date', 'due_day', 'due_day_of_week', 'start_date', 'category', 'notes', 'status'],
@@ -53,10 +58,23 @@ Deno.serve(async (req) => {
       if (!data) return Response.json({ error: 'data is required for create' }, { status: 400 });
       const allowedFields = ALLOWED_TABLES[table];
       const sanitized = { user_id: uid };
+      const defaults = TABLE_DEFAULTS[table] || {};
       for (const field of allowedFields) {
         if (data[field] !== undefined) sanitized[field] = data[field];
+        else if (defaults[field] !== undefined) sanitized[field] = defaults[field];
       }
-      const { data: result, error } = await supabaseAdmin.from(table).insert([sanitized]).select().single();
+      let { data: result, error } = await supabaseAdmin.from(table).insert([sanitized]).select().single();
+
+      // Retry without missing columns (handles schema drift gracefully)
+      if (error && /Could not find the .+ column/i.test(error.message)) {
+        const match = error.message.match(/Could not find the ['"`]?(\w+)['"`]? column/i);
+        if (match) {
+          const retrySanitized = { ...sanitized };
+          delete retrySanitized[match[1]];
+          ({ data: result, error } = await supabaseAdmin.from(table).insert([retrySanitized]).select().single());
+        }
+      }
+
       if (error) throw error;
       return Response.json({ success: true, record: result });
     }

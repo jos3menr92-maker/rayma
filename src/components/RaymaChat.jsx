@@ -16,11 +16,12 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Trash2, Loader2, ScanLine } from "lucide-react";
+import { X, Send, Trash2, Loader2, ScanLine, Copy, Check } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord } from "@/utils/financialRecord";
+import CodeBlock from "@/components/CodeBlock";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -64,7 +65,7 @@ export default function RaymaChat({
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
   const navigate = useNavigate();
-  const { supaUser, reload } = useFinancialData();
+  const { reload } = useFinancialData();
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -173,14 +174,7 @@ export default function RaymaChat({
         parsedSplits.push({ amount: parseFloat(m[1]), category: m[2].toLowerCase() });
       }
 
-      if (parsedSplits.length >= 2 && !supaUser?.id) {
-        setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
-        setInput("");
-        setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
-        return;
-      }
-
-      if (parsedSplits.length >= 2 && supaUser?.id) {
+      if (parsedSplits.length >= 2) {
         setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
         setInput("");
         setLoading(true);
@@ -196,29 +190,25 @@ export default function RaymaChat({
           const todayISO = new Date().toISOString().split("T")[0];
 
           // 1. Insert parent transaction
-          const { data: parentTx, error: txError } = await supabase.from("transactions").insert([{
-            user_id: supaUser.id,
+          const parentTx = await createRecord('transactions', {
             date: todayISO,
             description: merchant,
             amount: -totalAmount,
             category: parsedSplits[0].category,
             type: "debit",
             notes: `Split transaction (${parsedSplits.length} categories)`
-          }]).select().single();
-
-          if (txError) throw txError;
+          });
 
           // 2. Insert transaction_splits rows
-          const splitRows = parsedSplits.map(sp => ({
-            transaction_id: parentTx.id,
-            user_id: supaUser.id,
-            amount: sp.amount,
-            category: sp.category,
-            note: merchant
-          }));
-
-          const { error: splitError } = await supabase.from("transaction_splits").insert(splitRows);
-          if (splitError) throw splitError;
+          for (const sp of parsedSplits) {
+            await createRecord('transaction_splits', {
+              transaction_id: parentTx.id,
+              amount: sp.amount,
+              category: sp.category,
+              date: todayISO,
+              description: merchant
+            });
+          }
 
           const summary = parsedSplits.map(sp => `${formatCurrency(sp.amount)} ${sp.category}`).join(" + ");
           setMessages(prev => [...prev, { role: "assistant", content: T("splitLoggedSuccess", `✅ **Split Logged!** I recorded a ${formatCurrency(totalAmount)} transaction at ${merchant}, split into: ${summary}. Your budgets will update automatically.`) }]);
@@ -241,20 +231,13 @@ export default function RaymaChat({
       const amount = parseFloat(paidMatch[1]);
       const target = paidMatch[2];
       
-      if (!supaUser?.id) {
-         setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
-         setLoading(false);
-         return;
-      }
-
       try {
-        await supabase.from('payments').insert([{
-          user_id: supaUser.id, 
+        await createRecord('payments', { 
           amount: amount, 
           note: target,                  
           payment_type: 'bill',     
           payment_date: new Date().toISOString().split("T")[0]
-        }]);
+        });
         setMessages(prev => [...prev, { role: "assistant", content: T("paymentLoggedSuccess", `✅ **Payment Logged!** I just securely recorded your ${formatCurrency(amount)} payment to ${target} in your database. Your balances will update automatically.`) }]);
         reload();
       } catch (error) {
@@ -273,21 +256,15 @@ export default function RaymaChat({
       const amount = parseFloat(spentMatch[1]);
       const merchant = spentMatch[2].trim();
       
-      if (!supaUser?.id) {
-         setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
-         setLoading(false);
-         return;
-      }
       try {
         const todayISO = new Date().toISOString().split("T")[0];
-        await supabase.from('transactions').insert([{
-          user_id: supaUser.id,
+        await createRecord('transactions', {
           date: todayISO,
           description: merchant,
           amount: -amount,
           category: "other",
           type: "debit"
-        }]);
+        });
         setMessages(prev => [...prev, { role: "assistant", content: T("spentLoggedSuccess", `✅ **Transaction Logged!** I recorded a ${formatCurrency(amount)} transaction at ${merchant}. \n\n*💡 Tip: If you have a receipt, tap the scan button to upload it. It's not required, but it's a great habit for keeping your records bulletproof!*`) }]);
         reload();
       } catch (error) {
@@ -307,19 +284,13 @@ export default function RaymaChat({
       const billName = billMatch[1].trim();
       const amount = parseFloat(billMatch[2]);
       
-      if (!supaUser?.id) {
-         setMessages(prev => [...prev, { role: "assistant", content: T("authErrorChat", "I need to verify your secure session before logging payments. Please refresh the page.") }]);
-         setLoading(false);
-         return;
-      }
       try {
-        await supabase.from('bills').insert([{
-          user_id: supaUser.id,
+        await createRecord('bills', {
           name: billName,
           amount: amount,
           is_active: true,
           payment_frequency: "monthly"
-        }]);
+        });
         setMessages(prev => [...prev, { role: "assistant", content: T("billAddedSuccess", `✅ **Bill Added!** I successfully added ${billName} for ${formatCurrency(amount)} to your upcoming bills. \n\n*💡 Tip: You can always upload the PDF invoice if you want me to keep it on file!*`) }]);
         reload();
       } catch (error) {
@@ -541,7 +512,10 @@ export default function RaymaChat({
                   <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                     {msg.role === "assistant" ? (
                       <div className="flex flex-col gap-2">
-                        <ReactMarkdown className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                        <ReactMarkdown
+                          components={{ pre: CodeBlock }}
+                          className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                        >
                           {msg.content || "…"}
                         </ReactMarkdown>
                         {msg.actionCode && (
