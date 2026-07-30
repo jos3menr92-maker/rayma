@@ -6,7 +6,7 @@ import { t } from "@/lib/i18n";
 import { ChevronLeft, Save, AlertTriangle, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord } from "@/utils/financialRecord";
 
 export default function AddLoan() {
   const navigate = useNavigate();
@@ -46,9 +46,6 @@ export default function AddLoan() {
     setErrorMsg("");
 
     try {
-      if (!supaUser?.id) throw new Error("Missing User ID: The app doesn't know who is logged in.");
-      if (!supabase) throw new Error("Missing Supabase: The database client didn't load.");
-
       // 🧠 RAYMA INTERCEPT: Auto-filling the missing blanks
       let finalDueDate = formData.due_date;
       
@@ -61,9 +58,8 @@ export default function AddLoan() {
         finalDueDate = today.toISOString().split('T')[0];
       }
 
-      const { error } = await supabase.from('loans').insert([{
-        user_id: supaUser.id,
-        name: formData.name || "Unnamed Loan", // RAYMA fallback
+      await createRecord('loans', {
+        name: formData.name || "Unnamed Loan",
         original_amount: parseFloat(formData.original_amount) || parseFloat(formData.current_balance) || 0, 
         current_balance: parseFloat(formData.current_balance) || 0,
         remaining_balance: parseFloat(formData.current_balance) || 0, 
@@ -71,14 +67,9 @@ export default function AddLoan() {
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
         payment_frequency: formData.payment_frequency,
         total_payments: parseInt(formData.total_payments) || null,
-        due_date: finalDueDate, // 🚀 Sending RAYMA's calculated date!
+        due_date: finalDueDate,
         status: 'active'
-      }]);
-
-      if (error) {
-        console.error("Supabase Insert Error:", error);
-        throw new Error(error.message); 
-      }
+      });
 
       await reload();
       navigate("/");

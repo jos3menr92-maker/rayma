@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord, updateRecord, deleteRecord } from "@/utils/financialRecord";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage, useT } from "@/lib/LanguageContext";
@@ -77,7 +77,6 @@ export default function Finance() {
       week_start: incomeForm.week_start, 
       note: incomeForm.note, 
       source: incomeForm.note || "Manual Log",
-      user_id: supaUser?.id,
       is_active: true,
       is_recurring: incomeForm.is_recurring || false,
       recurring_frequency: incomeForm.recurring_frequency || "weekly",
@@ -86,9 +85,9 @@ export default function Finance() {
     
     try {
       if (editingIncome) {
-        await supabase.from('incomes').update(payload).eq('id', editingIncome.id);
+        await updateRecord('incomes', editingIncome.id, payload);
       } else {
-        await supabase.from('incomes').insert([payload]);
+        await createRecord('incomes', payload);
       }
       await reload(); // 🔄 Instantly pull the new data to the screen
       setIncomeDialog(false);
@@ -108,8 +107,7 @@ export default function Finance() {
   async function handleDeleteIncome() {
     if (!deleteTarget) return;
     try {
-      const { error } = await supabase.from('incomes').delete().eq('id', deleteTarget.id);
-      if (error) throw error;
+      await deleteRecord('incomes', deleteTarget.id);
       await reload();
     } catch (err) {
       console.error("Delete income error:", err);

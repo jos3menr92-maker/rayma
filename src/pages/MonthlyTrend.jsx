@@ -7,7 +7,7 @@ import { t } from "@/lib/i18n";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { getMonthName } from "@/utils/formatLocalized";
-import { supabase } from "@/lib/supabaseClientFrontend";
+// (supabase direct calls removed — using FinancialDataContext for resilient reads)
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
@@ -44,36 +44,14 @@ export default function MonthlyTrend() {
   const TYPE_CONFIG = useMemo(() => buildTypeConfig(T), [lang]);
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.totalPaid;
 
-  const { loans: ctxLoans, payments: ctxPayments, bills: ctxBills, supaUser } = useFinancialData();
+  const { incomes, transactions, transactionSplits } = useFinancialData();
 
   useEffect(() => {
-    if (!ctxLoans && !ctxPayments && !ctxBills) return;
-    loadData(ctxLoans, ctxPayments, ctxBills);
-  }, [ctxLoans, ctxPayments, ctxBills, type, locale, supaUser?.id]);
+    buildChart(incomes, transactions, transactionSplits);
+  }, [incomes, transactions, transactionSplits, type, locale]);
 
-  async function loadData(loans, payments, bills) {
+  function buildChart(incomes, transactions, splits) {
     setLoading(true);
-
-    const uid = supaUser?.id;
-    const [incomeRes, txRes, splitRes] = await Promise.all([
-      uid
-        ? supabase.from("incomes").select("amount,week_start").eq("user_id", uid).order("week_start", { ascending: true })
-        : Promise.resolve({ data: [], error: null }),
-      uid
-        ? supabase.from("transactions").select("id,date,amount").eq("user_id", uid).order("date", { ascending: true })
-        : Promise.resolve({ data: [], error: null }),
-      uid
-        ? supabase.from("transaction_splits").select("transaction_id,amount").eq("user_id", uid)
-        : Promise.resolve({ data: [], error: null }),
-    ]);
-
-    if (incomeRes.error) console.error("Income fetch error:", incomeRes.error);
-    if (txRes.error) console.error("Transactions fetch error:", txRes.error);
-    if (splitRes.error) console.error("Transaction splits fetch error:", splitRes.error);
-
-    const incomes = incomeRes.data || [];
-    const transactions = txRes.data || [];
-    const splits = splitRes.data || [];
 
     const splitByTx = splits.reduce((acc, sp) => {
       if (!acc[sp.transaction_id]) acc[sp.transaction_id] = 0;

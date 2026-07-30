@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord, updateRecord, deleteRecord } from "@/utils/financialRecord";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -65,11 +65,9 @@ export default function BankAccounts() {
     const data = { ...form, balance: parseFloat(form.balance) || 0, last_synced: format(new Date(), "yyyy-MM-dd") };
     try {
       if (editing) {
-        const { error } = await supabase.from('bank_accounts').update(data).eq('id', editing.id);
-        if (error) throw error;
+        await updateRecord('bank_accounts', editing.id, data);
       } else {
-        const { error } = await supabase.from('bank_accounts').insert([{ ...data, user_id: supaUser?.id }]);
-        if (error) throw error;
+        await createRecord('bank_accounts', data);
       }
     } catch (err) {
       console.error("BankAccounts Error:", err.message);
@@ -86,9 +84,10 @@ export default function BankAccounts() {
 
   const confirmDelete = async () => {
     if (!accountToDelete) return;
-    const { error } = await supabase.from('bank_accounts').delete().eq('id', accountToDelete);
-    if (error) {
-      toast({ title: T("deleteFailed", "Delete failed"), description: error.message, variant: "destructive" });
+    try {
+      await deleteRecord('bank_accounts', accountToDelete);
+    } catch (err) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
     }
     setAccountToDelete(null);
     setShowConfirm(false);
@@ -98,8 +97,7 @@ export default function BankAccounts() {
   const saveTx = async () => {
     if (!txForm.bank_account_id) { toast({ title: T("selectAccountPrompt", "Please select a bank account.") }); return; }
     try {
-      const { error } = await supabase.from('transactions').insert([{ ...txForm, amount: parseFloat(txForm.amount) || 0, user_id: supaUser?.id }]);
-      if (error) throw error;
+      await createRecord('transactions', { ...txForm, amount: parseFloat(txForm.amount) || 0 });
     } catch (err) {
       console.error("BankAccounts Error:", err.message);
       toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord, updateRecord } from "@/utils/financialRecord";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useT } from "@/lib/LanguageContext";
@@ -121,11 +122,9 @@ export default function BudgetDashboard() {
 
     try {
       if (editing) {
-        const { error } = await supabase.from("budget_categories").update(data).eq("id", editing.id);
-        if (error) throw error;
+        await updateRecord('budget_categories', editing.id, data);
       } else {
-        const { error } = await supabase.from("budget_categories").insert([{ ...data, user_id: supaUser?.id }]);
-        if (error) throw error;
+        await createRecord('budget_categories', data);
       }
       setShowDialog(false);
       fetchAll();

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord } from "@/utils/financialRecord";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +13,10 @@ import { t } from "@/lib/i18n";
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function AddBillDialog({ open, onClose, onSaved }) {
-  const { userProfile, supaUser, reload } = useFinancialData();
+  const { userProfile, reload } = useFinancialData();
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+  const { toast } = useToast();
 
   const categories = [
     { value: "utilities", label: `⚡ ${T("catUtilities", "Utilities")}` },
@@ -44,7 +46,6 @@ export default function AddBillDialog({ open, onClose, onSaved }) {
     
     const payload = {
       name: form.name,
-      user_id: supaUser?.id,
       amount: parseFloat(form.amount) || 0,
       payment_frequency: form.payment_frequency,
       category: form.category,
@@ -58,7 +59,11 @@ export default function AddBillDialog({ open, onClose, onSaved }) {
       payload.due_day = parseInt(form.due_day) || null;
     }
     
-    await supabase.from('bills').insert([payload]);
+    try {
+      await createRecord('bills', payload);
+    } catch (err) {
+      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
+    }
     setSaving(false);
     setForm({ name: "", amount: "", payment_frequency: "monthly", due_day: "", due_day_of_week: "", category: "other", autopay: false, notes: "" });
     reload();

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord, updateRecord, deleteRecord } from "@/utils/financialRecord";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -67,23 +67,18 @@ export default function AssetDashboard() {
   async function handleSave(e) {
     e.preventDefault();
     
-    if (!supaUser?.id) return; // Prevent null ID crash
-    
     setSaving(true);
     
     const payload = { 
       ...form, 
       amount: parseFloat(form.amount) || 0,
-      user_id: supaUser.id
     };
 
     try {
       if (editing) {
-        const { error } = await supabase.from('assets').update(payload).eq('id', editing.id);
-        if (error) throw error;
+        await updateRecord('assets', editing.id, payload);
       } else {
-        const { error } = await supabase.from('assets').insert([payload]);
-        if (error) throw error;
+        await createRecord('assets', payload);
       }
       
       setDialogOpen(false);
@@ -103,9 +98,10 @@ export default function AssetDashboard() {
 
   const confirmDelete = async () => {
     if (!assetToDelete) return;
-    const { error } = await supabase.from('assets').delete().eq('id', assetToDelete);
-    if (error) {
-      toast({ title: T("deleteFailed", "Delete failed"), description: error.message, variant: "destructive" });
+    try {
+      await deleteRecord('assets', assetToDelete);
+    } catch (err) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
     }
     setAssetToDelete(null);
     setShowConfirm(false);

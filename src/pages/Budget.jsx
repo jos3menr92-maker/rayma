@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord, updateRecord, deleteRecord } from "@/utils/financialRecord";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -99,12 +99,9 @@ export default function Budget() {
   async function handleSaveGoal(e) {
     e.preventDefault();
     
-    if (!supaUser?.id) return; // 🛡️ FAIL-SAFE: Prevent null ID crash
-    
     setSavingGoal(true);
 
     const data = {
-      user_id: supaUser.id, 
       name: goalForm.name,
       target_amount: parseFloat(goalForm.target_amount) || 0,
       current_saved: parseFloat(goalForm.current_saved) || 0,
@@ -115,11 +112,9 @@ export default function Budget() {
 
     try {
       if (editingGoal) {
-        const { error } = await supabase.from('savings_goals').update(data).eq('id', editingGoal.id);
-        if (error) throw error;
+        await updateRecord('savings_goals', editingGoal.id, data);
       } else {
-        const { error } = await supabase.from('savings_goals').insert([data]);
-        if (error) throw error;
+        await createRecord('savings_goals', data);
       }
       
       await reload(); 
@@ -138,8 +133,11 @@ export default function Budget() {
 
   const confirmDeleteGoal = async () => {
     if (!goalToDelete) return;
-    const { error } = await supabase.from('savings_goals').delete().eq('id', goalToDelete);
-    if (error) console.error("Failed to delete goal:", error.message);
+    try {
+      await deleteRecord('savings_goals', goalToDelete);
+    } catch (err) {
+      console.error("Failed to delete goal:", err.message);
+    }
     setGoalToDelete(null);
     setShowConfirm(false);
     reload();

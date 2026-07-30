@@ -2,7 +2,7 @@ import { useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Upload, Camera, FileImage, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord } from "@/utils/financialRecord";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -103,7 +103,7 @@ Today's date: ${today}`,
 
       // --- Save the document (always runs, even if analysis timed out) ---
       setUploadStep(T("saving", "Saving…"));
-      const { data, error } = await supabase.from('documents').insert({
+      const doc = await createRecord('documents', {
         file_url: file_uri,
         file_name: file.name,
         folder: analysis.folder || "misc",
@@ -113,10 +113,7 @@ Today's date: ${today}`,
         loggable: analysis.loggable !== false,
         notes: analysis.rayma_message || analysis.summary,
         scan_date: today,
-        user_id: supaUser?.id,
-      }).select();
-      if (error) throw error;
-      const doc = data[0];
+      });
       onDocumentScanned({ ...doc, _analysis: analysis });
     } catch (err) {
       console.error('Document upload failed:', err);
