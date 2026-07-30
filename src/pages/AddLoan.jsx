@@ -6,7 +6,7 @@ import { t } from "@/lib/i18n";
 import { ChevronLeft, Save, AlertTriangle, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { createRecord } from "@/utils/financialRecord";
+import { createRecord } from "@/lib/supabaseHelpers";
 
 export default function AddLoan() {
   const navigate = useNavigate();

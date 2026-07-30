@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import { createRecord, updateRecord, deleteRecord } from "@/utils/financialRecord";
+import { createRecord, updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";

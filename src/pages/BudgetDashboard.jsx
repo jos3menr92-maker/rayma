@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { createRecord, updateRecord } from "@/utils/financialRecord";
+import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
