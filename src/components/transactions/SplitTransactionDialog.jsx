@@ -53,6 +53,7 @@ export function SplitTransactionDialog({ tx, supaUser, onClose, onSaved, onError
           amount: parseFloat(sp.amount) || 0,
           category: sp.category,
           note: sp.note || null,
+          date: tx.date || null,
         });
       }
 
