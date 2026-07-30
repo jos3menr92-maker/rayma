@@ -62,7 +62,6 @@ export default function AddLoan() {
         name: formData.name || "Unnamed Loan",
         original_amount: parseFloat(formData.original_amount) || parseFloat(formData.current_balance) || 0, 
         current_balance: parseFloat(formData.current_balance) || 0,
-        remaining_balance: parseFloat(formData.current_balance) || 0, 
         interest_rate: parseFloat(formData.interest_rate) || 0,
         monthly_payment: parseFloat(formData.monthly_payment) || 0,
         payment_frequency: formData.payment_frequency,

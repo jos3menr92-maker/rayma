@@ -50,6 +50,7 @@ export function SplitTransactionDialog({ tx, supaUser, onClose, onSaved, onError
       for (const sp of splits) {
         await createRecord('transaction_splits', {
           transaction_id: tx.id,
+          bank_account_id: tx.bank_account_id || null,
           amount: parseFloat(sp.amount) || 0,
           category: sp.category,
           note: sp.note || null,

@@ -97,7 +97,11 @@ export default function BankAccounts() {
   const saveTx = async () => {
     if (!txForm.bank_account_id) { toast({ title: T("selectAccountPrompt", "Please select a bank account.") }); return; }
     try {
-      await createRecord('transactions', { ...txForm, amount: parseFloat(txForm.amount) || 0 });
+      await createRecord('transactions', { 
+        ...txForm, 
+        bank_account_id: txForm.bank_account_id || null,
+        amount: parseFloat(txForm.amount) || 0 
+      });
     } catch (err) {
       console.error("BankAccounts Error:", err.message);
       toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });

@@ -79,7 +79,6 @@ export default function Finance() {
       week_start: incomeForm.week_start, 
       note: incomeForm.note, 
       source: incomeForm.note || "Manual Log",
-      is_active: true,
       is_recurring: incomeForm.is_recurring || false,
       recurring_frequency: incomeForm.recurring_frequency || "weekly",
       recurring_active: incomeForm.is_recurring ? true : false
