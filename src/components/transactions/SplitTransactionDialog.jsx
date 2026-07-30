@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord } from "@/utils/financialRecord";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -44,19 +44,17 @@ export function SplitTransactionDialog({ tx, supaUser, onClose, onSaved, onError
   };
 
   const handleSave = async () => {
-    if (!isValid || !supaUser?.id) return;
+    if (!isValid) return;
     setSaving(true);
     try {
-      const rows = splits.map(sp => ({
-        transaction_id: tx.id,
-        user_id: supaUser.id,
-        amount: parseFloat(sp.amount) || 0,
-        category: sp.category,
-        note: sp.note || null,
-      }));
-
-      const { error } = await supabase.from("transaction_splits").insert(rows);
-      if (error) throw error;
+      for (const sp of splits) {
+        await createRecord('transaction_splits', {
+          transaction_id: tx.id,
+          amount: parseFloat(sp.amount) || 0,
+          category: sp.category,
+          note: sp.note || null,
+        });
+      }
 
       onSaved?.(tx.id);
     } catch (err) {

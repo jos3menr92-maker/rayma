@@ -20,7 +20,7 @@ const ALLOWED_TABLES = {
   loan_adjustments: ['loan_id', 'amount', 'direction', 'reason', 'date', 'description'],
   net_worth_snapshots: ['snapshot_date', 'total_assets', 'total_liabilities', 'net_worth', 'description'],
   documents: ['file_url', 'file_name', 'folder', 'status', 'document_type', 'extracted_data', 'loggable', 'notes', 'scan_date', 'logged_entity_type', 'logged_entity_id'],
-  transaction_splits: ['transaction_id', 'category', 'amount', 'date', 'description'],
+  transaction_splits: ['transaction_id', 'category', 'amount', 'date', 'description', 'note'],
   profiles: ['preferred_name', 'avatar_id', 'avatar_emoji', 'avatar_photo_url', 'preferred_currency', 'preferred_language', 'pay_frequency', 'pay_day', 'compact_mode', 'smart_alerts', 'auto_insights', 'subscription_type', 'ai_tokens_daily_limit'],
 };
 

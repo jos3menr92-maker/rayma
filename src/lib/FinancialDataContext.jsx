@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "./supabaseClientFrontend";
+import { createRecord, updateRecord } from "@/utils/financialRecord";
 import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);
@@ -20,6 +21,7 @@ export function FinancialDataProvider({ children }) {
 
   // ✅ NEW: Global split transaction container
   const [transactionSplits, setTransactionSplits] = useState([]);
+  const [budgetCategories, setBudgetCategories] = useState([]);
 
   const [userProfile, setUserProfile] = useState(null);
   const [supaUser, setSupaUser] = useState(null);
@@ -68,6 +70,7 @@ export function FinancialDataProvider({ children }) {
             setSavingsGoals(d.savings_goals || []);
             setBankAccounts(d.bank_accounts || []);
             setDocuments(d.documents || []);
+            setBudgetCategories(d.budget_categories || []);
             setTransactionSplits([]);
             setUserProfile(me);
           } catch (fallbackErr) {
@@ -82,6 +85,7 @@ export function FinancialDataProvider({ children }) {
               setSavingsGoals([]);
               setBankAccounts([]);
               setDocuments([]);
+              setBudgetCategories([]);
               setTransactionSplits([]);
             }
           } finally {
@@ -105,6 +109,7 @@ export function FinancialDataProvider({ children }) {
           setSavingsGoals([]);
           setBankAccounts([]);
           setDocuments([]);
+          setBudgetCategories([]);
           setTransactionSplits([]);
           setLoading(false);
         }
@@ -125,6 +130,7 @@ export function FinancialDataProvider({ children }) {
         savingsRes,
         bankAccountsRes,
         documentsRes,
+        budgetCategoriesRes,
         splitsRes,
         profileRes
       ] = await Promise.all([
@@ -137,6 +143,7 @@ export function FinancialDataProvider({ children }) {
         supabase.from("savings_goals").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("bank_accounts").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("documents").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("budget_categories").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("transaction_splits").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("profiles").select("*").eq("id", uid).single()
       ]);
@@ -152,6 +159,7 @@ export function FinancialDataProvider({ children }) {
       setSavingsGoals(savingsRes.data || []);
       setBankAccounts(bankAccountsRes.data || []);
       setDocuments(documentsRes.data || []);
+      setBudgetCategories(budgetCategoriesRes.data || []);
       setTransactionSplits(splitsRes.data || []);
 
       // ✅ Unify profile: merge Supabase profile (tokens, energy_bars) with Base44 user
@@ -206,23 +214,20 @@ export function FinancialDataProvider({ children }) {
   }
 
   async function payBill(bill, paymentAmount, paymentDate = new Date().toISOString().split("T")[0]) {
-    if (!supaUser?.id) return;
     const prevBills = [...bills];
     const prevPayments = [...payments];
 
     setBills(prev => prev.map(b => (b.id === bill.id ? { ...b, last_paid_date: paymentDate } : b)));
 
     try {
-      const { data, error } = await supabase.from("payments").insert({
+      const data = await createRecord('payments', {
         bill_id: bill.id,
         amount: paymentAmount,
         payment_date: paymentDate,
         payment_type: "bill",
-        user_id: supaUser.id
-      }).select();
+      });
 
-      if (error) throw error;
-      if (data?.[0]) setPayments(prev => [data[0], ...prev]);
+      setPayments(prev => [data, ...prev]);
     } catch (e) {
       setBills(prevBills);
       setPayments(prevPayments);
@@ -231,13 +236,11 @@ export function FinancialDataProvider({ children }) {
   }
 
   async function updateLoan(loanId, updates) {
-    if (!supaUser?.id) return;
     const prevLoans = [...loans];
     setLoans(prev => prev.map(l => (l.id === loanId ? { ...l, ...updates } : l)));
 
     try {
-      const { error } = await supabase.from("loans").update(updates).eq("id", loanId).eq("user_id", supaUser.id);
-      if (error) throw error;
+      await updateRecord('loans', loanId, updates);
     } catch (e) {
       setLoans(prevLoans);
       toast({ title: "Update failed", description: e.message, variant: "destructive" });
@@ -245,20 +248,14 @@ export function FinancialDataProvider({ children }) {
   }
 
   async function addTransaction(transactionData) {
-    if (!supaUser?.id) return;
     const tempId = `temp_${Date.now()}`;
-    const optimisticRecord = { ...transactionData, id: tempId, created_at: new Date().toISOString(), user_id: supaUser.id };
+    const optimisticRecord = { ...transactionData, id: tempId, created_at: new Date().toISOString() };
 
     setPayments(prev => [optimisticRecord, ...prev]);
 
     try {
-      const { data, error } = await supabase.from("payments").insert({
-        ...transactionData,
-        user_id: supaUser.id
-      }).select();
-
-      if (error) throw error;
-      setPayments(prev => prev.map(p => (p.id === tempId ? data[0] : p)));
+      const data = await createRecord('payments', transactionData);
+      setPayments(prev => prev.map(p => (p.id === tempId ? data : p)));
     } catch (e) {
       setPayments(prev => prev.filter(p => p.id !== tempId));
       toast({ title: "Failed to add transaction", description: e.message, variant: "destructive" });
@@ -281,6 +278,7 @@ export function FinancialDataProvider({ children }) {
         setSavingsGoals([]);
         setBankAccounts([]);
         setDocuments([]);
+        setBudgetCategories([]);
         setTransactionSplits([]);
       }
     });
@@ -325,6 +323,7 @@ export function FinancialDataProvider({ children }) {
         bankAccounts,
         documents,
         transactionSplits,
+        budgetCategories,
         userProfile,
         supaUser,
         loading,

@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
 import { createRecord, updateRecord } from "@/utils/financialRecord";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,63 +36,16 @@ const emptyForm = { name: "", category_key: "other", monthly_limit: "" };
 export default function BudgetDashboard() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const { bills, loans, supaUser, transactionSplits } = useFinancialData();
+  const { bills, loans, budgetCategories: budgets, transactions, transactionSplits, loading, reload } = useFinancialData();
   const { toast } = useToast();
 
-  const [budgets, setBudgets] = useState([]);
-  const [transactions, setTransactions] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
-  const [loading, setLoading] = useState(true);
 
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    const uid = supaUser?.id;
-
-    if (!uid) {
-      setBudgets([]);
-      setTransactions([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { data: catData, error: catErr } = await supabase
-        .from("budget_categories")
-        .select("*")
-        .eq("user_id", uid)
-        .order("created_at", { ascending: false });
-      if (catErr) throw catErr;
-
-      const { data: txData, error: txErr } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", uid)
-        .order("date", { ascending: false })
-        .limit(500);
-      if (txErr) throw txErr;
-
-      setBudgets(catData || []);
-      setTransactions(txData || []);
-    } catch (err) {
-      console.error("BudgetDashboard load error:", err.message);
-      toast({ title: T("loadFailed", "Failed to load data"), description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAll();
-  }, [supaUser?.id]);
-
-  // 🔄 Realtime: reload when budgets or transactions change
-  useSupabaseRealtime(['budget_categories', 'transactions'], fetchAll, [supaUser?.id]);
 
   const openAdd = () => {
     setEditing(null);
@@ -127,7 +78,7 @@ export default function BudgetDashboard() {
         await createRecord('budget_categories', data);
       }
       setShowDialog(false);
-      fetchAll();
+      reload();
     } catch (err) {
       toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     }
