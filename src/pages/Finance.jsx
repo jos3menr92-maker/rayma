@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CashFlowForecast from "../components/CashFlowForecast";
 import { getWeekdayNames } from "@/utils/formatLocalized";
+import { useToast } from "@/components/ui/use-toast";
 
 function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
@@ -33,6 +34,7 @@ export default function Finance() {
   const { lang, locale } = useLanguage();
   const T = useT();
   const { bills, loans, incomes, userProfile, supaUser, reload, loading } = useFinancialData();
+  const { toast } = useToast();
 
   const [incomeDialog, setIncomeDialog] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
@@ -93,6 +95,7 @@ export default function Finance() {
       setIncomeDialog(false);
     } catch (error) {
       console.error("Error saving income:", error);
+      toast({ title: T("saveFailed", "Save failed"), description: error.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -111,6 +114,7 @@ export default function Finance() {
       await reload();
     } catch (err) {
       console.error("Delete income error:", err);
+      toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
     } finally {
       setDeleteTarget(null);
     }

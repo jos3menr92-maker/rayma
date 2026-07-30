@@ -26,7 +26,7 @@ async function tryRefreshSession() {
 }
 
 /**
- * Checks if an error indicates an expired/invalid session.
+ * Checks if an error indicates an expired/invalid session (401/JWT).
  */
 function isAuthError(error) {
   if (!error) return false;
@@ -39,8 +39,18 @@ function isAuthError(error) {
     msg.includes("jwt expired") ||
     msg.includes("invalid jwt") ||
     msg.includes("not authenticated") ||
-    msg.includes("unauthorized")
+    msg.includes("unauthorized") ||
+    msg.includes("refresh_token_not_found")
   );
+}
+
+/**
+ * Build a human-readable error message for failed DB operations.
+ */
+function buildErrorMessage(table, operation, error) {
+  const detail = error?.details || error?.hint || "";
+  const base = `[${table}] ${operation} failed: ${error?.message || "Unknown error"}`;
+  return detail ? `${base} (${detail})` : base;
 }
 
 /**
@@ -83,11 +93,11 @@ export async function createRecord(table, data) {
       .select()
       .single();
 
-    if (retryError) throw new Error(retryError.message);
+    if (retryError) throw new Error(buildErrorMessage(table, "insert", retryError));
     return retryRecord;
   }
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(buildErrorMessage(table, "insert", error));
   return record;
 }
 
@@ -106,7 +116,9 @@ export async function updateRecord(table, recordId, data) {
     .single();
 
   if (error && isAuthError(error)) {
-    await tryRefreshSession();
+    const refreshedUser = await tryRefreshSession();
+    if (!refreshedUser?.id) throw new Error("Session expired. Please log in again.");
+
     const { data: retryRecord, error: retryError } = await supabase
       .from(table)
       .update(data)
@@ -114,11 +126,11 @@ export async function updateRecord(table, recordId, data) {
       .select()
       .single();
 
-    if (retryError) throw new Error(retryError.message);
+    if (retryError) throw new Error(buildErrorMessage(table, "update", retryError));
     return retryRecord;
   }
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(buildErrorMessage(table, "update", error));
   return record;
 }
 
@@ -135,15 +147,17 @@ export async function deleteRecord(table, recordId) {
     .eq("id", recordId);
 
   if (error && isAuthError(error)) {
-    await tryRefreshSession();
+    const refreshedUser = await tryRefreshSession();
+    if (!refreshedUser?.id) throw new Error("Session expired. Please log in again.");
+
     const { error: retryError } = await supabase
       .from(table)
       .delete()
       .eq("id", recordId);
 
-    if (retryError) throw new Error(retryError.message);
+    if (retryError) throw new Error(buildErrorMessage(table, "delete", retryError));
     return;
   }
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(buildErrorMessage(table, "delete", error));
 }
