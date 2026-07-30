@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { createRecord } from "@/utils/financialRecord";
+import { createRecord } from "@/lib/supabaseHelpers";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";

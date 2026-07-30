@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "./supabaseClientFrontend";
-import { createRecord, updateRecord } from "@/utils/financialRecord";
+import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
 import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);

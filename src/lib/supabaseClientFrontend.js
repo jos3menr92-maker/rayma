@@ -7,7 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error("[Rayma AI] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Set these environment variables before building.");
 }
 
-// Create the client with a fallback so the module never throws at import time.
+// Create the client with options that handle token persistence and auto-refresh.
 // If the real env vars are missing, Supabase calls will fail with network errors
 // (caught by try/catch in consumers) instead of crashing the entire app.
 let _client = null;
@@ -16,7 +16,14 @@ function getClient() {
   if (_client) return _client;
   _client = createClient(
     supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder-anon-key'
+    supabaseAnonKey || 'placeholder-anon-key',
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    }
   );
   return _client;
 }

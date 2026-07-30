@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { createRecord } from "@/utils/financialRecord";
+import { createRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

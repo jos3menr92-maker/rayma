@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/lib/supabaseClientFrontend';
 
@@ -11,9 +11,41 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const refreshIntervalRef = useRef(null);
 
   useEffect(() => {
     checkAppState();
+
+    // Listen for Supabase auth state changes (token refresh, sign-in, sign-out)
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('[AuthContext] Supabase token refreshed successfully.');
+      } else if (event === 'SIGNED_OUT') {
+        // Supabase session ended — clear state
+        setUser(null);
+        setIsAuthenticated(false);
+      } else if (event === 'SIGNED_IN' && !isAuthenticated) {
+        // Re-check Base44 auth when Supabase session is restored
+        checkUserAuth();
+      }
+    });
+
+    // Proactive session refresh every 10 minutes to prevent silent expiry
+    refreshIntervalRef.current = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await supabase.auth.refreshSession();
+        }
+      } catch (e) {
+        console.warn('[AuthContext] Periodic refresh failed:', e.message);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+
+    return () => {
+      authListener.subscription.unsubscribe();
+      if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
+    };
   }, []);
 
   const checkAppState = async () => {
