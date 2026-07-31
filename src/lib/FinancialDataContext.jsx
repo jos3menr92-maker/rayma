@@ -170,6 +170,14 @@ export function FinancialDataProvider({ children }) {
       for (const [key, value] of Object.entries(supaProfile)) {
         if (value !== null && value !== undefined) mergedLoad[key] = value;
       }
+      // Base44 User is authoritative for energy/entitlement fields (the Stripe
+      // webhook + daily reset write there). Prevent stale Supabase profile copies
+      // (e.g. ai_tokens: 0) from clobbering fresh Base44 values after a purchase,
+      // which was causing "purchased but shows empty" in the AI chat.
+      const ENERGY_FIELDS = ['ai_tokens', 'ai_tokens_daily_limit', 'energy_bars', 'purchased_energy', 'subscription_type', 'annual_pass_expires_at'];
+      for (const f of ENERGY_FIELDS) {
+        if (me?.[f] !== undefined && me?.[f] !== null) mergedLoad[f] = me[f];
+      }
       setUserProfile(mergedLoad);
     } catch (e) {
       console.error("Failed to load financial data:", e);
@@ -203,6 +211,10 @@ export function FinancialDataProvider({ children }) {
       const merged = { ...me };
       for (const [key, value] of Object.entries(supaProfile)) {
         if (value !== null && value !== undefined) merged[key] = value;
+      }
+      const ENERGY_FIELDS = ['ai_tokens', 'ai_tokens_daily_limit', 'energy_bars', 'purchased_energy', 'subscription_type', 'annual_pass_expires_at'];
+      for (const f of ENERGY_FIELDS) {
+        if (me?.[f] !== undefined && me?.[f] !== null) merged[f] = me[f];
       }
       setUserProfile(merged);
       setSupaUser(session?.user || null);

@@ -65,7 +65,7 @@ export default function RaymaChat({
   const messagesEndRef = useRef(null);
   const scanFileRef = useRef(null);
   const navigate = useNavigate();
-  const { reload } = useFinancialData();
+  const { reload, refreshUserProfile } = useFinancialData();
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -125,6 +125,7 @@ export default function RaymaChat({
       const last = msgs[msgs.length - 1];
       if (last?.role === "assistant" && last?.status !== "streaming" && last?.status !== "pending") {
         setLoading(false);
+        refreshUserProfile?.();
       }
     });
     return () => unsubscribe();
@@ -477,7 +478,7 @@ export default function RaymaChat({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          style={{ bottom: `calc(6rem + ${keyboardHeight}px)`, maxHeight: `calc(75vh - ${keyboardHeight}px)` }}
+          style={{ bottom: `calc(6rem + ${keyboardHeight}px)`, maxHeight: `calc(100vh - 10rem - ${keyboardHeight}px)` }}
           className="fixed right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] z-[60]"
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">

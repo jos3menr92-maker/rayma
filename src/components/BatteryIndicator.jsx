@@ -4,6 +4,7 @@ const SIZE_CONFIG = {
   sm: { battery: "w-10 h-5", nub: "w-[3px] h-2", text: "text-[10px]" },
   md: { battery: "w-12 h-6", nub: "w-[3px] h-2.5", text: "text-xs" },
   lg: { battery: "w-14 h-7", nub: "w-[3px] h-3", text: "text-sm" },
+  xl: { battery: "w-28 h-6", nub: "w-[3px] h-4", text: "text-xs" },
 };
 
 const SEGMENT_COUNT = 5;

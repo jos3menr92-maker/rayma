@@ -6,6 +6,7 @@ import QuickAddMenu from "./QuickAddMenu";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import MoreMenu from "./MoreMenu";
+import GlobalBatteryBar from "./GlobalBatteryBar";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import AppTour from "./AppTour";
 import { useFinancialData } from "@/lib/FinancialDataContext";
@@ -104,7 +105,8 @@ export default function Layout() {
             </div>
             <span className="text-sm font-semibold font-heading text-foreground tracking-wide">Rayma AI</span>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
+            <GlobalBatteryBar />
             <button onClick={() => setDrawerOpen(true)} aria-label="Open Menu" className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Menu className="w-8 h-8" />
             </button>
