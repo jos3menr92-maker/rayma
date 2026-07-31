@@ -65,14 +65,15 @@ Deno.serve(async (req) => {
       }
       let { data: result, error } = await supabaseAdmin.from(table).insert([sanitized]).select().single();
 
-      // Retry without missing columns (handles schema drift gracefully)
-      if (error && /Could not find the .+ column/i.test(error.message)) {
+      // Retry without missing columns (handles schema drift gracefully — loops for multiple missing columns)
+      let retryCount = 0;
+      let currentPayload = { ...sanitized };
+      while (error && /Could not find the .+ column/i.test(error.message) && retryCount < 5) {
         const match = error.message.match(/Could not find the ['"`]?(\w+)['"`]? column/i);
-        if (match) {
-          const retrySanitized = { ...sanitized };
-          delete retrySanitized[match[1]];
-          ({ data: result, error } = await supabaseAdmin.from(table).insert([retrySanitized]).select().single());
-        }
+        if (!match) break;
+        delete currentPayload[match[1]];
+        ({ data: result, error } = await supabaseAdmin.from(table).insert([currentPayload]).select().single());
+        retryCount++;
       }
 
       if (error) throw error;
