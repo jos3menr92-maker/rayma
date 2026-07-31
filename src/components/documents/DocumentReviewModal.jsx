@@ -71,6 +71,22 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
           status: "logged", folder, extracted_data: fields,
           logged_entity_type: "bill", logged_entity_id: bill?.id
         });
+      } else if (folder === "loans" && (fields.balance != null || fields.amount != null)) {
+        const loan = await createRecord("loans", {
+          name: fields.description || fields.payee || T("importedLoan", "Imported Loan"),
+          lender: fields.payee || "",
+          original_amount: parseFloat(fields.amount ?? fields.balance ?? 0),
+          current_balance: parseFloat(fields.balance ?? fields.amount ?? 0),
+          interest_rate: fields.interest_rate != null ? parseFloat(fields.interest_rate) : undefined,
+          start_date: fields.date || undefined,
+          category: "other",
+          notes: `Imported from document: ${doc.file_name}`,
+          status: "active",
+        });
+        await updateRecord("documents", doc.id, {
+          status: "logged", folder, extracted_data: fields,
+          logged_entity_type: "loan", logged_entity_id: loan?.id
+        });
       } else {
         await updateRecord("documents", doc.id, { status: "approved", folder, extracted_data: fields });
       }
@@ -223,6 +239,13 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
                   <Label className="text-[10px] text-muted-foreground">{T("balanceLabel", "Balance")}</Label>
                   <Input value={fields.balance} onChange={e => setFields(f => ({ ...f, balance: e.target.value }))}
                     className="mt-0.5 rounded-xl h-8 text-sm" type="number" />
+                </div>
+              )}
+              {fields.interest_rate != null && (
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{T("interestRate", "Interest Rate (%)")}</Label>
+                  <Input value={fields.interest_rate} onChange={e => setFields(f => ({ ...f, interest_rate: e.target.value }))}
+                    className="mt-0.5 rounded-xl h-8 text-sm" type="number" step="0.01" />
                 </div>
               )}
               {Object.keys(fields).length === 0 && (
