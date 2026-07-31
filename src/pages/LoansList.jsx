@@ -7,10 +7,16 @@ import LoanCard from "../components/LoanCard";
 import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EditLoanForm from "../components/EditLoanForm";
+import { updateRecord } from "@/lib/supabaseHelpers";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function LoansList() {
   const navigate = useNavigate();
-  const { loans, loading } = useFinancialData();
+  const { loans, loading, reload } = useFinancialData();
+  const { toast } = useToast();
+  const [editingLoan, setEditingLoan] = useState(null);
   const { lang } = useLanguage();
   const T = useMemo(
     () => (key, fallback) => {
@@ -50,6 +56,17 @@ export default function LoansList() {
       }
       return 0;
     }), [loans, search, filter, sort]);
+
+  async function handleSaveEdit(updatedData) {
+    if (!editingLoan) return;
+    try {
+      await updateRecord('loans', editingLoan.id, updatedData);
+      await reload();
+      setEditingLoan(null);
+    } catch (err) {
+      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
+    }
+  }
 
   if (loading) {
     return (
@@ -120,7 +137,7 @@ export default function LoansList() {
       {/* 2-column grid */}
       <div className="grid grid-cols-2 gap-3">
         {filtered.map((loan, i) => (
-          <LoanCard key={loan.id} loan={loan} index={i} />
+          <LoanCard key={loan.id} loan={loan} index={i} onEdit={setEditingLoan} />
         ))}
       </div>
 
@@ -146,6 +163,13 @@ export default function LoansList() {
           )}
         </div>
       )}
+
+      <Dialog open={!!editingLoan} onOpenChange={(open) => { if (!open) setEditingLoan(null); }}>
+        <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{T("editLoan", "Edit Loan")}</DialogTitle></DialogHeader>
+          {editingLoan && <EditLoanForm loan={editingLoan} onSave={handleSaveEdit} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

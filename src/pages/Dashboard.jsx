@@ -269,7 +269,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         </div>
         <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar">
           {activeLoans.length > 0 ? activeLoans.map(loan => (
-            <div key={loan.id} onClick={() => navigate(`/loan/${loan.id}`)} className="min-w-[145px] w-[145px] bg-card border border-border rounded-2xl p-3 snap-start shrink-0 shadow-sm cursor-pointer active:scale-95 transition-transform">
+            <div key={loan.id} onClick={() => navigate("/loans")} className="min-w-[145px] w-[145px] bg-card border border-border rounded-2xl p-3 snap-start shrink-0 shadow-sm cursor-pointer active:scale-95 transition-transform">
                <div className="flex justify-between items-start mb-2">
                  <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-base">{iconMap[loan.category] || "💳"}</div>
                  <span className="text-[10px] font-bold text-primary">{loan.original_amount > 0 ? Math.min(Math.max(((loan.original_amount - loan.current_balance) / loan.original_amount) * 100, 0), 100).toFixed(0) : 0}%</span>

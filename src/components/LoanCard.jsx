@@ -1,4 +1,3 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronRight, AlertCircle, Calendar, DollarSign } from "lucide-react";
@@ -12,8 +11,7 @@ const categoryIcons = {
   credit_card: "💳", medical: "🏥", other: "📋",
 };
 
-export default function LoanCard({ loan, index = 0 }) {
-  const navigate = useNavigate();
+export default function LoanCard({ loan, index = 0, onEdit }) {
   const { lang } = useLanguage();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const { formatCurrency } = useCurrency();
@@ -56,7 +54,7 @@ export default function LoanCard({ loan, index = 0 }) {
       </div>
 
       <motion.div style={{ x }} drag="x" dragConstraints={{ left: -72, right: 0 }} dragElastic={0.1} onDragEnd={handleDragEnd}>
-        <Link to={`/loan/${loan.id}`} className={`block bg-card rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98] overflow-hidden ${loan.status === "paid_off" ? "border-primary/40" : "border-border hover:border-primary/30"}`} onClick={(e) => { if (swiped) { e.preventDefault(); animate(x, 0, { type: "spring", stiffness: 300, damping: 30 }); setSwiped(false); } }}>
+        <div onClick={() => { if (swiped) { animate(x, 0, { type: "spring", stiffness: 300, damping: 30 }); setSwiped(false); return; } onEdit?.(loan); }} className={`block bg-card rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98] overflow-hidden cursor-pointer ${loan.status === "paid_off" ? "border-primary/40" : "border-border hover:border-primary/30"}`}>
           <div className="p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -97,7 +95,7 @@ export default function LoanCard({ loan, index = 0 }) {
               </span>
             </div>
           )}
-        </Link>
+        </div>
       </motion.div>
     </motion.div>
   );
