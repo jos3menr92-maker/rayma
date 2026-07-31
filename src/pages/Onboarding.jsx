@@ -6,17 +6,32 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
-import { ChevronRight, DollarSign, Receipt, CreditCard, CheckCircle2, Loader2 } from "lucide-react";
+import { ChevronRight, DollarSign, Receipt, CreditCard, CheckCircle2, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
-const STEPS = ["welcome", "income", "bill", "loan", "done"];
+const STEPS = ["language", "welcome", "income", "bill", "loan", "done"];
+
+const LANG_OPTIONS = [
+  { code: "en", locale: "en-US", label: "English", flag: "🇺🇸" },
+  { code: "es", locale: "es-CO", label: "Español", flag: "🇪🇸" },
+  { code: "pt", locale: "pt-BR", label: "Português", flag: "🇧🇷" },
+  { code: "fr", locale: "fr-FR", label: "Français", flag: "🇫🇷" },
+  { code: "de", locale: "de-DE", label: "Deutsch", flag: "🇩🇪" },
+  { code: "it", locale: "it-IT", label: "Italiano", flag: "🇮🇹" },
+  { code: "ja", locale: "ja-JP", label: "日本語", flag: "🇯🇵" },
+  { code: "zh", locale: "zh-CN", label: "中文", flag: "🇨🇳" },
+  { code: "hi", locale: "hi-IN", label: "हिन्दी", flag: "🇮🇳" },
+  { code: "ar", locale: "ar-AE", label: "العربية", flag: "🇦🇪" },
+  { code: "ru", locale: "ru-RU", label: "Русский", flag: "🇷🇺" },
+  { code: "bn", locale: "bn-BD", label: "বাংলা", flag: "🇧🇩" },
+];
 
 function ProgressDots({ step }) {
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
-      {STEPS.filter(s => s !== "welcome" && s !== "done").map((s, i) => (
+      {STEPS.filter(s => s !== "welcome" && s !== "done" && s !== "language").map((s, i) => (
         <div key={s} className={`h-1.5 rounded-full transition-all duration-300 ${STEPS.indexOf(step) > i + 1 ? "w-6 bg-primary" : STEPS[STEPS.indexOf(step) - 1] === s || STEPS.indexOf(step) === i + 1 ? "w-6 bg-primary" : "w-3 bg-muted"}`} />
       ))}
     </div>
@@ -25,7 +40,7 @@ function ProgressDots({ step }) {
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { lang } = useLanguage();
+  const { lang, setLang, setLocale } = useLanguage();
   const { supaUser, reload } = useFinancialData(); // 🚀 NEW: Grab the Supabase ID
 
   const T = useMemo(() =>
@@ -36,7 +51,7 @@ export default function Onboarding() {
     [lang]
   );
 
-  const [step, setStep] = useState("welcome");
+  const [step, setStep] = useState("language");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -46,6 +61,20 @@ export default function Onboarding() {
   const [loanName, setLoanName] = useState("");
   const [loanBalance, setLoanBalance] = useState("");
   const [loanPayment, setLoanPayment] = useState("");
+  const [savingLang, setSavingLang] = useState(false);
+
+  async function selectLanguage(code, localeCode) {
+    setSavingLang(true);
+    setLang(code);
+    setLocale(localeCode);
+    try {
+      await base44.auth.updateMe({ preferred_language: code, preferred_locale: localeCode });
+    } catch (err) {
+      console.error("Language save failed:", err?.message);
+    }
+    setSavingLang(false);
+    setStep("welcome");
+  }
 
   async function handleIncome() {
     if (!weeklyIncome || isNaN(weeklyIncome)) { setStep("bill"); return; }
@@ -138,6 +167,37 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6" style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}>
       <div className="w-full max-w-sm">
         <AnimatePresence mode="wait">
+          {/* LANGUAGE */}
+          {step === "language" && (
+            <motion.div key="language" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
+              <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <Globe className="w-10 h-10 text-primary" />
+              </div>
+              <h1 className="text-3xl font-bold font-heading text-foreground mb-3">{T("chooseLanguage", "Choose your language")}</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+                {T("chooseLanguageDesc", "Select your preferred language. You can change this anytime in Settings.")}
+              </p>
+              <div className="grid grid-cols-3 gap-2 mb-8 max-h-72 overflow-y-auto">
+                {LANG_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.code}
+                    onClick={() => selectLanguage(opt.code, opt.locale)}
+                    disabled={savingLang}
+                    className={`flex flex-col items-center gap-1 p-3 rounded-2xl border transition-all ${lang === opt.code ? "border-primary bg-primary/5" : "border-border hover:border-primary/30 hover:bg-muted"}`}
+                  >
+                    <span className="text-2xl">{opt.flag}</span>
+                    <span className="text-xs font-medium text-foreground">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+              {savingLang && (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> {T("saving", "Saving...")}
+                </div>
+              )}
+            </motion.div>
+          )}
+
           {/* WELCOME */}
           {step === "welcome" && (
             <motion.div key="welcome" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">

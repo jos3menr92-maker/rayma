@@ -46,7 +46,7 @@ const TOUR_STEPS = [
   },
 ];
 
-export default function AppTour() {
+export default function AppTour({ onboardingComplete = true }) {
   const T = useT();
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
@@ -58,9 +58,9 @@ export default function AppTour() {
     };
     window.addEventListener("trigger-rayma-tour", handler);
 
-    // Auto-start for first-time users
+    // Auto-start for first-time users — only AFTER onboarding is complete
     const completed = localStorage.getItem("rayma_tour_completed");
-    if (!completed) {
+    if (!completed && onboardingComplete) {
       const timer = setTimeout(() => setActive(true), 1200);
       return () => {
         window.removeEventListener("trigger-rayma-tour", handler);
@@ -69,7 +69,7 @@ export default function AppTour() {
     }
 
     return () => window.removeEventListener("trigger-rayma-tour", handler);
-  }, []);
+  }, [onboardingComplete]);
 
   useEffect(() => {
     if (active) {

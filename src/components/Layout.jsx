@@ -141,7 +141,7 @@ export default function Layout() {
       </motion.button>
 
       <PushNotificationPrompt />
-      <AppTour />
+      <AppTour onboardingComplete={userProfile?.onboarding_complete === true} />
       
       <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
