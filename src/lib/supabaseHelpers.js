@@ -40,6 +40,51 @@ async function backendDelete(table, recordId) {
   }
 }
 
+let _sessionRecoveryInFlight = null;
+
+/**
+ * Attempt to re-establish the Supabase browser session by syncing with the
+ * Base44-authenticated identity. Calls syncSupabaseUser backend (1 credit) to
+ * mint a temp password, then signInWithPassword to get a real, persistent
+ * Supabase session. After success, all subsequent reads/writes are free —
+ * no per-save credits. Deduplicates concurrent recovery attempts.
+ */
+export async function ensureSupabaseSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user?.id) return true;
+
+  if (_sessionRecoveryInFlight) return _sessionRecoveryInFlight;
+
+  _sessionRecoveryInFlight = (async () => {
+    try {
+      const me = await base44.auth.me();
+      if (!me?.email) return false;
+
+      const syncRes = await base44.functions.invoke('syncSupabaseUser', {});
+      const tempToken = syncRes.data?.tempToken;
+      if (!tempToken) return false;
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: me.email,
+        password: tempToken,
+      });
+      if (error) {
+        console.warn('[supabaseHelpers] Session recovery signIn failed:', error.message);
+        return false;
+      }
+      console.log('[supabaseHelpers] Supabase session recovered — free path restored.');
+      return true;
+    } catch (err) {
+      console.warn('[supabaseHelpers] Session recovery failed:', err?.message);
+      return false;
+    } finally {
+      _sessionRecoveryInFlight = null;
+    }
+  })();
+
+  return _sessionRecoveryInFlight;
+}
+
 /**
  * Attempt a silent token refresh if the Supabase session has expired.
  * Returns the refreshed session user or null.
@@ -93,9 +138,17 @@ async function getValidUserId() {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user?.id) return session.user.id;
 
-  // Session expired — attempt refresh
+  // Session expired — attempt silent token refresh
   const user = await tryRefreshSession();
   if (user?.id) return user.id;
+
+  // Session missing — attempt one-shot recovery via backend sync (1 credit,
+  // then the real Supabase session is restored so all future calls are free)
+  const recovered = await ensureSupabaseSession();
+  if (recovered) {
+    const { data: { session: newSession } } = await supabase.auth.getSession();
+    if (newSession?.user?.id) return newSession.user.id;
+  }
 
   throw new Error("No active Supabase session. Please log in again.");
 }

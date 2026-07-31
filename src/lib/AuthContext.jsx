@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/lib/supabaseClientFrontend';
+import { ensureSupabaseSession } from '@/lib/supabaseHelpers';
 
 const AuthContext = createContext();
 
@@ -67,6 +68,12 @@ export const AuthProvider = ({ children }) => {
 
       setUser(me);
       setIsAuthenticated(true);
+
+      // Proactively recover the Supabase session so all reads/writes use the
+      // free frontend path. Costs 1 credit once per session, not per save.
+      ensureSupabaseSession().catch((e) =>
+        console.warn('[AuthContext] Proactive session sync failed:', e?.message)
+      );
     } catch (error) {
       console.error('Auth Error caught:', error);
 
