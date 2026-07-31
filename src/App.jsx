@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
 import ProtectedLayout from './components/ProtectedLayout';
+import RootGate from './components/RootGate';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import LoansList from './pages/LoansList';
@@ -71,9 +72,11 @@ const AuthenticatedApp = () => {
   return (
     <FinancialDataProvider>
       <Routes>
+        {/* Public front page for guests; authed users go to the dashboard */}
+        <Route path="/" element={<RootGate />} />
         <Route element={<Layout />}>
           {/* Core App Pages (Immediate Load) - Protected */}
-          <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
+          <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
           <Route path="/loans" element={<ProtectedLayout><LoansList /></ProtectedLayout>} />
           <Route path="/add-loan" element={<ProtectedLayout><AddLoan /></ProtectedLayout>} />
           <Route path="/loan/:id" element={<ProtectedLayout><LoanDetail /></ProtectedLayout>} />

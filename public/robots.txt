@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Replace https://rayma.ai with your published domain before submitting to Search Console
+Sitemap: https://rayma.ai/sitemap.xml
