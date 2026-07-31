@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditLoanForm from "../components/EditLoanForm";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { updateRecord } from "@/lib/supabaseHelpers";
+import { updateRecord, deleteRecord, ensureSupabaseSession } from "@/lib/supabaseHelpers";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -74,10 +74,12 @@ export default function LoansList() {
   async function handleDeleteLoan() {
     if (!loanToDelete) return;
     try {
-      // Remove the loan's payments first, then the loan itself.
-      await supabase.from('payments').delete().eq('loan_id', loanToDelete.id);
-      const { error } = await supabase.from('loans').delete().eq('id', loanToDelete.id);
-      if (error) throw error;
+      // Ensure a valid Supabase session so the payments delete doesn't fail
+      // with "Invalid API key" when the browser session has expired.
+      await ensureSupabaseSession();
+      const { error: payError } = await supabase.from('payments').delete().eq('loan_id', loanToDelete.id);
+      if (payError) throw payError;
+      await deleteRecord('loans', loanToDelete.id);
       await reload();
       setEditingLoan(null);
       toast({ title: T("loanDeleted", "Loan deleted") });
@@ -157,7 +159,7 @@ export default function LoansList() {
       {/* 2-column grid */}
       <div className="grid grid-cols-2 gap-3">
         {filtered.map((loan, i) => (
-          <LoanCard key={loan.id} loan={loan} index={i} onEdit={setEditingLoan} />
+          <LoanCard key={loan.id} loan={loan} index={i} onEdit={setEditingLoan} onDelete={setLoanToDelete} />
         ))}
       </div>
 
@@ -187,7 +189,7 @@ export default function LoansList() {
       <Dialog open={!!editingLoan} onOpenChange={(open) => { if (!open) setEditingLoan(null); }}>
         <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{T("editLoan", "Edit Loan")}</DialogTitle></DialogHeader>
-          {editingLoan && <EditLoanForm loan={editingLoan} onSave={handleSaveEdit} onDelete={setLoanToDelete} />}
+          {editingLoan && <EditLoanForm loan={editingLoan} onSave={handleSaveEdit} />}
         </DialogContent>
       </Dialog>
 

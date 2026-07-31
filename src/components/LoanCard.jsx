@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { ChevronRight, AlertCircle, Calendar, DollarSign } from "lucide-react";
+import { ChevronRight, AlertCircle, Calendar, DollarSign, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import PaymentButton from "./PaymentButton";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -11,7 +11,7 @@ const categoryIcons = {
   credit_card: "💳", medical: "🏥", other: "📋",
 };
 
-export default function LoanCard({ loan, index = 0, onEdit }) {
+export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
   const { lang } = useLanguage();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const { formatCurrency } = useCurrency();
@@ -41,15 +41,21 @@ export default function LoanCard({ loan, index = 0, onEdit }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }} className="relative">
-      {/* Swipe reveal action */}
-      <div className="absolute inset-y-0 right-0 flex items-center justify-end rounded-xl overflow-hidden">
-        <motion.div style={{ opacity: revealOpacity }} className="h-full" onClick={() => { animate(x, 0, { type: "spring", stiffness: 300, damping: 30 }); setSwiped(false); }}>
+      {/* Swipe reveal actions: Pay (top) + Delete (bottom) */}
+      <div className="absolute inset-y-0 right-0 w-[72px] flex flex-col rounded-xl overflow-hidden">
+        <motion.div style={{ opacity: revealOpacity }} className="h-full flex flex-col" onClick={() => { animate(x, 0, { type: "spring", stiffness: 300, damping: 30 }); setSwiped(false); }}>
           <PaymentButton planId={loan.id} amount={loan.monthly_payment}>
-            <div className="w-18 h-full bg-primary flex flex-col items-center justify-center gap-0.5 px-4 rounded-xl cursor-pointer hover:bg-primary/90 transition-colors">
+            <div className="flex-1 bg-primary flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:bg-primary/90 transition-colors">
               <DollarSign className="w-4 h-4 text-primary-foreground" />
               <span className="text-[9px] font-bold text-primary-foreground uppercase tracking-wide">{T("pay", "Pay")}</span>
             </div>
           </PaymentButton>
+          {onDelete && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(loan); }} className="flex-1 bg-destructive flex flex-col items-center justify-center gap-0.5 hover:bg-destructive/90 transition-colors">
+              <Trash2 className="w-4 h-4 text-destructive-foreground" />
+              <span className="text-[9px] font-bold text-destructive-foreground uppercase tracking-wide">{T("delete", "Delete")}</span>
+            </button>
+          )}
         </motion.div>
       </div>
 
