@@ -87,6 +87,20 @@ Deno.serve(async (req) => {
       sessionConfig.customer_email = user.email;
     }
 
+    // For subscriptions, mirror metadata onto the Subscription object so lifecycle
+    // webhooks (customer.subscription.deleted/updated, invoice.payment_failed) can
+    // identify the user. Stripe does NOT auto-copy session metadata onto the
+    // subscription or invoice — without this, cancellation never revokes premium.
+    if (priceConfig.mode === 'subscription') {
+      sessionConfig.subscription_data = {
+        metadata: {
+          user_id: user.id,
+          user_email: user.email || '',
+          purchase_type: purchaseType,
+        },
+      };
+    }
+
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
     console.log(`Checkout session created: ${session.id} for ${user.email || 'guest'}, type: ${purchaseType}`);
