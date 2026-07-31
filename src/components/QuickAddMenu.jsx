@@ -20,7 +20,7 @@ export default function QuickAddMenu({ open, onClose }) {
   const actions = [
     { key: "scan", icon: ScanLine, label: T("scanLogDocument", "Scan & Log Document"), color: "bg-primary/10 text-primary border-primary/20", badge: "AI", action: () => { onClose(); navigate("/documents"); } },
     { key: "loan", icon: CreditCard, label: T("addLoan", "Add Loan"), color: "bg-primary/10 text-primary border-primary/20", action: () => { onClose(); navigate("/add-loan"); } },
-    { key: "bill", icon: Receipt, label: T("addBill", "Add Bill"), color: "bg-accent/10 text-accent border-accent/20", action: () => { onClose(); navigate("/bills"); } },
+    { key: "bill", icon: Receipt, label: T("addBill", "Add Bill"), color: "bg-accent/10 text-accent border-accent/20", action: () => { onClose(); navigate("/bills", { state: { autoOpenAdd: true } }); } },
     { key: "income", icon: DollarSign, label: T("logIncome", "Log Income"), color: "bg-primary/10 text-primary border-primary/20", action: () => { onClose(); navigate("/finance"); } },
     { key: "savings", icon: PiggyBank, label: T("addSavingsGoal", "Add Savings Goal"), color: "bg-accent/10 text-accent border-accent/20", action: () => { onClose(); navigate("/budget"); } },
     { key: "transaction", icon: ArrowLeftRight, label: T("logTransaction", "Log Transaction"), color: "bg-primary/10 text-primary border-primary/20", action: () => { onClose(); navigate("/bank-accounts", { state: { autoOpenLog: true } }); } },

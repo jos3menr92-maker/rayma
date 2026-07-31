@@ -16,7 +16,7 @@ import AccountBalanceChart from "@/components/AccountBalanceChart";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 function buildTypeConfig(T) {
   return {
@@ -36,7 +36,6 @@ export default function BankAccounts() {
   const { formatCurrency: fmt } = useCurrency();
   const { userProfile, supaUser, bankAccounts: accounts, transactions, loading, reload } = useFinancialData();
   const location = useLocation();
-  const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [showTxDialog, setShowTxDialog] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -54,9 +53,16 @@ export default function BankAccounts() {
   useEffect(() => {
     if (location.state?.autoOpenLog) {
       setShowTxDialog(true);
-      navigate("/bank-accounts", { replace: true, state: {} });
+      window.history.replaceState({}, "");
     }
-  }, [location.state, navigate]);
+  }, [location.state]);
+
+  // Preselect the first account so the transaction form is ready to use
+  useEffect(() => {
+    if (showTxDialog && accounts.length > 0 && !txForm.bank_account_id) {
+      setTxForm(f => ({ ...f, bank_account_id: accounts[0].id }));
+    }
+  }, [showTxDialog, accounts, txForm.bank_account_id]);
 
   const openAdd = () => { setEditing(null); setForm(emptyForm); setShowDialog(true); };
   const openEdit = (acc) => { setEditing(acc); setForm({ ...acc }); setShowDialog(true); };

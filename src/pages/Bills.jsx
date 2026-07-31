@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
-import { supabase } from "@/lib/supabaseClientFrontend"; // 🔌 THE VAULT
+import { createRecord, updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
+import { toast } from "@/components/ui/use-toast";
+import { useLocation } from "react-router-dom";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🧠 THE BRAIN
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit3, Receipt, CheckCircle2, Sparkles } from "lucide-react";
@@ -23,7 +25,8 @@ export default function Bills() {
   const T = useT();
   
   // 🧠 Pulling real data from your Supabase Brain
-  const { bills, userProfile, supaUser, reload, loading } = useFinancialData();
+  const { bills, userProfile, reload, loading } = useFinancialData();
+  const location = useLocation();
   
   const categories = [
     { value: "utilities", label: T("catUtilities", "⚡ Utilities") },
@@ -49,6 +52,16 @@ export default function Bills() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [billToDelete, setBillToDelete] = useState(null);
 
+  // Auto-open the Add Bill dialog when navigated from Quick Add
+  useEffect(() => {
+    if (location.state?.autoOpenAdd) {
+      setEditing(null);
+      setForm(emptyForm);
+      setDialogOpen(true);
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
+
   const openAdd = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
   
   const openEdit = (bill) => {
@@ -70,10 +83,9 @@ export default function Bills() {
     e.preventDefault();
     setSaving(true);
     
-    // 🛡️ Data formatting before saving to Supabase
+    // 🛡️ Data formatting before saving (user_id is injected by the resilient helpers)
     const data = {
       ...form,
-      user_id: supaUser?.id, // Locks bill to the current user!
       amount: parseFloat(form.amount) || 0,
       due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
       due_day_of_week: (form.payment_frequency === "weekly" || form.payment_frequency === "biweekly") ? (form.due_day_of_week || "Monday") : null,
@@ -81,13 +93,14 @@ export default function Bills() {
 
     try {
       if (editing) {
-        await supabase.from('bills').update(data).eq('id', editing.id);
+        await updateRecord('bills', editing.id, data);
       } else {
-        await supabase.from('bills').insert([data]);
+        await createRecord('bills', data);
       }
       reload(); // 🔄 Tell the Brain to fetch the fresh data
     } catch (err) {
-      console.error("Error saving bill to Supabase:", err);
+      console.error("Error saving bill:", err);
+      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     }
 
     setSaving(false);
@@ -101,7 +114,11 @@ export default function Bills() {
 
   const confirmDelete = async () => {
     if (!billToDelete) return;
-    await supabase.from('bills').delete().eq('id', billToDelete.id);
+    try {
+      await deleteRecord('bills', billToDelete.id);
+    } catch (err) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
+    }
     setBillToDelete(null);
     setShowConfirm(false);
     reload();
@@ -109,21 +126,21 @@ export default function Bills() {
 
   const handleMarkPaid = async (bill) => {
     setPaidBillId(bill.id);
-    
-    // 🚀 APPLE-COMPLIANT: Writes directly to Supabase
+
     try {
-      await supabase.from('payments').insert([{
+      await createRecord('payments', {
         bill_id: bill.id,
-        user_id: supaUser.id,
         amount: bill.amount,
         payment_type: "bill",
         payment_date: format(new Date(), "yyyy-MM-dd"),
-        note: "Auto-logged from Bills page"
-      }]);
+        note: "Auto-logged from Bills page",
+      });
+      reload();
     } catch (err) {
       console.error("Failed to log payment:", err);
+      toast({ title: T("paymentFailed", "Payment failed"), description: err.message, variant: "destructive" });
     }
-    
+
     setPaidBillId(null);
   };
 
@@ -215,7 +232,12 @@ export default function Bills() {
             <button
               type="button"
               className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors border border-primary/20"
-              onClick={() => alert(T("ocrComingSoon", "Rayma AI OCR Scanner coming soon! 🤖"))}
+              onClick={() => {
+                setDialogOpen(false);
+                window.dispatchEvent(new CustomEvent("rayma:open", {
+                  detail: { prefill: T("autofillBillPrompt", "Help me add a new bill — I can describe it or upload a photo/scan of the bill and you extract the details.") }
+                }));
+              }}
             >
               <Sparkles className="w-4 h-4" /> {T("autofillRAYMA", "Auto-fill with Rayma AI")}
             </button>

@@ -65,6 +65,16 @@ export default function Layout() {
     } catch (e) {}
   }, []);
 
+  // Allow any page to open Rayma chat with an optional prefill prompt
+  useEffect(() => {
+    const handler = (e) => {
+      setRaymaOpen(true);
+      if (e?.detail?.prefill) setRaymaPrefillPrompt(e.detail.prefill);
+    };
+    window.addEventListener("rayma:open", handler);
+    return () => window.removeEventListener("rayma:open", handler);
+  }, []);
+
   useEffect(() => {
     setImageError(false);
   }, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
