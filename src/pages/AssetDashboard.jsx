@@ -72,6 +72,7 @@ export default function AssetDashboard() {
     const payload = { 
       ...form, 
       amount: parseFloat(form.amount) || 0,
+      notes: form.notes || "",
     };
 
     try {
