@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useT } from "@/lib/LanguageContext";
 
 const categoryIcons = {
@@ -6,7 +7,7 @@ const categoryIcons = {
   mortgage: "🏠", auto: "🚗", student: "🎓", personal: "👤", credit_card: "💳", medical: "🏥",
 };
 
-export default function CalendarMonthView({ cells, dayMap, payDays, selectedDay, onSelectDay, today, year, month, dayHeaders, dayHeadersNarrow, onItemClick, fmt }) {
+export default function CalendarMonthView({ cells, dayMap, payDays, selectedDay, onSelectDay, today, year, month, dayHeaders, dayHeadersNarrow, onItemClick, fmt, flashToday = 0 }) {
   const T = useT();
 
   return (
@@ -39,6 +40,15 @@ export default function CalendarMonthView({ cells, dayMap, payDays, selectedDay,
               `}
             >
               <span className={`self-end text-[11px] leading-none mb-0.5 ${isSelected ? "text-primary-foreground" : isToday ? "text-primary" : "text-muted-foreground"}`}>{day}</span>
+              {isToday && flashToday > 0 && (
+                <motion.span
+                  key={`flash-${flashToday}`}
+                  initial={{ scale: 0.85, opacity: 0.8 }}
+                  animate={{ scale: 2.4, opacity: 0 }}
+                  transition={{ duration: 1, repeat: 2, ease: "easeOut" }}
+                  className="absolute inset-0 rounded-xl border-2 border-primary pointer-events-none z-20"
+                />
+              )}
               <div className="flex flex-col gap-0.5 w-full overflow-hidden">
                 {items.slice(0, 3).map((item, idx) => (
                   <div

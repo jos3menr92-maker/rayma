@@ -38,6 +38,7 @@ export default function Calendar() {
   const [filters, setFilters] = useState({ bills: true, loans: true, income: true, payday: true });
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showAddBill, setShowAddBill] = useState(false);
+  const [flashToday, setFlashToday] = useState(0);
 
   const year = current.getFullYear();
   const month = current.getMonth();
@@ -227,7 +228,7 @@ export default function Calendar() {
     if (view === "month") setCurrent(new Date(year, month + 1, 1));
     else { const d = new Date(current); d.setDate(d.getDate() + 7); setCurrent(d); }
   };
-  const goToday = () => { setCurrent(new Date()); setSelectedDay(today.getDate()); };
+  const goToday = () => { setCurrent(new Date()); setSelectedDay(today.getDate()); setFlashToday(f => f + 1); };
 
   const handleAddBill = () => { setShowAddEvent(false); setShowAddBill(true); };
   const handleAddLoan = () => { setShowAddEvent(false); navigate("/add-loan"); };
@@ -270,7 +271,7 @@ export default function Calendar() {
             payDays={filteredPayDays}
             selectedDay={selectedDay}
             onSelectDay={setSelectedDay}
-            today={today} year={year} month={month}
+            today={today} year={year} month={month} flashToday={flashToday}
             dayHeaders={dayHeaders} dayHeadersNarrow={dayHeadersNarrow}
             onItemClick={handleItemClick}
             fmt={fmt}
