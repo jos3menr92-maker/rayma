@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { createRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: To get the User ID
@@ -61,7 +61,10 @@ export default function Onboarding() {
   const [loanName, setLoanName] = useState("");
   const [loanBalance, setLoanBalance] = useState("");
   const [loanPayment, setLoanPayment] = useState("");
+  const [billDueDay, setBillDueDay] = useState("");
+  const [loanDueDay, setLoanDueDay] = useState("");
   const [savingLang, setSavingLang] = useState(false);
+  const finishRef = useRef(false);
 
   async function selectLanguage(code, localeCode) {
     setSavingLang(true);
@@ -84,6 +87,8 @@ export default function Onboarding() {
   // Hand everything to Rayma's logging path (createRecord — same one manual forms use,
   // with session recovery + manageFinancialRecord fallback). Free: direct Supabase write, no AI tokens.
   async function finish() {
+    if (finishRef.current) return;
+    finishRef.current = true;
     setLoading(true);
     const logged = [];
 
@@ -105,10 +110,13 @@ export default function Onboarding() {
 
     if (billName && billAmount && !isNaN(billAmount)) {
       try {
+        const dueDay = billDueDay ? Math.min(31, Math.max(1, parseInt(billDueDay))) : 1;
         await createRecord('bills', {
           name: billName,
           amount: parseFloat(billAmount),
           payment_frequency: "monthly",
+          due_day: dueDay,
+          category: "other",
           is_active: true
         });
         logged.push("bill");
@@ -119,12 +127,17 @@ export default function Onboarding() {
 
     if (loanName && loanBalance && !isNaN(loanBalance)) {
       try {
+        const dueDay = loanDueDay ? Math.min(31, Math.max(1, parseInt(loanDueDay))) : 1;
         await createRecord('loans', {
           name: loanName,
           original_amount: parseFloat(loanBalance),
           current_balance: parseFloat(loanBalance),
           remaining_balance: parseFloat(loanBalance),
           monthly_payment: loanPayment ? parseFloat(loanPayment) : 0,
+          payment_frequency: "monthly",
+          due_day: dueDay,
+          start_date: new Date().toISOString().split("T")[0],
+          category: "other",
           status: "active"
         });
         logged.push("loan");
@@ -236,6 +249,7 @@ export default function Onboarding() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                   <Input type="number" placeholder={T("monthlyAmount", "Monthly amount")} value={billAmount} onChange={e => setBillAmount(e.target.value)} className="pl-7 rounded-xl h-12" />
                 </div>
+                <Input type="number" min="1" max="31" placeholder={T("dueDayOptional", "Due day of month (1-31, optional — recurs monthly)")} value={billDueDay} onChange={e => setBillDueDay(e.target.value)} className="rounded-xl h-12" />
               </div>
               <Button className="w-full rounded-2xl h-12" onClick={handleBill} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
@@ -263,6 +277,7 @@ export default function Onboarding() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                   <Input type="number" placeholder={T("monthlyPaymentOpt", "Monthly payment (optional)")} value={loanPayment} onChange={e => setLoanPayment(e.target.value)} className="pl-7 rounded-xl h-12" />
                 </div>
+                <Input type="number" min="1" max="31" placeholder={T("dueDayOptional", "Due day of month (1-31, optional — recurs monthly)")} value={loanDueDay} onChange={e => setLoanDueDay(e.target.value)} className="rounded-xl h-12" />
               </div>
               <Button className="w-full rounded-2xl h-12" onClick={handleLoan} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
@@ -281,8 +296,8 @@ export default function Onboarding() {
               <p className="text-sm text-muted-foreground leading-relaxed mb-8">
                 {T("readyHelp", "Rayma AI is ready to help you track your finances. You can always add more loans, bills, and income from the dashboard.")}
               </p>
-              <Button className="w-full rounded-2xl h-12 text-base" onClick={finish}>
-                {T("goToDashboard", "Go to Dashboard")}
+              <Button className="w-full rounded-2xl h-12 text-base" onClick={finish} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("goToDashboard", "Go to Dashboard")}
               </Button>
             </motion.div>
           )}
