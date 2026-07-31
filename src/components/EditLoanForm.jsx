@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Trash2 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
 const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
-export default function EditLoanForm({ loan, onSave }) {
+export default function EditLoanForm({ loan, onSave, onDelete }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
@@ -139,6 +140,11 @@ export default function EditLoanForm({ loan, onSave }) {
       <Button type="submit" disabled={saving} className="w-full rounded-xl">
         {saving ? T("saving", "Saving...") : T("saveChanges", "Save Changes")}
       </Button>
+      {onDelete && (
+        <Button type="button" variant="ghost" className="w-full rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => onDelete(loan)}>
+          <Trash2 className="w-4 h-4" /> {T("deleteLoan", "Delete Loan")}
+        </Button>
+      )}
     </form>
   );
 }

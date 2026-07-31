@@ -9,7 +9,9 @@ import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditLoanForm from "../components/EditLoanForm";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { updateRecord } from "@/lib/supabaseHelpers";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function LoansList() {
@@ -17,6 +19,7 @@ export default function LoansList() {
   const { loans, loading, reload } = useFinancialData();
   const { toast } = useToast();
   const [editingLoan, setEditingLoan] = useState(null);
+  const [loanToDelete, setLoanToDelete] = useState(null);
   const { lang } = useLanguage();
   const T = useMemo(
     () => (key, fallback) => {
@@ -65,6 +68,23 @@ export default function LoansList() {
       setEditingLoan(null);
     } catch (err) {
       toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
+    }
+  }
+
+  async function handleDeleteLoan() {
+    if (!loanToDelete) return;
+    try {
+      // Remove the loan's payments first, then the loan itself.
+      await supabase.from('payments').delete().eq('loan_id', loanToDelete.id);
+      const { error } = await supabase.from('loans').delete().eq('id', loanToDelete.id);
+      if (error) throw error;
+      await reload();
+      setEditingLoan(null);
+      toast({ title: T("loanDeleted", "Loan deleted") });
+    } catch (err) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
+    } finally {
+      setLoanToDelete(null);
     }
   }
 
@@ -167,9 +187,20 @@ export default function LoansList() {
       <Dialog open={!!editingLoan} onOpenChange={(open) => { if (!open) setEditingLoan(null); }}>
         <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{T("editLoan", "Edit Loan")}</DialogTitle></DialogHeader>
-          {editingLoan && <EditLoanForm loan={editingLoan} onSave={handleSaveEdit} />}
+          {editingLoan && <EditLoanForm loan={editingLoan} onSave={handleSaveEdit} onDelete={setLoanToDelete} />}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!loanToDelete}
+        onOpenChange={(open) => { if (!open) setLoanToDelete(null); }}
+        title={T("deleteLoan", "Delete Loan")}
+        description={T("deleteLoanConfirmSimple", "Are you sure you want to delete this loan and all its payments? This cannot be undone.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={handleDeleteLoan}
+      />
     </div>
   );
 }
