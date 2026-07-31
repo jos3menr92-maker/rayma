@@ -25,6 +25,10 @@ export default function Admin() {
   const [maxUses, setMaxUses] = useState("");
   const [codeMode, setCodeMode] = useState("promo"); // "promo" | "diagnostic"
   const [generatedCode, setGeneratedCode] = useState(null);
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantAmount, setGrantAmount] = useState(100);
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantMsg, setGrantMsg] = useState(null);
 
   function StatCard({ icon: Icon, label, value, sub, color = "primary" }) {
     return (
@@ -156,6 +160,32 @@ export default function Admin() {
     }
   };
 
+  const handleGrantTokens = async () => {
+    setGrantMsg(null);
+    if (!grantEmail.trim()) return;
+    setGrantLoading(true);
+    try {
+      const all = await base44.entities.User.list();
+      const target = all.find(u => (u.email || "").toLowerCase() === grantEmail.trim().toLowerCase());
+      if (!target) {
+        setGrantMsg({ type: "error", text: T("userNotFound", "User not found.") });
+        setGrantLoading(false);
+        return;
+      }
+      const next = (target.ai_tokens || 0) + Number(grantAmount || 0);
+      await base44.entities.User.update(target.id, { ai_tokens: next });
+      const msg = T("grantSuccess", "Granted {amount} tokens to {email} (now {total}).")
+        .replace("{amount}", grantAmount).replace("{email}", target.email).replace("{total}", next);
+      setGrantMsg({ type: "success", text: msg });
+      setGrantEmail("");
+      loadData();
+    } catch (error) {
+      setGrantMsg({ type: "error", text: error.message || T("grantFailed", "Failed to grant tokens.") });
+    } finally {
+      setGrantLoading(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -265,6 +295,38 @@ export default function Admin() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Grant AI Tokens */}
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+          <h2 className="text-lg font-bold mb-1">{T("grantTokens", "Grant AI Tokens")}</h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            {T("grantTokensDesc", "Manually add AI tokens to any user's account — useful for fixing a purchase that didn't sync or compensating a tester.")}
+          </p>
+          <div className="flex flex-col gap-3">
+            <input
+              type="email"
+              placeholder={T("userEmail", "User email")}
+              className="bg-background border border-border rounded-xl px-4 py-3 w-full"
+              value={grantEmail}
+              onChange={(e) => setGrantEmail(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                placeholder={T("amount", "Amount")}
+                className="bg-background border border-border rounded-xl px-4 py-3 text-sm flex-1"
+                value={grantAmount}
+                onChange={(e) => setGrantAmount(e.target.value)}
+              />
+              <Button onClick={handleGrantTokens} disabled={grantLoading || !grantEmail.trim()} className="rounded-xl px-6 font-semibold">
+                {grantLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : T("grant", "Grant")}
+              </Button>
+            </div>
+            {grantMsg && (
+              <p className={`text-xs ${grantMsg.type === "success" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>{grantMsg.text}</p>
+            )}
+          </div>
         </div>
 
         {/* Bug Reports */}
