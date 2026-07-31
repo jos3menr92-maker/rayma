@@ -31,6 +31,8 @@ const SecurityAudit = lazy(() => import('./pages/SecurityAudit'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const Admin = lazy(() => import('./pages/Admin'));
+const BugReportDetail = lazy(() => import('./pages/BugReportDetail'));
+const BugReportsArchive = lazy(() => import('./pages/BugReportsArchive'));
 const Arcade = lazy(() => import('./arcade')); 
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Finance = lazy(() => import('./pages/Finance'));
@@ -85,6 +87,8 @@ const AuthenticatedApp = () => {
           <Route path="/security" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><SecurityAudit /></Suspense></ProtectedLayout>} />
 
           <Route path="/admin" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Admin /></Suspense></ProtectedLayout>} />
+          <Route path="/admin/bug-report/:id" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><BugReportDetail /></Suspense></ProtectedLayout>} />
+          <Route path="/admin/bug-reports/resolved" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><BugReportsArchive /></Suspense></ProtectedLayout>} />
           <Route path="/arcade" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Arcade /></Suspense></ProtectedLayout>} />
           <Route path="/feedback" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Feedback /></Suspense></ProtectedLayout>} /> 
           <Route path="/finance" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Finance /></Suspense></ProtectedLayout>} />
