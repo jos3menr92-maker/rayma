@@ -107,19 +107,15 @@ export default function Profile() {
     if (!file || !userProfile) return;
     setUploadingPhoto(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userProfile.id || Date.now()}-${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file);
-      if (uploadError) throw uploadError;
-      
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      setForm(f => ({ ...f, avatar_photo_url: publicUrl, avatar_emoji: "", avatar_id: "" }));
-    } catch (err) { 
-      console.error(err); 
-      alert("Failed to upload photo.");
-    } finally { 
-      setUploadingPhoto(false); 
+      // Use the platform's hosted UploadFile integration instead of a Supabase
+      // Storage bucket (which may be missing/private/RLS-blocked).
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setForm(f => ({ ...f, avatar_photo_url: file_url, avatar_emoji: "", avatar_id: "" }));
+    } catch (err) {
+      console.error(err);
+      alert(T("photoUploadFailed", "Failed to upload photo. Please try a smaller image."));
+    } finally {
+      setUploadingPhoto(false);
     }
   }
 
