@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabaseClientFrontend";
+import { createRecord, updateRecord, deleteRecord, ensureSupabaseSession } from "@/lib/supabaseHelpers";
+import { toast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useDisplayUrl } from "@/hooks/useDisplayUrl";
@@ -29,65 +31,53 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(doc.loggable === false ? "misc_prompt" : "review");
 
-  async function getCurrentUserId() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.user?.id || null;
-  }
-
   const raymaMessage = analysis?.rayma_message || doc.notes || T("raymaAnalyzedMsg", "I've analyzed this document. Please review the extracted details below.");
 
   async function handleApprove() {
     setSaving(true);
     try {
-      const uid = await getCurrentUserId();
+      // Guarantee the Supabase session is alive so writes use the free path
+      await ensureSupabaseSession();
+
       if (folder === "payments" && fields.amount && fields.date) {
         const matchedLoan = loans.find(l =>
           fields.payee && l.name?.toLowerCase().includes(fields.payee?.toLowerCase())
         ) || loans[0];
         if (matchedLoan) {
-          const { data: paymentData, error: paymentError } = await supabase.from("payments").insert({
+          const payment = await createRecord("payments", {
             loan_id: matchedLoan.id,
             amount: parseFloat(fields.amount),
             payment_date: fields.date,
             note: `Auto-logged from document: ${doc.file_name}`,
-            user_id: uid,
-          }).select();
-          if (paymentError) throw paymentError;
-          const payment = paymentData?.[0];
-          const { error: loanError } = await supabase.from("loans").update({
+          });
+          await updateRecord("loans", matchedLoan.id, {
             current_balance: Math.max((matchedLoan.current_balance || 0) - parseFloat(fields.amount), 0)
-          }).eq("id", matchedLoan.id).eq("user_id", uid);
-          if (loanError) throw loanError;
-          const { error } = await supabase.from('documents').update({
+          });
+          await updateRecord("documents", doc.id, {
             status: "logged", folder, extracted_data: fields,
             logged_entity_type: "payment", logged_entity_id: payment?.id
-          }).eq('id', doc.id);
-          if (error) throw error;
+          });
         } else {
-          const { error } = await supabase.from('documents').update({ status: "approved", folder, extracted_data: fields }).eq('id', doc.id);
-          if (error) throw error;
+          await updateRecord("documents", doc.id, { status: "approved", folder, extracted_data: fields });
         }
       } else if (folder === "bills" && fields.amount && fields.description) {
-        const { data: billData, error: billError } = await supabase.from("bills").insert({
+        const bill = await createRecord("bills", {
           name: fields.description || fields.payee || "Imported Bill",
           amount: parseFloat(fields.amount),
           category: fields.category || "other",
           notes: `Imported from document: ${doc.file_name}`,
-          user_id: uid,
-        }).select();
-        if (billError) throw billError;
-        const bill = billData?.[0];
-        const { error } = await supabase.from('documents').update({
+        });
+        await updateRecord("documents", doc.id, {
           status: "logged", folder, extracted_data: fields,
           logged_entity_type: "bill", logged_entity_id: bill?.id
-        }).eq('id', doc.id);
-        if (error) throw error;
+        });
       } else {
-        const { error } = await supabase.from('documents').update({ status: "approved", folder, extracted_data: fields }).eq('id', doc.id);
-        if (error) throw error;
+        await updateRecord("documents", doc.id, { status: "approved", folder, extracted_data: fields });
       }
+      toast({ title: T("approved", "Approved"), description: T("docSaved", "Document saved successfully.") });
     } catch (err) {
       console.error('Failed to approve document:', err);
+      toast({ title: T("approveFailed", "Approve Failed"), description: err?.message || T("tryAgain", "Please try again."), variant: "destructive" });
       return;
     } finally {
       setSaving(false);
@@ -98,10 +88,10 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
   async function handleArchive() {
     setSaving(true);
     try {
-      const { error } = await supabase.from('documents').update({ status: "archived", folder }).eq('id', doc.id);
-      if (error) throw error;
+      await updateRecord("documents", doc.id, { status: "archived", folder });
     } catch (err) {
       console.error('Failed to archive document:', err);
+      toast({ title: T("archiveFailed", "Archive Failed"), description: err?.message, variant: "destructive" });
       return;
     } finally {
       setSaving(false);
@@ -112,10 +102,10 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
   async function handleDiscard() {
     setSaving(true);
     try {
-      const { error } = await supabase.from('documents').delete().eq('id', doc.id);
-      if (error) throw error;
+      await deleteRecord("documents", doc.id);
     } catch (err) {
       console.error('Failed to discard document:', err);
+      toast({ title: T("discardFailed", "Discard Failed"), description: err?.message, variant: "destructive" });
       return;
     } finally {
       setSaving(false);
@@ -127,14 +117,13 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
     setSaving(true);
     try {
       if (keep) {
-        const { error } = await supabase.from('documents').update({ status: "archived", folder: "misc" }).eq('id', doc.id);
-        if (error) throw error;
+        await updateRecord("documents", doc.id, { status: "archived", folder: "misc" });
       } else {
-        const { error } = await supabase.from('documents').delete().eq('id', doc.id);
-        if (error) throw error;
+        await deleteRecord("documents", doc.id);
       }
     } catch (err) {
       console.error('Failed to update document:', err);
+      toast({ title: T("actionFailed", "Action Failed"), description: err?.message, variant: "destructive" });
       return;
     } finally {
       setSaving(false);
