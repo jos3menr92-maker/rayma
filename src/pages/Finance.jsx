@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createRecord, updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -16,6 +16,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import CashFlowForecast from "../components/CashFlowForecast";
 import { getWeekdayNames } from "@/utils/formatLocalized";
 import { useToast } from "@/components/ui/use-toast";
+import { useLocation } from "react-router-dom";
 
 function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
@@ -35,12 +36,23 @@ export default function Finance() {
   const T = useT();
   const { bills, loans, incomes, userProfile, supaUser, reload, loading } = useFinancialData();
   const { toast } = useToast();
+  const location = useLocation();
 
-  const [incomeDialog, setIncomeDialog] = useState(false);
+  const [incomeDialog, setIncomeDialog] = useState(() => !!location.state?.autoOpenIncome);
   const [editingIncome, setEditingIncome] = useState(null);
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "", is_recurring: false, recurring_frequency: "weekly" });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Auto-open the Log Income dialog when navigated from Quick Add
+  useEffect(() => {
+    if (location.state?.autoOpenIncome) {
+      setEditingIncome(null);
+      setIncomeForm({ amount: "", week_start: startOfWeek(), note: "", is_recurring: false, recurring_frequency: "weekly" });
+      setIncomeDialog(true);
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
 
   // --- Financial Calculations ---
   const activeBills = useMemo(() => bills.filter(b => b.is_active !== false), [bills]);

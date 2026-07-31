@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useLocation } from "react-router-dom";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
@@ -19,7 +20,8 @@ export default function Budget() {
   const { lang } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
-  const [goalOpen, setGoalOpen] = useState(false);
+  const location = useLocation();
+  const [goalOpen, setGoalOpen] = useState(() => !!location.state?.autoOpenSavings);
   const [editingGoal, setEditingGoal] = useState(null);
   const [goalForm, setGoalForm] = useState({ name: "", target_amount: "", current_saved: "", notes: "", target_date: "", weekly_contribution: "" });
   const [savingGoal, setSavingGoal] = useState(false);
@@ -209,6 +211,16 @@ export default function Budget() {
     const timeout = setTimeout(() => setWinOverlay(null), 5200);
     return () => clearTimeout(timeout);
   }, [winOverlay]);
+
+  // Auto-open the New Savings Goal dialog when navigated from Quick Add
+  useEffect(() => {
+    if (location.state?.autoOpenSavings) {
+      setEditingGoal(null);
+      setGoalForm({ name: "", target_amount: "", current_saved: "", notes: "", target_date: "", weekly_contribution: "" });
+      setGoalOpen(true);
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
