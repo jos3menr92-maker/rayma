@@ -8,7 +8,7 @@ import { getInitialsColor } from "@/components/AvatarPicker";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t, getDir } from "@/lib/i18n";
-import BatteryIndicator from "@/components/BatteryIndicator";
+import MembershipBattery from "@/components/MembershipBattery";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
@@ -37,13 +37,7 @@ export default function SideDrawer({ open, onClose }) {
 
   const tokenDisplay = () => {
     if (!user) return null;
-    const tokens = user.ai_tokens ?? user.ai_tokens_daily_limit ?? 10;
-    const max = user.ai_tokens_daily_limit ?? 10;
-    const isInf = user.subscription_type === 'Generator' || tokens > 900;
-    const pct = isInf ? 100 : Math.max(0, Math.min(100, (tokens / max) * 100));
-    return (
-      <BatteryIndicator tokens={tokens} max={max} isInf={isInf} size="sm" />
-    );
+    return <MembershipBattery userProfile={user} size="sm" />;
   };
 
   async function handleLogout() {

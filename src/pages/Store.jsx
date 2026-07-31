@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useNavigate } from "react-router-dom";
 
-import BatteryIndicator from "@/components/BatteryIndicator";
+import MembershipBattery from "@/components/MembershipBattery";
 import PlanBadge from "@/components/PlanBadge";
 
 export default function Store() {
@@ -190,13 +190,7 @@ export default function Store() {
         {userProfile && (
           <div className="mb-6 bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <BatteryIndicator
-                tokens={userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10}
-                max={userProfile.ai_tokens_daily_limit ?? 10}
-                isInf={(userProfile.ai_tokens ?? userProfile.ai_tokens_daily_limit ?? 10) > 900 || userProfile.subscription_type === 'Generator'}
-                size="md"
-                showLabel={false}
-              />
+              <MembershipBattery userProfile={userProfile} size="lg" />
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("batteryStatus", "Battery Status")}</p>
                 <p className="text-sm font-bold font-heading text-foreground">

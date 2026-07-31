@@ -13,7 +13,7 @@ import StatsCard from "../components/StatsCard";
 import DueThisWeek from "../components/DueThisWeek";
 import NetWorthChart from "../components/NetWorthChart";
 import { motion, AnimatePresence } from "framer-motion";
-import BatteryIndicator from "@/components/BatteryIndicator";
+
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useT } from "@/lib/LanguageContext";
 import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
@@ -140,15 +140,6 @@ const imageToShow =
 const userDisplayName = userProfile?.preferred_name || userProfile?.full_name || "";
 const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
 
-  const renderBattery = (tokens, max, plan) => {
-    const isInf = plan === 'Generator' || tokens > 900;
-    return (
-      <div onClick={() => navigate("/store")} className="flex items-center cursor-pointer bg-card border border-border px-2 py-1.5 rounded-lg shadow-sm active:scale-95 transition-transform">
-        <BatteryIndicator tokens={tokens} max={max} isInf={isInf} size="sm" />
-      </div>
-    );
-  };
-
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
   if (!userProfile) {
@@ -209,7 +200,6 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         </div>
         
         <div className="flex items-center gap-3">
-          {renderBattery(userProfile?.ai_tokens ?? userProfile?.ai_tokens_daily_limit ?? 10, userProfile?.ai_tokens_daily_limit ?? 10, userProfile?.subscription_type)}
          <button 
           onClick={() => navigate("/profile")} 
           className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm overflow-hidden" 
