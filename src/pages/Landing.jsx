@@ -216,7 +216,7 @@ export default function Landing() {
             {/* Insert Coin */}
             <div className="bg-card border border-border rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{T("insertCoin", "Insert Coin")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$1.99</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$2.99</p>
               <p className="text-xs text-muted-foreground mb-4">{T("oneTimeInstantEnergy", "One-time · Instant Energy")}</p>
               {[T("featureInstantEnergy", "Instant energy boost"), T("featureAnytime", "Use anytime"), T("featureNoExpiry", "No expiry"), T("featureOccasional", "Great for occasional use")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
@@ -228,9 +228,9 @@ export default function Landing() {
             <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 rounded-2xl p-5 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">{T("popular", "POPULAR")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("lithium", "Lithium")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$5.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$5.99/mo or $49.99/year · 50 daily energy bars")}</p>
-              {[T("feature50DailyEnergy", "50 daily energy bars"), T("featureMonthly", "Billed monthly"), T("featureAnnual", "or $49.99/year"), T("featureBestValue", "Best per-token value")].map(f => (
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$8.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$8.99/mo or $74.99/year · 50 daily energy bars")}</p>
+              {[T("feature50DailyEnergy", "50 daily energy bars"), T("featureMonthly", "Billed monthly"), T("featureAnnual", "or $74.99/year"), T("featureBestValue", "Best per-token value")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>
@@ -240,9 +240,9 @@ export default function Landing() {
             <div className="bg-primary/5 border-2 border-primary rounded-2xl p-5 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-0.5 rounded-full">{T("bestValue", "BEST VALUE")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">{T("generator", "Generator")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$11.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$11.99/mo or $95.99/year · 200 daily energy bars")}</p>
-              {[T("feature200DailyEnergy", "200 daily energy bars"), T("featureAllFeatures", "All future features"), T("featurePriority", "Priority experience"), T("featureAnnualGen", "or $95.99/year")].map(f => (
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$16.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$16.99/mo or $135.99/year · 200 daily energy bars")}</p>
+              {[T("feature200DailyEnergy", "200 daily energy bars"), T("featureAllFeatures", "All future features"), T("featurePriority", "Priority experience"), T("featureAnnualGen", "or $135.99/year")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
