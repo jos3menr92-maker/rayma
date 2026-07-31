@@ -63,7 +63,9 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
       } else if (folder === "bills" && fields.amount != null) {
         const bill = await createRecord("bills", {
           name: fields.description || fields.payee || "Imported Bill",
-          amount: parseFloat(fields.amount),
+          amount: parseFloat(fields.amount) || 0,
+          payment_frequency: "monthly",
+          is_active: true,
           category: fields.category || "other",
           notes: `Imported from document: ${doc.file_name}`,
         });

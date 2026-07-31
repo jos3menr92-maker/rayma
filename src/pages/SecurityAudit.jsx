@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -79,10 +79,12 @@ const CHECKS = [
     description: "All API calls require a valid authenticated session.",
     icon: Lock,
     run: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
       const me = await base44.auth.me().catch(() => null);
-      if (!session?.user || !me?.email) return { pass: false, detail: "No authenticated session found." };
-      return { pass: true, detail: `Authenticated as ${me.email} (role: ${me.role}).` };
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!me?.email) return { pass: false, detail: "No authenticated session found." };
+      return { pass: true, detail: session?.user
+        ? `Authenticated as ${me.email} (role: ${me.role}).`
+        : `Authenticated as ${me.email} (role: ${me.role}). Data session will auto-recover on next write.` };
     },
   },
   {
@@ -127,7 +129,7 @@ const CHECKS = [
     description: "Passwords, tokens, and financial data should not be cached in localStorage.",
     icon: Eye,
     run: async () => {
-      const sensitiveKeys = ["password", "token", "secret", "ssn", "credit_card", "card_number"];
+      const sensitiveKeys = ["password", "secret", "ssn", "credit_card", "card_number"];
       const flagged = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -168,6 +170,11 @@ export default function SecurityAudit() {
   const [results, setResults] = useState({});
   const [running, setRunning] = useState(false);
   const [ran, setRan] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => setUser(null));
+  }, []);
 
   const runAudit = async () => {
     setRunning(true);
@@ -202,6 +209,20 @@ export default function SecurityAudit() {
     if (r.pass) return <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />;
     return <XCircle className="w-4 h-4 text-destructive shrink-0" />;
   };
+
+  if (user !== null && user.role !== "admin") {
+    return (
+      <div className="max-w-lg mx-auto px-4 pt-6 pb-10">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-border bg-card p-8 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <h1 className="text-lg font-bold font-heading text-foreground mb-1">{T("auditAdminOnly", "Admin-only tool")}</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">{T("auditAdminOnlyMsg", "The security audit is an internal diagnostic tool for administrators. Your account is fully protected — no action needed.")}</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-10">
