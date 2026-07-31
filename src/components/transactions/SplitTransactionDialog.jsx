@@ -47,83 +47,96 @@ export function SplitTransactionDialog({ tx, supaUser, onClose, onSaved, onError
     if (!isValid) return;
     setSaving(true);
     try {
-      for (const sp of splits) {
-        await createRecord('transaction_splits', {
-          transaction_id: tx.id,
-          bank_account_id: tx.bank_account_id || null,
-          amount: parseFloat(sp.amount) || 0,
-          category: sp.category,
-          note: sp.note || null,
-          date: tx.date || null,
+      for (const split of splits) {
+        await createRecord("transaction_splits", {
+          transaction_id: tx?.id,
+          amount: parseFloat(split.amount),
+          category: split.category,
+          note: split.note,
+          user_id: supaUser?.id
         });
       }
-
-      onSaved?.(tx.id);
-    } catch (err) {
-      console.error("Split save error:", err.message);
-      onError?.(err.message);
+      if (onSaved) onSaved();
+    } catch (error) {
+      console.error("Error saving splits:", error);
+      if (onError) onError(error);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-card border-border max-w-md rounded-2xl">
+    <Dialog open={true} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{T("splitTransaction", "Split Transaction")}</DialogTitle>
+          <DialogTitle>{T?.splitTransaction || "Split Transaction"}</DialogTitle>
         </DialogHeader>
+        
+        <div className="py-4 space-y-4">
+          <div className="flex justify-between items-center text-sm mb-4">
+            <span className="font-medium">Total: {fmt(totalAmount)}</span>
+            <span className={`font-medium ${Math.abs(remaining) < 0.01 ? "text-green-600" : "text-red-500"}`}>
+              Remaining: {fmt(remaining)}
+            </span>
+          </div>
 
-        <div className="bg-muted/50 rounded-xl p-3 mb-4">
-          <p className="text-xs text-muted-foreground">{tx?.description}</p>
-          <p className="text-lg font-bold font-heading text-foreground">{fmt(totalAmount)}</p>
-        </div>
-
-        <div className="space-y-3">
-          {splits.map((sp, idx) => (
-            <div key={idx} className="flex items-end gap-2">
-              <div className="flex-1 min-w-0">
-                <Label className="text-xs text-muted-foreground block mb-1">{T("amount", "Amount")}</Label>
-                <Input
-                  type="number"
-                  value={sp.amount}
-                  onChange={e => updateSplit(idx, "amount", e.target.value)}
-                  className="rounded-xl"
-                  placeholder="0.00"
-                />
+          <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
+            {splits.map((split, idx) => (
+              <div key={idx} className="flex flex-col gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-md border">
+                <div className="flex gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Amount</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={split.amount}
+                      onChange={(e) => updateSplit(idx, "amount", e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Category</Label>
+                    <Select value={split.category} onValueChange={(val) => updateSplit(idx, "category", val)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SPLIT_CATEGORIES.map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1 flex gap-2 items-end">
+                  <div className="flex-1">
+                    <Label className="text-xs">Note</Label>
+                    <Input
+                      value={split.note}
+                      onChange={(e) => updateSplit(idx, "note", e.target.value)}
+                      placeholder="Optional note"
+                    />
+                  </div>
+                  {splits.length >= 2 && (
+                    <Button variant="ghost" size="icon" onClick={() => removeSplit(idx)}>
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <Label className="text-xs text-muted-foreground block mb-1">{T("category", "Category")}</Label>
-                <Select value={sp.category} onValueChange={v => updateSplit(idx, "category", v)}>
-                  <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SPLIT_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              {splits.length > 1 && (
-                <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => removeSplit(idx)}>
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <button onClick={addSplit} className="flex items-center gap-1 text-sm text-primary font-medium mt-2">
-          <Plus className="w-4 h-4" /> {T("addSplit", "Add Split")}
-        </button>
-
-        <div className={`flex items-center justify-between text-sm pt-2 border-t border-border ${remaining === 0 ? "text-primary" : "text-destructive"}`}>
-          <span className="text-muted-foreground">{T("remaining", "Remaining")}</span>
-          <span className="font-bold">{fmt(remaining)}</span>
+          <Button variant="outline" className="w-full mt-2" onClick={addSplit}>
+            <Plus className="h-4 w-4 mr-2" /> Add Split
+          </Button>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{T("cancel", "Cancel")}</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button onClick={handleSave} disabled={!isValid || saving}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-            {T("saveSplits", "Save Splits")}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Save Splits
           </Button>
         </DialogFooter>
       </DialogContent>
