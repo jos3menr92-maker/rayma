@@ -60,7 +60,7 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
         } else {
           await updateRecord("documents", doc.id, { status: "approved", folder, extracted_data: fields });
         }
-      } else if (folder === "bills" && fields.amount && fields.description) {
+      } else if (folder === "bills" && fields.amount != null) {
         const bill = await createRecord("bills", {
           name: fields.description || fields.payee || "Imported Bill",
           amount: parseFloat(fields.amount),

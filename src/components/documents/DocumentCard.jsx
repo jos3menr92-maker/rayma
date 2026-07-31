@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { FileText, Eye, Trash2, CheckCircle2, Clock, Archive, ExternalLink } from "lucide-react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { deleteRecord } from "@/lib/supabaseHelpers";
+import { toast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useMemo } from "react";
@@ -31,11 +32,11 @@ export default function DocumentCard({ doc, index, onDelete, onReview }) {
 
   async function handleDelete() {
     try {
-      const { error } = await supabase.from('documents').delete().eq('id', doc.id);
-      if (error) throw error;
+      await deleteRecord("documents", doc.id);
       onDelete(doc.id);
     } catch (err) {
       console.error('Failed to delete document:', err);
+      toast({ title: T("deleteFailed", "Delete Failed"), description: err?.message, variant: "destructive" });
     }
   }
 
