@@ -1,0 +1,127 @@
+{
+  "name": "SupportTicket",
+  "type": "object",
+  "properties": {
+    "ticket_number": {
+      "type": "number",
+      "description": "Sequential display number shown to the user"
+    },
+    "issue_type": {
+      "type": "string",
+      "enum": [
+        "payment_failed",
+        "double_charge",
+        "refund_request",
+        "subscription_cancel",
+        "receipt_missing",
+        "billing_error",
+        "other"
+      ],
+      "default": "other",
+      "description": "Category of the support issue"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Short title of the issue"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the problem"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Priority level set by the user or AI"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "resolved",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Current status of the ticket"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "Optional Stripe checkout session or order reference"
+    },
+    "transaction_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional date of the problematic transaction"
+    },
+    "resolution_notes": {
+      "type": "string",
+      "description": "Admin notes on how the issue was resolved"
+    },
+    "ai_attempted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the AI assistant attempted to resolve this before the ticket was created"
+    },
+    "contact_preference": {
+      "type": "string",
+      "enum": [
+        "ai_only",
+        "email",
+        "phone"
+      ],
+      "default": "ai_only",
+      "description": "How the user prefers to be contacted for follow-up"
+    }
+  },
+  "required": [
+    "subject",
+    "description"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
