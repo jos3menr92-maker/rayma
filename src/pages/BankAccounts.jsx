@@ -37,7 +37,7 @@ export default function BankAccounts() {
   const { userProfile, supaUser, bankAccounts: accounts, transactions, loading, reload } = useFinancialData();
   const location = useLocation();
   const [showDialog, setShowDialog] = useState(false);
-  const [showTxDialog, setShowTxDialog] = useState(false);
+  const [showTxDialog, setShowTxDialog] = useState(() => !!location.state?.autoOpenLog);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [txForm, setTxForm] = useState(emptyTx);
