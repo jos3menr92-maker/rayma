@@ -119,7 +119,8 @@ export default function MerchantAnalytics() {
           {merchantData.length === 0 ? (
             <div className="text-center py-10 bg-card border border-border rounded-2xl">
               <Receipt className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">{T("noMerchantData", "No spending data for this period")}</p>
+              <p className="text-sm text-muted-foreground mb-1">{T("noMerchantData", "No spending data for this period")}</p>
+              <p className="text-xs text-muted-foreground/70 px-6">{T("merchantEmptyHint", "Log purchases on the Banking Info page — each transaction's description becomes a merchant here.")}</p>
             </div>
           ) : (
             <div className="space-y-2">

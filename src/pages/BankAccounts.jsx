@@ -141,9 +141,9 @@ export default function BankAccounts() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-heading text-foreground">{T("bankAccounts", "Bank Accounts")}</h1>
+          <h1 className="text-2xl font-bold font-heading text-foreground">{T("bankingInfo", "Banking Info")}</h1>
           <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-            <RefreshCw className="w-3 h-3" /> {T("manualBalances", "Manual balances — update anytime")}
+            <RefreshCw className="w-3 h-3" /> {T("bankingInfoDesc", "Accounts, balances, transactions & purchases")}
           </p>
         </div>
         <Button size="sm" onClick={openAdd} className="shrink-0">
