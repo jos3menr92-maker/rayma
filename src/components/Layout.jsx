@@ -37,6 +37,7 @@ export default function Layout() {
   const isDragging = useRef(false);
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
   const [raymaPrefillPrompt, setRaymaPrefillPrompt] = useState("");
+  const [raymaGreeting, setRaymaGreeting] = useState(false);
 
   useBackHandler([
     { isOpen: drawerOpen, onClose: () => setDrawerOpen(false) },
@@ -71,6 +72,7 @@ export default function Layout() {
     const handler = (e) => {
       setRaymaOpen(true);
       if (e?.detail?.prefill) setRaymaPrefillPrompt(e.detail.prefill);
+      if (e?.detail?.greeting) setRaymaGreeting(true);
     };
     window.addEventListener("rayma:open", handler);
     return () => window.removeEventListener("rayma:open", handler);
@@ -182,6 +184,8 @@ export default function Layout() {
         onClose={() => setRaymaOpen(false)}
         prefillPrompt={raymaPrefillPrompt}
         onPrefillConsumed={() => setRaymaPrefillPrompt("")}
+        showGreeting={raymaGreeting}
+        onGreetingConsumed={() => setRaymaGreeting(false)}
         loans={loans}
         bills={bills}
         incomes={incomes}

@@ -82,6 +82,15 @@ export default function AppTour({ onboardingComplete = true }) {
     localStorage.setItem("rayma_tour_completed", "true");
     setActive(false);
     setStep(0);
+    // After the tour, pop Rayma up with a congratulatory greeting if onboarding just logged data
+    try {
+      if (sessionStorage.getItem("rayma_post_tour_greeting")) {
+        sessionStorage.removeItem("rayma_post_tour_greeting");
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("rayma:open", { detail: { greeting: true } }));
+        }, 700);
+      }
+    } catch (e) {}
   };
 
   const handleNext = () => {

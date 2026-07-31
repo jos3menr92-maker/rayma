@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "@/lib/supabaseClientFrontend"; // 🚀 NEW: Added Supabase
+import { createRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: To get the User ID
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -76,90 +76,72 @@ export default function Onboarding() {
     setStep("welcome");
   }
 
-  async function handleIncome() {
-    if (!weeklyIncome || isNaN(weeklyIncome)) { setStep("bill"); return; }
+  // Steps advance only — all data is logged at finish() via the working createRecord path
+  function handleIncome() { setStep("bill"); }
+  function handleBill() { setStep("loan"); }
+  function handleLoan() { setStep("done"); }
+
+  // Hand everything to Rayma's logging path (createRecord — same one manual forms use,
+  // with session recovery + manageFinancialRecord fallback). Free: direct Supabase write, no AI tokens.
+  async function finish() {
     setLoading(true);
-    
-    // 🚀 FIXED: Save to Supabase
-    if (supaUser?.id) {
+    const logged = [];
+
+    if (weeklyIncome && !isNaN(weeklyIncome)) {
       try {
-        const { error } = await supabase.from('incomes').insert([{
-          user_id: supaUser.id,
+        await createRecord('incomes', {
           source: "Weekly Income",
           amount: parseFloat(weeklyIncome),
           frequency: "weekly",
           week_start: new Date().toISOString().split("T")[0],
           note: "Set during onboarding",
           is_active: true
-        }]);
-        if (error) throw error;
+        });
+        logged.push("income");
       } catch (err) {
-        console.error("Onboarding Error:", err.message);
-        toast({ title: T("saveFailed", "Could not save"), description: err.message, variant: "destructive" });
+        console.error("Onboarding income log failed:", err?.message);
       }
     }
-    
-    setLoading(false);
-    setStep("bill");
-  }
 
-  async function handleBill() {
     if (billName && billAmount && !isNaN(billAmount)) {
-      setLoading(true);
-      
-      // 🚀 FIXED: Save to Supabase
-      if (supaUser?.id) {
-        try {
-          const { error } = await supabase.from('bills').insert([{
-            user_id: supaUser.id,
-            name: billName,
-            amount: parseFloat(billAmount),
-            payment_frequency: "monthly",
-            is_active: true
-          }]);
-          if (error) throw error;
-        } catch (err) {
-          console.error("Onboarding Error:", err.message);
-        toast({ title: T("saveFailed", "Could not save"), description: err.message, variant: "destructive" });
-        }
+      try {
+        await createRecord('bills', {
+          name: billName,
+          amount: parseFloat(billAmount),
+          payment_frequency: "monthly",
+          is_active: true
+        });
+        logged.push("bill");
+      } catch (err) {
+        console.error("Onboarding bill log failed:", err?.message);
       }
-      
-      setLoading(false);
     }
-    setStep("loan");
-  }
 
-  async function handleLoan() {
     if (loanName && loanBalance && !isNaN(loanBalance)) {
-      setLoading(true);
-      
-      // 🚀 FIXED: Save to Supabase
-      if (supaUser?.id) {
-        try {
-          const { error } = await supabase.from('loans').insert([{
-            user_id: supaUser.id,
-            name: loanName,
-            original_amount: parseFloat(loanBalance),
-            current_balance: parseFloat(loanBalance),
-            remaining_balance: parseFloat(loanBalance),
-            monthly_payment: loanPayment ? parseFloat(loanPayment) : 0,
-            status: "active"
-          }]);
-          if (error) throw error;
-          await reload();
-        } catch (err) {
-          console.error("Onboarding Error:", err.message);
-        toast({ title: T("saveFailed", "Could not save"), description: err.message, variant: "destructive" });
-        }
+      try {
+        await createRecord('loans', {
+          name: loanName,
+          original_amount: parseFloat(loanBalance),
+          current_balance: parseFloat(loanBalance),
+          remaining_balance: parseFloat(loanBalance),
+          monthly_payment: loanPayment ? parseFloat(loanPayment) : 0,
+          status: "active"
+        });
+        logged.push("loan");
+      } catch (err) {
+        console.error("Onboarding loan log failed:", err?.message);
       }
-      
-      setLoading(false);
     }
-    setStep("done");
-  }
 
-  async function finish() {
+    try { await reload(); } catch (e) {}
+
+    // Flag for Rayma to greet the user after the tour — only if something was actually logged
+    if (logged.length > 0) {
+      try { sessionStorage.setItem("rayma_post_tour_greeting", "true"); } catch (e) {}
+    }
+
     await base44.auth.updateMe({ onboarding_complete: true });
+    setLoading(false);
     navigate("/");
   }
 

@@ -50,13 +50,15 @@ function sanitizeForDiagnostic(obj) {
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
   assets = [], savingsGoals = [], taxes = [], userProfile = null, 
-  currentPage = "", forceOpen, onClose, autoOpen, prefillPrompt = "", onPrefillConsumed 
+  currentPage = "", forceOpen, onClose, autoOpen, prefillPrompt = "", onPrefillConsumed,
+  showGreeting = false, onGreetingConsumed
 }) {
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(false);
+  const [onboardingGreeting, setOnboardingGreeting] = useState("");
   const [scanning, setScanning] = useState(false);
   const [tourTriggered, setTourTriggered] = useState(false);
   const { lang } = useLanguage();
@@ -137,6 +139,10 @@ export default function RaymaChat({
       const conv = await base44.agents.createConversation({ agent_name: "rayma" });
       setConversation(conv);
       setMessages(conv.messages || []);
+      if (showGreeting) {
+        setOnboardingGreeting(T("onboardingGreeting", "Good job logging your first financial information! 🎉 I've added it for you. I'm here to help. I've analyzed it — please add more so I can help you have better control of your finances. We're here to help. 💪"));
+        onGreetingConsumed?.();
+      }
     } catch (err) {
       console.error("Failed to start Rayma AI:", err);
     } finally {
@@ -145,6 +151,7 @@ export default function RaymaChat({
   }
   
   async function handleSend() {
+    setOnboardingGreeting("");
     const text = input.trim().toLowerCase();
     
     // --- 1. THE CASH FLOW SMOOTHER ---
@@ -497,6 +504,18 @@ export default function RaymaChat({
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Rayma AI conversation">
+            {!initializing && onboardingGreeting && (
+              <div className="flex justify-start">
+                <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
+                  <ReactMarkdown
+                    components={{ pre: CodeBlock }}
+                    className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                  >
+                    {onboardingGreeting}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
             {initializing ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
