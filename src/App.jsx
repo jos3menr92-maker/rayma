@@ -49,6 +49,7 @@ const TaxSummary = lazy(() => import('./pages/TaxSummary'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const MerchantAnalytics = lazy(() => import('./pages/MerchantAnalytics'));
 const Support = lazy(() => import('./pages/Support'));
+const BusinessInfo = lazy(() => import('./pages/BusinessInfo'));
 
 const PageLoader = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -139,6 +140,7 @@ export default function App() {
               <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
               <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
               <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
+              <Route path="/business-info" element={<Suspense fallback={<PageLoader />}><BusinessInfo /></Suspense>} />
               <Route path="/*" element={<AuthenticatedApp />} />
             </Routes>
           </Router>
