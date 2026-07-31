@@ -9,8 +9,8 @@
     {
       "entity_name": "SupportTicket",
       "allowed_operations": [
-        "read",
         "create",
+        "read",
         "update",
         "delete"
       ]
