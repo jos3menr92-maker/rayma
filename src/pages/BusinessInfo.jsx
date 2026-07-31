@@ -89,7 +89,7 @@ export default function BusinessInfo() {
           <div className="flex items-start gap-3">
             <Shield className="w-4 h-4 text-primary mt-0.5 shrink-0" />
             <p>
-              {T("chargeDescriptor", "Charges will appear on your statement as \"RAYMA AI\". If you believe a charge was made in error, contact us within 7 days.")}
+              {T("chargeDescriptor", "Charges will appear on your statement as \"Rayma AI\". If you believe a charge was made in error, contact us within 7 days.")}
             </p>
           </div>
         </section>
