@@ -2,10 +2,43 @@
  * supabaseHelpers.js — Session-aware CRUD helpers for frontend Supabase operations.
  *
  * These functions wrap direct Supabase client calls with automatic token refresh
- * on 401/expired JWT errors, preventing the "Missing User ID" failures that
- * previously caused the app to route everything through a metered backend.
+ * on 401/expired JWT errors. If the browser Supabase session is missing or
+ * cannot be refreshed, they automatically fall back to the manageFinancialRecord
+ * backend function (Base44 auth + service role key) so logging always works.
  */
 import { supabase } from "@/lib/supabaseClientFrontend";
+import { base44 } from "@/api/base44Client";
+
+/**
+ * Fallback to the manageFinancialRecord backend function when the browser
+ * Supabase session is missing/expired. Uses Base44 auth + service role key,
+ * so logging works even when the frontend session is dead.
+ */
+async function backendCreate(table, data) {
+  try {
+    const res = await base44.functions.invoke('manageFinancialRecord', { action: 'create', table, data });
+    return res.data?.record;
+  } catch (err) {
+    throw new Error(err?.response?.data?.error || err?.message || 'Backend save failed');
+  }
+}
+
+async function backendUpdate(table, recordId, data) {
+  try {
+    const res = await base44.functions.invoke('manageFinancialRecord', { action: 'update', table, record_id: recordId, data });
+    return res.data?.record;
+  } catch (err) {
+    throw new Error(err?.response?.data?.error || err?.message || 'Backend update failed');
+  }
+}
+
+async function backendDelete(table, recordId) {
+  try {
+    await base44.functions.invoke('manageFinancialRecord', { action: 'delete', table, record_id: recordId });
+  } catch (err) {
+    throw new Error(err?.response?.data?.error || err?.message || 'Backend delete failed');
+  }
+}
 
 /**
  * Attempt a silent token refresh if the Supabase session has expired.
@@ -72,9 +105,14 @@ async function getValidUserId() {
  * Automatically retries once after a silent token refresh on auth errors.
  */
 export async function createRecord(table, data) {
-  const userId = await getValidUserId();
-  const payload = { ...data, user_id: userId };
+  let userId;
+  try {
+    userId = await getValidUserId();
+  } catch {
+    return backendCreate(table, data);
+  }
 
+  const payload = { ...data, user_id: userId };
   const { data: record, error } = await supabase
     .from(table)
     .insert(payload)
@@ -82,10 +120,9 @@ export async function createRecord(table, data) {
     .single();
 
   if (error && isAuthError(error)) {
-    // Retry after refresh
     const refreshedUser = await tryRefreshSession();
-    if (!refreshedUser?.id) throw new Error("Session expired. Please log in again.");
-    
+    if (!refreshedUser?.id) return backendCreate(table, data);
+
     const retryPayload = { ...data, user_id: refreshedUser.id };
     const { data: retryRecord, error: retryError } = await supabase
       .from(table)
@@ -93,6 +130,7 @@ export async function createRecord(table, data) {
       .select()
       .single();
 
+    if (retryError && isAuthError(retryError)) return backendCreate(table, data);
     if (retryError) throw new Error(buildErrorMessage(table, "insert", retryError));
     return retryRecord;
   }
@@ -106,7 +144,11 @@ export async function createRecord(table, data) {
  * Automatically retries once after a silent token refresh on auth errors.
  */
 export async function updateRecord(table, recordId, data) {
-  await getValidUserId();
+  try {
+    await getValidUserId();
+  } catch {
+    return backendUpdate(table, recordId, data);
+  }
 
   const { data: record, error } = await supabase
     .from(table)
@@ -117,7 +159,7 @@ export async function updateRecord(table, recordId, data) {
 
   if (error && isAuthError(error)) {
     const refreshedUser = await tryRefreshSession();
-    if (!refreshedUser?.id) throw new Error("Session expired. Please log in again.");
+    if (!refreshedUser?.id) return backendUpdate(table, recordId, data);
 
     const { data: retryRecord, error: retryError } = await supabase
       .from(table)
@@ -126,6 +168,7 @@ export async function updateRecord(table, recordId, data) {
       .select()
       .single();
 
+    if (retryError && isAuthError(retryError)) return backendUpdate(table, recordId, data);
     if (retryError) throw new Error(buildErrorMessage(table, "update", retryError));
     return retryRecord;
   }
@@ -139,7 +182,11 @@ export async function updateRecord(table, recordId, data) {
  * Automatically retries once after a silent token refresh on auth errors.
  */
 export async function deleteRecord(table, recordId) {
-  await getValidUserId();
+  try {
+    await getValidUserId();
+  } catch {
+    return backendDelete(table, recordId);
+  }
 
   const { error } = await supabase
     .from(table)
@@ -148,13 +195,14 @@ export async function deleteRecord(table, recordId) {
 
   if (error && isAuthError(error)) {
     const refreshedUser = await tryRefreshSession();
-    if (!refreshedUser?.id) throw new Error("Session expired. Please log in again.");
+    if (!refreshedUser?.id) return backendDelete(table, recordId);
 
     const { error: retryError } = await supabase
       .from(table)
       .delete()
       .eq("id", recordId);
 
+    if (retryError && isAuthError(retryError)) return backendDelete(table, recordId);
     if (retryError) throw new Error(buildErrorMessage(table, "delete", retryError));
     return;
   }
