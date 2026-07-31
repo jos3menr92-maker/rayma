@@ -9,7 +9,7 @@ import { X, Landmark, PiggyBank, PieChart, TrendingDown, FolderOpen, TrendingUp,
 
 const moreItems = [
   { path: "/loans", icon: CreditCard, labelKey: "loans", labelFallback: "Loans & Debt", descKey: "manageActiveLoans", descFallback: "Manage your active loans" },
-  { path: "/bank-accounts", icon: Landmark, labelKey: "bankAccounts", labelFallback: "Bank Accounts", descKey: "manageAccountsTransactions", descFallback: "Manage accounts & transactions" },
+  { path: "/bank-accounts", icon: Landmark, labelKey: "bankingInfo", labelFallback: "Banking Info", descKey: "bankingInfoDesc", descFallback: "Accounts, balances, transactions & purchases" },
   { path: "/budget", icon: PiggyBank, labelKey: "savingsVault", labelFallback: "Savings Vault", descKey: "trackGrowSavings", descFallback: "Track and grow your savings" }, 
   { path: "/budget-dashboard", icon: PieChart, labelKey: "budgetDashboard", labelFallback: "Budget Dashboard", descKey: "advancedCategoryTracking", descFallback: "Advanced category tracking" }, 
   { path: "/debt-simulator", icon: TrendingDown, labelKey: "debtSimulator", labelFallback: "Debt Simulator", descKey: "planPayoffStrategy", descFallback: "Plan your payoff strategy" },

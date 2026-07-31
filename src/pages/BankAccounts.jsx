@@ -311,7 +311,7 @@ export default function BankAccounts() {
                 <SelectContent>{accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>{T("description", "Description")}</Label><Input className="mt-1" value={txForm.description} onChange={e => setTxForm({ ...txForm, description: e.target.value })} /></div>
+            <div><Label>{T("vendorOrSource", "Vendor / Source")}</Label><Input className="mt-1" value={txForm.description} onChange={e => setTxForm({ ...txForm, description: e.target.value })} placeholder={T("vendorSourcePlaceholder", "Where it came from — e.g. Walmart (expense) or Paycheck (income)")} /></div>
             <div className="grid grid-cols-2 gap-2">
               <div><Label>{T("amount", "Amount")}</Label><Input className="mt-1" type="number" value={txForm.amount} onChange={e => setTxForm({ ...txForm, amount: e.target.value })} placeholder="-50.00" /></div>
               <div><Label>{T("date", "Date")}</Label><Input className="mt-1" type="date" value={txForm.date} onChange={e => setTxForm({ ...txForm, date: e.target.value })} /></div>
