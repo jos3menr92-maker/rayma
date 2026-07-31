@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, SplitSquareHorizontal } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { SplitTransactionDialog } from "@/components/transactions/SplitTransactionDialog";
+import { LogTransactionDialog } from "@/components/transactions/LogTransactionDialog";
 import AccountBalanceChart from "@/components/AccountBalanceChart";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { format } from "date-fns";
@@ -29,7 +30,6 @@ function buildTypeConfig(T) {
 }
 
 const emptyForm = { name: "", institution: "", account_type: "checking", balance: "", notes: "" };
-const emptyTx = { bank_account_id: "", date: format(new Date(), "yyyy-MM-dd"), description: "", amount: "", category: "other", type: "debit", notes: "" };
 
 export default function BankAccounts() {
   const T = useT();
@@ -40,7 +40,6 @@ export default function BankAccounts() {
   const [showTxDialog, setShowTxDialog] = useState(() => !!location.state?.autoOpenLog);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
-  const [txForm, setTxForm] = useState(emptyTx);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [splitTx, setSplitTx] = useState(null);
   const { toast } = useToast();
@@ -56,13 +55,6 @@ export default function BankAccounts() {
       window.history.replaceState({}, "");
     }
   }, [location.state]);
-
-  // Preselect the first account so the transaction form is ready to use
-  useEffect(() => {
-    if (showTxDialog && accounts.length > 0 && !txForm.bank_account_id) {
-      setTxForm(f => ({ ...f, bank_account_id: accounts[0].id }));
-    }
-  }, [showTxDialog, accounts, txForm.bank_account_id]);
 
   const openAdd = () => { setEditing(null); setForm(emptyForm); setShowDialog(true); };
   const openEdit = (acc) => { setEditing(acc); setForm({ ...acc }); setShowDialog(true); };
@@ -97,23 +89,6 @@ export default function BankAccounts() {
     }
     setAccountToDelete(null);
     setShowConfirm(false);
-    reload();
-  };
-
-  const saveTx = async () => {
-    if (!txForm.bank_account_id) { toast({ title: T("selectAccountPrompt", "Please select a bank account.") }); return; }
-    try {
-      await createRecord('transactions', { 
-        ...txForm, 
-        bank_account_id: txForm.bank_account_id || null,
-        amount: parseFloat(txForm.amount) || 0 
-      });
-    } catch (err) {
-      console.error("BankAccounts Error:", err.message);
-      toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
-    }
-    setShowTxDialog(false);
-    setTxForm(emptyTx);
     reload();
   };
 
@@ -301,49 +276,14 @@ export default function BankAccounts() {
       </Dialog>
 
       {/* Log Transaction Dialog */}
-      <Dialog open={showTxDialog} onOpenChange={setShowTxDialog}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle>{T("logTransaction", "Log Transaction")}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>{T("account", "Account")}</Label>
-              <Select value={txForm.bank_account_id} onValueChange={v => setTxForm({ ...txForm, bank_account_id: v })}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder={T("selectAccount", "Select account")} /></SelectTrigger>
-                <SelectContent>{accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div><Label>{T("vendorOrSource", "Vendor / Source")}</Label><Input className="mt-1" value={txForm.description} onChange={e => setTxForm({ ...txForm, description: e.target.value })} placeholder={T("vendorSourcePlaceholder", "Where it came from — e.g. Walmart (expense) or Paycheck (income)")} /></div>
-            <div className="grid grid-cols-2 gap-2">
-              <div><Label>{T("amount", "Amount")}</Label><Input className="mt-1" type="number" value={txForm.amount} onChange={e => setTxForm({ ...txForm, amount: e.target.value })} placeholder="-50.00" /></div>
-              <div><Label>{T("date", "Date")}</Label><Input className="mt-1" type="date" value={txForm.date} onChange={e => setTxForm({ ...txForm, date: e.target.value })} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div><Label>{T("category", "Category")}</Label>
-                <Select value={txForm.category} onValueChange={v => setTxForm({ ...txForm, category: v })}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["income","food","transport","utilities","subscriptions","health","insurance","rent","loan_payment","savings","entertainment","shopping","other"].map(c =>
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>{T("type", "Type")}</Label>
-                <Select value={txForm.type} onValueChange={v => setTxForm({ ...txForm, type: v })}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="debit">{T("debit", "Debit")}</SelectItem>
-                    <SelectItem value="credit">{T("creditLabel", "Credit")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTxDialog(false)}>{T("cancel", "Cancel")}</Button>
-            <Button onClick={saveTx}>{T("logTransaction", "Log Transaction")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {showTxDialog && (
+        <LogTransactionDialog
+          accounts={accounts}
+          defaultAccountId={accounts[0]?.id || ""}
+          onClose={() => setShowTxDialog(false)}
+          onSaved={() => { setShowTxDialog(false); reload(); }}
+        />
+      )}
 
       {/* 📂 Split Transaction Dialog */}
       {splitTx && (
