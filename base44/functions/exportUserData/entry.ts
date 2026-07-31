@@ -3,7 +3,7 @@
  * Returns all user data as a JSON bundle for download.
  * Required by GDPR Art. 20 (Right to Data Portability) and CCPA.
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
 
 Deno.serve(async (req) => {
