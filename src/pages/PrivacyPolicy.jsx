@@ -128,7 +128,7 @@ export default function PrivacyPolicy() {
           </ul>
 
           <p className="mt-4">
-            {T("exerciseRights", "To exercise these rights, email")} <strong>support@reema.app</strong> {T("withRequest", "with your request. We will respond within 30 days.")}</p>
+            {T("exerciseRights", "To exercise these rights, email")} <strong>rayma.app2026@gmail.com</strong> {T("withRequest", "with your request. We will respond within 30 days.")}</p>
         </section>
 
         <section>
@@ -181,7 +181,8 @@ export default function PrivacyPolicy() {
           </p>
           <div className="mt-3 p-3 bg-muted rounded-lg text-xs">
             <p className="font-semibold">{T("raymaPrivacyTeam", "Rayma AI Privacy Team")}</p>
-            <p>Email: support@reema.app</p>
+            <p>Email: rayma.app2026@gmail.com</p>
+            <p>{T("phoneLabel", "Phone")}: 1 816-614-2216</p>
             <p>{T("responseTime", "Response time: 30 days")}</p>
             <p className="mt-2 text-muted-foreground">{T("gdprComplaint", "For GDPR complaints, you also have the right to lodge a complaint with your local data protection authority.")}</p>
           </div>

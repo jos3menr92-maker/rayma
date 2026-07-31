@@ -167,7 +167,7 @@ export default function TermsOfService() {
             <li>{T("subscriptionManagement", "Subscriptions can be managed or cancelled at any time from your Apple App Store or Google Play Store account settings.")}</li>
             <li>{T("nonRefundable", "One-time purchases are non-refundable once completed.")}</li>
             <li>{T("pricingSubject", "Pricing is subject to change at any time")}</li>
-            <li>{T("errorPayment", "If a payment was made in error, contact support@reema.app within 7 days")}</li>
+            <li>{T("errorPayment", "If a payment was made in error, contact rayma.app2026@gmail.com within 7 days")}</li>
             <li>{T("stripeRefund", "Stripe processes all payment refunds per")} <a href="https://stripe.com/legal" className="text-primary underline">{T("stripePolicy", "Stripe's refund policy")}</a></li>
           </ul>
         </section>
@@ -219,7 +219,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("disputeResolution", "17. Dispute Resolution")}</h2>
           <p>
-            {T("disputeDesc", "Before pursuing legal action, please contact support@reema.app to attempt resolution. If disputes cannot be resolved, you may pursue binding arbitration instead of litigation.")}
+            {T("disputeDesc", "Before pursuing legal action, please contact rayma.app2026@gmail.com to attempt resolution. If disputes cannot be resolved, you may pursue binding arbitration instead of litigation.")}
           </p>
         </section>
 
@@ -230,7 +230,8 @@ export default function TermsOfService() {
           </p>
           <div className="mt-3 p-3 bg-muted rounded-lg text-xs">
             <p className="font-semibold">{T("raymaLegalTeam", "Rayma AI Legal Team")}</p>
-            <p>Email: support@reema.app</p>
+            <p>Email: rayma.app2026@gmail.com</p>
+            <p>{T("phoneLabel", "Phone")}: 1 816-614-2216</p>
             <p>{T("responseTime", "Response time: 30 days")}</p>
           </div>
         </section>
