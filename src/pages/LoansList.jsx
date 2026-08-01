@@ -10,13 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditLoanForm from "../components/EditLoanForm";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { updateRecord, deleteRecord, ensureSupabaseSession } from "@/lib/supabaseHelpers";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function LoansList() {
   const navigate = useNavigate();
-  const { loans, loading, reload } = useFinancialData();
+  const { loans, payments, loading, reload } = useFinancialData();
   const { toast } = useToast();
   const [editingLoan, setEditingLoan] = useState(null);
   const [loanToDelete, setLoanToDelete] = useState(null);
@@ -74,11 +73,14 @@ export default function LoansList() {
   async function handleDeleteLoan() {
     if (!loanToDelete) return;
     try {
-      // Ensure a valid Supabase session so the payments delete doesn't fail
+      // Mirror the Bills pattern: use deleteRecord (session-aware, with a
+      // service-role backend fallback) for BOTH the loan's payments and the
+      // loan itself. Raw supabase.from().delete() has no fallback and fails
       // with "Invalid API key" when the browser session has expired.
-      await ensureSupabaseSession();
-      const { error: payError } = await supabase.from('payments').delete().eq('loan_id', loanToDelete.id);
-      if (payError) throw payError;
+      const loanPayments = payments.filter((p) => p.loan_id === loanToDelete.id);
+      for (const p of loanPayments) {
+        await deleteRecord('payments', p.id);
+      }
       await deleteRecord('loans', loanToDelete.id);
       await reload();
       setEditingLoan(null);
