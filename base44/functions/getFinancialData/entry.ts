@@ -1,7 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
+import { getSupaUserIdByEmail } from '../../shared/supabaseUserLookup.ts';
 
-Deno.serve(async (req) => {
+export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -9,20 +10,17 @@ Deno.serve(async (req) => {
 
     const { client: supabaseAdmin } = getSupabaseAdmin();
 
-    // Resolve Supabase UUID from Base44 user email
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
-    if (listError) throw listError;
-    const supabaseUser = users.find(u => u.email === user.email);
-    if (!supabaseUser) {
+    // Resolve the Supabase UUID from the Base44 user's email (exact match)
+    const uid = await getSupaUserIdByEmail(supabaseAdmin, user.email);
+    if (!uid) {
       return Response.json({ error: 'Supabase user not found' }, { status: 404 });
     }
-    const uid = supabaseUser.id;
 
     // Fetch all financial tables in parallel
     const [
       loansRes, billsRes, paymentsRes, incomesRes, assetsRes,
       savingsGoalsRes, bankAccountsRes, transactionsRes, netWorthRes,
-      budgetCategoriesRes, loanAdjustmentsRes, documentsRes
+      budgetCategoriesRes, loanAdjustmentsRes, documentsRes, splitsRes
     ] = await Promise.all([
       supabaseAdmin.from('loans').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabaseAdmin.from('bills').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
@@ -36,6 +34,7 @@ Deno.serve(async (req) => {
       supabaseAdmin.from('budget_categories').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabaseAdmin.from('loan_adjustments').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(50),
       supabaseAdmin.from('documents').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
+      supabaseAdmin.from('transaction_splits').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
     ]);
 
     return Response.json({
@@ -53,9 +52,10 @@ Deno.serve(async (req) => {
       budget_categories: budgetCategoriesRes.data || [],
       loan_adjustments: loanAdjustmentsRes.data || [],
       documents: documentsRes.data || [],
+      transaction_splits: splitsRes.data || [],
     });
   } catch (error) {
     console.error('[getFinancialData] Error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
-});
+}

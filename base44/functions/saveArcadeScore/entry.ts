@@ -1,7 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
+import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
+import { getSupaUserIdByEmail } from '../../shared/supabaseUserLookup.ts';
 
-Deno.serve(async (req) => {
+export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -16,26 +17,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
-    // Instantiate Supabase admin client (same pattern as syncSupabaseUser)
-    const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    // Use the shared sanitized admin client (avoids "Invalid URL string" from
+    // raw env vars that may contain quotes/whitespace).
+    const { client: supabaseAdmin } = getSupabaseAdmin();
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing Supabase configuration secrets.");
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
-
-    // Resolve the Supabase UUID from the Base44 user's email (scalable server-side search)
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
-    if (listError) throw listError;
-
-    const supabaseUser = users.find(u => u.email === user.email);
-    if (!supabaseUser) {
+    // Resolve the Supabase UUID from the Base44 user's email (exact match)
+    const supaUserId = await getSupaUserIdByEmail(supabaseAdmin, user.email);
+    if (!supaUserId) {
       throw new Error("Supabase user not found for email: " + user.email);
     }
-
-    const supaUserId = supabaseUser.id;
 
     // Fetch the current high score for this user + game before inserting
     const { data: existing } = await supabaseAdmin
@@ -70,4 +60,4 @@ Deno.serve(async (req) => {
     console.error("saveArcadeScore Error:", err.message);
     return Response.json({ error: err.message, saved: false }, { status: 500 });
   }
-});
+}

@@ -1,7 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
+import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
+import { getSupaUserIdByEmail } from '../../shared/supabaseUserLookup.ts';
 
-Deno.serve(async (req) => {
+export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -16,12 +17,9 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, message: "Reach Level 5 to earn your first coins!" }, { status: 400 });
     }
 
-    // 2 Energy Bars per 5-level milestone (Level 5 = 2, Level 10 = 4, etc.)
+    // 3 coins per 5-level milestone (Level 5 = 3, Level 10 = 6, etc.)
     const milestones = Math.floor(level / 5);
     const rewardAmount = milestones * 3;
-    // IMPORTANT: the battery + "free tokens" both display ai_tokens (NOT energy_bars).
-    // The daily reset only refills ai_tokens up to 10 when below 10, so earned tokens
-    // above the daily cap persist until spent.
     const currentTokens = user.ai_tokens || 0;
     const newTokensTotal = currentTokens + rewardAmount;
 
@@ -30,17 +28,10 @@ Deno.serve(async (req) => {
 
     // 2. Sync to Supabase profiles (best-effort — keeps FinancialDataContext in step)
     try {
-      const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL") || Deno.env.get("SUPABASE_URL") || "";
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-      if (supabaseUrl && supabaseKey) {
-        const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
-        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
-        if (!listError && users && users.length > 0) {
-          const supaUserId = users.find(u => u.email === user.email)?.id;
-          if (supaUserId) {
-            await supabaseAdmin.from('profiles').update({ ai_tokens: newTokensTotal }).eq('id', supaUserId);
-          }
-        }
+      const { client: supabaseAdmin } = getSupabaseAdmin();
+      const supaUserId = await getSupaUserIdByEmail(supabaseAdmin, user.email);
+      if (supaUserId) {
+        await supabaseAdmin.from('profiles').update({ ai_tokens: newTokensTotal }).eq('id', supaUserId);
       }
     } catch (syncErr) {
       console.warn("[Base44] Arcade reward Supabase sync failed (non-fatal):", syncErr.message);
@@ -60,4 +51,4 @@ Deno.serve(async (req) => {
     console.error("[Base44] Error rewarding arcade tokens:", error);
     return Response.json({ success: false, message: "Internal server error." }, { status: 500 });
   }
-});
+}

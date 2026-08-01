@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
   const [deletionCancelled, setDeletionCancelled] = useState(false);
   const refreshIntervalRef = useRef(null);
+  const isAuthedRef = useRef(false);
 
   useEffect(() => {
     checkAppState();
@@ -26,8 +27,9 @@ export const AuthProvider = ({ children }) => {
         // Supabase session ended — clear state
         setUser(null);
         setIsAuthenticated(false);
-      } else if (event === 'SIGNED_IN' && !isAuthenticated) {
-        // Re-check Base44 auth when Supabase session is restored
+        isAuthedRef.current = false;
+      } else if (event === 'SIGNED_IN' && !isAuthedRef.current) {
+        // Re-check Base44 auth when Supabase session is restored (guard against re-entrancy)
         checkUserAuth();
       }
     });
@@ -96,6 +98,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(me);
       setIsAuthenticated(true);
+      isAuthedRef.current = true;
 
       // Proactively recover the Supabase session so all reads/writes use the
       // free frontend path. Costs 1 credit once per session, not per save.
@@ -125,6 +128,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(null);
       setIsAuthenticated(false);
+      isAuthedRef.current = false;
     } finally {
       setIsLoadingAuth(false);
     }
@@ -133,6 +137,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    isAuthedRef.current = false;
 
     // Clear the Supabase session so no orphaned token remains
     try {

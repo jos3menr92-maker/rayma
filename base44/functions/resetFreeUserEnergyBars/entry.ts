@@ -4,15 +4,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
  * Weekly Free-Coin Top-up (legacy entry — mirrors resetDailyEnergyBars)
  * ====================================================================
  * This function is kept for backward compat with any external scheduler that
- * still points at it. It now performs the SAME weekly 30-coin top-up as
- * resetDailyEnergyBars so free users always get 30 coins/week (10 questions)
+ * still points at it. It now performs the SAME weekly 15-coin top-up as
+ * resetDailyEnergyBars so free users always get 15 coins/week (5 questions)
  * regardless of which endpoint the cron calls.
  *
- * Free users below 30 are topped up to 30 once per ISO week. Premium subscribers
- * and annual-pass holders are skipped. Purchased/earned coins above 30 carry over.
+ * Free users below 15 are topped up to 15 once per ISO week. Premium subscribers
+ * and annual-pass holders are skipped. Purchased/earned coins above 15 carry over.
  */
 
-const WEEKLY_FREE_COINS = 30;
+const WEEKLY_FREE_COINS = 15;
 
 function getWeekStartISO(date) {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));

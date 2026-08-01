@@ -1,7 +1,7 @@
 {
-  "name": "Rayma AI — Smart Debt & Bills Tracker",
+  "name": "Rayma AI",
   "short_name": "Rayma AI",
-  "description": "Free debt tracker and bill manager. Track loans, bills, budget, and net worth with an intelligent AI financial advisor.",
+  "description": "Smart debt & bills tracker with an AI financial advisor. Track loans, bills, budget, and net worth.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,25 +9,18 @@
   "background_color": "#0dcfba",
   "theme_color": "#0dcfba",
   "categories": ["finance", "productivity"],
-  "lang": "en",
   "icons": [
     {
       "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://media.base44.com/images/public/69c6cc1469212450bb9e1c92/a409f0253_generated_image.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }

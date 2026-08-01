@@ -3,19 +3,20 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 /**
  * Weekly Free-Coin Top-up (Rayma AI Coin Model)
  * =============================================
- * Runs on a schedule (weekly recommended). Free users get 15 coins (5 questions)
- * per week. This tops up to 15 ONLY if the user's balance is below 15 AND a new
- * week has started since the last top-up — so purchased/earned coins above 15 are
- * preserved (carry over), and the free allowance does not stack (no carry over of
- * unused allowance).
+ * Runs via a Base44 scheduled automation (weekly, Monday 09:00 local). Free
+ * users get 15 coins (5 questions) per week. Tops up to 15 ONLY when the
+ * balance is below 15 AND a new ISO week has started since the last top-up —
+ * purchased/earned coins above 15 carry over; the free allowance never stacks.
  *
- * Premium subscribers (Lithium/Generator/Unlimited) and annual-pass holders are
- * skipped. Idempotent via ai_tokens_reset_date (set to the week-start date).
+ * Premium subscribers (Lithium/Generator/Unlimited) and annual-pass holders
+ * are skipped. Idempotent via ai_tokens_reset_date (set to the week-start date).
+ *
+ * Auth: invoked by the scheduler with a service token, so createClientFromRequest
+ * resolves the service role directly — no shared secret required.
  */
 
 const WEEKLY_FREE_COINS = 15; // 15 coins = 5 questions/week
 
-// Returns the ISO Monday-UTC date string for the week containing `date`
 function getWeekStartISO(date) {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const day = d.getUTCDay(); // 0 = Sunday
@@ -24,75 +25,71 @@ function getWeekStartISO(date) {
   return d.toISOString().split('T')[0];
 }
 
-Deno.serve(async (req) => {
+export default async function(req) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const scheduledSecretKey = Deno.env.get('SCHEDULED_JOB_SECRET_KEY');
-
-    if (!authHeader || !scheduledSecretKey) {
-      console.warn('Missing authorization header or secret key');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (authHeader.replace('Bearer ', '') !== scheduledSecretKey) {
-      console.warn('Invalid authorization token');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const base44 = createClientFromRequest(req);
     const today = new Date();
-    const weekStart = getWeekStartISO(today); // YYYY-MM-DD (Monday UTC)
+    const weekStart = getWeekStartISO(today);
     const now = today.toISOString();
 
-    const allUsers = await base44.asServiceRole.entities.User.query({ limit: 10000 });
+    let page = 0;
+    const PAGE_SIZE = 100;
+    let usersProcessed = 0;
+    let tokensReset = 0;
+    let skippedPremium = 0;
+    let skippedAlreadyReset = 0;
+    let hasMore = true;
 
-    let resetCount = 0;
+    while (hasMore) {
+      const users = await base44.asServiceRole.entities.User.list('created_date', PAGE_SIZE, page * PAGE_SIZE);
+      if (!users || users.length === 0) break;
+      if (users.length < PAGE_SIZE) hasMore = false;
+      page++;
 
-    for (const user of allUsers) {
-      // Skip premium subscribers and annual-pass holders
-      const sub = user.subscription_type;
-      const isPremiumSub = sub === 'power_lithium' || sub === 'power_generator' || sub === 'power_unlimited';
-      const annualActive = user.annual_pass_expires_at
-        ? new Date(String(user.annual_pass_expires_at).includes('T')
-            ? user.annual_pass_expires_at
-            : `${user.annual_pass_expires_at}T23:59:59Z`) > new Date(now)
-        : false;
-      if (isPremiumSub || annualActive) continue;
+      for (const u of users) {
+        try {
+          usersProcessed++;
+          const sub = u.subscription_type;
+          const isPremiumSub = sub === 'power_lithium' || sub === 'power_generator' || sub === 'power_unlimited';
+          const annualActive = !!u.annual_pass_expires_at
+            && new Date(
+              String(u.annual_pass_expires_at).includes('T')
+                ? u.annual_pass_expires_at
+                : `${u.annual_pass_expires_at}T23:59:59Z`
+            ) > new Date(now);
+          if (isPremiumSub || annualActive) { skippedPremium++; continue; }
 
-      // Only top up once per week
-      if (user.ai_tokens_reset_date === weekStart) continue;
+          if (u.ai_tokens_reset_date === weekStart) { skippedAlreadyReset++; continue; }
 
-      const current = user.ai_tokens ?? 0;
+          const current = u.ai_tokens ?? 0;
+          if (current >= WEEKLY_FREE_COINS) { skippedAlreadyReset++; continue; }
 
-      // Only top up if below the weekly allowance — never reduce earned/purchased coins
-      if (current >= WEEKLY_FREE_COINS) continue;
-
-      try {
-        await base44.asServiceRole.entities.User.update(user.id, {
-          ai_tokens: WEEKLY_FREE_COINS,
-          ai_tokens_reset_date: weekStart,
-        });
-        resetCount++;
-        console.log(`✓ Weekly top-up ${user.id}: ${current} → ${WEEKLY_FREE_COINS} coins`);
-      } catch (updateError) {
-        console.error(`✗ Failed to top up user ${user.id}:`, updateError.message);
+          await base44.asServiceRole.entities.User.update(u.id, {
+            ai_tokens: WEEKLY_FREE_COINS,
+            ai_tokens_reset_date: weekStart,
+          });
+          tokensReset++;
+          console.log(`✓ Weekly top-up ${u.id}: ${current} → ${WEEKLY_FREE_COINS} coins`);
+        } catch (userErr) {
+          console.warn(`✗ Failed to top up user ${u.id}:`, userErr.message);
+        }
       }
+      console.log(`Processed batch ${page}: ${users.length} users`);
     }
 
-    console.log(`\n🔋 Weekly free-coin top-up complete: ${resetCount} users (week of ${weekStart})`);
+    console.log(`[resetDailyEnergyBars] Weekly top-up | Reset: ${tokensReset} | Skipped Premium: ${skippedPremium} | Skipped Already: ${skippedAlreadyReset} | Processed: ${usersProcessed} (week of ${weekStart})`);
 
     return Response.json({
       success: true,
       timestamp: now,
       week_start: weekStart,
-      usersResetCount: resetCount,
-      message: `Topped up ${resetCount} free users to ${WEEKLY_FREE_COINS} coins (week of ${weekStart})`,
+      tokens_reset: tokensReset,
+      skipped_premium: skippedPremium,
+      skipped_already_reset: skippedAlreadyReset,
+      total_processed: usersProcessed,
     });
   } catch (error) {
-    console.error('❌ Critical error in weekly token top-up:', error);
-    return Response.json(
-      { error: error.message, timestamp: new Date().toISOString() },
-      { status: 500 }
-    );
+    console.error('[resetDailyEnergyBars] Error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
-});
+}

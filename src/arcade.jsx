@@ -115,9 +115,9 @@ const Arcade = () => {
       case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'neon_drift': return <NeonDrift onUpdateScore={handleUpdateScore} />;
-      case 'crystal_crusher': return <CrystalCrusher onUpdateScore={handleUpdateScore} />;
-      case 'meteor_storm': return <MeteorStorm onUpdateScore={handleUpdateScore} />;
+      case 'neon_drift': return <NeonDrift onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'crystal_crusher': return <CrystalCrusher onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'meteor_storm': return <MeteorStorm onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       default: return <PlaceholderGame title="Unknown Terminal" description="Signal lost." />;
     }
   };

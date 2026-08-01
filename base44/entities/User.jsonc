@@ -62,8 +62,8 @@
     },
     "ai_tokens": {
       "type": "number",
-      "default": 30,
-      "description": "AI coin balance. 3 coins = 1 question or 1 scan. Free users get 30 coins/week (topped up weekly, not carried over). Purchased and earned coins carry over forever."
+      "default": 15,
+      "description": "AI coin balance. 3 coins = 1 question or 1 scan. Free users get 15 coins/week (5 questions), topped up weekly and not carried over. Purchased and earned coins carry over forever."
     },
     "ai_tokens_reset_date": {
       "type": "string",
@@ -87,7 +87,7 @@
     },
     "energy_bars": {
       "type": "number",
-      "default": 30,
+      "default": 15,
       "description": "Legacy field \u2014 kept for backward compat. ai_tokens is the single source of truth."
     },
     "purchased_energy": {
@@ -122,8 +122,8 @@
     },
     "ai_tokens_daily_limit": {
       "type": "number",
-      "default": 30,
-      "description": "Legacy field \u2014 weekly free-coin allowance (30). Kept for backward compat."
+      "default": 15,
+      "description": "Legacy field \u2014 weekly free-coin allowance (15). Kept for backward compat."
     }
   },
   "required": []

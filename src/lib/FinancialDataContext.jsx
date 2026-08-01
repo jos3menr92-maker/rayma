@@ -92,7 +92,7 @@ export function FinancialDataProvider({ children }) {
             setBankAccounts(d.bank_accounts || []);
             setDocuments(d.documents || []);
             setBudgetCategories(d.budget_categories || []);
-            setTransactionSplits([]);
+            setTransactionSplits(d.transaction_splits || []);
             setUserProfile(me);
           } catch (fallbackErr) {
             console.error("Fallback data load failed:", fallbackErr);

@@ -100,9 +100,20 @@ Deno.serve(async (req) => {
     // ===== invoice.paid — grant monthly coins on subscription renewal =====
     if (event.type === 'invoice.paid') {
       const invoice = event.data.object;
-      const userId = invoice.metadata?.user_id;
-      const purchaseType = invoice.metadata?.purchase_type;
       const billingReason = invoice.billing_reason; // 'subscription_create' | 'subscription_cycle' | ...
+      let userId = invoice.metadata?.user_id;
+      let purchaseType = invoice.metadata?.purchase_type;
+      // Stripe does not copy subscription metadata onto invoices — retrieve the
+      // subscription so renewal cycles still find user_id / purchase_type.
+      if ((!userId || !purchaseType) && invoice.subscription) {
+        try {
+          const sub = await stripe.subscriptions.retrieve(invoice.subscription);
+          userId = userId || sub.metadata?.user_id;
+          purchaseType = purchaseType || sub.metadata?.purchase_type;
+        } catch (e) {
+          console.warn('Failed to retrieve subscription metadata for invoice:', e.message);
+        }
+      }
 
       // Only grant on renewal cycles — initial grant already happened on checkout
       if (userId && purchaseType && billingReason === 'subscription_cycle' && POWER_TIER_CONFIG[purchaseType]) {
