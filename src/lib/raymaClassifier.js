@@ -127,22 +127,43 @@ export function freeAnswer(rawText, ctx = {}) {
     return T("freeBillsDue", `**Bills Due This Week** 📅\n\n${list}`);
   }
   if (/(monthly\s*(obligations|payments|bills)|how\s*much.*spend\s*(a\s*)?month)/.test(text)) {
+    // Normalize any payment frequency to a monthly equivalent.
+    const toMonthly = (amount, freq) => {
+      const a = Number(amount || 0);
+      switch (freq) {
+        case "weekly": return a * 4.333;
+        case "biweekly": return a * 2.167;
+        default: return a; // monthly
+      }
+    };
+
     const activeBills = (bills || []).filter((b) => b.is_active);
     const activeLoans = (loans || []).filter((l) => l.status !== "paid_off");
-    const monthlyBills = activeBills.reduce((s, b) => s + (b.amount || 0), 0);
-    const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
-    const total = monthlyBills + monthlyLoans;
 
     const billLines = activeBills.length
-      ? activeBills.map((b) => `  • ${b.name} — ${formatCurrency(b.amount)}${b.due_day ? ` (due day ${b.due_day})` : ""}`).join("\n")
+      ? activeBills.map((b) => {
+          const mo = toMonthly(b.amount, b.payment_frequency);
+          const freq = b.payment_frequency && b.payment_frequency !== "monthly" ? ` · ${b.payment_frequency}` : "";
+          const due = b.due_day ? ` (due day ${b.due_day})` : "";
+          return `  • ${b.name} — ${formatCurrency(mo)}/mo${freq}${due}`;
+        }).join("\n")
       : `  • ${T("freeNoBills", "No active bills logged.")}`;
+
     const loanLines = activeLoans.length
-      ? activeLoans.map((l) => `  • ${l.name} — ${formatCurrency(l.monthly_payment || 0)}/mo (balance ${formatCurrency(l.current_balance || 0)})`).join("\n")
+      ? activeLoans.map((l) => {
+          const mo = toMonthly(l.monthly_payment, l.payment_frequency);
+          const freq = l.payment_frequency && l.payment_frequency !== "monthly" ? ` · ${l.payment_frequency}` : "";
+          return `  • ${l.name} — ${formatCurrency(mo)}/mo${freq} (balance ${formatCurrency(l.current_balance || 0)})`;
+        }).join("\n")
       : `  • ${T("freeNoLoans", "No active loans.")}`;
+
+    const monthlyBills = activeBills.reduce((s, b) => s + toMonthly(b.amount, b.payment_frequency), 0);
+    const monthlyLoans = activeLoans.reduce((s, l) => s + toMonthly(l.monthly_payment, l.payment_frequency), 0);
+    const total = monthlyBills + monthlyLoans;
 
     return T(
       "freeMonthly",
-      `**${T("freeMonthlyTitle", "Monthly Obligations")}** 🧾\n\n**${T("freeMonthlyBills", "Bills")}** (${formatCurrency(monthlyBills)})\n${billLines}\n\n**${T("freeMonthlyLoans", "Loan payments")}** (${formatCurrency(monthlyLoans)})\n${loanLines}\n\n—\n**${T("freeMonthlyTotal", "Total monthly obligations")}: ${formatCurrency(total)}/mo**`
+      `**${T("freeMonthlyTitle", "Monthly Obligations")}** 🧾\n\n**${T("freeMonthlyBills", "Bills")}** — ${formatCurrency(monthlyBills)}/mo\n${billLines}\n\n**${T("freeMonthlyLoans", "Loan payments")}** — ${formatCurrency(monthlyLoans)}/mo\n${loanLines}\n\n—\n**${T("freeMonthlyTotal", "Total monthly obligations")}: ${formatCurrency(total)}/mo**`
     );
   }
 
