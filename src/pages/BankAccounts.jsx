@@ -47,6 +47,8 @@ export default function BankAccounts() {
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
+  const [showTxConfirm, setShowTxConfirm] = useState(false);
+  const [txToDelete, setTxToDelete] = useState(null);
 
   // Auto-open transaction modal when navigated with autoOpenLog state
   useEffect(() => {
@@ -89,6 +91,23 @@ export default function BankAccounts() {
     }
     setAccountToDelete(null);
     setShowConfirm(false);
+    reload();
+  };
+
+  const deleteTransaction = (tx) => {
+    setTxToDelete(tx);
+    setShowTxConfirm(true);
+  };
+
+  const confirmDeleteTx = async () => {
+    if (!txToDelete) return;
+    try {
+      await deleteRecord('transactions', txToDelete.id);
+    } catch (err) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
+    }
+    setTxToDelete(null);
+    setShowTxConfirm(false);
     reload();
   };
 
@@ -242,6 +261,13 @@ export default function BankAccounts() {
                   >
                     <SplitSquareHorizontal className="w-3.5 h-3.5" />
                   </button>
+                  <button
+                    onClick={() => deleteTransaction(tx)}
+                    className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                    title={T("deleteTransaction", "Delete Transaction")}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                   <p className={`font-semibold text-sm ${tx.amount >= 0 ? "text-primary" : "text-destructive"}`}>
                     {tx.amount >= 0 ? "+" : ""}{fmt(tx.amount)}
                   </p>
@@ -309,6 +335,17 @@ export default function BankAccounts() {
         cancelLabel={T("cancel", "Cancel")}
         destructive
         onConfirm={confirmDelete}
+      />
+
+      <ConfirmDialog
+        open={showTxConfirm}
+        onOpenChange={setShowTxConfirm}
+        title={T("deleteTransaction", "Delete Transaction")}
+        description={T("deleteTransactionConfirmSimple", "Are you sure you want to delete this transaction? This cannot be undone.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={confirmDeleteTx}
       />
     </div>
   );
