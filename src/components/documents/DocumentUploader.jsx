@@ -18,7 +18,7 @@ export default function DocumentUploader({ onDocumentScanned }) {
   const [uploading, setUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const { supaUser } = useFinancialData();
+  const { supaUser, userProfile } = useFinancialData();
   const { toast } = useToast();
 
   async function processFile(rawFile) {
@@ -27,6 +27,14 @@ export default function DocumentUploader({ onDocumentScanned }) {
     // Validate file size
     if (rawFile.size > MAX_FILE_SIZE) {
       toast({ title: T("uploadFailed", "Upload failed"), description: T("fileTooLarge", "File too large (max 10MB). Try a smaller photo."), variant: "destructive" });
+      return;
+    }
+
+    // 🪙 Coin gate — 3 coins per scan (unlimited & annual-pass users skip)
+    const isUnlimited = userProfile?.subscription_type === 'power_unlimited'
+      || (userProfile?.annual_pass_expires_at && new Date(String(userProfile.annual_pass_expires_at).includes('T') ? userProfile.annual_pass_expires_at : `${userProfile.annual_pass_expires_at}T23:59:59Z`) > new Date());
+    if (!isUnlimited && (userProfile?.ai_tokens ?? 0) < 3) {
+      toast({ title: T("outOfCoins", "Out of coins"), description: T("needCoinsScan", "You need 3 coins to scan a document. Earn coins in the Arcade or visit the Store."), variant: "destructive" });
       return;
     }
 
@@ -114,6 +122,14 @@ Today's date: ${today}`,
         notes: analysis.rayma_message || analysis.summary,
         scan_date: today,
       });
+      // 🪙 Deduct 3 coins for the scan (best-effort; unlimited users skip)
+      if (!isUnlimited) {
+        try {
+          const me = await base44.auth.me();
+          const remaining = (me?.ai_tokens ?? 0) - 3;
+          if (remaining >= 0) await base44.auth.updateMe({ ai_tokens: remaining });
+        } catch (e) { console.warn('Scan coin deduction failed:', e.message); }
+      }
       onDocumentScanned({ ...doc, _analysis: analysis });
     } catch (err) {
       console.error('Document upload failed:', err);

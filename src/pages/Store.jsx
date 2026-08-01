@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Battery, BatteryCharging, Zap, Gamepad2, CheckCircle2, Loader2, Gift } from "lucide-react";
+import { Battery, BatteryCharging, Zap, Gamepad2, Crown, CheckCircle2, Loader2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/LanguageContext";
@@ -49,8 +49,8 @@ export default function Store() {
   const PLANS = [
     {
       id: "power_insert_coin",
-      label: T("insertCoin", "Insert Coin (Instant Charge)"),
-      desc: T("insertCoinDesc", "Instantly adds +100 Energy Bars to your battery. No subscription — a one-time top-up."),
+      label: T("insertCoin", "Insert Coin"),
+      desc: T("insertCoinDesc", "+30 coins (10 questions). One-time top-up — coins never expire."),
       icon: <Zap className="w-5 h-5 text-amber-500" />,
       color: "border-border",
       isSubscription: false,
@@ -59,8 +59,8 @@ export default function Store() {
     },
     {
       id: "power_lithium",
-      label: T("lithiumUpgrade", "Lithium Upgrade"),
-      desc: T("lithiumDesc", "Upgrades your daily capacity to 50 Energy Bars / day."),
+      label: T("lithiumUpgrade", "Lithium"),
+      desc: T("lithiumDesc", "+120 coins (40 questions) every month. Coins carry over."),
       icon: <BatteryCharging className="w-5 h-5 text-blue-500" />,
       color: "border-blue-500",
       badge: T("popular", "POPULAR"),
@@ -73,8 +73,8 @@ export default function Store() {
     },
     {
       id: "power_generator",
-      label: T("arcadeGenerator", "Arcade Generator"),
-      desc: T("generatorDesc", "200 Energy Bars / day + a Gold Sponsor Badge showing your support."),
+      label: T("arcadeGenerator", "Generator"),
+      desc: T("generatorDesc", "+240 coins (80 questions) every month + Gold Sponsor Badge."),
       icon: <Gamepad2 className="w-5 h-5 text-primary" />,
       color: "border-primary",
       badge: T("sponsorTier", "SPONSOR TIER"),
@@ -84,6 +84,20 @@ export default function Store() {
       annualId: "power_generator_annual",
       annualPrice: "$135.99 / yr",
       annualSavings: T("save33", "Save 33%"),
+    },
+    {
+      id: "power_unlimited",
+      label: T("unlimitedTier", "Unlimited"),
+      desc: T("unlimitedDesc", "Unlimited AI questions & scans. No coin counting — ever."),
+      icon: <Crown className="w-5 h-5 text-amber-500" />,
+      color: "border-amber-500",
+      badge: T("noBrainer", "NO BRAINER"),
+      isSubscription: true,
+      monthlyId: "power_unlimited_monthly",
+      monthlyPrice: "$34.99 / mo",
+      annualId: "power_unlimited_annual",
+      annualPrice: "$299.99 / yr",
+      annualSavings: T("save29", "Save 29%"),
     },
   ];
 
@@ -204,7 +218,7 @@ export default function Store() {
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("batteryStatus", "Battery Status")}</p>
                 <p className="text-sm font-bold font-heading text-foreground">
-                  {energy.isUnlimited ? "∞ Unlimited" : `${energy.tokens} / ${energy.max}`}
+                  {energy.isUnlimited ? "∞ Unlimited" : `${energy.tokens} ${T("coins", "coins")}`}
                 </p>
               </div>
             </div>

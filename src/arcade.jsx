@@ -101,7 +101,9 @@ const Arcade = () => {
   };
 
   const hasGameAccess = userProfile?.subscription_tier === 'power_generator'
+    || userProfile?.subscription_tier === 'power_unlimited'
     || userProfile?.subscription_type === 'power_generator'
+    || userProfile?.subscription_type === 'power_unlimited'
     || (userProfile?.game_access_expires_at && new Date(userProfile.game_access_expires_at) > new Date());
 
   const renderActiveGame = () => {

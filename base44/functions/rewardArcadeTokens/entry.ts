@@ -13,12 +13,12 @@ Deno.serve(async (req) => {
     const { gameId, level } = body;
 
     if (!level || level < 5) {
-      return Response.json({ success: false, message: "Reach Level 5 to earn your first Energy Bars!" }, { status: 400 });
+      return Response.json({ success: false, message: "Reach Level 5 to earn your first coins!" }, { status: 400 });
     }
 
     // 2 Energy Bars per 5-level milestone (Level 5 = 2, Level 10 = 4, etc.)
     const milestones = Math.floor(level / 5);
-    const rewardAmount = milestones * 2;
+    const rewardAmount = milestones * 3;
     // IMPORTANT: the battery + "free tokens" both display ai_tokens (NOT energy_bars).
     // The daily reset only refills ai_tokens up to 10 when below 10, so earned tokens
     // above the daily cap persist until spent.
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       rewardGranted: true,
       rewardAmount,
       milestones,
-      message: `Congratulations! You reached Level ${level} in ${gameId} and earned ${rewardAmount} Energy Bars!`
+      message: `Congratulations! You reached Level ${level} in ${gameId} and earned ${rewardAmount} coins!`
     });
 
   } catch (error) {

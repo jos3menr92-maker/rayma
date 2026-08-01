@@ -443,7 +443,7 @@ export default function RaymaChat({
     // 🔋 Deduct 1 token for this AI consultation — the single "Battery" field.
     try {
       const meNow = await base44.auth.me();
-      const remaining = (meNow?.ai_tokens ?? 0) - 1;
+      const remaining = (meNow?.ai_tokens ?? 0) - 3;
       if (remaining >= 0) {
         await base44.auth.updateMe({ ai_tokens: remaining });
         refreshUserProfile?.();

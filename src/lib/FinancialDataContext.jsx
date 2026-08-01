@@ -6,26 +6,17 @@ import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);
 
-// 🔋 Daily token self-heal — guarantees free users start each day with their full
-// allowance (and brand-new accounts get initialized) even if the midnight cron
-// didn't run. Mirrors resetFreeUserEnergyBars. Returns updated fields or null.
-async function ensureDailyTokens(me) {
+// 🪙 One-time coin grant — brand-new accounts start with 30 coins (10 questions).
+// No daily/weekly refill here; the weekly cron tops up free users to 30. Purchased
+// and earned coins carry over, so we only ever initialize a null balance once.
+async function ensureInitialCoins(me) {
   if (!me) return null;
-  const annualActive = me.annual_pass_expires_at
-    ? new Date(String(me.annual_pass_expires_at).includes('T') ? me.annual_pass_expires_at : `${me.annual_pass_expires_at}T23:59:59Z`) > new Date()
-    : false;
-  const isFreeTier = !annualActive && me.subscription_type !== 'power_lithium' && me.subscription_type !== 'power_generator';
-  if (!isFreeTier) return null;
-  const today = new Date().toISOString().split('T')[0];
-  const limit = me.ai_tokens_daily_limit || 10;
-  const tokens = me.ai_tokens;
-  const resetDate = me.ai_tokens_reset_date;
-  if (tokens == null || (tokens < limit && resetDate !== today)) {
+  if (me.ai_tokens == null) {
     try {
-      await base44.auth.updateMe({ ai_tokens: limit, ai_tokens_reset_date: today });
-      return { ai_tokens: limit, ai_tokens_reset_date: today };
+      await base44.auth.updateMe({ ai_tokens: 30 });
+      return { ai_tokens: 30 };
     } catch (e) {
-      console.warn('Token self-heal failed:', e.message);
+      console.warn('Initial coin grant failed:', e.message);
       return null;
     }
   }
@@ -71,9 +62,8 @@ export function FinancialDataProvider({ children }) {
         supabase.auth.getSession()
       ]);
 
-      // 🔋 Daily token self-heal (see ensureDailyTokens) — initialize new accounts
-      // and refill free users' daily allowance so the AI works on first login.
-      const tokenHeal = await ensureDailyTokens(meRaw);
+      // 🪙 One-time initial coin grant for brand-new accounts (see ensureInitialCoins)
+      const tokenHeal = await ensureInitialCoins(meRaw);
       const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
 
       const currentSupaUser = session?.user || null;
@@ -233,7 +223,7 @@ export function FinancialDataProvider({ children }) {
         base44.auth.me().catch(() => null),
         supabase.auth.getSession()
       ]);
-      const tokenHeal = await ensureDailyTokens(meRaw);
+      const tokenHeal = await ensureInitialCoins(meRaw);
       const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
       const uid = session?.user?.id;
       let supaProfile = {};

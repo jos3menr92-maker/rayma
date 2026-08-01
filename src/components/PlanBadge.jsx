@@ -2,6 +2,12 @@ import { Zap, BatteryCharging, Gamepad2, Battery } from "lucide-react";
 import { useT } from "@/lib/LanguageContext";
 
 const TIER_CONFIG = {
+  power_unlimited: {
+    labelKey: "tierUnlimited",
+    labelFallback: "Unlimited",
+    icon: Zap,
+    classes: "bg-amber-500/15 text-amber-600 border-amber-500/40 dark:text-amber-400",
+  },
   power_generator: {
     labelKey: "tierSponsor",
     labelFallback: "Sponsor",

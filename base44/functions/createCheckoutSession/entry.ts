@@ -16,11 +16,13 @@ import Stripe from 'npm:stripe@14.21.0';
  */
 
 const PRICE_IDS = {
-  power_insert_coin:       { price: 'price_1Tyg6YIer8UHtVVls17tvIB2', mode: 'payment'       },
-  power_lithium_monthly:   { price: 'price_1Tyg6YIer8UHtVVldvSNEBUg', mode: 'subscription' },
-  power_lithium_annual:    { price: 'price_1Tyg6YIer8UHtVVlnCzDVSUm', mode: 'subscription' },
-  power_generator_monthly: { price: 'price_1Tyg6YIer8UHtVVl3Kv0r0AP', mode: 'subscription' },
-  power_generator_annual:  { price: 'price_1Tyg6YIer8UHtVVlXkG95Bou', mode: 'subscription' },
+  power_insert_coin:        { price: 'price_1Tyg6YIer8UHtVVls17tvIB2', mode: 'payment'       },
+  power_lithium_monthly:    { price: 'price_1Tyg6YIer8UHtVVldvSNEBUg', mode: 'subscription' },
+  power_lithium_annual:     { price: 'price_1Tyg6YIer8UHtVVlnCzDVSUm', mode: 'subscription' },
+  power_generator_monthly:  { price: 'price_1Tyg6YIer8UHtVVl3Kv0r0AP', mode: 'subscription' },
+  power_generator_annual:   { price: 'price_1Tyg6YIer8UHtVVlXkG95Bou', mode: 'subscription' },
+  power_unlimited_monthly:  { price: 'price_1TzWroIer8UHtVVl17l34MTM', mode: 'subscription' },
+  power_unlimited_annual:   { price: 'price_1TzWroIer8UHtVVlV7WjbzTX', mode: 'subscription' },
 };
 
 Deno.serve(async (req) => {

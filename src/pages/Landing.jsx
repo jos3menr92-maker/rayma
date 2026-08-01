@@ -65,7 +65,7 @@ export default function Landing() {
 
   // 🌍 MOVED: FAQs with translation keys
   const faqs = [
-    { qKey: "faq1Q", q: "Is Rayma AI free?", aKey: "faq1A", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. Rayma AI gives you 5 free consultations every month. Buy token packs if you need more, or get the Annual Pass for unlimited AI." },
+    { qKey: "faq1Q", q: "Is Rayma AI free?", aKey: "faq1A", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. You get 30 coins (10 questions) free every week. Play games in the Arcade to earn more coins, buy an Insert Coin pack for a one-time boost, or subscribe to Lithium / Generator / Unlimited for monthly coins or unlimited access." },
     { qKey: "faq2Q", q: "Does Rayma AI connect to my bank?", aKey: "faq2A", a: "No. Rayma AI is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
     { qKey: "faq3Q", q: "Is my data private?", aKey: "faq3A", a: "Absolutely. Every record is privately scoped to your account with row-level security. We never sell or share your data." },
     { qKey: "faq4Q", q: "What platforms does Rayma AI work on?", aKey: "faq4A", a: "Rayma AI works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
@@ -201,12 +201,12 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold font-heading text-foreground mb-3">{T("simplePricing", "Simple, honest pricing")}</h2>
           <p className="text-muted-foreground mb-10">{T("pricingDesc", "No hidden fees. Core features are free forever — pay only for extra AI consultations if you need them.")}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
             {/* Free */}
             <div className="bg-card border border-border rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{T("freePlan", "Free Forever")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$0</p>
-              <p className="text-xs text-muted-foreground mb-4">{T("freeIncluded", "5 AI consults/month included")}</p>
+              <p className="text-xs text-muted-foreground mb-4">{T("freeIncluded", "10 questions / week")}</p>
               {[T("featureLoans", "Loans & debt tracking"), T("featureBills", "Bills & calendar"), T("featureBudget", "Budget categories"), T("featureNetWorth", "Net worth tracking"), T("featureDocuments", "Document vault"), T("featureAIFree", "5 free AI queries/mo")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
@@ -217,8 +217,8 @@ export default function Landing() {
             <div className="bg-card border border-border rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{T("insertCoin", "Insert Coin")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$2.99</p>
-              <p className="text-xs text-muted-foreground mb-4">{T("oneTimeInstantEnergy", "One-time · Instant Energy")}</p>
-              {[T("featureInstantEnergy", "Instant energy boost"), T("featureAnytime", "Use anytime"), T("featureNoExpiry", "No expiry"), T("featureOccasional", "Great for occasional use")].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">{T("oneTimeInstantEnergy", "One-time · 30 coins (10 questions)")}</p>
+              {[T("featureInstantEnergy", "+30 coins (10 questions)"), T("featureAnytime", "Use anytime"), T("featureNoExpiry", "Coins never expire"), T("featureOccasional", "Great for occasional use")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
@@ -229,8 +229,8 @@ export default function Landing() {
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">{T("popular", "POPULAR")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("lithium", "Lithium")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$8.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$8.99/mo or $74.99/year · 50 daily energy bars")}</p>
-              {[T("feature50DailyEnergy", "50 daily energy bars"), T("featureMonthly", "Billed monthly"), T("featureAnnual", "or $74.99/year"), T("featureBestValue", "Best per-token value")].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$8.99/mo or $74.99/year · 120 coins/mo (40 q)")}</p>
+              {[T("feature50DailyEnergy", "120 coins / month (40 q)"), T("featureMonthly", "Billed monthly"), T("featureAnnual", "or $74.99/year"), T("featureBestValue", "Best per-question value")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>
@@ -241,10 +241,22 @@ export default function Landing() {
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-0.5 rounded-full">{T("bestValue", "BEST VALUE")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">{T("generator", "Generator")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$16.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$16.99/mo or $135.99/year · 200 daily energy bars")}</p>
-              {[T("feature200DailyEnergy", "200 daily energy bars"), T("featureAllFeatures", "All future features"), T("featurePriority", "Priority experience"), T("featureAnnualGen", "or $135.99/year")].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$16.99/mo or $135.99/year · 240 coins/mo (80 q)")}</p>
+              {[T("feature200DailyEnergy", "240 coins / month (80 q)"), T("featureAllFeatures", "Sponsor games unlocked"), T("featurePriority", "Priority experience"), T("featureAnnualGen", "or $135.99/year")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
+                </div>
+              ))}
+            </div>
+            {/* Unlimited */}
+            <div className="bg-gradient-to-br from-amber-50 to-primary/5 dark:from-amber-950/20 border-2 border-amber-400 rounded-2xl p-5 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">{T("noBrainer", "NO BRAINER")}</div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("tierUnlimited", "Unlimited")}</p>
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$34.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs text-muted-foreground mb-4">{T("unlimitedDesc", "Unlimited AI questions & scans. No coin counting.")}</p>
+              {[T("featureUnlimitedQ", "Unlimited questions"), T("featureUnlimitedScan", "Unlimited scans"), T("featureAllGames", "All games unlocked"), T("featureAnnualUnl", "or $299.99/year")].map(f => (
+                <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>
               ))}
             </div>

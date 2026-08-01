@@ -35,6 +35,14 @@ export const TIER = {
     nub: "bg-primary",
     chip: "border-primary/40 bg-primary/5 hover:bg-primary/10",
   },
+  power_unlimited: {
+    wordKey: "tierUnlimited",
+    wordFallback: "Unlimited",
+    fill: "bg-gradient-to-r from-amber-400 to-primary",
+    body: "border-amber-500",
+    nub: "bg-amber-500",
+    chip: "border-amber-500/40 bg-amber-500/5 hover:bg-amber-500/10",
+  },
 };
 
 const SIZE = {
@@ -51,12 +59,11 @@ export function getEnergyState(userProfile) {
     const d = String(exp).includes("T") ? exp : `${exp}T23:59:59Z`;
     isPremiumPass = new Date(d) > new Date();
   }
-  const isUnlimited = sub === "power_generator" || isPremiumPass;
+  const isUnlimited = sub === "power_unlimited" || isPremiumPass;
   const tokens = userProfile?.ai_tokens ?? 0;
-  const max = userProfile?.ai_tokens_daily_limit || 10;
-  const pct = isUnlimited ? 100 : Math.max(0, Math.min(100, (tokens / max) * 100));
-  const isLow = !isUnlimited && tokens <= 2;
-  return { sub, isUnlimited, tokens, max, pct, isLow };
+  const pct = isUnlimited ? 100 : Math.min(100, (tokens / 30) * 100);
+  const isLow = !isUnlimited && tokens <= 3;
+  return { sub, isUnlimited, tokens, pct, isLow };
 }
 
 export default function MembershipBattery({ userProfile, size = "md" }) {
