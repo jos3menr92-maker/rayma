@@ -18,6 +18,7 @@ import { useLanguage, useT } from "@/lib/LanguageContext";
 import { LANGUAGES } from "@/lib/i18n";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
+import MembershipBattery, { getEnergyState } from "@/components/MembershipBattery";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -59,6 +60,7 @@ export default function Profile() {
   const fileInputRef = useRef(null);
   
   const { userProfile, supaUser, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
+  const energy = getEnergyState(userProfile);
   
   const [saving, setSaving] = useState(false); 
   const [saved, setSaved] = useState(false); 
@@ -319,17 +321,17 @@ export default function Profile() {
           {/* Subscription Hub */}
           <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-6 mb-6">
             <SectionHeader icon={Sparkles} title={T("currentPlan", "Current Plan")} subtitle={T("manageSubscription", "Manage your AI access and billing")} />
-            <div className="flex items-center justify-between mt-4">
-              <div>
-                <p className="text-2xl font-bold font-heading text-foreground uppercase">
-                  {userProfile?.subscription_type || "FREE"}
+            <div className="flex items-center justify-between mt-4 gap-3">
+              <div className="flex flex-col gap-2">
+                <MembershipBattery userProfile={userProfile} size="lg" />
+                <p className="text-xs text-muted-foreground">
+                  {energy.isUnlimited
+                    ? `∞ ${T("unlimitedAccess", "Unlimited access")}`
+                    : `${energy.tokens} ${T("coins", "coins")} · 3 ${T("coinsPerQuery", "coins per query")}`}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {T("dailyTokens", "Daily Tokens")}: {userProfile?.ai_tokens_daily_limit || 10}
-                </p>
-                <p className="text-[10px] text-amber-500 font-semibold mt-1.5">⚡ {T("earnMoreArcade", "Play in the Arcade to earn extra tokens!")}</p>
+                <p className="text-[10px] text-amber-500 font-semibold">🪙 {T("earnMoreCoinsArcade", "Play in the Arcade to earn extra coins!")}</p>
               </div>
-              <Button type="button" onClick={() => navigate("/store")} className="rounded-xl shadow-sm">
+              <Button type="button" onClick={() => navigate("/store")} className="rounded-xl shadow-sm shrink-0">
                 {T("upgradeManage", "Manage Plan")}
               </Button>
             </div>
@@ -499,7 +501,7 @@ export default function Profile() {
               className="text-muted-foreground/30 hover:text-primary/60 transition-colors flex items-center gap-2 text-xs font-mono"
             >
               <Gamepad2 className="w-4 h-4" />
-              {T("playToWin", "PLAY TO WIN TOKENS")}
+              {T("playToWinCoins", "PLAY TO WIN COINS")}
             </button>
           </div>
         </form>
