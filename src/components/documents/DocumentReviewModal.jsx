@@ -13,6 +13,25 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useDisplayUrl } from "@/hooks/useDisplayUrl";
 
+// Map the AI's free-text category (and common merchant keywords) onto the
+// Transaction category enum so scanned receipts feed Merchant Insights.
+const TX_CATEGORIES = ["income", "food", "transport", "utilities", "subscriptions", "health", "insurance", "rent", "loan_payment", "savings", "entertainment", "shopping", "other"];
+function normalizeTxCategory(raw) {
+  if (!raw) return "other";
+  const c = String(raw).toLowerCase();
+  if (TX_CATEGORIES.includes(c)) return c;
+  if (/(food|grocer|restaurant|coffee|meal|snack|bakery|market)/.test(c)) return "food";
+  if (/(transport|gas|fuel|uber|lyft|taxi|parking|transit|car|auto)/.test(c)) return "transport";
+  if (/(util|electric|water|internet|phone|wifi|broadband)/.test(c)) return "utilities";
+  if (/(subscription|netflix|spotify|disney|hulu|prime|audible)/.test(c)) return "subscriptions";
+  if (/(health|medical|pharmacy|dental|doctor|clinic|hospital)/.test(c)) return "health";
+  if (/(insur)/.test(c)) return "insurance";
+  if (/(rent)/.test(c)) return "rent";
+  if (/(entertain|movie|cinema|game|concert|theatre)/.test(c)) return "entertainment";
+  if (/(shop|retail|store|amazon|walmart|target|purchase|clothing|apparel|mall)/.test(c)) return "shopping";
+  return "other";
+}
+
 export default function DocumentReviewModal({ doc, analysis, loans, bills, onClose, onDone }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -39,23 +58,24 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
       // Guarantee the Supabase session is alive so writes use the free path
       await ensureSupabaseSession();
 
-      if (folder === "payments" && fields.amount && fields.date) {
-        const matchedLoan = loans.find(l =>
-          fields.payee && l.name?.toLowerCase().includes(fields.payee?.toLowerCase())
-        ) || loans[0];
-        if (matchedLoan) {
-          const payment = await createRecord("payments", {
-            loan_id: matchedLoan.id,
-            amount: parseFloat(fields.amount),
-            payment_date: fields.date,
-            note: `Auto-logged from document: ${doc.file_name}`,
-          });
-          await updateRecord("loans", matchedLoan.id, {
-            current_balance: Math.max((matchedLoan.current_balance || 0) - parseFloat(fields.amount), 0)
+      if (folder === "payments" && fields.amount != null && fields.date) {
+        // A scanned receipt is an expense — log it as a Transaction so it shows
+        // up in Recent Transactions and Merchant Insights (which both read the
+        // transactions table). Previously this matched a loan and logged a loan
+        // payment, so non-loan receipts were never logged anywhere.
+        const amount = parseFloat(fields.amount);
+        if (!isNaN(amount)) {
+          const tx = await createRecord("transactions", {
+            date: fields.date,
+            description: fields.description || fields.payee || T("scannedReceipt", "Scanned receipt"),
+            amount: -Math.abs(amount),
+            category: normalizeTxCategory(fields.category),
+            type: "debit",
+            notes: `Auto-logged from document: ${doc.file_name}`,
           });
           await updateRecord("documents", doc.id, {
             status: "logged", folder, extracted_data: fields,
-            logged_entity_type: "payment", logged_entity_id: payment?.id
+            logged_entity_type: "transaction", logged_entity_id: tx?.id
           });
         } else {
           await updateRecord("documents", doc.id, { status: "approved", folder, extracted_data: fields });
