@@ -10,22 +10,20 @@
 
 // Quick-reply chips shown at the top of Rayma Chat.
 export const CHIPS = [
-  // Identity (free)
-  { id: "name", labelKey: "chipName", fallback: "What's your name?", tier: "free", text: "what's your name" },
-  { id: "canDo", labelKey: "chipCanDo", fallback: "What can you do?", tier: "free", text: "what can you do" },
-  // How-to (free)
-  { id: "addLoan", labelKey: "chipAddLoan", fallback: "Add a loan?", tier: "free", text: "how do i add a loan" },
-  { id: "logPayment", labelKey: "chipLogPayment", fallback: "Log a payment?", tier: "free", text: "how do i log a payment" },
-  { id: "scanReceipt", labelKey: "chipScanReceipt", fallback: "Scan a receipt?", tier: "free", text: "how do i scan a receipt" },
-  { id: "setBudget", labelKey: "chipSetBudget", fallback: "Set a budget?", tier: "free", text: "how do i set a budget" },
-  // Financial lookups — pure app math (free)
-  { id: "netWorth", labelKey: "chipNetWorth", fallback: "My net worth?", tier: "free", text: "what's my net worth" },
-  { id: "totalDebt", labelKey: "chipTotalDebt", fallback: "How much do I owe?", tier: "free", text: "how much do i owe" },
-  { id: "billsDue", labelKey: "chipBillsDue", fallback: "Bills due this week?", tier: "free", text: "what bills are due this week" },
-  { id: "monthly", labelKey: "chipMonthly", fallback: "Monthly obligations?", tier: "free", text: "what are my monthly obligations" },
-  // Financial advice — needs AI (paid)
-  { id: "cashFlow", labelKey: "chipCashFlow", fallback: "Improve cash flow", tier: "paid", text: "how can i improve my cash flow" },
-  { id: "saveMoney", labelKey: "chipSaveMoney", fallback: "Save more money", tier: "paid", text: "how do i save more money" },
+  // 🟢 Row 1 — Free silent lookups (local math, 0 credits)
+  { id: "who", labelKey: "chipWhoRayma", fallback: "Who is Rayma?", tier: "free", text: "who is rayma" },
+  { id: "netWorth", labelKey: "chipNetWorth", fallback: "Current net worth?", tier: "free", text: "current net worth" },
+  { id: "totalDebt", labelKey: "chipTotalDebt", fallback: "Total debt balance?", tier: "free", text: "total debt balance" },
+  { id: "upcomingBills", labelKey: "chipUpcomingBills", fallback: "Upcoming bills?", tier: "free", text: "upcoming bills" },
+  { id: "burnRate", labelKey: "chipBurnRate", fallback: "My monthly burn rate?", tier: "free", text: "my monthly burn rate" },
+  { id: "recentSpending", labelKey: "chipRecentSpending", fallback: "Recent spending?", tier: "free", text: "recent spending" },
+  // 🔴 Row 2 — Paid AI advisor questions (3 credits)
+  { id: "cashFlow", labelKey: "chipCashFlow", fallback: "Analyze my cash flow", tier: "paid", text: "analyze my cash flow" },
+  { id: "cutBack", labelKey: "chipCutBack", fallback: "Where can I cut back?", tier: "paid", text: "where can i cut back" },
+  { id: "debtPayoff", labelKey: "chipDebtPayoff", fallback: "Debt payoff strategy", tier: "paid", text: "debt payoff strategy" },
+  { id: "savingEnough", labelKey: "chipSavingEnough", fallback: "Am I saving enough?", tier: "paid", text: "am i saving enough" },
+  { id: "budgetPlan", labelKey: "chipBudgetPlan", fallback: "Build a budget plan", tier: "paid", text: "build a budget plan" },
+  { id: "scan", labelKey: "chipScanReceipt", fallback: "Scan a receipt", tier: "paid", text: "scan a receipt" },
 ];
 
 function billsDueWithinDays(bills, days) {
@@ -57,11 +55,12 @@ export function freeAnswer(rawText, ctx = {}) {
     loans = [],
     bills = [],
     assets = [],
+    transactions = [],
     T = (_k, f) => f,
   } = ctx;
 
   // --- Identity ---
-  if (/(what(?:'s| is)\s*(your|ur)\s*name)|who\s*(are|r)\s*you|your\s*name/.test(text)) {
+  if (/(what(?:'s| is)\s*(your|ur)\s*name)|who\s*(are|r)\s*you|who\s*is\s*rayma|your\s*name/.test(text)) {
     return T(
       "freeName",
       "I'm **Rayma AI**, your personal financial co-pilot. 🤖\n\nI help you track loans, bills, budgets, and net worth — and I can log transactions, analyze your cash flow, and suggest your best next step. Ask me anything about your money!"
@@ -126,7 +125,7 @@ export function freeAnswer(rawText, ctx = {}) {
     const list = due.map((b) => `• ${b.name} — ${formatCurrency(b.amount)}`).join("\n");
     return T("freeBillsDue", `**Bills Due This Week** 📅\n\n${list}`);
   }
-  if (/(monthly\s*(obligations|payments|bills)|how\s*much.*spend\s*(a\s*)?month)/.test(text)) {
+  if (/(burn\s*rate|monthly\s*burn|monthly\s*(obligations|payments|bills)|how\s*much.*spend\s*(a\s*)?month)/.test(text)) {
     // Normalize any payment frequency to a monthly equivalent.
     const toMonthly = (amount, freq) => {
       const a = Number(amount || 0);
@@ -162,9 +161,20 @@ export function freeAnswer(rawText, ctx = {}) {
     const total = monthlyBills + monthlyLoans;
 
     return T(
-      "freeMonthlyObligations",
-      `**${T("freeMonthlyTitle", "Monthly Obligations")}** 🧾\n\n**${T("freeMonthlyBills", "Bills")}** — ${formatCurrency(monthlyBills)}/mo\n${billLines}\n\n**${T("freeMonthlyLoans", "Loan payments")}** — ${formatCurrency(monthlyLoans)}/mo\n${loanLines}\n\n—\n**${T("freeMonthlyTotal", "Total monthly obligations")}: ${formatCurrency(total)}/mo**`
+      "freeBurnRate",
+      `**${T("freeBurnTitle", "Monthly Burn Rate")}** 🔥\n\n**${T("freeMonthlyBills", "Bills")}** — ${formatCurrency(monthlyBills)}/mo\n${billLines}\n\n**${T("freeMonthlyLoans", "Loan payments")}** — ${formatCurrency(monthlyLoans)}/mo\n${loanLines}\n\n—\n**${T("freeBurnTotal", "Your fixed monthly survival number")}: ${formatCurrency(total)}/mo**`
     );
+  }
+
+  if (/(recent\s*spending|recent\s*transactions|last\s*transactions|my\s*spending)/.test(text)) {
+    const recent = (transactions || []).slice(0, 5);
+    if (!recent.length) {
+      return T("freeRecentNone", "No transactions logged yet. Use **Quick Add → Log Transaction** to record spending, and I'll summarize it here.");
+    }
+    const list = recent
+      .map((t) => `  • ${t.description || "—"} — ${formatCurrency(Math.abs(t.amount || 0))}${t.date ? ` · ${t.date}` : ""}`)
+      .join("\n");
+    return T("freeRecentSpending", `**Recent Spending** 💸\n\n${list}`);
   }
 
   return null;

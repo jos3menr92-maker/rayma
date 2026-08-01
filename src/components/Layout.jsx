@@ -68,6 +68,7 @@ export default function Layout() {
     payments = [], // Ready for the calendar/transactions
     assets = [], // Ready for net worth
     savingsGoals = [], // Ready for the Savings Vault
+    transactions = [], // Ready for recent-spending lookup
     userProfile
   } = useFinancialData();
 
@@ -216,6 +217,7 @@ export default function Layout() {
         payments={payments} // <-- NEW: Transaction History
         assets={assets} // <-- NEW: Net Worth Tracking
         savingsGoals={savingsGoals} // <-- NEW: Savings Vault
+        transactions={transactions} // <-- NEW: Recent spending lookup
         userProfile={userProfile}
         currentPage={location.pathname} // <-- NEW: Page Awareness / Context
       />
