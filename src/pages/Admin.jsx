@@ -21,12 +21,12 @@ export default function Admin() {
   const [recentFeedback, setRecentFeedback] = useState([]);
   const [newCode, setNewCode] = useState("");
   const [rewardType, setRewardType] = useState("tokens");
-  const [rewardValue, setRewardValue] = useState(100);
+  const [rewardValue, setRewardValue] = useState(30);
   const [maxUses, setMaxUses] = useState("");
   const [codeMode, setCodeMode] = useState("promo"); // "promo" | "diagnostic"
   const [generatedCode, setGeneratedCode] = useState(null);
   const [grantEmail, setGrantEmail] = useState("");
-  const [grantAmount, setGrantAmount] = useState(100);
+  const [grantAmount, setGrantAmount] = useState(30);
   const [grantLoading, setGrantLoading] = useState(false);
   const [grantMsg, setGrantMsg] = useState(null);
 
@@ -151,7 +151,7 @@ export default function Admin() {
           redeemed_by: []
         });
         setNewCode("");
-        setRewardValue(100);
+        setRewardValue(30);
         setMaxUses("");
         loadData();
       } catch (error) {
@@ -174,13 +174,13 @@ export default function Admin() {
       }
       const next = (target.ai_tokens || 0) + Number(grantAmount || 0);
       await base44.entities.User.update(target.id, { ai_tokens: next });
-      const msg = T("grantSuccess", "Granted {amount} tokens to {email} (now {total}).")
+      const msg = T("grantCoinsSuccess", "Granted {amount} coins to {email} (now {total}).")
         .replace("{amount}", grantAmount).replace("{email}", target.email).replace("{total}", next);
       setGrantMsg({ type: "success", text: msg });
       setGrantEmail("");
       loadData();
     } catch (error) {
-      setGrantMsg({ type: "error", text: error.message || T("grantFailed", "Failed to grant tokens.") });
+      setGrantMsg({ type: "error", text: error.message || T("grantCoinsFailed", "Failed to grant coins.") });
     } finally {
       setGrantLoading(false);
     }
@@ -220,7 +220,7 @@ export default function Admin() {
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <h2 className="text-lg font-bold mb-1">{T("codeManagement", "Code Management")}</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            {T("codeManagementDesc", "Create promo codes (tokens, annual pass, 30-day game access) or generate one-time diagnostic codes. Max 50 active codes at a time. Deactivate any code to cancel it.")}
+            {T("codeManagementDesc", "Create promo codes (coins, annual pass, 30-day game access) or generate one-time diagnostic codes. Max 50 active codes at a time. Deactivate any code to cancel it.")}
           </p>
 
           {/* Mode Toggle */}
@@ -254,14 +254,14 @@ export default function Admin() {
                   value={rewardType}
                   onChange={(e) => setRewardType(e.target.value)}
                 >
-                  <option value="tokens">Tokens</option>
+                  <option value="tokens">{T("coins", "Coins")}</option>
                   <option value="annual_pass">Annual Pass</option>
                   <option value="game_access">{T("gameAccess30d", "Game Access (30 days)")}</option>
                 </select>
                 {rewardType === "tokens" && (
                   <input
                     type="number"
-                    placeholder="Tokens"
+                    placeholder={T("coins", "Coins")}
                     className="bg-background border border-border rounded-xl px-3 py-3 text-sm w-28"
                     value={rewardValue}
                     onChange={(e) => setRewardValue(e.target.value)}
@@ -299,9 +299,9 @@ export default function Admin() {
 
         {/* Grant AI Tokens */}
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <h2 className="text-lg font-bold mb-1">{T("grantTokens", "Grant AI Tokens")}</h2>
+          <h2 className="text-lg font-bold mb-1">{T("grantCoins", "Grant AI Coins")}</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            {T("grantTokensDesc", "Manually add AI tokens to any user's account — useful for fixing a purchase that didn't sync or compensating a tester.")}
+            {T("grantCoinsDesc", "Manually add coins to any user's account — useful for fixing a purchase that didn't sync or compensating a tester.")}
           </p>
           <div className="flex flex-col gap-3">
             <input
@@ -337,7 +337,7 @@ export default function Admin() {
         <div className="grid grid-cols-2 gap-3 mb-6">
           <StatCard icon={Users} label={T("totalUsers", "Total Users")} value={stats.totalUsers} color="primary" />
           <StatCard icon={Activity} label={T("activeSubscriptions", "Active Subscriptions")} value={stats.annualPassUsers} sub={T("annualPassHolders", "Annual Pass holders")} color="accent" />
-          <StatCard icon={Zap} label={T("tokenUsers", "Token Users")} value={stats.tokenUsers} sub={`${stats.totalTokensSold} ${T("tokensHeld", "tokens held")}`} color="primary" />
+          <StatCard icon={Zap} label={T("coinUsers", "Coin Users")} value={stats.tokenUsers} sub={`${stats.totalTokensSold} ${T("coinsHeld", "coins held")}`} color="primary" />
           <StatCard icon={TrendingUp} label={T("avgAppRating", "Avg App Rating")} value={stats.avgRating} sub={T("fromFeedback", "From feedback submissions")} color="accent" />
           <StatCard icon={DollarSign} label={T("totalLoans", "Total Loans")} value={stats.totalLoans} color="primary" />
           <StatCard icon={DollarSign} label={T("totalBills", "Total Bills")} value={stats.totalBills} color="accent" />
@@ -358,7 +358,7 @@ export default function Admin() {
                     {code.reward_type === "annual_pass" ? "Annual Pass" 
                       : code.reward_type === "game_access" ? T("gameAccess30d", "Game Access (30 days)")
                       : code.reward_type === "diagnostic_access" ? "Diagnostic Access" 
-                      : `${code.reward_value || 0} tokens`}
+                      : `${code.reward_value || 0} ${T("coins", "coins")}`}
                     {code.max_uses ? ` · ${code.times_used || 0}/${code.max_uses} used` : ` · ${code.times_used || 0} used`}
                     {code.reward_type === "diagnostic_access" && ` · ${new Date(code.expires_at) > new Date() ? Math.ceil((new Date(code.expires_at) - new Date()) / 60000) + "m left" : "expired"}`}
                   </p>

@@ -63,12 +63,7 @@ Deno.serve(async (req) => {
       const currentTokens = userRecord.ai_tokens || 0;
       const newTokens = currentTokens + (promoCode.reward_value || 0);
       updatedFields = { ai_tokens: newTokens };
-      rewardMessage = `You've been granted ${promoCode.reward_value} AI tokens! 🤖`;
-    } else if (promoCode.reward_type === 'energy_bars') {
-      const currentBars = userRecord.energy_bars || 0;
-      const newBars = currentBars + (promoCode.reward_value || 0);
-      updatedFields = { energy_bars: newBars };
-      rewardMessage = `You've been granted ${promoCode.reward_value} Energy Bars! ⚡`;
+      rewardMessage = `You've been granted ${promoCode.reward_value} coins! 🪙`;
     } else if (promoCode.reward_type === 'annual_pass') {
       let baseDate = new Date();
       if (userRecord.annual_pass_expires_at) {
