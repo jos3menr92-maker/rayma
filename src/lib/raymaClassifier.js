@@ -162,7 +162,7 @@ export function freeAnswer(rawText, ctx = {}) {
     const total = monthlyBills + monthlyLoans;
 
     return T(
-      "freeMonthly",
+      "freeMonthlyObligations",
       `**${T("freeMonthlyTitle", "Monthly Obligations")}** 🧾\n\n**${T("freeMonthlyBills", "Bills")}** — ${formatCurrency(monthlyBills)}/mo\n${billLines}\n\n**${T("freeMonthlyLoans", "Loan payments")}** — ${formatCurrency(monthlyLoans)}/mo\n${loanLines}\n\n—\n**${T("freeMonthlyTotal", "Total monthly obligations")}: ${formatCurrency(total)}/mo**`
     );
   }
