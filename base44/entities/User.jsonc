@@ -62,7 +62,7 @@
     },
     "ai_tokens": {
       "type": "number",
-      "default": 5,
+      "default": 10,
       "description": "Remaining AI consultation tokens"
     },
     "ai_tokens_reset_date": {

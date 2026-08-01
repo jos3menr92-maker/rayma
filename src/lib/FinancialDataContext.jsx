@@ -6,6 +6,32 @@ import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);
 
+// 🔋 Daily token self-heal — guarantees free users start each day with their full
+// allowance (and brand-new accounts get initialized) even if the midnight cron
+// didn't run. Mirrors resetFreeUserEnergyBars. Returns updated fields or null.
+async function ensureDailyTokens(me) {
+  if (!me) return null;
+  const annualActive = me.annual_pass_expires_at
+    ? new Date(String(me.annual_pass_expires_at).includes('T') ? me.annual_pass_expires_at : `${me.annual_pass_expires_at}T23:59:59Z`) > new Date()
+    : false;
+  const isFreeTier = !annualActive && me.subscription_type !== 'power_lithium' && me.subscription_type !== 'power_generator';
+  if (!isFreeTier) return null;
+  const today = new Date().toISOString().split('T')[0];
+  const limit = me.ai_tokens_daily_limit || 10;
+  const tokens = me.ai_tokens;
+  const resetDate = me.ai_tokens_reset_date;
+  if (tokens == null || (tokens < limit && resetDate !== today)) {
+    try {
+      await base44.auth.updateMe({ ai_tokens: limit, ai_tokens_reset_date: today });
+      return { ai_tokens: limit, ai_tokens_reset_date: today };
+    } catch (e) {
+      console.warn('Token self-heal failed:', e.message);
+      return null;
+    }
+  }
+  return null;
+}
+
 export function FinancialDataProvider({ children }) {
   const [loans, setLoans] = useState([]);
   const [bills, setBills] = useState([]);
@@ -40,10 +66,15 @@ export function FinancialDataProvider({ children }) {
     setLoading(true);
 
     try {
-      const [me, { data: { session } }] = await Promise.all([
+      const [meRaw, { data: { session } }] = await Promise.all([
         base44.auth.me().catch(() => null),
         supabase.auth.getSession()
       ]);
+
+      // 🔋 Daily token self-heal (see ensureDailyTokens) — initialize new accounts
+      // and refill free users' daily allowance so the AI works on first login.
+      const tokenHeal = await ensureDailyTokens(meRaw);
+      const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
 
       const currentSupaUser = session?.user || null;
 
@@ -198,10 +229,12 @@ export function FinancialDataProvider({ children }) {
 
   async function refreshUserProfile() {
     try {
-      const [me, { data: { session } }] = await Promise.all([
+      const [meRaw, { data: { session } }] = await Promise.all([
         base44.auth.me().catch(() => null),
         supabase.auth.getSession()
       ]);
+      const tokenHeal = await ensureDailyTokens(meRaw);
+      const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
       const uid = session?.user?.id;
       let supaProfile = {};
       if (uid) {
