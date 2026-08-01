@@ -15,7 +15,7 @@ export default function QuickReplyChips({ onChip }) {
   const row1 = CHIPS.slice(0, 6);
   const row2 = CHIPS.slice(6);
   const renderRow = (row) => (
-    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide w-max">
+    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
       {row.map((chip) => (
         <button
           key={chip.id}
