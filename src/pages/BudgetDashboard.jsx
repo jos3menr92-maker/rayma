@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
+import { createRecord, updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, TrendingDown } from "lucide-react";
+import { Plus, Pencil, Trash2, TrendingDown } from "lucide-react";
 import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const CATEGORY_COLORS = {
   food: "#f59e0b", transport: "#3b82f6", utilities: "#8b5cf6", subscriptions: "#ec4899",
@@ -42,6 +43,8 @@ export default function BudgetDashboard() {
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [budgetToDelete, setBudgetToDelete] = useState(null);
 
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -82,6 +85,23 @@ export default function BudgetDashboard() {
     } catch (err) {
       toast({ title: T("saveFailed", "Save failed"), description: err.message, variant: "destructive" });
     }
+  };
+
+  const handleDelete = (b) => {
+    setBudgetToDelete(b);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!budgetToDelete) return;
+    try {
+      await deleteRecord('budget_categories', budgetToDelete.id);
+    } catch (err) {
+      toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
+    }
+    setBudgetToDelete(null);
+    setShowConfirm(false);
+    reload();
   };
 
   // split rows = source of truth; parent tx is fallback only when that tx has zero splits
@@ -219,6 +239,9 @@ export default function BudgetDashboard() {
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(b)}>
                         <Pencil className="w-3 h-3" />
                       </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(b)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
                   <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
@@ -312,6 +335,17 @@ export default function BudgetDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title={T("deleteBudget", "Delete Budget")}
+        description={T("deleteBudgetConfirmSimple", "Are you sure you want to delete this budget category? This cannot be undone.")}
+        confirmLabel={T("delete", "Delete")}
+        cancelLabel={T("cancel", "Cancel")}
+        destructive
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

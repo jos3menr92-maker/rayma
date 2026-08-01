@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"; 
 import { useParams, useNavigate } from "react-router-dom"; 
-import { supabase } from "@/lib/supabaseClientFrontend"; 
+import { supabase } from "@/lib/supabaseClientFrontend";
+import { deleteRecord, updateRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -84,10 +85,13 @@ export default function LoanDetail() {
 
   async function executeDeleteLoan() {
     try {
-      const { error: payError } = await supabase.from('payments').delete().eq('loan_id', id);
-      if (payError) throw payError;
-      const { error: loanError } = await supabase.from('loans').delete().eq('id', id);
-      if (loanError) throw loanError;
+      // Use the session-aware helpers (with service-role backend fallback) so
+      // deletion works even when the browser Supabase session has expired —
+      // raw supabase.from().delete() fails with "Invalid API key" in that case.
+      for (const p of payments) {
+        await deleteRecord('payments', p.id);
+      }
+      await deleteRecord('loans', id);
       reload();
       navigate("/loans");
     } catch (err) {
@@ -98,14 +102,12 @@ export default function LoanDetail() {
   async function executeDeletePayment(paymentId) {
     try {
       const payment = payments.find((p) => p.id === paymentId);
-      const { error: payError } = await supabase.from('payments').delete().eq('id', paymentId);
-      if (payError) throw payError;
+      await deleteRecord('payments', paymentId);
       const newBalance = (loan.current_balance || 0) + (payment.amount || 0);
-      const { error: loanError } = await supabase.from('loans').update({
+      await updateRecord('loans', id, {
         current_balance: newBalance,
         status: newBalance > 0 ? "active" : "paid_off",
-      }).eq('id', id);
-      if (loanError) throw loanError;
+      });
       reload();
       loadData();
     } catch (err) {
