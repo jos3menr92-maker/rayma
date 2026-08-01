@@ -17,6 +17,8 @@ import CashFlowForecast from "../components/CashFlowForecast";
 import { getWeekdayNames } from "@/utils/formatLocalized";
 import { useToast } from "@/components/ui/use-toast";
 import { useLocation } from "react-router-dom";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
@@ -43,6 +45,7 @@ export default function Finance() {
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "", is_recurring: false, recurring_frequency: "weekly" });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh(reload);
 
   // Auto-open the Log Income dialog when navigated from Quick Add
   useEffect(() => {
@@ -134,7 +137,8 @@ export default function Finance() {
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24" {...pullHandlers}>
+      <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         
         {/* Header */}

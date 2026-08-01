@@ -1,4 +1,5 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, Plus, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
@@ -28,6 +29,7 @@ const HUMAN_AVATARS = [
 export default function Layout() {
   const T = useT();
   const location = useLocation();
+  const { activeTab, handleTabClick } = useTabNavigation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -157,14 +159,14 @@ export default function Layout() {
       
       <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
-          <Link to="/dashboard" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/dashboard" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => handleTabClick("home")} className={`flex flex-col items-center gap-0.5 w-12 ${activeTab === "home" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-[10px] font-medium">{T("dashboard", "Home")}</span>
-          </Link>
-          <Link to="/finance" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/finance" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+          </button>
+          <button onClick={() => handleTabClick("finance")} className={`flex flex-col items-center gap-0.5 w-12 ${activeTab === "finance" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <TrendingUp className="w-5 h-5" />
             <span className="text-[10px] font-medium">{T("finance", "Finance")}</span>
-          </Link>
+          </button>
 
           <div className="relative -top-5 flex justify-center w-16">
             <button
@@ -176,10 +178,10 @@ export default function Layout() {
             </button>
           </div>
 
-          <Link to="/bills" className={`flex flex-col items-center gap-0.5 w-12 ${location.pathname === "/bills" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => handleTabClick("bills")} className={`flex flex-col items-center gap-0.5 w-12 ${activeTab === "bills" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <Receipt className="w-5 h-5" />
             <span className="text-[10px] font-medium">{T("bills", "Bills")}</span>
-          </Link>
+          </button>
           <button onClick={() => setMoreOpen(true)} className="flex flex-col items-center gap-0.5 w-12 text-muted-foreground hover:text-foreground">
             <MoreHorizontal className="w-5 h-5" />
             <span className="text-[10px] font-medium">{T("more", "More")}</span>

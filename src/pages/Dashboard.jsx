@@ -6,13 +6,15 @@ import DueSoonAlert from "../components/DueSoonAlert";
 import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
-import { Wallet, TrendingDown, TrendingUp, CreditCard, CalendarDays, BarChart2, RefreshCw, ChevronRight, Store } from "lucide-react";
+import { Wallet, TrendingDown, TrendingUp, CreditCard, CalendarDays, BarChart2, ChevronRight, Store } from "lucide-react";
 import { getInitialsColor } from "@/components/AvatarPicker";
 import FinancialHealthScore from "../components/FinancialHealthScore";
 import StatsCard from "../components/StatsCard";
 import DueThisWeek from "../components/DueThisWeek";
 import NetWorthChart from "../components/NetWorthChart";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useT } from "@/lib/LanguageContext";
@@ -74,9 +76,7 @@ export default function Dashboard() {
   
   const { loans, bills, incomes, userProfile, loading, reload } = useFinancialData();
   const [payments, setPayments] = useState([]); 
-  const [refreshing, setRefreshing] = useState(false);
-  const [pullStartY, setPullStartY] = useState(null);
-  const [pullDistance, setPullDistance] = useState(0);
+  const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh(reload);
 
   useEffect(() => {
     // Don't redirect to /auth here — ProtectedLayout already guards auth.
@@ -87,20 +87,7 @@ export default function Dashboard() {
     }
   }, [userProfile, loading, navigate]);
 
-  const handleTouchStart = (e) => setPullStartY(e.touches[0].clientY);
-  const handleTouchMove = (e) => {
-    if (pullStartY === null) return;
-    const dist = e.touches[0].clientY - pullStartY;
-    if (dist > 0 && window.scrollY === 0) setPullDistance(Math.min(dist, 80));
-  };
-  const handleTouchEnd = async () => {
-    if (pullDistance > 50) {
-      setRefreshing(true);
-      await reload(); 
-      setRefreshing(false);
-    }
-    setPullDistance(0); setPullStartY(null);
-  };
+  // Pull-to-refresh is provided by the usePullToRefresh hook (see pullHandlers).
 
   const { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, loansPieData } = useMemo(() => {
     const activeLoans = loans.filter((l) => l.status !== "paid_off");
@@ -154,42 +141,13 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4 pb-24" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+    <div className="max-w-lg mx-auto px-4 pt-4 pb-24" {...pullHandlers}>
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      <AnimatePresence>
-        {(pullDistance > 10 || refreshing) && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 48, marginBottom: 8 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="flex items-center justify-center gap-3"
-          >
-            <div
-              className="relative w-7 h-7 flex items-center justify-center"
-              style={{ transform: `rotate(${pullDistance * 4}deg)` }}
-            >
-              <RefreshCw
-                className={`w-7 h-7 ${refreshing ? "animate-spin" : ""}`}
-                style={{ color: refreshing || pullDistance > 50 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))" }}
-              />
-            </div>
-            <span
-              className={`text-sm font-medium ${refreshing || pullDistance > 50 ? "text-primary" : "text-muted-foreground"}`}
-            >
-              {refreshing
-                ? T("refreshing", "Refreshing...")
-                : pullDistance > 50
-                  ? T("releaseRefresh", "Release to refresh")
-                  : T("pullRefresh", "Pull to refresh")}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
         <div>

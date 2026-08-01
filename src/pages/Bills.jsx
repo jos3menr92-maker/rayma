@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { useT } from "@/lib/LanguageContext";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 const categoryIcons = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️",
@@ -51,6 +53,7 @@ export default function Bills() {
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [billToDelete, setBillToDelete] = useState(null);
+  const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh(reload);
 
   // Auto-open the Add Bill dialog when navigated from Quick Add
   useEffect(() => {
@@ -161,7 +164,8 @@ export default function Bills() {
   );
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24" {...pullHandlers}>
+      <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <BillPriceAlert />
         <div className="flex items-center justify-between mb-2">

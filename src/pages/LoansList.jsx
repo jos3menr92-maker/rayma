@@ -6,6 +6,8 @@ import { t } from "@/lib/i18n";
 import LoanCard from "../components/LoanCard";
 import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
 import { motion } from "framer-motion";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditLoanForm from "../components/EditLoanForm";
@@ -31,6 +33,7 @@ export default function LoansList() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("default");
+  const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh(reload);
 
   const filtered = useMemo(() => loans
     .filter((l) => {
@@ -101,7 +104,8 @@ export default function LoansList() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24" {...pullHandlers}>
+      <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold font-heading text-primary">
           {T("myLoans", "My Loans")}
