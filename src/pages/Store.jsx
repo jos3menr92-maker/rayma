@@ -60,7 +60,7 @@ export default function Store() {
     {
       id: "power_lithium",
       label: T("lithiumUpgrade", "Lithium"),
-      desc: T("lithiumDesc", "+80 coins (~27 questions) every month. Coins carry over."),
+      desc: T("lithiumDesc", "+100 coins (33 questions) every month. Coins carry over."),
       icon: <BatteryCharging className="w-5 h-5 text-blue-500" />,
       color: "border-blue-500",
       badge: T("popular", "POPULAR"),
@@ -71,7 +71,7 @@ export default function Store() {
     {
       id: "power_generator",
       label: T("arcadeGenerator", "Generator"),
-      desc: T("generatorDesc", "+180 coins (60 questions) every month + Gold Sponsor Badge."),
+      desc: T("generatorDesc", "+200 coins (66 questions) every month + Gold Sponsor Badge."),
       icon: <Gamepad2 className="w-5 h-5 text-primary" />,
       color: "border-primary",
       badge: T("sponsorTier", "SPONSOR TIER"),
