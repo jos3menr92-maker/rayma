@@ -13,6 +13,8 @@ import AppTour from "./AppTour";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { getInitialsColor } from "@/components/AvatarPicker";
 import { useT } from "@/lib/LanguageContext";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import { useBackHandler } from "@/hooks/useBackHandler";
 
 const HUMAN_AVATARS = [
@@ -30,6 +32,8 @@ export default function Layout() {
   const T = useT();
   const location = useLocation();
   const { activeTab, handleTabClick } = useTabNavigation();
+  const { deletionCancelled, clearDeletionCancelled } = useAuth();
+  const { toast } = useToast();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -47,6 +51,14 @@ export default function Layout() {
     { isOpen: moreOpen, onClose: () => setMoreOpen(false) },
     { isOpen: raymaOpen, onClose: () => setRaymaOpen(false) },
   ]);
+
+  // Welcome-back toast when a grace-period deletion is cancelled by re-login
+  useEffect(() => {
+    if (deletionCancelled) {
+      toast({ title: T("welcomeBackDeletionCancelled", "Welcome back! Your account deletion has been cancelled and your data is restored.") });
+      clearDeletionCancelled();
+    }
+  }, [deletionCancelled]);
 
   // 🧠 SECURE: Pulling the ENTIRE vault for the God-View
   const {

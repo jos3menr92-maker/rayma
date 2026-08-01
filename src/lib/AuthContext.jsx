@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const [deletionCancelled, setDeletionCancelled] = useState(false);
   const refreshIntervalRef = useRef(null);
 
   useEffect(() => {
@@ -65,6 +66,33 @@ export const AuthProvider = ({ children }) => {
           setTimeout(() => reject(new Error('Authentication timed out')), 15000)
         ),
       ]);
+
+      // Grace-period check: if the user scheduled deletion and logs back in
+      // within 30 days, cancel it. If the grace period has expired, block login.
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('deletion_scheduled_at')
+            .eq('id', session.user.id)
+            .single();
+          if (profile?.deletion_scheduled_at) {
+            const deletionDate = new Date(profile.deletion_scheduled_at);
+            if (deletionDate > new Date()) {
+              await supabase.from('profiles').update({ deletion_scheduled_at: null }).eq('id', session.user.id);
+              setDeletionCancelled(true);
+            } else {
+              await supabase.auth.signOut();
+              setAuthError({ type: 'auth_required', message: 'Account permanently deleted' });
+              setIsLoadingAuth(false);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[AuthContext] Deletion-schedule check failed (non-fatal):', e?.message);
+      }
 
       setUser(me);
       setIsAuthenticated(true);
@@ -135,6 +163,8 @@ export const AuthProvider = ({ children }) => {
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
+      deletionCancelled,
+      clearDeletionCancelled: () => setDeletionCancelled(false),
       logout,
       navigateToLogin,
       checkAppState

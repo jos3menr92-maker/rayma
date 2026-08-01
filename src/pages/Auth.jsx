@@ -65,6 +65,12 @@ export default function Auth() {
       }
     } catch (err) {
       const errMsg = err.message?.toLowerCase() || "";
+      if (!isLogin && (errMsg.includes("already") || errMsg.includes("exists") || errMsg.includes("registered"))) {
+        setIsLogin(true);
+        setFormData(f => ({ ...f, password: "" }));
+        setError(T("accountExistsLoginInstead", "An account with this email already exists. Please sign in instead."));
+        return;
+      }
       if (errMsg.includes("verify") || errMsg.includes("not confirmed") || errMsg.includes("verification")) {
         setShowOtp(true);
       } else {

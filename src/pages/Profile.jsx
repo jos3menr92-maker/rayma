@@ -13,8 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; 
 import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useLanguage, useT } from "@/lib/LanguageContext"; 
 import { LANGUAGES } from "@/lib/i18n";
+import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 
 const HUMAN_AVATARS = [
@@ -50,9 +52,10 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
 } 
 
 export default function Profile() { 
-  const { lang, setLang } = useLanguage(); 
+  const { lang, locale, setLang } = useLanguage(); 
   const navigate = useNavigate();
   const T = useT();
+  const { toast } = useToast();
   const fileInputRef = useRef(null);
   
   const { userProfile, supaUser, incomes, bills, loans, reload, loading: contextLoading } = useFinancialData();
@@ -61,6 +64,8 @@ export default function Profile() {
   const [saved, setSaved] = useState(false); 
   const [uploadingPhoto, setUploadingPhoto] = useState(false); 
   const [deleting, setDeleting] = useState(false);
+  const [showDeletionWarning, setShowDeletionWarning] = useState(false);
+  const [scheduledDeletionDate, setScheduledDeletionDate] = useState(null);
   
   // 🔒 Security Vault State - NOW FULLY WIRED
   const [showPasswordLock, setShowPasswordLock] = useState(false);
@@ -209,7 +214,7 @@ export default function Profile() {
       if (pendingAction === 'export') {
         await handleExport();
       } else if (pendingAction === 'delete') {
-        await handleDelete();
+        setShowDeletionWarning(true);
       }
       
     } catch (err) {
@@ -238,50 +243,33 @@ export default function Profile() {
 
   const handleDelete = async () => {
     setDeleting(true);
+    setShowDeletionWarning(false);
     try {
       const uid = supaUser?.id;
-      if (!uid) throw new Error("User ID missing. Cannot delete account.");
+      if (!uid) throw new Error("User ID missing. Cannot schedule account deletion.");
 
-      // 1. Delete Supabase Storage files (avatars)
-      if (userProfile?.avatar_id) {
-        await supabase.storage.from('avatars').remove([userProfile.avatar_id]).catch(e => console.warn("Avatar ID cleanup missed:", e.message));
-      }
-      if (userProfile?.avatar_photo_url) {
-        const fileName = userProfile.avatar_photo_url.split('/').pop();
-        if (fileName) {
-          await supabase.storage.from('avatars').remove([fileName]).catch(e => console.warn("Custom photo cleanup missed:", e.message));
-        }
-      }
+      const res = await base44.functions.invoke('scheduleAccountDeletion', {
+        supabaseUserId: uid,
+      });
 
-      // 2. Hard wipe all financial data from Supabase (fail-safe: continues on table misses)
-      const tables = ['transaction_splits', 'payments', 'loan_adjustments', 'promo_redemptions', 'arcade_scores', 'assets', 'bank_accounts', 'bills', 'budget_categories', 'documents', 'feedback', 'incomes', 'loans', 'net_worth_snapshots', 'savings_goals', 'transactions', 'user_memories', 'profiles'];
-      for (const table of tables) {
-        // 🛡️ Fail-Safe Key Mapping: profiles table primary key is 'id', others use 'user_id'
-        const targetColumn = table === 'profiles' ? 'id' : 'user_id';
-        
-        const { error } = await supabase.from(table).delete().eq(targetColumn, supaUser.id);
-        if (error) {
-          console.warn(`Failed to wipe table ${table}, plowing forward...`, error.message);
-          continue;
-        }
+      if (res?.data?.deletionDate) {
+        setScheduledDeletionDate(new Date(res.data.deletionDate));
+      } else {
+        setScheduledDeletionDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
       }
-
-      // 2. Delete both Supabase auth user AND Base44 user record via backend function
-      //    (No client-side Base44 SDK method exists — must use service role server-side)
-      try {
-        await base44.functions.invoke('deleteUserAccount', { supabaseUserId: uid });
-      } catch (e) {
-        console.error('Account deletion failed:', e.message);
-        throw new Error(e.message || "Failed to delete account. Please try again.");
-      }
-
-      // 3. Terminate Supabase session and redirect
-      await supabase.auth.signOut();
-      window.location.href = "/auth";
+      // Sessions are revoked server-side; the local sign-out happens when the
+      // user taps "Continue" on the scheduled-deletion confirmation screen.
     } catch (err) {
-      console.error(err);
+      console.error("Scheduling failed:", err.message);
+      toast({ title: T("deletionScheduleFailed", "Failed to schedule account deletion. Please try again."), variant: "destructive" });
+    } finally {
       setDeleting(false);
     }
+  };
+
+  const finalizeDeletionRedirect = async () => {
+    try { await supabase.auth.signOut(); } catch (e) { /* sessions already revoked */ }
+    window.location.href = "/auth";
   };
 
   const getPaydayPlaceholder = () => {
@@ -558,6 +546,47 @@ export default function Profile() {
                 {T("confirm", "Confirm")}
               </Button>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ⚠️ 30-Day Grace Period Warning Dialog */}
+      <Dialog open={showDeletionWarning} onOpenChange={setShowDeletionWarning}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="w-5 h-5" /> {T("deleteAccountTitle", "Delete Account")}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {T("deletionGracePeriodNotice", "Your account will be scheduled for permanent deletion in 30 days. If you log back in before then, your deletion will be cancelled and your data restored. After 30 days, all your data will be permanently erased and cannot be recovered.")}
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setShowDeletionWarning(false)} disabled={deleting}>
+              {T("cancel", "Cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              {T("scheduleDeletion", "Schedule Deletion")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 📅 Post-Scheduling Confirmation Screen */}
+      {scheduledDeletionDate && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6 text-center">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm w-full">
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-5">
+              <ShieldAlert className="w-8 h-8 text-amber-500" />
+            </div>
+            <h2 className="text-xl font-bold font-heading text-foreground mb-2">{T("deletionScheduledTitle", "Deletion Scheduled")}</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+              {T("deletionScheduledBody", "Your account is scheduled for permanent deletion on {date}. Log back in anytime before then to cancel and restore your account.").replace("{date}", scheduledDeletionDate.toLocaleDateString(locale || undefined, { year: "numeric", month: "long", day: "numeric" }))}
+            </p>
+            <Button onClick={finalizeDeletionRedirect} className="w-full rounded-xl">
+              {T("signIn", "Sign In")}
+            </Button>
           </motion.div>
         </div>
       )}
