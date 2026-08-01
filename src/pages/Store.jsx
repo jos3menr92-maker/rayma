@@ -32,6 +32,10 @@ export default function Store() {
   // Debug: log native bridge presence so you can confirm injection inside your wrapper
   useEffect(() => { logBridgeStatus(); }, []);
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const successType = urlParams.get("success") === "true" ? urlParams.get("type") : null;
+  const cancelled = urlParams.get("cancelled") === "true";
+
   // After returning from a Stripe checkout, refresh the profile so the battery
   // reflects the just-purchased tokens immediately. The retry covers webhook delay.
   useEffect(() => {
@@ -40,10 +44,6 @@ export default function Store() {
     const t = setTimeout(() => refreshUserProfile(), 2500);
     return () => clearTimeout(t);
   }, [successType, refreshUserProfile]);
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const successType = urlParams.get("success") === "true" ? urlParams.get("type") : null;
-  const cancelled = urlParams.get("cancelled") === "true";
 
   const PLANS = [
     {
