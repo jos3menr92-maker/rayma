@@ -229,8 +229,8 @@ export default function Landing() {
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">{T("popular", "POPULAR")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("lithium", "Lithium")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$8.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$8.99/mo or $74.99/year · 120 coins/mo (40 q)")}</p>
-              {[T("feature50DailyEnergy", "120 coins / month (40 q)"), T("featureMonthly", "Billed monthly"), T("featureAnnual", "or $74.99/year"), T("featureBestValue", "Best per-question value")].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$8.99/mo · 120 coins (40 q)")}</p>
+              {[T("feature50DailyEnergy", "120 coins / month (40 q)"), T("featureMonthly", "Billed monthly"), T("featureNoCommitment", "Cancel anytime"), T("featureBestValue", "Best per-question value")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>
@@ -241,8 +241,8 @@ export default function Landing() {
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-0.5 rounded-full">{T("bestValue", "BEST VALUE")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">{T("generator", "Generator")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$16.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$16.99/mo or $135.99/year · 240 coins/mo (80 q)")}</p>
-              {[T("feature200DailyEnergy", "240 coins / month (80 q)"), T("featureAllFeatures", "Sponsor games unlocked"), T("featurePriority", "Priority experience"), T("featureAnnualGen", "or $135.99/year")].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$16.99/mo · 240 coins (80 q)")}</p>
+              {[T("feature200DailyEnergy", "240 coins / month (80 q)"), T("featureAllFeatures", "Sponsor games unlocked"), T("featurePriority", "Priority experience"), T("featureNoCommitment", "Cancel anytime")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
@@ -254,7 +254,7 @@ export default function Landing() {
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("tierUnlimited", "Unlimited")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$34.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               <p className="text-xs text-muted-foreground mb-4">{T("unlimitedDesc", "Unlimited AI questions & scans. No coin counting.")}</p>
-              {[T("featureUnlimitedQ", "Unlimited questions"), T("featureUnlimitedScan", "Unlimited scans"), T("featureAllGames", "All games unlocked"), T("featureAnnualUnl", "or $299.99/year")].map(f => (
+              {[T("featureUnlimitedQ", "Unlimited questions"), T("featureUnlimitedScan", "Unlimited scans"), T("featureAllGames", "All games unlocked"), T("featureNoCommitment", "Cancel anytime")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>

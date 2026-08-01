@@ -67,9 +67,6 @@ export default function Store() {
       isSubscription: true,
       monthlyId: "power_lithium_monthly",
       monthlyPrice: "$8.99 / mo",
-      annualId: "power_lithium_annual",
-      annualPrice: "$74.99 / yr",
-      annualSavings: T("save30", "Save 30%"),
     },
     {
       id: "power_generator",
@@ -81,9 +78,6 @@ export default function Store() {
       isSubscription: true,
       monthlyId: "power_generator_monthly",
       monthlyPrice: "$16.99 / mo",
-      annualId: "power_generator_annual",
-      annualPrice: "$135.99 / yr",
-      annualSavings: T("save33", "Save 33%"),
     },
     {
       id: "power_unlimited",
@@ -95,9 +89,6 @@ export default function Store() {
       isSubscription: true,
       monthlyId: "power_unlimited_monthly",
       monthlyPrice: "$34.99 / mo",
-      annualId: "power_unlimited_annual",
-      annualPrice: "$299.99 / yr",
-      annualSavings: T("save29", "Save 29%"),
     },
   ];
 
@@ -303,22 +294,11 @@ export default function Store() {
               </div>
 
               {plan.isSubscription ? (
-                <div className="flex flex-col sm:flex-row gap-3 mt-4 pt-4 border-t border-border/50">
-                  <div className="flex-1 flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border">
-                    <span className="font-medium text-sm">{plan.monthlyPrice}</span>
-                    <Button size="sm" variant="secondary" onClick={() => handlePurchase(plan.monthlyId)} disabled={loading === plan.monthlyId} className="rounded-lg">
-                      {loading === plan.monthlyId ? <Loader2 className="w-4 h-4 animate-spin" /> : T("monthly", "Monthly")}
-                    </Button>
-                  </div>
-                  <div className="flex-1 flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/30 relative">
-                    <div className="absolute -top-2.5 right-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
-                      {plan.annualSavings}
-                    </div>
-                    <span className="font-bold text-sm text-primary">{plan.annualPrice}</span>
-                    <Button size="sm" onClick={() => handlePurchase(plan.annualId)} disabled={loading === plan.annualId} className="rounded-lg shadow-sm">
-                      {loading === plan.annualId ? <Loader2 className="w-4 h-4 animate-spin" /> : T("yearly", "Yearly")}
-                    </Button>
-                  </div>
+                <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between bg-muted/30 p-3 rounded-xl border border-border">
+                  <span className="font-bold text-base font-heading text-foreground">{plan.monthlyPrice}</span>
+                  <Button size="sm" onClick={() => handlePurchase(plan.monthlyId)} disabled={loading === plan.monthlyId} className="rounded-lg">
+                    {loading === plan.monthlyId ? <Loader2 className="w-4 h-4 animate-spin" /> : T("subscribe", "Subscribe")}
+                  </Button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
