@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useT } from '@/lib/LanguageContext';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
@@ -15,6 +16,9 @@ export default function SkyStriker({ onUpdateScore }) {
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [levelFlash, setLevelFlash] = useState(false);
+  const T = useT();
   const canvasRef = useRef(null);
   const touchRef = useRef({});
 
@@ -29,6 +33,7 @@ export default function SkyStriker({ onUpdateScore }) {
   const handleStartGame = () => {
     setGameOver(false);
     setScore(0);
+    setLevel(1);
     setIsPaused(false);
     setRewardResult(null);
     setIsGameRunning(true);
@@ -44,6 +49,7 @@ export default function SkyStriker({ onUpdateScore }) {
     let animationFrameId;
     let currentScore = score; 
     let frameCount = 0;
+    let lastLevel = Math.floor(currentScore / 150) + 1;
 
     const player = { x: canvas.width / 2, y: canvas.height - 60, width: 30, height: 30, speed: 6, dx: 0 };
     let bullets = [];
@@ -156,6 +162,13 @@ export default function SkyStriker({ onUpdateScore }) {
             bullets.splice(j, 1);
             currentScore += 15;
             setScore(currentScore);
+            const newLevel = Math.floor(currentScore / 150) + 1;
+            if (newLevel > lastLevel) {
+              lastLevel = newLevel;
+              setLevel(newLevel);
+              setLevelFlash(true);
+              setTimeout(() => setLevelFlash(false), 1200);
+            }
             break;
           }
         }
@@ -199,6 +212,7 @@ export default function SkyStriker({ onUpdateScore }) {
             score={score}
             bestScore={bestScore}
             accentColor="text-cyan-400"
+            level={level}
             isPaused={isPaused}
             onTogglePause={() => setIsPaused(!isPaused)}
             onToggleRotate={() => setIsRotated(!isRotated)}
@@ -206,6 +220,12 @@ export default function SkyStriker({ onUpdateScore }) {
           />
 
           <canvas ref={canvasRef} width={800} height={450} className="w-full h-full max-w-7xl object-contain bg-slate-900 border-y-4 sm:border-4 border-slate-800 z-10 shadow-2xl" />
+
+          {levelFlash && !gameOver && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+              <div className="text-cyan-300 font-black text-5xl sm:text-7xl uppercase tracking-widest animate-pulse drop-shadow-[0_0_20px_rgba(34,211,237,0.8)]">{T('levelUp', 'LEVEL UP!')}</div>
+            </div>
+          )}
           
           {isPaused && !gameOver && (
             <div className="absolute inset-0 z-40 bg-black/50 flex flex-col items-center justify-center gap-6">

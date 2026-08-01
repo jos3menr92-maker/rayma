@@ -1,37 +1,37 @@
-import { useState, useRef, useEffect } from 'react';
-import { X, Lock, Crown } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { useT } from '@/lib/LanguageContext';
 
 /**
- * PremiumGameLock — shown when a non-Generator user selects a sponsor-only game.
- * Reassures them the arcade is still free; only these 3 bonus games are sponsor perks.
+ * PremiumGameLock — faded, locked preview shown when a non-sponsor user
+ * selects a sponsor-only game. No payment redirect (checkout doesn't work
+ * inside the unpublished mobile app yet) — just a dimmed preview with a
+ * "Buy Membership to Access" message.
  */
-export default function PremiumGameLock({ gameTitle, onUpgrade }) {
+export default function PremiumGameLock({ gameTitle }) {
   const T = useT();
   return (
-    <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-primary/40 relative overflow-hidden flex flex-col items-center justify-center p-8 text-center">
-      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(135deg,transparent_40%,hsl(var(--primary)/0.3)_100%)]" />
-      <Crown className="w-12 h-12 text-primary mb-4 relative z-10" />
-      <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2 relative z-10">{gameTitle}</h3>
-      <div className="bg-primary/15 border border-primary/40 rounded-2xl px-6 py-4 mb-6 relative z-10 max-w-sm">
-        <p className="text-sm text-primary font-bold mb-1">{T('sponsorOnlyGame', 'Sponsor-Only Game')}</p>
-        <p className="text-xs text-slate-400 leading-relaxed">
+    <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8 text-center select-none">
+      {/* Faded game-preview backdrop */}
+      <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_50%_40%,hsl(var(--primary)/0.35),transparent_70%)]" />
+      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[3px]" />
+      <h3 className="absolute inset-0 flex items-center justify-center text-5xl sm:text-7xl font-black text-slate-700/40 uppercase tracking-tighter pointer-events-none">{gameTitle}</h3>
+
+      <div className="relative z-10 flex flex-col items-center gap-3">
+        <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+          <Lock className="w-7 h-7 text-primary/80" />
+        </div>
+        <p className="text-lg sm:text-xl font-black text-white uppercase tracking-widest">{T('buyMembershipToAccess', 'Buy Membership to Access')}</p>
+        <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
           {T('sponsorGameDesc', 'The arcade is free for everyone. These 3 bonus games are our thanks to Generator sponsors.')}
         </p>
       </div>
+
       <button
-        onClick={onUpgrade}
-        className="px-8 py-4 bg-primary text-primary-foreground font-black uppercase tracking-widest hover:opacity-90 rounded-xl shadow-[0_0_20px_hsl(var(--primary)/0.4)] relative z-10"
-      >
-        {T('becomeSponsor', 'Become a Sponsor')}
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); window.history.back(); }}
-        className="mt-3 text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-wide flex items-center gap-1 relative z-10"
+        onClick={() => window.history.back()}
+        className="mt-6 text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-wide flex items-center gap-1 relative z-10"
       >
         <X className="w-4 h-4" /> {T('back', 'Back')}
       </button>
-      <Lock className="absolute top-4 right-4 w-5 h-5 text-primary/60" />
     </div>
   );
 }

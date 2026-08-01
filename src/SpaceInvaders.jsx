@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useT } from '@/lib/LanguageContext';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
@@ -16,6 +17,9 @@ export default function SpaceInvaders({ onUpdateScore }) {
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [wave, setWave] = useState(1);
+  const [waveFlash, setWaveFlash] = useState(false);
+  const T = useT();
   const canvasRef = useRef(null);
   const touchRef = useRef({});
 
@@ -32,6 +36,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
     setGameWon(false);
     setIsPaused(false);
     setScore(0);
+    setWave(1);
     setRewardResult(null);
     setIsGameRunning(true);
   };
@@ -62,18 +67,23 @@ export default function SpaceInvaders({ onUpdateScore }) {
     const alienStepX = 2;
     const alienDropY = 15;
 
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        aliens.push({
-          x: c * (alienWidth + alienPadding) + alienOffsetLeft,
-          y: r * (alienHeight + alienPadding) + alienOffsetTop,
-          width: alienWidth,
-          height: alienHeight,
-          alive: true,
-          points: (rows - r) * 10 
-        });
+    const spawnWave = (w) => {
+      aliens.length = 0;
+      alienDirection = 1;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          aliens.push({
+            x: c * (alienWidth + alienPadding) + alienOffsetLeft,
+            y: r * (alienHeight + alienPadding) + alienOffsetTop,
+            width: alienWidth,
+            height: alienHeight,
+            alive: true,
+            points: (rows - r) * 10
+          });
+        }
       }
-    }
+    };
+    spawnWave(currentWave);
 
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowLeft') player.dx = -player.speed;
@@ -157,7 +167,8 @@ export default function SpaceInvaders({ onUpdateScore }) {
         const aliveCount = aliveAliens.length;
         // Speed up as fewer aliens remain
         const speedMultiplier = 1 + (1 - aliveCount / (rows * cols)) * 2;
-        const step = alienStepX * speedMultiplier * alienDirection;
+        const waveBoost = 1 + (currentWave - 1) * 0.12;
+        const step = alienStepX * speedMultiplier * waveBoost * alienDirection;
 
         const minX = Math.min(...aliveAliens.map(a => a.x));
         const maxX = Math.max(...aliveAliens.map(a => a.x + a.width));
@@ -199,7 +210,13 @@ export default function SpaceInvaders({ onUpdateScore }) {
         });
       });
 
-      if (allDead) triggerEnd(true);
+      if (allDead) {
+        currentWave++;
+        setWave(currentWave);
+        setWaveFlash(true);
+        setTimeout(() => setWaveFlash(false), 1300);
+        spawnWave(currentWave);
+      }
     };
 
     renderLoop();
@@ -229,6 +246,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
             score={score}
             bestScore={bestScore}
             accentColor="text-purple-400"
+            level={wave}
             isPaused={isPaused}
             onTogglePause={() => setIsPaused(!isPaused)}
             onToggleRotate={() => setIsRotated(!isRotated)}
@@ -236,6 +254,12 @@ export default function SpaceInvaders({ onUpdateScore }) {
           />
 
           <canvas ref={canvasRef} width={800} height={450} className="w-full h-full max-w-7xl object-contain bg-slate-900 border-4 border-slate-800 z-10" />
+
+          {waveFlash && !gameOver && !gameWon && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+              <div className="text-purple-300 font-black text-5xl sm:text-7xl uppercase tracking-widest animate-pulse drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]">{T('waveUp', 'WAVE {n}').replace('{n}', wave)}</div>
+            </div>
+          )}
           
           {isPaused && !gameOver && !gameWon && (
             <div className="absolute inset-0 z-40 bg-black/50 flex flex-col items-center justify-center gap-6">
@@ -265,8 +289,8 @@ export default function SpaceInvaders({ onUpdateScore }) {
                   </div>
                 )}
                 <div className="flex gap-4">
-                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase rounded-xl">Try Again</button>
-                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); setWave(1); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase rounded-xl">Try Again</button>
+                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); setWave(1); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
                     <X className="w-5 h-5" /> Exit
                     </button>
                     </div>

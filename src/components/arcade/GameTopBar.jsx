@@ -13,10 +13,16 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
  *   onToggleRotate — callback to toggle landscape rotation
  *   isRotated      — whether the game is currently in landscape mode
  */
-export default function GameTopBar({ score, bestScore, accentColor, isPaused, onTogglePause, onToggleRotate, isRotated }) {
+export default function GameTopBar({ score, bestScore, accentColor, level, isPaused, onTogglePause, onToggleRotate, isRotated }) {
   return (
     <div className="absolute top-0 left-0 right-0 p-3 sm:p-4 flex justify-between items-start z-50 gap-2">
       <div className="bg-black/70 backdrop-blur-sm border border-slate-800 font-mono text-lg sm:text-xl font-black px-4 sm:px-6 py-2 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4">
+        {level != null && (
+          <>
+            <span className="text-slate-300 text-sm font-bold">LVL {level}</span>
+            <span className="text-slate-600">|</span>
+          </>
+        )}
         <span className={accentColor}>{(score || 0).toString().padStart(4, '0')}</span>
         <span className="text-slate-600">|</span>
         <span className="text-slate-400 text-sm">BEST: {bestScore}</span>

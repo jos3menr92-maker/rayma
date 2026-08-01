@@ -107,7 +107,7 @@ const Arcade = () => {
   const renderActiveGame = () => {
     const game = GAMES_REGISTRY[activeGame];
     if (game?.premium && !hasGameAccess) {
-      return <PremiumGameLock gameTitle={game.title} onUpgrade={() => { window.location.href = '/store'; }} />;
+      return <PremiumGameLock gameTitle={game.title} />;
     }
     switch(activeGame) {
       case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} />;

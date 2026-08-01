@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useT } from '@/lib/LanguageContext';
 import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
@@ -15,6 +16,8 @@ export default function RetroSnake({ onUpdateScore }) {
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const T = useT();
   const canvasRef = useRef(null);
   const directionRef = useRef(null);
 
@@ -29,6 +32,7 @@ export default function RetroSnake({ onUpdateScore }) {
   const handleStartGame = () => {
     setGameOver(false);
     setScore(0);
+    setLevel(1);
     setIsPaused(false);
     setRewardResult(null);
     setIsGameRunning(true);
@@ -48,6 +52,7 @@ export default function RetroSnake({ onUpdateScore }) {
     let dx = 1;
     let dy = 0;
     let currentScore = score;
+    let lastLevel = Math.floor(currentScore / 50) + 1;
 
     const setDirection = (dir) => {
       if (dir === 'up' && dy === 0) { dx = 0; dy = -1; }
@@ -94,7 +99,11 @@ export default function RetroSnake({ onUpdateScore }) {
       if (isPaused) return;
 
       const currentLevel = Math.floor(currentScore / 50) + 1;
-      const dynamicSpeed = Math.max(3, 14 - (currentLevel * 2));
+      const dynamicSpeed = Math.max(3, 14 - currentLevel);
+      if (currentLevel > lastLevel) {
+        lastLevel = currentLevel;
+        setLevel(currentLevel);
+      }
       
       frameCount++;
       if (frameCount < dynamicSpeed) return;
@@ -153,6 +162,7 @@ export default function RetroSnake({ onUpdateScore }) {
             score={score}
             bestScore={bestScore}
             accentColor="text-lime-400"
+            level={level}
             isPaused={isPaused}
             onTogglePause={() => setIsPaused(!isPaused)}
             onToggleRotate={() => setIsRotated(!isRotated)}
@@ -184,8 +194,8 @@ export default function RetroSnake({ onUpdateScore }) {
                   </div>
                 )}
                 <div className="flex gap-4">
-                  <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl">Play Again</button>
-                  <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                  <button onClick={() => { setGameOver(false); setScore(0); setLevel(1); setIsPaused(false); }} className="px-10 py-5 bg-lime-500 text-black font-black text-xl uppercase rounded-xl">Play Again</button>
+                  <button onClick={() => { setGameOver(false); setScore(0); setLevel(1); setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
                     <X className="w-5 h-5" /> Exit
                     </button>
                     </div>
