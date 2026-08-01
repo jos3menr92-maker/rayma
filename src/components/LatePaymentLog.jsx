@@ -4,6 +4,7 @@ import { useFinancialData } from '@/lib/FinancialDataContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLanguage } from '@/lib/LanguageContext';
 import { t } from '@/lib/i18n';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 
 export default function LatePaymentLog({ loan, onLoanUpdated }) {
@@ -120,14 +121,15 @@ export default function LatePaymentLog({ loan, onLoanUpdated }) {
             </div>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">{T("effect", "Effect")}</label>
-              <select
-                value={form.direction}
-                onChange={e => setForm(f => ({ ...f, direction: e.target.value }))}
-                className="w-full bg-muted border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="add">{T("addToTotalOwed", "+ Add to total owed")}</option>
-                <option value="subtract">{T("reduceBalance", "− Reduce balance")}</option>
-              </select>
+              <Select value={form.direction} onValueChange={v => setForm(f => ({ ...f, direction: v }))}>
+                <SelectTrigger className="w-full bg-muted border border-border rounded-xl h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add">{T("addToTotalOwed", "+ Add to total owed")}</SelectItem>
+                  <SelectItem value="subtract">{T("reduceBalance", "− Reduce balance")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">

@@ -5,7 +5,9 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
-import { FileText, Info, TrendingUp, Calculator, Home, GraduationCap, Heart, AlertTriangle, Sparkles } from "lucide-react";
+import { FileText, Info, TrendingUp, Calculator, Home, GraduationCap, Heart, AlertTriangle, Sparkles, ChevronLeft } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 import TaxProfileEditor, { TAX_EVENT_TYPES } from "@/components/tax/TaxProfileEditor";
 
 // 2025 US Federal Tax Brackets
@@ -96,6 +98,7 @@ function getEventDeductions(events) {
 export default function TaxSummary() {
   const { formatCurrency: fmt } = useCurrency();
   const { lang } = useLanguage();
+  const navigate = useNavigate();
   const T = useMemo(() => (key, fallback) => { const tr = t(lang, key); return tr !== key ? tr : fallback; }, [lang]);
 
   const { loans, incomes, transactions } = useFinancialData();
@@ -186,6 +189,9 @@ export default function TaxSummary() {
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
+          <ChevronLeft className="w-4 h-4" /> {T("back", "Back")}
+        </button>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -197,15 +203,16 @@ export default function TaxSummary() {
               <p className="text-xs text-muted-foreground">{T("taxEstimatorSubtitle", "Estimate your tax bracket before tax season")}</p>
             </div>
           </div>
-          <select
-            value={year}
-            onChange={e => setYear(Number(e.target.value))}
-            className="text-sm bg-card border border-border rounded-xl px-3 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            {[currentYear, currentYear - 1, currentYear - 2].map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+          <Select value={String(year)} onValueChange={v => setYear(Number(v))}>
+            <SelectTrigger className="w-24 text-sm bg-card border border-border rounded-xl h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[currentYear, currentYear - 1, currentYear - 2].map(y => (
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Educational Disclaimer */}

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Headset, Database, FlaskConical, CheckCircle2, Bug } from "lucide-react";
+import { Headset, Database, FlaskConical, CheckCircle2, Bug, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useT } from "@/lib/LanguageContext";
 import DiagnosticsConsole from "@/components/diagnostics/DiagnosticsConsole";
 import BugCodeSubmission from "@/components/diagnostics/BugCodeSubmission";
@@ -12,10 +13,15 @@ const STEPS = [
 
 export default function RemoteSupport() {
   const T = useT();
+  const navigate = useNavigate();
 
   return (
     <div className="max-w-xl mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ChevronLeft className="w-4 h-4" /> {T("back", "Back")}
+        </button>
 
         {/* Header */}
         <div className="text-center mb-8">

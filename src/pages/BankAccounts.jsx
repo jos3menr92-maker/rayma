@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, SplitSquareHorizontal } from "lucide-react";
+import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, SplitSquareHorizontal, ChevronLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { SplitTransactionDialog } from "@/components/transactions/SplitTransactionDialog";
 import { LogTransactionDialog } from "@/components/transactions/LogTransactionDialog";
@@ -17,7 +17,7 @@ import AccountBalanceChart from "@/components/AccountBalanceChart";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function buildTypeConfig(T) {
   return {
@@ -36,6 +36,7 @@ export default function BankAccounts() {
   const { formatCurrency: fmt } = useCurrency();
   const { userProfile, supaUser, bankAccounts: accounts, transactions, loading, reload } = useFinancialData();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [showTxDialog, setShowTxDialog] = useState(() => !!location.state?.autoOpenLog);
   const [editing, setEditing] = useState(null);
@@ -131,6 +132,10 @@ export default function BankAccounts() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pt-6 pb-6 space-y-6">
+
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ChevronLeft className="w-4 h-4" /> {T("back", "Back")}
+      </button>
 
       {/* Header */}
       <div className="flex items-start justify-between">

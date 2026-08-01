@@ -1,5 +1,6 @@
 import React, { useState, Suspense, lazy, useEffect } from 'react';
-import { Crown } from 'lucide-react';
+import { Crown, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useFinancialData } from '@/lib/FinancialDataContext';
 import { getAllHighScores } from '@/api/arcadeGamesApi';
 import { useT } from '@/lib/LanguageContext';
@@ -71,6 +72,7 @@ const LoadingScreen = () => (
 
 const Arcade = () => {
   const T = useT();
+  const navigate = useNavigate();
   const { userProfile } = useFinancialData();
   const [activeGame, setActiveGame] = useState('space_invaders');
 
@@ -120,6 +122,9 @@ const Arcade = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 p-8 font-sans selection:bg-cyan-500/30">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors mb-4 max-w-7xl mx-auto">
+        <ChevronLeft className="w-4 h-4" /> {T('back', 'Back')}
+      </button>
       <header className="max-w-7xl mx-auto mb-12 flex justify-between items-end">
         <div>
           <div className="flex items-center gap-3 mb-2">

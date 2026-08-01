@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
 import ProtectedLayout from './components/ProtectedLayout';
+import PageTransition from './components/PageTransition';
 import RootGate from './components/RootGate';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
@@ -126,8 +127,14 @@ export default function App() {
     } else if (savedTheme === "light") {
       document.documentElement.classList.remove("dark");
     } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const defaultTheme = systemDark ? "dark" : "light";
+      if (defaultTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      localStorage.setItem("theme", defaultTheme);
     }
   }, []);
 
@@ -137,13 +144,13 @@ export default function App() {
         <QueryClientProvider client={queryClientInstance}>
           <Router>
             <Routes>
-              <Route path="/home" element={<Landing />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense>} />
-              <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><ResetPassword /></Suspense>} />
-              <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPolicy /></Suspense>} />
-              <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsOfService /></Suspense>} />
-              <Route path="/business-info" element={<Suspense fallback={<PageLoader />}><BusinessInfo /></Suspense>} />
+              <Route path="/home" element={<PageTransition><Landing /></PageTransition>} />
+              <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+              <Route path="/forgot-password" element={<Suspense fallback={<PageLoader />}><PageTransition><ForgotPassword /></PageTransition></Suspense>} />
+              <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><PageTransition><ResetPassword /></PageTransition></Suspense>} />
+              <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PageTransition><PrivacyPolicy /></PageTransition></Suspense>} />
+              <Route path="/terms" element={<Suspense fallback={<PageLoader />}><PageTransition><TermsOfService /></PageTransition></Suspense>} />
+              <Route path="/business-info" element={<Suspense fallback={<PageLoader />}><PageTransition><BusinessInfo /></PageTransition></Suspense>} />
               <Route path="/*" element={<AuthenticatedApp />} />
             </Routes>
           </Router>
