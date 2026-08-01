@@ -8,7 +8,7 @@ import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration
 
 const GAME_ID = 'retro_snake';
 
-export default function RetroSnake({ onUpdateScore }) {
+export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -28,6 +28,8 @@ export default function RetroSnake({ onUpdateScore }) {
 
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
+  const onRewardEarnedRef = useRef(onRewardEarned);
+  useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -87,6 +89,7 @@ export default function RetroSnake({ onUpdateScore }) {
           const result = await claimArcadeReward(GAME_ID, levelReached);
           if (result.success && result.rewardGranted) {
             setRewardResult({ amount: result.rewardAmount });
+            onRewardEarnedRef.current?.();
           }
         }
       });

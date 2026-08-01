@@ -8,7 +8,7 @@ import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration
 
 const GAME_ID = 'space_invaders';
 
-export default function SpaceInvaders({ onUpdateScore }) {
+export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
@@ -30,6 +30,8 @@ export default function SpaceInvaders({ onUpdateScore }) {
 
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
+  const onRewardEarnedRef = useRef(onRewardEarned);
+  useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -51,6 +53,8 @@ export default function SpaceInvaders({ onUpdateScore }) {
     let animationFrameId;
     let currentScore = score;
     let currentWave = Math.floor(score / 500) + 1;
+    let frameCount = 0;
+    let alienBullets = [];
 
     const player = { x: canvas.width / 2 - 20, y: canvas.height - 50, width: 40, height: 20, speed: 5, dx: 0 };
     let bullets = [];
@@ -127,11 +131,12 @@ export default function SpaceInvaders({ onUpdateScore }) {
 
       // Background API calls — don't block the game-over UI
       saveArcadeScore(GAME_ID, currentScore).then(async () => {
-        const levelReached = Math.floor(currentScore / 500) + 1;
+        const levelReached = currentWave;
         if (levelReached >= 5) {
           const result = await claimArcadeReward(GAME_ID, levelReached);
           if (result.success && result.rewardGranted) {
             setRewardResult({ amount: result.rewardAmount });
+            onRewardEarnedRef.current?.();
           }
         }
       });
@@ -142,6 +147,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
     const renderLoop = () => {
       animationFrameId = window.requestAnimationFrame(renderLoop);
       if (isPaused) return;
+      frameCount++;
 
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -187,6 +193,26 @@ export default function SpaceInvaders({ onUpdateScore }) {
           }
         });
         if (shouldDrop) alienDirection *= -1;
+
+        // Alien return-fire — forces the player to keep moving (no camping)
+        if (frameCount % Math.max(30, 80 - currentWave * 6) === 0) {
+          const shooter = aliveAliens[Math.floor(Math.random() * aliveAliens.length)];
+          alienBullets.push({ x: shooter.x + shooter.width / 2 - 2, y: shooter.y + shooter.height, width: 4, height: 12, speed: 3.5 + currentWave * 0.25 });
+        }
+      }
+
+      // Alien bullets — move, render, collide with player
+      ctx.fillStyle = '#f87171';
+      for (let abi = alienBullets.length - 1; abi >= 0; abi--) {
+        const ab = alienBullets[abi];
+        ab.y += ab.speed;
+        ctx.fillRect(ab.x, ab.y, ab.width, ab.height);
+        if (ab.y > canvas.height) { alienBullets.splice(abi, 1); continue; }
+        if (ab.x < player.x + player.width && ab.x + ab.width > player.x && ab.y < player.y + player.height && ab.y + ab.height > player.y) {
+          alienBullets.splice(abi, 1);
+          triggerEnd(false);
+          return;
+        }
       }
 
       // Render + collision
@@ -283,7 +309,7 @@ export default function SpaceInvaders({ onUpdateScore }) {
              <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center">
                 <div className={`font-black text-6xl mb-2 ${gameWon ? 'text-green-400' : 'text-red-500'}`}>{gameWon ? 'VICTORY' : 'INVADED'}</div>
                 <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
-                {score >= 2000 && (
+                {wave >= 5 && (
                   <div className="text-purple-400 font-black text-xl mb-8 animate-bounce tracking-widest">
                     🎉 WAVE 5+ REACHED: +2 ENERGY BARS PER MILESTONE!
                   </div>

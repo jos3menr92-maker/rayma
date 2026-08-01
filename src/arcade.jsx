@@ -73,7 +73,7 @@ const LoadingScreen = () => (
 const Arcade = () => {
   const T = useT();
   const navigate = useNavigate();
-  const { userProfile } = useFinancialData();
+  const { userProfile, reload } = useFinancialData();
   const [activeGame, setActiveGame] = useState('space_invaders');
 
   // Track high scores
@@ -110,9 +110,9 @@ const Arcade = () => {
       return <PremiumGameLock gameTitle={game.title} />;
     }
     switch(activeGame) {
-      case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} />;
-      case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} />;
-      case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} />;
+      case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       case 'neon_drift': return <NeonDrift onUpdateScore={handleUpdateScore} />;
       case 'crystal_crusher': return <CrystalCrusher onUpdateScore={handleUpdateScore} />;
       case 'meteor_storm': return <MeteorStorm onUpdateScore={handleUpdateScore} />;
