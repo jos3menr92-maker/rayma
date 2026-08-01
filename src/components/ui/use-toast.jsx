@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 300;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -134,6 +134,11 @@ function toast({ ...props }) {
     },
   });
 
+  // Auto-dismiss so toasts don't pile up and persist forever. Destructive
+  // toasts (errors) stay longer so the user can read them.
+  const duration = props.duration ?? (props.variant === "destructive" ? 7000 : 4000);
+  setTimeout(() => dismiss(), duration);
+
   return {
     id,
     dismiss,
@@ -161,4 +166,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast }; 
+export { useToast, toast };
