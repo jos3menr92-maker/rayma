@@ -16,7 +16,11 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Trash2, Loader2, ScanLine, Copy, Check } from "lucide-react";
+import { X, Send, Trash2, Loader2, ScanLine, Copy, Check, History } from "lucide-react";
+import { freeAnswer } from "@/lib/raymaClassifier";
+import QuickReplyChips from "@/components/rayma/QuickReplyChips";
+import CostTag from "@/components/rayma/CostTag";
+import ChatHistory, { saveHistory } from "@/components/rayma/ChatHistory";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
@@ -61,6 +65,9 @@ export default function RaymaChat({
   const [onboardingGreeting, setOnboardingGreeting] = useState("");
   const [scanning, setScanning] = useState(false);
   const [tourTriggered, setTourTriggered] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyView, setHistoryView] = useState(null);
+  const pendingAICostRef = useRef(0);
   const { lang } = useLanguage();
   const { formatCurrency } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -128,6 +135,11 @@ export default function RaymaChat({
       if (last?.role === "assistant" && last?.status !== "streaming" && last?.status !== "pending") {
         setLoading(false);
         refreshUserProfile?.();
+        if (pendingAICostRef.current) {
+          const cost = pendingAICostRef.current;
+          pendingAICostRef.current = 0;
+          setMessages(msgs.map((m, i) => (i === msgs.length - 1 ? { ...m, cost } : m)));
+        }
       }
     });
     return () => unsubscribe();
@@ -150,13 +162,28 @@ export default function RaymaChat({
     }
   }
   
-  async function handleSend() {
+  async function handleSend(overrideText) {
     setOnboardingGreeting("");
-    const text = input.trim().toLowerCase();
+    setHistoryView(null);
+    const sourceText = (overrideText || input).trim();
+    const text = sourceText.toLowerCase();
+
+    // --- 0. SILENT CLASSIFIER (free vs paid) — runs before any coin is spent ---
+    const freeReply = freeAnswer(sourceText, { loans, bills, incomes, payments, assets, savingsGoals, userProfile, currentPage, formatCurrency, T });
+    if (freeReply) {
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
+      setInput("");
+      setLoading(true);
+      setTimeout(() => {
+        setMessages(prev => [...prev, { role: "assistant", content: freeReply, cost: 0 }]);
+        setLoading(false);
+      }, 450);
+      return;
+    }
     
     // --- 1. THE CASH FLOW SMOOTHER ---
     if (text.includes("balance my bills") || text.includes("smooth my cash flow") || text.includes("move my due dates")) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setLoading(true);
       setTimeout(() => {
@@ -168,7 +195,7 @@ export default function RaymaChat({
     }
 
     // --- 1B. SPLIT-LOGGER (Multi-category transactions) ---
-    const splitMatch = input.trim().match(/^log \$?(\d+(?:\.\d+)?)\s+at\s+(.+?),\s+split\s+(.+)$/i);
+    const splitMatch = sourceText.match(/^log \$?(\d+(?:\.\d+)?)\s+at\s+(.+?),\s+split\s+(.+)$/i);
     if (splitMatch) {
       const totalAmount = parseFloat(splitMatch[1]);
       const merchant = splitMatch[2].trim();
@@ -183,7 +210,7 @@ export default function RaymaChat({
       }
 
       if (parsedSplits.length >= 2) {
-        setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+        setMessages(prev => [...prev, { role: "user", content: sourceText }]);
         setInput("");
         setLoading(true);
 
@@ -233,7 +260,7 @@ export default function RaymaChat({
     // --- 2. THE AUTO-LOGGER (WRITE ACCESS) ---
     const paidMatch = text.match(/paid \$?(\d+)\s+(?:to|for)\s+(.+)/);
     if (paidMatch) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setLoading(true);
       const amount = parseFloat(paidMatch[1]);
@@ -256,9 +283,9 @@ export default function RaymaChat({
     }
 
     // --- 2B. STANDARD TRANSACTION LOGGER ---
-    const spentMatch = input.trim().match(/^spent\s+\$?(\d+(?:\.\d+)?)\s+(?:at|on)\s+(.+)$/i);
+    const spentMatch = sourceText.match(/^spent\s+\$?(\d+(?:\.\d+)?)\s+(?:at|on)\s+(.+)$/i);
     if (spentMatch) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setLoading(true);
       const amount = parseFloat(spentMatch[1]);
@@ -284,9 +311,9 @@ export default function RaymaChat({
     }
 
     // --- 2C. ADD BILL LOGGER ---
-    const billMatch = input.trim().match(/^add\s+(?:a\s+)?bill\s+for\s+(.+?)\s+for\s+\$?(\d+(?:\.\d+)?)$/i);
+    const billMatch = sourceText.match(/^add\s+(?:a\s+)?bill\s+for\s+(.+?)\s+for\s+\$?(\d+(?:\.\d+)?)$/i);
     if (billMatch) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setLoading(true);
       const billName = billMatch[1].trim();
@@ -311,7 +338,7 @@ export default function RaymaChat({
 
     // --- 3. PAGE-AWARE CONTEXT ---
     if (text.includes("what am i looking at") || text.includes("explain this page") || text.includes("help me with this")) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       let response = T("contextAppGeneral", "You are currently viewing your Rayma AI app.");
       if (currentPage.includes("tax-summary")) response = T("contextTaxSummary", "You are looking at your **Tax Summary**. This page tracks your deductible expenses and organizes your financial data so you are ready for tax season.");
@@ -323,7 +350,7 @@ export default function RaymaChat({
 
     // --- 4. LOAN ADVISOR (DTI CALCULATOR) ---
     if (text.includes("loan") && (text.includes("can i get") || text.includes("should i get") || text.includes("do i qualify") || text.includes("qualify for"))) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setLoading(true);
       const totalMonthlyObligations = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0) + bills.reduce((s, b) => s + (b.amount || 0), 0);
@@ -348,7 +375,7 @@ export default function RaymaChat({
     }
 
     // --- 6. USER DIAGNOSTIC PIN ---
-    const isPin = /^\d{6}$/.test(input.trim());
+    const isPin = /^\d{6}$/.test(sourceText);
     if (isPin) {
       setScanning(true);
       setMessages(prev => [...prev, { role: "user", content: input }]);
@@ -358,7 +385,7 @@ export default function RaymaChat({
         const runRemoteDiagnostic = module.runRemoteDiagnostic;
         const mockLogs = { status: "timeout", provider: "Plaid", endpoint: "/sync" };
         const sanitizedLogs = sanitizeForDiagnostic(mockLogs);
-        const result = await runRemoteDiagnostic(input.trim(), sanitizedLogs);
+        const result = await runRemoteDiagnostic(sourceText, sanitizedLogs);
         setMessages(prev => [...prev, { role: "assistant", content: result.userMessage, actionCode: result.actionCode }]);
       } catch (err) {
         setMessages(prev => [...prev, { role: "assistant", content: T("diagnosticError", "Error loading diagnostic protocol. Try again later.") }]);
@@ -369,7 +396,7 @@ export default function RaymaChat({
 
     // --- 7. SYSTEM COMMANDS (Help, Log out, Nav, Modes) ---
     if (text === "help" || text === "what can you do" || text === "who are you") {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       const helpText = T("helpText", `I am Rayma AI, your proactive financial co-pilot. I can automate your app and analyze your money. Try commanding me:\n\n* **Navigate:** "Go to my loans", "Take me to profile", "Open dashboard"\n* **Customize:** "Switch to dark mode", "Turn on focus mode"\n* **Analyze:** "Scan this document"\n* **Learn:** "Start tour"\n* **Security:** "Log me out"`);
       setMessages(prev => [...prev, { role: "assistant", content: helpText }]);
@@ -377,7 +404,7 @@ export default function RaymaChat({
     }
 
     if (text === "log out" || text === "sign out") {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setMessages(prev => [...prev, { role: "assistant", content: T("loggingOut", "Logging you out securely. See you next time!") }]);
       setTimeout(async () => { await base44.auth.logout(); window.location.href = "/auth"; }, 1500);
@@ -385,7 +412,7 @@ export default function RaymaChat({
     }
 
     if (text.includes("focus mode")) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       document.documentElement.classList.add("focus-mode");
       localStorage.setItem("focus_mode", "true");
@@ -395,7 +422,7 @@ export default function RaymaChat({
 
     const tourTriggers = [ "tour","start tour","show me around","guide me","another tour","restart tour" ];
     if (tourTriggers.some(trigger => text.includes(trigger))) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: T("startingTour", "Starting the tour now.") }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }, { role: "assistant", content: T("startingTour", "Starting the tour now.") }]);
       if (onClose) onClose();
       navigate("/");
       setTimeout(() => window.dispatchEvent(new CustomEvent("trigger-rayma-tour")), 600);
@@ -407,12 +434,12 @@ export default function RaymaChat({
       document.documentElement.classList.remove(mode === "dark" ? "light" : "dark"); 
       document.documentElement.classList.add(mode); 
       localStorage.setItem("theme", mode);
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }, { role: "assistant", content: T("modeSwitched", `Done! Switched to ${mode} mode.`) }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }, { role: "assistant", content: T("modeSwitched", `Done! Switched to ${mode} mode.`) }]);
       setInput(""); return;
     }
 
     if (text.includes("go to") || text.includes("take me to")) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       if (text.includes("profile")) navigate("/profile");
       if (text.includes("loan")) navigate("/loans");
@@ -423,13 +450,13 @@ export default function RaymaChat({
     }
 
 // --- 8. MAIN AI FALLBACK LOGIC (WITH BATTERY DRAIN) ---
-    if (!input.trim() || loading || !conversation) return;
+    if (!sourceText || loading || !conversation) return;
 
     // 🔋 THE TOKEN TOLL BOOTH — single unified "Battery" field (ai_tokens)
     const aiTokens = userProfile?.ai_tokens ?? 0;
 
     if (aiTokens <= 0) {
-      setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
+      setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setTimeout(() => {
         setMessages(prev => [...prev, { 
@@ -450,10 +477,11 @@ export default function RaymaChat({
       }
     } catch (e) { console.warn('Token deduction failed:', e.message); }
 
-    const messageContent = input.trim(); 
+    const messageContent = sourceText; 
     setInput("");
     setLoading(true);
     const timeout = setTimeout(() => setLoading(false), 30000);
+    pendingAICostRef.current = 3;
     await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
     clearTimeout(timeout);
   }
@@ -475,6 +503,11 @@ export default function RaymaChat({
   }
 
   async function handleClear() {
+    if (messages && messages.filter(m => m.content).length > 0) {
+      saveHistory(messages);
+    }
+    setHistoryView(null);
+    setShowHistory(false);
     setConversation(null);
     setMessages([]);
     setLoading(false);
@@ -486,6 +519,12 @@ export default function RaymaChat({
     setInitializing(false);
   }
 
+  function handleChip(chip) {
+    setHistoryView(null);
+    setShowHistory(false);
+    handleSend(chip.text);
+  }
+
   return (
     <AnimatePresence>
       {forceOpen && (
@@ -495,7 +534,7 @@ export default function RaymaChat({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           style={{ bottom: `calc(6rem + ${keyboardHeight}px)`, maxHeight: `calc(100vh - 10rem - ${keyboardHeight}px)` }}
-          className="fixed right-4 w-[calc(100vw-2rem)] sm:w-80 left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[460px] z-[60]"
+          className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[400px] left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[560px] z-[60]"
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
             <div>
@@ -503,81 +542,118 @@ export default function RaymaChat({
               <p className="text-xs text-muted-foreground">{T("aiFinancialAdvisor", "AI Financial Advisor")}</p>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={handleClear} aria-label={T("clearConversation", "Clear conversation")} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("clearConversation", "Clear conversation")}>
+              <button onClick={() => { setShowHistory(s => !s); setHistoryView(null); }} aria-label={T("historyLabel", "Chat history")} className="min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("historyLabel", "Chat history")}>
+                <History className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <button onClick={handleClear} aria-label={T("archiveChat", "Archive chat to history")} className="min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("archiveChat", "Archive chat to history")}>
                 <Trash2 className="w-5 h-5 text-muted-foreground" />
               </button>
-              <button onClick={onClose} aria-label={T("closeChat", "Close chat")} className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors">
+              <button onClick={onClose} aria-label={T("closeChat", "Close chat")} className="min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors">
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Rayma AI conversation">
-            {!initializing && onboardingGreeting && (
-              <div className="flex justify-start">
-                <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
-                  <ReactMarkdown
-                    components={{ pre: CodeBlock }}
-                    className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                  >
-                    {onboardingGreeting}
-                  </ReactMarkdown>
-                </div>
+          {showHistory ? (
+            <ChatHistory
+              onClose={() => setShowHistory(false)}
+              onLoad={(h) => { setHistoryView(h.messages); setShowHistory(false); }}
+            />
+          ) : historyView ? (
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="text-center mb-1">
+                <button onClick={() => setHistoryView(null)} className="text-xs text-primary underline">
+                  {T("backToLiveChat", "← Back to live chat")}
+                </button>
               </div>
-            )}
-            {initializing ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex justify-start">
-                <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
-                  {T("raymaGreeting", "Hi! I'm Rayma AI, your personal financial advisor. I can help you log transactions, split expenses, add bills, or update loans—just ask!")}
-                </div>
-              </div>
-            ) : (
-              messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
+              {historyView.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                     {msg.role === "assistant" ? (
-                      <div className="flex flex-col gap-2">
-                        <ReactMarkdown
-                          components={{ pre: CodeBlock }}
-                          className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                        >
+                      <div className="flex flex-col gap-1">
+                        <ReactMarkdown components={{ pre: CodeBlock }} className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                           {msg.content || "…"}
                         </ReactMarkdown>
-                        {msg.actionCode && (
-                          <button
-                            onClick={() => {
-                              setMessages(prev => [...prev, { role: "assistant", content: T("connectionRefreshed", "✅ Successfully refreshed the connection. Your sync is back to normal!") }]);
-                            }}
-                            className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors self-start shadow-sm"
+                        {typeof msg.cost === "number" && <CostTag free={msg.cost === 0} cost={msg.cost} />}
+                      </div>
+                    ) : (msg.content)}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          ) : (
+            <>
+              <QuickReplyChips onChip={handleChip} />
+              <div className="flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Rayma AI conversation">
+                {!initializing && onboardingGreeting && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
+                      <ReactMarkdown
+                        components={{ pre: CodeBlock }}
+                        className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                      >
+                        {onboardingGreeting}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                )}
+                {initializing ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex justify-start">
+                    <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
+                      {T("raymaGreeting", "Hi! I'm Rayma AI, your personal financial advisor. I can help you log transactions, split expenses, add bills, or update loans—just ask!")}
+                    </div>
+                  </div>
+                ) : (
+                  messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
+                    <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                        {msg.role === "assistant" ? (
+                          <div className="flex flex-col gap-1">
+                            <ReactMarkdown
+                              components={{ pre: CodeBlock }}
+                              className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             >
-                            {T("securelyFixThis", "Yes, securely fix this")}
-                          </button>
+                              {msg.content || "…"}
+                            </ReactMarkdown>
+                            {msg.actionCode && (
+                              <button
+                                onClick={() => {
+                                  setMessages(prev => [...prev, { role: "assistant", content: T("connectionRefreshed", "✅ Successfully refreshed the connection. Your sync is back to normal!") }]);
+                                }}
+                                className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors self-start shadow-sm"
+                              >
+                                {T("securelyFixThis", "Yes, securely fix this")}
+                              </button>
+                            )}
+                            {typeof msg.cost === "number" && <CostTag free={msg.cost === 0} cost={msg.cost} />}
+                          </div>
+                        ) : (
+                          msg.content
                         )}
                       </div>
-                    ) : (
-                      msg.content
-                    )}
+                    </div>
+                  ))
+                )}
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted px-3 py-2 rounded-lg">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-muted px-3 py-2 rounded-lg">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
-                  </div>
-                </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+            </>
+          )}
 
           <div className="border-t border-border p-3 flex items-center gap-2 shrink-0">
             <button
