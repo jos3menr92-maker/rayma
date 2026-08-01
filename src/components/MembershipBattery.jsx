@@ -61,7 +61,7 @@ export function getEnergyState(userProfile) {
   }
   const isUnlimited = sub === "power_unlimited" || isPremiumPass;
   const tokens = userProfile?.ai_tokens ?? 0;
-  const pct = isUnlimited ? 100 : Math.min(100, (tokens / 30) * 100);
+  const pct = isUnlimited ? 100 : Math.min(100, (tokens / 15) * 100);
   const isLow = !isUnlimited && tokens <= 3;
   return { sub, isUnlimited, tokens, pct, isLow };
 }

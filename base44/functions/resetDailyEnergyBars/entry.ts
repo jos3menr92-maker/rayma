@@ -3,9 +3,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 /**
  * Weekly Free-Coin Top-up (Rayma AI Coin Model)
  * =============================================
- * Runs on a schedule (weekly recommended). Free users get 30 coins (10 questions)
- * per week. This tops up to 30 ONLY if the user's balance is below 30 AND a new
- * week has started since the last top-up — so purchased/earned coins above 30 are
+ * Runs on a schedule (weekly recommended). Free users get 15 coins (5 questions)
+ * per week. This tops up to 15 ONLY if the user's balance is below 15 AND a new
+ * week has started since the last top-up — so purchased/earned coins above 15 are
  * preserved (carry over), and the free allowance does not stack (no carry over of
  * unused allowance).
  *
@@ -13,7 +13,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
  * skipped. Idempotent via ai_tokens_reset_date (set to the week-start date).
  */
 
-const WEEKLY_FREE_COINS = 30; // 30 coins = 10 questions/week
+const WEEKLY_FREE_COINS = 15; // 15 coins = 5 questions/week
 
 // Returns the ISO Monday-UTC date string for the week containing `date`
 function getWeekStartISO(date) {
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
       timestamp: now,
       week_start: weekStart,
       usersResetCount: resetCount,
-      message: `Topped up ${resetCount} free users to ${WEEKLY_FREE_COINS} coins`,
+      message: `Topped up ${resetCount} free users to ${WEEKLY_FREE_COINS} coins (week of ${weekStart})`,
     });
   } catch (error) {
     console.error('❌ Critical error in weekly token top-up:', error);

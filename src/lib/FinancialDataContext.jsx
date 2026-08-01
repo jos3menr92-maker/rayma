@@ -6,15 +6,15 @@ import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);
 
-// 🪙 One-time coin grant — brand-new accounts start with 30 coins (10 questions).
-// No daily/weekly refill here; the weekly cron tops up free users to 30. Purchased
+// 🪙 One-time coin grant — brand-new accounts start with 15 coins (5 questions).
+// No daily/weekly refill here; the weekly cron tops up free users to 15. Purchased
 // and earned coins carry over, so we only ever initialize a null balance once.
 async function ensureInitialCoins(me) {
   if (!me) return null;
   if (me.ai_tokens == null) {
     try {
-      await base44.auth.updateMe({ ai_tokens: 30 });
-      return { ai_tokens: 30 };
+      await base44.auth.updateMe({ ai_tokens: 15 });
+      return { ai_tokens: 15 };
     } catch (e) {
       console.warn('Initial coin grant failed:', e.message);
       return null;

@@ -17,8 +17,8 @@ import Stripe from 'npm:stripe@14.21.0';
 
 const PRICE_IDS = {
   power_insert_coin:        { price: 'price_1Tyg6YIer8UHtVVls17tvIB2', mode: 'payment'       },
-  power_lithium_monthly:    { price: 'price_1Tyg6YIer8UHtVVldvSNEBUg', mode: 'subscription' },
-  power_generator_monthly:  { price: 'price_1Tyg6YIer8UHtVVl3Kv0r0AP', mode: 'subscription' },
+  power_lithium_monthly:    { price: 'price_1TzXLbIer8UHtVVlGjp9YC9s', mode: 'subscription' },
+  power_generator_monthly:  { price: 'price_1TzXLbIer8UHtVVl5nFXHBVg', mode: 'subscription' },
   power_unlimited_monthly:  { price: 'price_1TzWroIer8UHtVVl17l34MTM', mode: 'subscription' },
 };
 

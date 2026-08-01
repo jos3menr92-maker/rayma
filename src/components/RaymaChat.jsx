@@ -434,13 +434,13 @@ export default function RaymaChat({
       setTimeout(() => {
         setMessages(prev => [...prev, { 
           role: "assistant", 
-          content: T("outOfEnergy", "⚡ **Out of Energy!** \n\nI need a recharge to run this analysis. Head over to the **Arcade** to play a game and earn free tokens, or visit the **Store** for a quick recharge!") 
+          content: T("outOfEnergy", "🪙 **Out of coins!** \n\nI need coins to run this analysis. Play a game in the **Arcade** to earn free coins, or visit the **Store** for a quick top-up!")
         }]);
       }, 500);
       return;
     }
 
-    // 🔋 Deduct 1 token for this AI consultation — the single "Battery" field.
+    // 🪙 Deduct 3 coins for this AI consultation.
     try {
       const meNow = await base44.auth.me();
       const remaining = (meNow?.ai_tokens ?? 0) - 3;

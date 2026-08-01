@@ -20,7 +20,7 @@ const testimonials = [
 ];
 
 const faqs = [
-  { q: "Is Rayma AI free?", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. Rayma AI gives you 5 free consultations every month. Buy Insert Coin for a one-time energy boost, or subscribe to Lithium or Generator for daily energy bars." },
+  { q: "Is Rayma AI free?", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. You get 15 coins (5 questions) free every week. Play games in the Arcade to earn more, buy an Insert Coin pack for a one-time boost, or subscribe to Lithium / Generator / Unlimited for monthly coins or unlimited access." },
   { q: "Does Rayma AI connect to my bank?", a: "No. Rayma AI is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
   { q: "Is my data private?", a: "Absolutely. Every record is privately scoped to your account with row-level security. We never sell or share your data." },
   { q: "What platforms does Rayma AI work on?", a: "Rayma AI works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
@@ -65,7 +65,7 @@ export default function Landing() {
 
   // 🌍 MOVED: FAQs with translation keys
   const faqs = [
-    { qKey: "faq1Q", q: "Is Rayma AI free?", aKey: "faq1A", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. You get 30 coins (10 questions) free every week. Play games in the Arcade to earn more coins, buy an Insert Coin pack for a one-time boost, or subscribe to Lithium / Generator / Unlimited for monthly coins or unlimited access." },
+    { qKey: "faq1Q", q: "Is Rayma AI free?", aKey: "faq1A", a: "Yes — all core features (loans, bills, budget, net worth) are free forever. You get 15 coins (5 questions) free every week. Play games in the Arcade to earn more coins, buy an Insert Coin pack for a one-time boost, or subscribe to Lithium / Generator / Unlimited for monthly coins or unlimited access." },
     { qKey: "faq2Q", q: "Does Rayma AI connect to my bank?", aKey: "faq2A", a: "No. Rayma AI is manual-entry by design. Your financial data stays on your device and our secure servers — never shared with banks or third parties." },
     { qKey: "faq3Q", q: "Is my data private?", aKey: "faq3A", a: "Absolutely. Every record is privately scoped to your account with row-level security. We never sell or share your data." },
     { qKey: "faq4Q", q: "What platforms does Rayma AI work on?", aKey: "faq4A", a: "Rayma AI works on any device — iPhone, Android, tablet, or desktop — directly in your browser. You can also install it as an app from your browser." },
@@ -206,8 +206,8 @@ export default function Landing() {
             <div className="bg-card border border-border rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{T("freePlan", "Free Forever")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$0</p>
-              <p className="text-xs text-muted-foreground mb-4">{T("freeIncluded", "10 questions / week")}</p>
-              {[T("featureLoans", "Loans & debt tracking"), T("featureBills", "Bills & calendar"), T("featureBudget", "Budget categories"), T("featureNetWorth", "Net worth tracking"), T("featureDocuments", "Document vault"), T("featureAIFree", "5 free AI queries/mo")].map(f => (
+              <p className="text-xs text-muted-foreground mb-4">{T("freeIncluded", "5 questions / week")}</p>
+              {[T("featureLoans", "Loans & debt tracking"), T("featureBills", "Bills & calendar"), T("featureBudget", "Budget categories"), T("featureNetWorth", "Net worth tracking"), T("featureDocuments", "Document vault"), T("featureAIFree", "5 free AI questions/week")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>
@@ -228,9 +228,9 @@ export default function Landing() {
             <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 rounded-2xl p-5 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">{T("popular", "POPULAR")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("lithium", "Lithium")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$8.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$8.99/mo · 120 coins (40 q)")}</p>
-              {[T("feature50DailyEnergy", "120 coins / month (40 q)"), T("featureMonthly", "Billed monthly"), T("featureNoCommitment", "Cancel anytime"), T("featureBestValue", "Best per-question value")].map(f => (
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$4.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$4.99/mo · 80 coins (~27 q)")}</p>
+              {[T("feature50DailyEnergy", "80 coins / month (~27 q)"), T("featureMonthly", "Billed monthly"), T("featureNoCommitment", "Cancel anytime"), T("featureBestValue", "Best per-question value")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>
@@ -240,9 +240,9 @@ export default function Landing() {
             <div className="bg-primary/5 border-2 border-primary rounded-2xl p-5 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-0.5 rounded-full">{T("bestValue", "BEST VALUE")}</div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">{T("generator", "Generator")}</p>
-              <p className="text-3xl font-bold font-heading text-foreground mb-1">$16.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$16.99/mo · 240 coins (80 q)")}</p>
-              {[T("feature200DailyEnergy", "240 coins / month (80 q)"), T("featureAllFeatures", "Sponsor games unlocked"), T("featurePriority", "Priority experience"), T("featureNoCommitment", "Cancel anytime")].map(f => (
+              <p className="text-3xl font-bold font-heading text-foreground mb-1">$9.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs text-muted-foreground mb-4">{T("generatorDesc", "$9.99/mo · 180 coins (60 q)")}</p>
+              {[T("feature200DailyEnergy", "180 coins / month (60 q)"), T("featureAllFeatures", "Sponsor games unlocked"), T("featurePriority", "Priority experience"), T("featureNoCommitment", "Cancel anytime")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />{f}
                 </div>

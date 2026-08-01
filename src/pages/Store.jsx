@@ -60,24 +60,24 @@ export default function Store() {
     {
       id: "power_lithium",
       label: T("lithiumUpgrade", "Lithium"),
-      desc: T("lithiumDesc", "+120 coins (40 questions) every month. Coins carry over."),
+      desc: T("lithiumDesc", "+80 coins (~27 questions) every month. Coins carry over."),
       icon: <BatteryCharging className="w-5 h-5 text-blue-500" />,
       color: "border-blue-500",
       badge: T("popular", "POPULAR"),
       isSubscription: true,
       monthlyId: "power_lithium_monthly",
-      monthlyPrice: "$8.99 / mo",
+      monthlyPrice: "$4.99 / mo",
     },
     {
       id: "power_generator",
       label: T("arcadeGenerator", "Generator"),
-      desc: T("generatorDesc", "+240 coins (80 questions) every month + Gold Sponsor Badge."),
+      desc: T("generatorDesc", "+180 coins (60 questions) every month + Gold Sponsor Badge."),
       icon: <Gamepad2 className="w-5 h-5 text-primary" />,
       color: "border-primary",
       badge: T("sponsorTier", "SPONSOR TIER"),
       isSubscription: true,
       monthlyId: "power_generator_monthly",
-      monthlyPrice: "$16.99 / mo",
+      monthlyPrice: "$9.99 / mo",
     },
     {
       id: "power_unlimited",
@@ -198,7 +198,7 @@ export default function Store() {
           </div>
           <h1 className="text-2xl font-bold font-heading text-foreground mb-2">{T("powerStation", "Rayma AI Power Station")}</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {T("powerStationDesc", "Every user gets an AA Battery (10 Energy Bars) every day for free. Need more juice to simulate heavy debt payoffs? Upgrade your capacity below.")}
+            {T("powerStationDesc", "Every user gets 15 coins (5 questions) free every week. Need more? Earn coins in the Arcade or buy a pack below. 3 coins = 1 question or scan.")}
           </p>
         </div>
 

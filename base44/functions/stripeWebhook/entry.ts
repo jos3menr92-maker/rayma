@@ -7,12 +7,12 @@ import Stripe from 'npm:stripe@14.21.0';
  * 1 coin = 1/3 of a question or scan. 3 coins per chat question, 3 per scan.
  *
  * Tiers:
- *   - Insert Coin:  +30 coins (one-time)         $2.99
- *   - Lithium:      +120 coins (monthly grant)   $8.99/mo | $74.99/yr
- *   - Generator:    +240 coins (monthly grant)  $16.99/mo | $135.99/yr
- *   - Unlimited:    ∞ (no coin counting)         $34.99/mo | $299.99/yr
+ *   - Insert Coin:  +30 coins (one-time)          $2.99
+ *   - Lithium:      +80 coins (monthly grant)     $4.99/mo
+ *   - Generator:    +180 coins (monthly grant)    $9.99/mo
+ *   - Unlimited:    ∞ (no coin counting)          $34.99/mo
  *
- * Purchased + earned coins carry over forever. Free users get 30 coins/week
+ * Purchased + earned coins carry over forever. Free users get 15 coins/week
  * (topped up weekly, not carried over) — handled by resetDailyEnergyBars.
  *
  * Events:
@@ -25,10 +25,10 @@ import Stripe from 'npm:stripe@14.21.0';
 
 // Monthly coin grants per subscription tier (granted on checkout + each renewal)
 const POWER_TIER_CONFIG = {
-  power_lithium_monthly:   { subscription_type: 'power_lithium',   coins_grant: 120 },
-  power_lithium_annual:    { subscription_type: 'power_lithium',   coins_grant: 120 },
-  power_generator_monthly: { subscription_type: 'power_generator', coins_grant: 240 },
-  power_generator_annual:  { subscription_type: 'power_generator', coins_grant: 240 },
+  power_lithium_monthly:   { subscription_type: 'power_lithium',   coins_grant: 80 },
+  power_lithium_annual:    { subscription_type: 'power_lithium',   coins_grant: 80 },
+  power_generator_monthly: { subscription_type: 'power_generator', coins_grant: 180 },
+  power_generator_annual:  { subscription_type: 'power_generator', coins_grant: 180 },
   power_unlimited_monthly: { subscription_type: 'power_unlimited', coins_grant: 0  },
   power_unlimited_annual:  { subscription_type: 'power_unlimited', coins_grant: 0  },
 };
