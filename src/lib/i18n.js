@@ -89,7 +89,9 @@ export const translations = {
     deleteAccountTitle: "Delete Account", deletionGracePeriodNotice: "Your account will be scheduled for permanent deletion in 30 days. If you log back in before then, your deletion will be cancelled and your data restored. After 30 days, all your data will be permanently erased and cannot be recovered.", scheduleDeletion: "Schedule Deletion", deletionScheduledTitle: "Deletion Scheduled", deletionScheduledBody: "Your account is scheduled for permanent deletion on {date}. Log back in anytime before then to cancel and restore your account.", deletionScheduleFailed: "Failed to schedule account deletion. Please try again.", welcomeBackDeletionCancelled: "Welcome back! Your account deletion has been cancelled and your data is restored.", accountPermanentlyDeleted: "This account has been permanently deleted.", accountExistsLoginInstead: "An account with this email already exists. Please sign in instead.",
     chipName: "What's your name?", chipCanDo: "What can you do?", chipAddLoan: "Add a loan?", chipLogPayment: "Log a payment?", chipScanReceipt: "Scan a receipt?", chipSetBudget: "Set a budget?", chipNetWorth: "My net worth?", chipTotalDebt: "How much do I owe?", chipBillsDue: "Bills due this week?", chipMonthly: "Monthly obligations?", chipCashFlow: "Improve cash flow", chipSaveMoney: "Save more money",
     historyLabel: "Chat history", archiveChat: "Archive chat to history", noHistory: "No saved conversations yet. Trash a chat to save it here for free re-reading.", backToChat: "Back to chat", historyTitle: "Saved Chats (last 5)", backToLiveChat: "← Back to live chat",
-    freeTag: "Free — no credits used", creditsUsed: "{n} credits used"
+    creditsUsed: "{n} credits used",
+    zoomOut: "Smaller text", zoomIn: "Larger text",
+    freeMonthlyTitle: "Monthly Obligations", freeMonthlyBills: "Bills", freeMonthlyLoans: "Loan payments", freeMonthlyTotal: "Total monthly obligations", freeNoBills: "No active bills logged.", freeNoLoans: "No active loans."
   },
   zh: {
     appName: "债务与账单", dashboard: "仪表板", loans: "贷款", bills: "账单", finance: "财务", more: "更多", signIn: "登录", signOut: "退出登录", getStartedFree: "免费开始",

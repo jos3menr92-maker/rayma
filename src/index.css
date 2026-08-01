@@ -147,3 +147,19 @@ body.tour-active #quick-add-button {
 body.tour-active #rayma-chat-panel {
   display: none !important;
 }
+
+/* Rayma Chat zoom — children inherit the container's font-size
+   so the A+/A− controls scale every message (markdown included). */
+.chat-messages,
+.chat-messages .prose,
+.chat-messages p,
+.chat-messages li,
+.chat-messages strong,
+.chat-messages ul,
+.chat-messages ol {
+  font-size: inherit;
+}
+.chat-messages code,
+.chat-messages pre {
+  font-size: 0.9em;
+}

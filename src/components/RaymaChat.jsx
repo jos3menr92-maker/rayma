@@ -67,7 +67,9 @@ export default function RaymaChat({
   const [tourTriggered, setTourTriggered] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [historyView, setHistoryView] = useState(null);
+  const [zoom, setZoom] = useState(0);
   const pendingAICostRef = useRef(0);
+  const ZOOM_PX = [13, 15, 17, 19];
   const { lang } = useLanguage();
   const { formatCurrency } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -542,7 +544,13 @@ export default function RaymaChat({
               <p className="text-xs text-muted-foreground">{T("aiFinancialAdvisor", "AI Financial Advisor")}</p>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => { setShowHistory(s => !s); setHistoryView(null); }} aria-label={T("historyLabel", "Chat history")} className="min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("historyLabel", "Chat history")}>
+              <button onClick={() => setZoom((z) => Math.max(0, z - 1))} disabled={zoom === 0} aria-label={T("zoomOut", "Smaller text")} title={T("zoomOut", "Smaller text")} className="min-w-[34px] min-h-[34px] flex items-center justify-center hover:bg-muted rounded-lg text-sm font-bold text-muted-foreground disabled:opacity-40 transition-colors">
+                A−
+              </button>
+              <button onClick={() => setZoom((z) => Math.min(ZOOM_PX.length - 1, z + 1))} disabled={zoom === ZOOM_PX.length - 1} aria-label={T("zoomIn", "Larger text")} title={T("zoomIn", "Larger text")} className="min-w-[34px] min-h-[34px] flex items-center justify-center hover:bg-muted rounded-lg text-sm font-bold text-muted-foreground disabled:opacity-40 transition-colors">
+                A+
+              </button>
+              <button onClick={() => { setShowHistory(s => !s); setHistoryView(null); }} aria-label={T("historyLabel", "Chat history")} className="min-w-[34px] min-h-[34px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("historyLabel", "Chat history")}>
                 <History className="w-5 h-5 text-muted-foreground" />
               </button>
               <button onClick={handleClear} aria-label={T("archiveChat", "Archive chat to history")} className="min-w-[40px] min-h-[40px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors" title={T("archiveChat", "Archive chat to history")}>
@@ -560,7 +568,7 @@ export default function RaymaChat({
               onLoad={(h) => { setHistoryView(h.messages); setShowHistory(false); }}
             />
           ) : historyView ? (
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="chat-messages flex-1 overflow-y-auto p-4 space-y-3" style={{ fontSize: ZOOM_PX[zoom] }}>
               <div className="text-center mb-1">
                 <button onClick={() => setHistoryView(null)} className="text-xs text-primary underline">
                   {T("backToLiveChat", "← Back to live chat")}
@@ -568,13 +576,13 @@ export default function RaymaChat({
               </div>
               {historyView.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                  <div className={`max-w-[85%] px-3 py-2 rounded-lg ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                     {msg.role === "assistant" ? (
                       <div className="flex flex-col gap-1">
-                        <ReactMarkdown components={{ pre: CodeBlock }} className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                        <ReactMarkdown components={{ pre: CodeBlock }} className="prose prose-sm prose-slate dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                           {msg.content || "…"}
                         </ReactMarkdown>
-                        {typeof msg.cost === "number" && <CostTag free={msg.cost === 0} cost={msg.cost} />}
+                        {msg.cost > 0 && <CostTag cost={msg.cost} />}
                       </div>
                     ) : (msg.content)}
                   </div>
@@ -585,13 +593,13 @@ export default function RaymaChat({
           ) : (
             <>
               <QuickReplyChips onChip={handleChip} />
-              <div className="flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Rayma AI conversation">
+              <div className="chat-messages flex-1 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Rayma AI conversation" style={{ fontSize: ZOOM_PX[zoom] }}>
                 {!initializing && onboardingGreeting && (
                   <div className="flex justify-start">
-                    <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
+                    <div className="bg-muted text-foreground px-3 py-2 rounded-lg max-w-[85%]">
                       <ReactMarkdown
                         components={{ pre: CodeBlock }}
-                        className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                        className="prose prose-sm prose-slate dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                       >
                         {onboardingGreeting}
                       </ReactMarkdown>
@@ -604,19 +612,19 @@ export default function RaymaChat({
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex justify-start">
-                    <div className="bg-muted text-foreground px-3 py-2 rounded-lg text-sm max-w-[85%]">
+                    <div className="bg-muted text-foreground px-3 py-2 rounded-lg max-w-[85%]">
                       {T("raymaGreeting", "Hi! I'm Rayma AI, your personal financial advisor. I can help you log transactions, split expenses, add bills, or update loans—just ask!")}
                     </div>
                   </div>
                 ) : (
                   messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
                     <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                      <div className={`max-w-[85%] px-3 py-2 rounded-lg ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                         {msg.role === "assistant" ? (
                           <div className="flex flex-col gap-1">
                             <ReactMarkdown
                               components={{ pre: CodeBlock }}
-                              className="prose prose-sm prose-slate dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                              className="prose prose-sm prose-slate dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             >
                               {msg.content || "…"}
                             </ReactMarkdown>
@@ -630,7 +638,7 @@ export default function RaymaChat({
                                 {T("securelyFixThis", "Yes, securely fix this")}
                               </button>
                             )}
-                            {typeof msg.cost === "number" && <CostTag free={msg.cost === 0} cost={msg.cost} />}
+                            {msg.cost > 0 && <CostTag cost={msg.cost} />}
                           </div>
                         ) : (
                           msg.content

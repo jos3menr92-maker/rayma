@@ -3,7 +3,8 @@ import { t } from "@/lib/i18n";
 import { CHIPS } from "@/lib/raymaClassifier";
 
 /**
- * Horizontally scrollable quick-reply chips.
+ * Quick-reply chips arranged in a wrapping grid (2–3 per row on mobile)
+ * so users see more questions right away without horizontal scrolling.
  * Green dot = free (no AI). Red dot = uses AI (credits).
  */
 export default function QuickReplyChips({ onChip }) {
@@ -13,13 +14,13 @@ export default function QuickReplyChips({ onChip }) {
     return r !== key ? r : fb;
   };
   return (
-    <div className="shrink-0 px-3 pt-2 pb-1 overflow-x-auto scrollbar-hide">
-      <div className="flex gap-1.5 w-max">
+    <div className="shrink-0 px-3 pt-2 pb-1">
+      <div className="flex flex-wrap gap-1.5">
         {CHIPS.map((chip) => (
           <button
             key={chip.id}
             onClick={() => onChip?.(chip)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-colors ${
+            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium whitespace-nowrap border transition-colors ${
               chip.tier === "free"
                 ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10"
                 : "border-rose-500/40 bg-rose-500/5 text-rose-700 dark:text-rose-400 hover:bg-rose-500/10"
