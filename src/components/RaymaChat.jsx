@@ -425,8 +425,8 @@ export default function RaymaChat({
 // --- 8. MAIN AI FALLBACK LOGIC (WITH BATTERY DRAIN) ---
     if (!input.trim() || loading || !conversation) return;
 
-    // 🔋 THE TOKEN TOLL BOOTH — aligned with Store/Dashboard (ai_tokens)
-    const aiTokens = userProfile?.ai_tokens ?? userProfile?.ai_tokens_daily_limit ?? 0;
+    // 🔋 THE TOKEN TOLL BOOTH — single unified "Battery" field (ai_tokens)
+    const aiTokens = userProfile?.ai_tokens ?? 0;
 
     if (aiTokens <= 0) {
       setMessages(prev => [...prev, { role: "user", content: input.trim() }]);
@@ -440,7 +440,16 @@ export default function RaymaChat({
       return;
     }
 
-    // Token consumption is handled natively by the Base44 agent platform via addMessage below
+    // 🔋 Deduct 1 token for this AI consultation — the single "Battery" field.
+    try {
+      const meNow = await base44.auth.me();
+      const remaining = (meNow?.ai_tokens ?? 0) - 1;
+      if (remaining >= 0) {
+        await base44.auth.updateMe({ ai_tokens: remaining });
+        refreshUserProfile?.();
+      }
+    } catch (e) { console.warn('Token deduction failed:', e.message); }
+
     const messageContent = input.trim(); 
     setInput("");
     setLoading(true);

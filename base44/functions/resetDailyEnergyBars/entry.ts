@@ -1,29 +1,21 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 /**
- * Daily Energy Reset (scheduled via pg_cron at 00:00 UTC)
+ * Daily Token Top-up (unified "Battery" field: ai_tokens)
+ * ======================================================
+ * Runs daily at 00:00 UTC. Tops up each user's ai_tokens to their tier's daily
+ * limit (free 10 / lithium 50 / generator 200) WITHOUT reducing tokens already
+ * above the limit — so Insert Coin boosts and arcade rewards are preserved.
+ * Annual-pass users are unlimited and skipped. Idempotent via ai_tokens_reset_date.
  *
- * Rules:
- *  - Annual pass active  → skip entirely (unlimited energy, no cap)
- *  - power_generator active → reset to 200 bars/day
- *  - power_lithium active   → reset to 50 bars/day
- *  - Free user              → reset to 10 bars/day
- *
- * In all non-skipped cases, purchased_energy is added on top.
- * Duplicate resets on the same calendar day are prevented via last_energy_reset.
+ * This replaces the legacy energy_bars reset — ai_tokens is now the single
+ * field driving the Battery UI, the AI chat gate, Stripe purchases, and rewards.
  */
-
-// Daily energy cap per subscription tier
-const DAILY_ENERGY_BY_TIER: Record<string, number> = {
-  power_generator: 200,
-  power_lithium:   50,
-  free:            10,
-};
 
 Deno.serve(async (req) => {
   try {
-    // Verify this is being called by the pg_cron scheduled job
-    const authHeader       = req.headers.get('authorization');
+    // Verify this is being called by the scheduled job
+    const authHeader = req.headers.get('authorization');
     const scheduledSecretKey = Deno.env.get('SCHEDULED_JOB_SECRET_KEY');
 
     if (!authHeader || !scheduledSecretKey) {
@@ -31,87 +23,59 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const bearerToken = authHeader.replace('Bearer ', '');
-    if (bearerToken !== scheduledSecretKey) {
+    if (authHeader.replace('Bearer ', '') !== scheduledSecretKey) {
       console.warn('Invalid authorization token');
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const base44 = createClientFromRequest(req);
-    const today  = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
-    const now    = new Date();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD UTC
+    const now = new Date();
 
     const allUsers = await base44.asServiceRole.entities.User.query({
       limit: 10000,
     });
 
     let resetCount = 0;
-    const resetSummary = [];
 
     for (const user of allUsers) {
-
       // ── ANNUAL PASS CHECK ─────────────────────────────────────────────────
-      // Annual pass = unlimited energy. Skip the reset entirely so their
-      // bars are never touched by this job.
+      // Annual pass = unlimited. Skip so their tokens are never touched.
       const hasActivePremium = user.annual_pass_expires_at
         ? new Date(user.annual_pass_expires_at + 'T23:59:59Z') > now
         : false;
-
-      if (hasActivePremium) {
-        console.log(`⊘ Skipped annual-pass user ${user.id} (expires ${user.annual_pass_expires_at})`);
-        continue;
-      }
+      if (hasActivePremium) continue;
 
       // ── DUPLICATE RESET GUARD ─────────────────────────────────────────────
-      if (user.last_energy_reset === today) {
-        console.log(`⊘ Skipped user ${user.id} (already reset today)`);
-        continue;
-      }
+      if (user.ai_tokens_reset_date === today) continue;
 
-      // ── DETERMINE TIER ────────────────────────────────────────────────────
-      // stripeWebhook sets `subscription_type` to 'power_lithium' or 'power_generator'.
-      // Check that field directly to assign the correct daily energy cap.
-      const subType = user.subscription_type;
-      const activeTier = (subType && DAILY_ENERGY_BY_TIER[subType]) ? subType : 'free';
+      // ── TOP-UP TO TIER LIMIT ──────────────────────────────────────────────
+      const limit = user.ai_tokens_daily_limit || 10;
+      const current = user.ai_tokens ?? 0;
 
-      // ── CALCULATE DAILY ENERGY ────────────────────────────────────────────
-      const baseDailyEnergy  = DAILY_ENERGY_BY_TIER[activeTier] ?? 10;
-      const purchasedEnergy  = user.purchased_energy || 0;
-      const totalEnergy      = baseDailyEnergy + purchasedEnergy;
+      // Only top up if below the daily limit — never reduce purchased/earned tokens.
+      if (current >= limit) continue;
 
       try {
         await base44.asServiceRole.entities.User.update(user.id, {
-          energy_bars:       totalEnergy,
-          last_energy_reset: today,
+          ai_tokens: limit,
+          ai_tokens_reset_date: today,
         });
 
         resetCount++;
-        resetSummary.push({
-          userId:         user.id,
-          email:          user.email,
-          tier:           activeTier,
-          baseDailyEnergy,
-          purchasedEnergy,
-          newEnergyBars:  totalEnergy,
-        });
-
-        console.log(
-          `✓ Reset user ${user.id} [${activeTier}]: ` +
-          `${baseDailyEnergy} base + ${purchasedEnergy} purchased = ${totalEnergy} bars`
-        );
+        console.log(`✓ Topped up ${user.id}: ${current} → ${limit} tokens`);
       } catch (updateError) {
-        console.error(`✗ Failed to reset user ${user.id}:`, updateError.message);
+        console.error(`✗ Failed to top up user ${user.id}:`, updateError.message);
       }
     }
 
-    console.log(`\n🔋 Daily reset complete: ${resetCount} users updated at ${today} UTC`);
+    console.log(`\n🔋 Daily token top-up complete: ${resetCount} users at ${today} UTC`);
 
     return Response.json({
-      success:         true,
-      timestamp:       new Date().toISOString(),
+      success: true,
+      timestamp: new Date().toISOString(),
       usersResetCount: resetCount,
-      summary:         resetSummary,
-      message:         `Successfully reset daily energy for ${resetCount} users`,
+      message: `Topped up ai_tokens for ${resetCount} users`,
     });
   } catch (error) {
     console.error('❌ Critical error in resetDailyEnergyBars:', error);
