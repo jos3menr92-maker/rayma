@@ -11,7 +11,7 @@
 // Quick-reply chips shown at the top of Rayma Chat.
 export const CHIPS = [
   // 🟢 Row 1 — Free silent lookups (local math, 0 credits)
-  { id: "who", labelKey: "chipWhoRayma", fallback: "Who is Rayma?", tier: "free", text: "who is rayma" },
+  { id: "who", labelKey: "chipWhoRayma", fallback: "What is Rayma?", tier: "free", text: "what is rayma" },
   { id: "netWorth", labelKey: "chipNetWorth", fallback: "Current net worth?", tier: "free", text: "current net worth" },
   { id: "totalDebt", labelKey: "chipTotalDebt", fallback: "Total debt balance?", tier: "free", text: "total debt balance" },
   { id: "upcomingBills", labelKey: "chipUpcomingBills", fallback: "Upcoming bills?", tier: "free", text: "upcoming bills" },
@@ -60,10 +60,10 @@ export function freeAnswer(rawText, ctx = {}) {
   } = ctx;
 
   // --- Identity ---
-  if (/(what(?:'s| is)\s*(your|ur)\s*name)|who\s*(are|r)\s*you|who\s*is\s*rayma|your\s*name/.test(text)) {
+  if (/(what(?:'s| is)\s*(your|ur)\s*name)|who\s*(are|r)\s*you|who\s*is\s*rayma|what\s*is\s*rayma|your\s*name/.test(text)) {
     return T(
       "freeName",
-      "I'm **Rayma AI**, your personal financial co-pilot. 🤖\n\nI help you track loans, bills, budgets, and net worth — and I can log transactions, analyze your cash flow, and suggest your best next step. Ask me anything about your money!"
+      "**Meet Rayma AI** 🤖\n\nI'm your personal financial co-pilot, here to make managing money feel less overwhelming. Rayma AI brings your whole financial life into one place — loans, bills, income, budgets, savings goals, and net worth — and turns it into clear, actionable insight.\n\n**How the app works:** Log your payments, bills, and transactions (or just tell me in plain words — \"paid $50 to Netflix\" and I'll record it). I analyze your real numbers and suggest your best next step.\n\n**The coin system:** Every AI question or document scan uses **3 coins**. You get **15 free coins every week**, and coins you earn or buy carry over forever. Run out? Head to the **Arcade** 🎮 — play a quick game and earn more coins for free. You can also grab a coin pack or membership in the **Store**.\n\nI'm not here to judge — I'm here to help, one step at a time. Ask me anything about your money! 💪"
     );
   }
   if (/(what\s*can\s*you\s*do)|how\s*do\s*you\s*work|^help$|\bhelp\b|what\s*do\s*you\s*do/.test(text)) {
