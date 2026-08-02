@@ -712,7 +712,7 @@ export default function RaymaChat({
               disabled={loading || initializing}
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={!input.trim() || loading || initializing}
               aria-label={T("sendMessage", "Send message")}
               className="h-12 w-12 flex items-center justify-center bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0"
