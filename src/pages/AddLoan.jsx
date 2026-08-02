@@ -7,6 +7,9 @@ import { ChevronLeft, Save, AlertTriangle, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { createRecord } from "@/lib/supabaseHelpers";
+import { useCurrency } from "@/hooks/useCurrency";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeLoanPreview } from "@/utils/logPreviewMath";
 
 export default function AddLoan() {
   const navigate = useNavigate();
@@ -39,6 +42,10 @@ export default function AddLoan() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const { formatCurrency: fmt } = useCurrency();
+  const loanPreview = useMemo(() => computeLoanPreview(formData, { fmt, T, locale: lang === "es" ? "es" : "en-US" }), [formData, fmt, T, lang]);
+  const acceptSuggestion = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -217,6 +224,8 @@ export default function AddLoan() {
             className="w-full px-4 py-3 bg-card border border-border rounded-2xl text-sm text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-all"
           />
         </div>
+
+        <LogSuggestionStrip preview={loanPreview} onAccept={acceptSuggestion} />
 
         <button
           type="submit"

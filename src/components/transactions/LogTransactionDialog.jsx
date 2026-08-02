@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowDownCircle, ArrowUpCircle, Loader2, Wallet } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeTransactionPreview } from "@/utils/logPreviewMath";
 
 const CATEGORIES = [
   "income", "food", "transport", "utilities", "subscriptions", "health",
@@ -39,6 +41,9 @@ export function LogTransactionDialog({ accounts, defaultAccountId, onClose, onSa
     selectedAccount != null ? (selectedAccount.balance || 0) + signedAmount : null;
 
   const canSave = !!form.bank_account_id && amountNum > 0 && form.description.trim().length > 0;
+
+  const txPreview = useMemo(() => computeTransactionPreview(form, { fmt, T }), [form, fmt, T]);
+  const acceptSuggestion = (field, value) => setField(field, value);
 
   const setField = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -198,6 +203,7 @@ export function LogTransactionDialog({ accounts, defaultAccountId, onClose, onSa
               </div>
             </div>
           )}
+          <LogSuggestionStrip preview={txPreview} onAccept={acceptSuggestion} />
         </div>
 
         <DialogFooter>

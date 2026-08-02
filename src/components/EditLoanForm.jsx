@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { useCurrency } from "@/hooks/useCurrency";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeLoanPreview } from "@/utils/logPreviewMath";
 
 const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
@@ -42,6 +45,9 @@ export default function EditLoanForm({ loan, onSave }) {
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
+
+  const { formatCurrency: fmt } = useCurrency();
+  const loanPreview = useMemo(() => computeLoanPreview(form, { fmt, T, locale: lang === "es" ? "es" : "en-US" }), [form, fmt, T, lang]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -136,6 +142,7 @@ export default function EditLoanForm({ loan, onSave }) {
         <Label className="text-xs text-muted-foreground">{T("notes", "Notes")}</Label>
         <Textarea value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} className="mt-1 rounded-xl" rows={2} />
       </div>
+      <LogSuggestionStrip preview={loanPreview} onAccept={handleChange} />
       <Button type="submit" disabled={saving} className="w-full rounded-xl">
         {saving ? T("saving", "Saving...") : T("saveChanges", "Save Changes")}
       </Button>

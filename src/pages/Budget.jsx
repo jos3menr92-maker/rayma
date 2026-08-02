@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useLocation } from "react-router-dom";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeSavingsPreview } from "@/utils/logPreviewMath";
 
 const MILESTONES = [25, 50, 75, 100];
 
@@ -34,6 +36,9 @@ export default function Budget() {
   const [winOverlay, setWinOverlay] = useState(null);
   const [shownMilestones, setShownMilestones] = useState({});
   const milestoneMemoryRef = useRef({});
+
+  const savingsPreview = useMemo(() => computeSavingsPreview(goalForm, { fmt, T, locale: lang === "es" ? "es" : "en-US" }), [goalForm, fmt, T, lang]);
+  const acceptSuggestion = (field, value) => setGoalForm(f => ({ ...f, [field]: value }));
 
   const triggerRaymaConfetti = useCallback((milestone) => {
     const coinPalette = ["#F59E0B", "#FBBF24", "#FCD34D", "#EAB308", "#22C55E", "#14B8A6"];
@@ -365,6 +370,7 @@ export default function Budget() {
               <div><Label>{T("weeklyContribution", "Weekly Contribution")}</Label><Input type="number" value={goalForm.weekly_contribution} onChange={e => setGoalForm(f => ({...f, weekly_contribution: e.target.value}))} className="rounded-xl" /></div>
             </div>
             <div><Label>{T("goalPurpose", "What's it for?")}</Label><Input value={goalForm.notes} onChange={e => setGoalForm(f => ({...f, notes: e.target.value}))} placeholder={T("goalPurposePlaceholder", "e.g. Emergency fund, Vacation...")} className="rounded-xl" /></div>
+            <LogSuggestionStrip preview={savingsPreview} onAccept={acceptSuggestion} />
             <Button type="submit" disabled={savingGoal} className="w-full rounded-xl">{savingGoal ? T("saving", "Saving...") : T("saveGoal", "Save Goal")}</Button>
           </form>
         </DialogContent>

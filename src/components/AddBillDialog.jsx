@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { useCurrency } from "@/hooks/useCurrency";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeBillPreview } from "@/utils/logPreviewMath";
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -37,6 +40,9 @@ export default function AddBillDialog({ open, onClose, onSaved }) {
   function set(field, value) {
     setForm(f => ({ ...f, [field]: value }));
   }
+
+  const { formatCurrency: fmt } = useCurrency();
+  const billPreview = useMemo(() => computeBillPreview(form, { fmt, T, locale: lang === "es" ? "es" : "en-US" }), [form, fmt, T, lang]);
 
   const isWeekly = form.payment_frequency === "weekly" || form.payment_frequency === "biweekly";
 
@@ -134,6 +140,7 @@ export default function AddBillDialog({ open, onClose, onSaved }) {
             <Label className="text-xs text-muted-foreground">{T("notes", "Notes")}</Label>
             <Input value={form.notes} onChange={e => set("notes", e.target.value)} placeholder={T("optional", "Optional")} className="mt-1 rounded-xl" />
           </div>
+          <LogSuggestionStrip preview={billPreview} onAccept={set} />
           <Button type="submit" disabled={saving || !isValid} className="w-full rounded-xl">
             {saving ? T("saving", "Saving...") : T("addBill", "Add Bill")}
           </Button>

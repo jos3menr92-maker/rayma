@@ -14,6 +14,8 @@ import { Plus, Pencil, Trash2, TrendingDown } from "lucide-react";
 import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeBudgetPreview } from "@/utils/logPreviewMath";
 
 const CATEGORY_COLORS = {
   food: "#f59e0b", transport: "#3b82f6", utilities: "#8b5cf6", subscriptions: "#ec4899",
@@ -150,6 +152,9 @@ export default function BudgetDashboard() {
   const totalFixed = fixedExpenses.reduce((s, e) => s + (e.amount || 0), 0);
 
   const categories = Object.keys(CATEGORY_COLORS);
+
+  const budgetPreview = useMemo(() => computeBudgetPreview(form, { fmt, T, monthlySpent: getSpent(form.category_key) }), [form, fmt, T]);
+  const acceptSuggestion = (field, value) => setForm({ ...form, [field]: value });
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
@@ -328,6 +333,8 @@ export default function BudgetDashboard() {
               />
             </div>
           </div>
+
+          <LogSuggestionStrip preview={budgetPreview} onAccept={acceptSuggestion} />
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>{T("cancel", "Cancel")}</Button>

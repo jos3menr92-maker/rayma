@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeAssetPreview } from "@/utils/logPreviewMath";
 
 const TYPE_ICONS = { cash: "💵", investment: "📈", property: "🏠", savings: "🏦", other: "📦" };
 const TYPE_COLORS = {
@@ -46,6 +48,9 @@ export default function AssetDashboard() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState(null);
   const { toast } = useToast();
+
+  const assetPreview = useMemo(() => computeAssetPreview(form, { fmt, T }), [form, fmt, T]);
+  const acceptSuggestion = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
   // 🧮 Net Worth Math
   const activeLoans = loans.filter(x => x.status !== "paid_off");
@@ -237,6 +242,7 @@ export default function AssetDashboard() {
               <Label className="text-xs text-muted-foreground">{T("notes", "Notes")}</Label>
               <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder={T("optional", "Optional")} className="mt-1 rounded-xl" />
             </div>
+            <LogSuggestionStrip preview={assetPreview} onAccept={acceptSuggestion} />
             <Button type="submit" disabled={saving} className="w-full rounded-xl">
               {saving ? T("saving", "Saving...") : editing ? T("saveChanges", "Save Changes") : T("addAssetBtn", "Add Asset")}
             </Button>

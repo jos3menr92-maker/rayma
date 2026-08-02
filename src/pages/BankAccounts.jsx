@@ -15,6 +15,8 @@ import { SplitTransactionDialog } from "@/components/transactions/SplitTransacti
 import { LogTransactionDialog } from "@/components/transactions/LogTransactionDialog";
 import AccountBalanceChart from "@/components/AccountBalanceChart";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeBankAccountPreview } from "@/utils/logPreviewMath";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -50,6 +52,9 @@ export default function BankAccounts() {
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [showTxConfirm, setShowTxConfirm] = useState(false);
   const [txToDelete, setTxToDelete] = useState(null);
+
+  const accountPreview = useMemo(() => computeBankAccountPreview(form, { fmt, T }), [form, fmt, T]);
+  const acceptAccountSuggestion = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
   // Auto-open transaction modal when navigated with autoOpenLog state
   useEffect(() => {
@@ -299,6 +304,7 @@ export default function BankAccounts() {
             <div><Label>{T("currentBalance", "Current Balance")}</Label><Input className="mt-1" type="number" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} placeholder="0.00" /></div>
             <div><Label>{T("notes", "Notes")}</Label><Input className="mt-1" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
           </div>
+          <LogSuggestionStrip preview={accountPreview} onAccept={acceptAccountSuggestion} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>{T("cancel", "Cancel")}</Button>
             <Button onClick={saveAccount}>{T("save", "Save")}</Button>

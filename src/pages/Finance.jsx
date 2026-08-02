@@ -19,6 +19,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLocation } from "react-router-dom";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeIncomePreview } from "@/utils/logPreviewMath";
 
 function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
@@ -45,6 +47,9 @@ export default function Finance() {
   const [incomeForm, setIncomeForm] = useState({ amount: "", week_start: startOfWeek(), note: "", is_recurring: false, recurring_frequency: "weekly" });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const incomePreview = useMemo(() => computeIncomePreview(incomeForm, { fmt, T }), [incomeForm, fmt, T]);
+  const acceptSuggestion = (field, value) => setIncomeForm(f => ({ ...f, [field]: value }));
   const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh(reload);
 
   // Auto-open the Log Income dialog when navigated from Quick Add
@@ -307,6 +312,7 @@ export default function Finance() {
                 </div>
               )}
 
+              <LogSuggestionStrip preview={incomePreview} onAccept={acceptSuggestion} />
               <Button type="submit" disabled={saving} className="w-full rounded-xl shadow-lg mt-2">
                 {saving ? T("saving", "Saving...") : T("saveIncome", "Save Income")}
               </Button>
