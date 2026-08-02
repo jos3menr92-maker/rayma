@@ -52,7 +52,7 @@ export function FinancialDataProvider({ children }) {
   const reloadTimerRef = useRef(null);
   const profileTimerRef = useRef(null);
 
-  async function loadAll() {
+  async function loadAll({ fresh = false } = {}) {
     if (loadInFlight.current) {
       pendingReload.current = true;
       return;
@@ -65,9 +65,11 @@ export function FinancialDataProvider({ children }) {
 
     try {
       const [meRaw, { data: { session } }] = await Promise.all([
-        // Reuse the cached Base44 user on background refreshes — base44.auth.me()
-        // is a network round-trip we don't need on every realtime tick.
-        hasLoadedRef.current && meRef.current
+        // Reuse the cached Base44 user on background/realtime refreshes —
+        // base44.auth.me() is a network round-trip we don't need on every tick.
+        // An explicit reload (fresh=true, e.g. after a profile save) re-fetches
+        // so the freshly-saved fields show up immediately instead of on hard refresh.
+        hasLoadedRef.current && meRef.current && !fresh
           ? Promise.resolve(meRef.current)
           : base44.auth.me().catch(() => null),
         supabase.auth.getSession()
@@ -335,7 +337,7 @@ export function FinancialDataProvider({ children }) {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         setSupaUser(session?.user || null);
-        loadAll();
+        loadAll({ fresh: true });
       } else if (event === "SIGNED_OUT") {
         setSupaUser(null);
         // Clear cached identity so a different user signing in next gets a fresh fetch,
@@ -403,7 +405,7 @@ export function FinancialDataProvider({ children }) {
         userProfile,
         supaUser,
         loading,
-        reload: loadAll,
+        reload: () => loadAll({ fresh: true }),
         refreshUserProfile,
         payBill,
         updateLoan,

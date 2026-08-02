@@ -74,7 +74,7 @@ const Arcade = () => {
   const T = useT();
   const navigate = useNavigate();
   const { userProfile, reload } = useFinancialData();
-  const [activeGame, setActiveGame] = useState('space_invaders');
+  const [activeGame, setActiveGame] = useState(null);
 
   // Track high scores
   const [highScores, setHighScores] = useState({
@@ -107,6 +107,14 @@ const Arcade = () => {
     || (userProfile?.game_access_expires_at && new Date(userProfile.game_access_expires_at) > new Date());
 
   const renderActiveGame = () => {
+    if (!activeGame) {
+      return (
+        <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8 text-center">
+          <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">{T('arcadeSelectGame', 'Select a Game')}</h3>
+          <p className="text-slate-400 font-mono text-center max-w-md">{T('arcadeSelectPrompt', 'Choose a terminal from the left to start playing.')}</p>
+        </div>
+      );
+    }
     const game = GAMES_REGISTRY[activeGame];
     if (game?.premium && !hasGameAccess) {
       return <PremiumGameLock gameTitle={game.title} />;
