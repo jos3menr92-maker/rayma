@@ -78,36 +78,44 @@ export default function RaymaChat({
   const navigate = useNavigate();
   const { reload, refreshUserProfile } = useFinancialData();
 
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [viewportBox, setViewportBox] = useState({ top: 0, height: 0 });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 📱 Keyboard awareness — keep the chat input visible above the on-screen keyboard.
-  // We compare the live visualViewport height against the tallest height we've seen
-  // (the no-keyboard baseline). This works on both iOS (window.innerHeight stays the
-  // full layout viewport) and Android (the layout viewport shrinks WITH the keyboard,
-  // so a naive innerHeight − visualViewport.height would read ~0 and never trigger).
+  // 📱 Keyboard awareness — anchor the chat panel to the *visual* viewport so the
+  // input bar always sits just above the on-screen keyboard on both iOS and Android.
+  // We track the live visual viewport (top + height) and derive the keyboard height
+  // from the tallest height seen (the no-keyboard baseline). Anchoring the panel with
+  // top + height (instead of bottom + 100vh) avoids the Android/preview-iframe quirk
+  // where 100vh shrinks WITH the keyboard — that made `100vh − keyboardHeight` go
+  // negative and collapsed the panel to just the input bar floating mid-screen.
   // A 150px threshold ignores the mobile URL bar collapsing/expanding (~50–120px).
   const viewportBaselineRef = useRef(0);
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
-    viewportBaselineRef.current = viewport.height;
-    const handleResize = () => {
-      const visible = viewport.height;
-      if (visible > viewportBaselineRef.current) viewportBaselineRef.current = visible;
-      const kb = viewportBaselineRef.current - visible;
-      setKeyboardHeight(kb > 150 ? kb : 0);
+    const sync = () => {
+      if (viewport.height > viewportBaselineRef.current) {
+        viewportBaselineRef.current = viewport.height;
+      }
+      setViewportBox({ top: viewport.offsetTop, height: viewport.height });
     };
-    viewport.addEventListener("resize", handleResize);
-    viewport.addEventListener("scroll", handleResize);
+    viewportBaselineRef.current = viewport.height;
+    sync();
+    viewport.addEventListener("resize", sync);
+    viewport.addEventListener("scroll", sync);
     return () => {
-      viewport.removeEventListener("resize", handleResize);
-      viewport.removeEventListener("scroll", handleResize);
+      viewport.removeEventListener("resize", sync);
+      viewport.removeEventListener("scroll", sync);
     };
   }, []);
+
+  const keyboardHeight = viewportBox.height > 0
+    ? Math.max(0, viewportBaselineRef.current - viewportBox.height)
+    : 0;
+  const keyboardOpen = keyboardHeight > 150;
 
   useEffect(() => {
     if (keyboardHeight > 0) {
@@ -548,7 +556,15 @@ export default function RaymaChat({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          style={{ bottom: `calc(6rem + ${keyboardHeight}px)`, maxHeight: `calc(100vh - 10rem - ${keyboardHeight}px)` }}
+          style={keyboardOpen ? {
+            top: `${viewportBox.top}px`,
+            height: `${viewportBox.height}px`,
+            bottom: "auto",
+            maxHeight: "none",
+          } : {
+            bottom: "6rem",
+            maxHeight: "calc(100vh - 10rem)",
+          }}
           className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[400px] left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[560px] z-[60]"
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
