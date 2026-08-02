@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
         const tierConfig = POWER_TIER_CONFIG[purchaseType];
         const updateFields = {
           subscription_type: tierConfig.subscription_type,
+          subscription_tier: tierConfig.subscription_type, // enum mirror — Arcade gates sponsor games on subscription_tier
           subscription_start_date: new Date().toISOString().split('T')[0],
         };
 
@@ -136,6 +137,7 @@ Deno.serve(async (req) => {
       if (userId) {
         await base44.asServiceRole.entities.User.update(userId, {
           subscription_type: 'free',
+          subscription_tier: 'free',
         });
         console.log(`Subscription cancelled (deleted) for ${userId}. Reverted to free.`);
       }
@@ -148,6 +150,7 @@ Deno.serve(async (req) => {
       if (userId && subscription.status === 'canceled') {
         await base44.asServiceRole.entities.User.update(userId, {
           subscription_type: 'free',
+          subscription_tier: 'free',
         });
         console.log(`Subscription updated to 'canceled' for ${userId}. Reverted to free.`);
       }
@@ -160,6 +163,7 @@ Deno.serve(async (req) => {
       if (userId) {
         await base44.asServiceRole.entities.User.update(userId, {
           subscription_type: 'free',
+          subscription_tier: 'free',
         });
         console.log(`Payment failed for ${userId}. Reverted to free.`);
       }
