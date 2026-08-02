@@ -55,6 +55,10 @@
       "type": "boolean",
       "default": true
     },
+    "phone_number": {
+      "type": "string",
+      "description": "Optional phone number in E.164 format (e.g. +15551234567) for SMS bill alerts and weekly insights. Stored on the Base44 User entity only."
+    },
     "rayma_expires_at": {
       "type": "string",
       "format": "date",
