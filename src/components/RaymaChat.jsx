@@ -84,13 +84,22 @@ export default function RaymaChat({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 📱 Keyboard awareness — keep the chat input visible above the on-screen keyboard
+  // 📱 Keyboard awareness — keep the chat input visible above the on-screen keyboard.
+  // We compare the live visualViewport height against the tallest height we've seen
+  // (the no-keyboard baseline). This works on both iOS (window.innerHeight stays the
+  // full layout viewport) and Android (the layout viewport shrinks WITH the keyboard,
+  // so a naive innerHeight − visualViewport.height would read ~0 and never trigger).
+  // A 150px threshold ignores the mobile URL bar collapsing/expanding (~50–120px).
+  const viewportBaselineRef = useRef(0);
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
+    viewportBaselineRef.current = viewport.height;
     const handleResize = () => {
-      const kbHeight = window.innerHeight - viewport.height;
-      setKeyboardHeight(kbHeight > 50 ? kbHeight : 0);
+      const visible = viewport.height;
+      if (visible > viewportBaselineRef.current) viewportBaselineRef.current = visible;
+      const kb = viewportBaselineRef.current - visible;
+      setKeyboardHeight(kb > 150 ? kb : 0);
     };
     viewport.addEventListener("resize", handleResize);
     viewport.addEventListener("scroll", handleResize);
