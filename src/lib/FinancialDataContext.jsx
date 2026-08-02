@@ -47,6 +47,10 @@ export function FinancialDataProvider({ children }) {
   const loadInFlight = useRef(false);
   const mountedRef = useRef(true);
   const pendingReload = useRef(false);
+  const meRef = useRef(null);          // cached Base44 user — avoids base44.auth.me() on every background refresh
+  const hasLoadedRef = useRef(false);  // true after first load — background refreshes skip the loading spinner
+  const reloadTimerRef = useRef(null);
+  const profileTimerRef = useRef(null);
 
   async function loadAll() {
     if (loadInFlight.current) {
@@ -54,23 +58,32 @@ export function FinancialDataProvider({ children }) {
       return;
     }
     loadInFlight.current = true;
-    setLoading(true);
+    // Only the very first load flashes the full-screen spinner. Every later
+    // refresh (realtime, token-refresh, explicit reload) updates the data
+    // silently so pages re-render without a jarring loader flash.
+    if (!hasLoadedRef.current) setLoading(true);
 
     try {
       const [meRaw, { data: { session } }] = await Promise.all([
-        base44.auth.me().catch(() => null),
+        // Reuse the cached Base44 user on background refreshes — base44.auth.me()
+        // is a network round-trip we don't need on every realtime tick.
+        hasLoadedRef.current && meRef.current
+          ? Promise.resolve(meRef.current)
+          : base44.auth.me().catch(() => null),
         supabase.auth.getSession()
       ]);
 
+      const isFirstLoad = !hasLoadedRef.current;
       // 🪙 One-time initial coin grant for brand-new accounts (see ensureInitialCoins)
-      const tokenHeal = await ensureInitialCoins(meRaw);
+      const tokenHeal = isFirstLoad ? await ensureInitialCoins(meRaw) : null;
       const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
+      if (me) meRef.current = me;
 
       const currentSupaUser = session?.user || null;
 
       if (mountedRef.current) {
-        setUserProfile(me || null);
         setSupaUser(currentSupaUser);
+        if (isFirstLoad) setUserProfile(me || null);
       }
 
       if (!currentSupaUser?.id) {
@@ -110,6 +123,7 @@ export function FinancialDataProvider({ children }) {
               setTransactionSplits([]);
             }
           } finally {
+            hasLoadedRef.current = true;
             if (mountedRef.current) setLoading(false);
             loadInFlight.current = false;
             if (pendingReload.current) {
@@ -132,6 +146,7 @@ export function FinancialDataProvider({ children }) {
           setDocuments([]);
           setBudgetCategories([]);
           setTransactionSplits([]);
+          hasLoadedRef.current = true;
           setLoading(false);
         }
         loadInFlight.current = false;
@@ -208,6 +223,7 @@ export function FinancialDataProvider({ children }) {
         variant: "destructive"
       });
     } finally {
+      hasLoadedRef.current = true;
       if (mountedRef.current) setLoading(false);
       loadInFlight.current = false;
       if (pendingReload.current) {
@@ -225,6 +241,7 @@ export function FinancialDataProvider({ children }) {
       ]);
       const tokenHeal = await ensureInitialCoins(meRaw);
       const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
+      if (me) meRef.current = me;
       const uid = session?.user?.id;
       let supaProfile = {};
       if (uid) {
@@ -297,6 +314,23 @@ export function FinancialDataProvider({ children }) {
     }
   }
 
+  // ⏱️ Debounce realtime bursts — a single save can emit multiple row events;
+  // coalesce them into one reload instead of hammering Supabase with 12 queries N times.
+  function scheduleReload() {
+    if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
+    reloadTimerRef.current = setTimeout(() => {
+      reloadTimerRef.current = null;
+      loadAll();
+    }, 350);
+  }
+  function scheduleProfileRefresh() {
+    if (profileTimerRef.current) clearTimeout(profileTimerRef.current);
+    profileTimerRef.current = setTimeout(() => {
+      profileTimerRef.current = null;
+      refreshUserProfile();
+    }, 350);
+  }
+
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
@@ -304,6 +338,10 @@ export function FinancialDataProvider({ children }) {
         loadAll();
       } else if (event === "SIGNED_OUT") {
         setSupaUser(null);
+        // Clear cached identity so a different user signing in next gets a fresh fetch,
+        // not the previous user's Base44 profile.
+        meRef.current = null;
+        hasLoadedRef.current = false;
         setLoans([]);
         setBills([]);
         setIncomes([]);
@@ -323,25 +361,28 @@ export function FinancialDataProvider({ children }) {
     };
   }, []);
 
-  // 📡 Supabase Realtime — only subscribe to tables loaded by loadAll()
+  // 📡 Supabase Realtime — debounced so a burst of row changes triggers ONE reload,
+  // not 12 queries × N events. Background refreshes skip the loading spinner.
   useEffect(() => {
     const channel = supabase
       .channel("financial-data-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "loans" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "bills" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "incomes" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "savings_goals" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "bank_accounts" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "transaction_splits" }, () => loadAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => refreshUserProfile())
+      .on("postgres_changes", { event: "*", schema: "public", table: "loans" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bills" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "incomes" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "savings_goals" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bank_accounts" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "transaction_splits" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, scheduleProfileRefresh)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
+      if (profileTimerRef.current) clearTimeout(profileTimerRef.current);
     };
   }, []);
 
