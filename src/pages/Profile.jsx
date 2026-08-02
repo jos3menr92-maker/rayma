@@ -82,7 +82,8 @@ export default function Profile() {
     preferred_name: "", avatar_id: "", avatar_emoji: "", avatar_photo_url: "", 
     preferred_currency: "USD", preferred_language: "en", 
     pay_frequency: "", pay_day: "", compact_mode: false,
-    smart_alerts: true, auto_insights: true
+    smart_alerts: true, auto_insights: true,
+    phone_number: ""
   });
 
   useEffect(() => {
@@ -105,6 +106,7 @@ export default function Profile() {
         compact_mode: userProfile.compact_mode || false, 
         smart_alerts: userProfile.smart_alerts !== false,
         auto_insights: userProfile.auto_insights !== false,
+        phone_number: userProfile.phone_number || "",
       });
     }
   }, [userProfile]);
@@ -157,9 +159,9 @@ export default function Profile() {
         data: safePayload 
       });
 
-      // 2. Sync to Base44 User entity
+      // 2. Sync to Base44 User entity (phone_number lives on the Base44 User only)
       try {
-        await base44.auth.updateMe(safePayload);
+        await base44.auth.updateMe({ ...safePayload, phone_number: form.phone_number || null });
       } catch (base44Err) {
         console.error("Base44 sync failed (non-fatal):", base44Err.message);
       }
@@ -380,6 +382,11 @@ export default function Profile() {
           {/* AI Smart Notifications */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <SectionHeader icon={Bell} title={T("smartNotifications", "Smart Notifications")} subtitle={T("raymaHeavyLifting", "Let Rayma AI handle the heavy lifting")} />
+            <div className="mb-4 p-3 bg-muted/30 rounded-xl border border-border/50">
+              <Label className="text-xs text-muted-foreground ml-1 mb-1 block">{T("phoneNumber", "Phone Number")}</Label>
+              <Input value={form.phone_number} onChange={e => setForm({...form, phone_number: e.target.value})} className="rounded-xl" placeholder={T("phonePlaceholder", "e.g. +1 555 123 4567")} />
+              <p className="text-[11px] text-muted-foreground mt-1.5 ml-1">{T("phoneAlertsDesc", "Add a number with country code to receive bill-due alerts and weekly insights by text.")}</p>
+            </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3">
                 <div className="flex gap-3">
