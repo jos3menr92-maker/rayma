@@ -311,18 +311,16 @@ export default function Admin() {
               value={grantEmail}
               onChange={(e) => setGrantEmail(e.target.value)}
             />
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder={T("amount", "Amount")}
-                className="bg-background border border-border rounded-xl px-4 py-3 text-sm flex-1"
-                value={grantAmount}
-                onChange={(e) => setGrantAmount(e.target.value)}
-              />
-              <Button onClick={handleGrantTokens} disabled={grantLoading || !grantEmail.trim()} className="rounded-xl px-6 font-semibold">
-                {grantLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : T("grant", "Grant")}
-              </Button>
-            </div>
+            <input
+              type="number"
+              placeholder={T("amount", "Amount")}
+              className="bg-background border border-border rounded-xl px-4 py-3 text-sm w-full"
+              value={grantAmount}
+              onChange={(e) => setGrantAmount(e.target.value)}
+            />
+            <Button onClick={handleGrantTokens} disabled={grantLoading || !grantEmail.trim()} className="w-full rounded-xl h-12 font-semibold">
+              {grantLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : T("grant", "Grant")}
+            </Button>
             {grantMsg && (
               <p className={`text-xs ${grantMsg.type === "success" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>{grantMsg.text}</p>
             )}

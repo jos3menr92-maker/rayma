@@ -55,6 +55,11 @@
       "type": "boolean",
       "default": true
     },
+    "onboarding_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has completed the initial onboarding flow. Set to true at the end of Onboarding; Dashboard redirects here while false/undefined."
+    },
     "rayma_expires_at": {
       "type": "string",
       "format": "date",

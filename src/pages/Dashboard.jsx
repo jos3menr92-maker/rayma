@@ -83,7 +83,9 @@ export default function Dashboard() {
     // Don't redirect to /auth here — ProtectedLayout already guards auth.
     // userProfile can briefly be null while the Supabase session syncs;
     // the loading spinner below handles that instead of bouncing to /auth.
-    if (userProfile && userProfile.onboarding_complete === false) {
+    // Treat undefined (legacy users / field not yet persisted) the same as
+    // explicit false — both should go through onboarding before the dashboard.
+    if (userProfile && !userProfile.onboarding_complete) {
       navigate("/onboarding");
     }
   }, [userProfile, loading, navigate]);

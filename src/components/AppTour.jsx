@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useT } from "@/lib/LanguageContext";
-import { X, ChevronRight, ChevronLeft, Sparkles, Plus, Receipt, CreditCard, LayoutDashboard, MoreHorizontal, CheckCircle2 } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Sparkles, Plus, Receipt, TrendingUp, LayoutDashboard, MoreHorizontal, CheckCircle2 } from "lucide-react";
 
 const TOUR_STEPS = [
   {
@@ -25,9 +25,9 @@ const TOUR_STEPS = [
     descKey: "tourBillsDesc", descFallback: "Track all your upcoming bills, see due dates, and never miss a payment. Tap the Bills icon in the bottom nav.",
   },
   {
-    icon: CreditCard,
-    titleKey: "tourLoans", titleFallback: "Loans & Debt",
-    descKey: "tourLoansDesc", descFallback: "Manage all your loans, see payoff progress, and use the Debt Simulator to plan your payoff strategy.",
+    icon: TrendingUp,
+    titleKey: "tourFinance", titleFallback: "Finance Tab",
+    descKey: "tourFinanceDesc", descFallback: "Tap the Finance button in the bottom nav to see your cash flow, track spending, manage budgets, and view all your transactions in one place.",
   },
   {
     icon: Sparkles,
