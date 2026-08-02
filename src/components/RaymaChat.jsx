@@ -69,6 +69,7 @@ export default function RaymaChat({
   const [historyView, setHistoryView] = useState(null);
   const [zoom, setZoom] = useState(0);
   const pendingAICostRef = useRef(0);
+  const costByIdRef = useRef({});
   const ZOOM_PX = [13, 15, 17, 19];
   const { lang } = useLanguage();
   const { formatCurrency } = useCurrency();
@@ -148,7 +149,11 @@ export default function RaymaChat({
   useEffect(() => {
     if (!conversation?.id) return;
     const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
-      const msgs = data.messages || [];
+      // Re-attach any previously-deducted cost tags so the "3 credits used" indicator
+      // survives subsequent subscription ticks (server messages don't carry `cost`).
+      const msgs = (data.messages || []).map((m) =>
+        costByIdRef.current[m.id] ? { ...m, cost: costByIdRef.current[m.id] } : m
+      );
       setMessages(msgs);
       const last = msgs[msgs.length - 1];
       if (last?.role === "assistant" && last?.status !== "streaming" && last?.status !== "pending") {
@@ -157,6 +162,7 @@ export default function RaymaChat({
         if (pendingAICostRef.current) {
           const cost = pendingAICostRef.current;
           pendingAICostRef.current = 0;
+          if (last.id) costByIdRef.current[last.id] = cost;
           setMessages(msgs.map((m, i) => (i === msgs.length - 1 ? { ...m, cost } : m)));
         }
       }
