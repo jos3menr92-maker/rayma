@@ -3,6 +3,7 @@ import { ShieldCheck, TrendingDown, Brain, CalendarCheck, BarChart2, FileText, S
 import { useState, useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const features = [
   { icon: TrendingDown, title: "Loan & Debt Tracker", desc: "Track every loan, see your balance drop, and know exactly when you'll be debt-free." },
@@ -95,6 +96,7 @@ export default function Landing() {
             <a href="#pricing" className="hover:text-foreground transition-colors">{T("pricing", "Pricing")}</a>
           </div>
           <div className="hidden md:flex items-center gap-2">
+            <LanguageSwitcher />
             <button onClick={handleLogin} className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5">
               {T("signIn", "Sign in")}
             </button>
@@ -108,9 +110,10 @@ export default function Landing() {
         </div>
         {mobileMenu && (
           <div className="md:hidden border-t border-border bg-background px-4 py-4 space-y-3">
-            {[{key: "features", label: "Features"}, {key: "testimonials", label: "Reviews"}, {key: "faq", label: "FAQ"}, {key: "pricing", label: "Pricing"}].map(s => (
-              <a key={s.key} href={`#${s.key}`} onClick={() => setMobileMenu(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground capitalize">
-                {s.label}
+            <LanguageSwitcher />
+            {[{key: "features", labelKey: "features", label: "Features"}, {key: "testimonials", labelKey: "reviews", label: "Reviews"}, {key: "faq", labelKey: "faq", label: "FAQ"}, {key: "pricing", labelKey: "pricing", label: "Pricing"}].map(s => (
+              <a key={s.key} href={`#${s.key}`} onClick={() => setMobileMenu(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground">
+                {T(s.labelKey, s.label)}
               </a>
             ))}
             <button onClick={handleLogin} className="w-full mt-2 text-sm font-semibold bg-primary text-primary-foreground px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors">
@@ -133,11 +136,11 @@ export default function Landing() {
           <Star className="w-3 h-3 fill-primary" /> {T("freeForeverNoBankConnection", "Free forever · No bank connection required")}
         </div>
         <h1 className="text-4xl md:text-6xl font-bold font-heading text-foreground leading-tight mb-5">
-          {T("takeControl", "Take Control of Your")}<br />
-          <span className="text-primary">{T("debtBillsHero", "Debt & Bills")}</span>
+          {T("heroTitle", "Take Control of Your")}<br />
+          <span className="text-primary">{T("heroDebtBills", "Debt & Bills")}</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-          {T("heroDescription", "Rayma AI tracks your loans, bills, budget, and net worth — all in one place. Your AI financial coach tells you exactly what to do next.")}
+          {T("heroDesc", "Rayma AI tracks your loans, bills, budget, and net worth — all in one place. Your AI financial coach tells you exactly what to do next.")}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
           <button onClick={handleLogin} className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-2xl hover:bg-primary/90 transition-colors text-base">
@@ -163,13 +166,13 @@ export default function Landing() {
             <p className="text-muted-foreground max-w-lg mx-auto">{T("builtForRealPeople", "Built for real people managing real debt — not investors or finance pros.")}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="bg-card border border-border rounded-2xl p-5 hover:border-primary/30 transition-colors">
+            {features.map(({ icon: Icon, titleKey, title, descKey, desc }) => (
+              <div key={titleKey} className="bg-card border border-border rounded-2xl p-5 hover:border-primary/30 transition-colors">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
                   <Icon className="w-5 h-5 text-primary" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                <h3 className="font-semibold text-foreground mb-1">{T(titleKey, title)}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{T(descKey, desc)}</p>
               </div>
             ))}
           </div>
@@ -185,11 +188,11 @@ export default function Landing() {
             <p className="text-[11px] text-muted-foreground mt-1 italic">{T("testimonialNote", "Testimonials are illustrative of typical user experiences.")}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {testimonials.map((t) => (
-              <div key={t.name} className="bg-card border border-border rounded-2xl p-5">
-                <Stars n={t.stars} />
-                <p className="text-sm text-muted-foreground leading-relaxed mt-3 mb-4">"{t.text}"</p>
-                <p className="text-sm font-semibold text-foreground">— {t.name}</p>
+            {testimonials.map((tm) => (
+              <div key={tm.nameKey} className="bg-card border border-border rounded-2xl p-5">
+                <Stars n={tm.stars} />
+                <p className="text-sm text-muted-foreground leading-relaxed mt-3 mb-4">"{T(tm.textKey, tm.text)}"</p>
+                <p className="text-sm font-semibold text-foreground">— {T(tm.nameKey, tm.name)}</p>
               </div>
             ))}
           </div>
@@ -284,12 +287,12 @@ export default function Landing() {
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/40 transition-colors"
                 >
-                  <span className="font-semibold text-sm text-foreground">{item.q}</span>
+                  <span className="font-semibold text-sm text-foreground">{T(item.qKey, item.q)}</span>
                   <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ml-3 ${openFaq === i ? "rotate-90" : ""}`} />
                 </button>
                 {openFaq === i && (
                   <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border pt-3">
-                    {item.a}
+                    {T(item.aKey, item.a)}
                   </div>
                 )}
               </div>
