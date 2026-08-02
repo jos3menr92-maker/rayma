@@ -46,12 +46,13 @@ const iconMap = {
 };
 
 function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency }) {
+  const T = useT();
   const fmt = formatCurrency || ((v) => `$${Math.round(v || 0).toLocaleString()}`);
   return (
     <div className="flex flex-col items-center">
       {data.length === 0 ? (
         <div style={{ height }} className="flex items-center justify-center">
-          <p className="text-xs text-muted-foreground">No data</p>
+          <p className="text-xs text-muted-foreground">{T("noData", "No data")}</p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={height}>

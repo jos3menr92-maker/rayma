@@ -113,7 +113,7 @@ export default function Layout() {
               className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm"
               style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
               {imageToShow && !imageError ?
-              <img src={imageToShow} className="w-full h-full object-cover" alt="Profile" onError={() => setImageError(true)} /> :
+              <img src={imageToShow} className="w-full h-full object-cover" alt={T("profile", "Profile")} onError={() => setImageError(true)} /> :
 
               <span className="text-xs font-bold text-white">
                   {userProfile?.preferred_name?.charAt(0) || userProfile?.full_name?.charAt(0) || "R"}
@@ -124,7 +124,7 @@ export default function Layout() {
           </div>
           <div className="flex items-center gap-1">
             <GlobalBatteryBar />
-            <button onClick={() => setDrawerOpen(true)} aria-label="Open Menu" className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <button onClick={() => setDrawerOpen(true)} aria-label={T("openMenu", "Open Menu")} className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
               <Menu className="w-8 h-8" />
             </button>
           </div>
