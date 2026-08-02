@@ -5,6 +5,10 @@
  * - Returns a free answer string  → answered locally, 0 credits
  * - Returns null                   → falls through to paid AI (3 credits)
  *
+ * Dynamic answers (with computed amounts/lists) use {placeholder} tokens that
+ * `fill()` replaces at runtime, so the strings can live in the i18n dictionary
+ * without losing the live numbers.
+ *
  * Also exports the quick-reply chip definitions (green = free, red = paid).
  */
 
@@ -42,10 +46,16 @@ function billsDueWithinDays(bills, days) {
   });
 }
 
+// Substitute {placeholders} in a translated template with runtime values.
+function fill(tmpl, vars) {
+  if (!tmpl || !vars) return tmpl;
+  return Object.keys(vars).reduce((s, k) => s.split(`{${k}}`).join(String(vars[k])), tmpl);
+}
+
 /**
  * Returns a free answer string, or null to defer to paid AI.
  * @param {string} rawText
- * @param {object} ctx { formatCurrency, loans, bills, assets, T }
+ * @param {object} ctx { formatCurrency, loans, bills, assets, transactions, T }
  */
 export function freeAnswer(rawText, ctx = {}) {
   const text = (rawText || "").trim().toLowerCase();
@@ -104,18 +114,14 @@ export function freeAnswer(rawText, ctx = {}) {
     const totalAssets = (assets || []).reduce((s, a) => s + (a.amount || 0), 0);
     const totalDebt = (loans || []).reduce((s, l) => s + (l.current_balance || 0), 0);
     const nw = totalAssets - totalDebt;
-    return T(
-      "freeNetWorth",
-      `**Your Net Worth** 💰\n\n• Total assets: ${formatCurrency(totalAssets)}\n• Total debt: ${formatCurrency(totalDebt)}\n• **Net worth: ${formatCurrency(nw)}**\n\n*Calculated from your assets minus your loan balances.*`
-    );
+    const tmpl = T("freeNetWorth", "**Your Net Worth** 💰\n\n• Total assets: {assets}\n• Total debt: {debt}\n• **Net worth: {nw}**\n\n*Calculated from your assets minus your loan balances.*");
+    return fill(tmpl, { assets: formatCurrency(totalAssets), debt: formatCurrency(totalDebt), nw: formatCurrency(nw) });
   }
   if (/(how\s*much\s*do\s*i\s*owe|total\s*debt|what\s*do\s*i\s*owe)/.test(text)) {
     const totalDebt = (loans || []).reduce((s, l) => s + (l.current_balance || 0), 0);
     const activeLoans = (loans || []).filter((l) => l.status !== "paid_off").length;
-    return T(
-      "freeTotalDebt",
-      `**Total Debt** 🏦\n\nYou owe **${formatCurrency(totalDebt)}** across ${activeLoans} active loan${activeLoans === 1 ? "" : "s"}.\n\n*Tap any loan on the Loans page to see its payoff progress.*`
-    );
+    const tmpl = T("freeTotalDebt", "**Total Debt** 🏦\n\nYou owe **{total}** across {count} active loan(s).\n\n*Tap any loan on the Loans page to see its payoff progress.*");
+    return fill(tmpl, { total: formatCurrency(totalDebt), count: String(activeLoans) });
   }
   if (/(bills?\s*due|due\s*this\s*week|upcoming\s*bills)/.test(text)) {
     const due = billsDueWithinDays(bills, 7);
@@ -123,7 +129,8 @@ export function freeAnswer(rawText, ctx = {}) {
       return T("freeBillsNone", "**Bills Due This Week** 📅\n\nNo bills due in the next 7 days. You're clear! ✅");
     }
     const list = due.map((b) => `• ${b.name} — ${formatCurrency(b.amount)}`).join("\n");
-    return T("freeBillsDue", `**Bills Due This Week** 📅\n\n${list}`);
+    const tmpl = T("freeBillsDue", "**Bills Due This Week** 📅\n\n{list}");
+    return fill(tmpl, { list });
   }
   if (/(burn\s*rate|monthly\s*burn|monthly\s*(obligations|payments|bills)|how\s*much.*spend\s*(a\s*)?month)/.test(text)) {
     // Normalize any payment frequency to a monthly equivalent.
@@ -138,21 +145,25 @@ export function freeAnswer(rawText, ctx = {}) {
 
     const activeBills = (bills || []).filter((b) => b.is_active);
     const activeLoans = (loans || []).filter((l) => l.status !== "paid_off");
+    const perMo = T("perMoAbbr", "/mo");
+    const freqLabel = (freq) => (freq === "weekly" ? T("freqWeeklyShort", "weekly") : freq === "biweekly" ? T("freqBiweeklyShort", "biweekly") : "");
 
     const billLines = activeBills.length
       ? activeBills.map((b) => {
           const mo = toMonthly(b.amount, b.payment_frequency);
-          const freq = b.payment_frequency && b.payment_frequency !== "monthly" ? ` · ${b.payment_frequency}` : "";
-          const due = b.due_day ? ` (due day ${b.due_day})` : "";
-          return `  • ${b.name} — ${formatCurrency(mo)}/mo${freq}${due}`;
+          const fl = freqLabel(b.payment_frequency);
+          const freq = fl ? ` · ${fl}` : "";
+          const due = b.due_day ? ` (${T("dueDayShort", "due day")} ${b.due_day})` : "";
+          return `  • ${b.name} — ${formatCurrency(mo)}${perMo}${freq}${due}`;
         }).join("\n")
       : `  • ${T("freeNoBills", "No active bills logged.")}`;
 
     const loanLines = activeLoans.length
       ? activeLoans.map((l) => {
           const mo = toMonthly(l.monthly_payment, l.payment_frequency);
-          const freq = l.payment_frequency && l.payment_frequency !== "monthly" ? ` · ${l.payment_frequency}` : "";
-          return `  • ${l.name} — ${formatCurrency(mo)}/mo${freq} (balance ${formatCurrency(l.current_balance || 0)})`;
+          const fl = freqLabel(l.payment_frequency);
+          const freq = fl ? ` · ${fl}` : "";
+          return `  • ${l.name} — ${formatCurrency(mo)}${perMo}${freq} (${T("balanceShort", "balance")} ${formatCurrency(l.current_balance || 0)})`;
         }).join("\n")
       : `  • ${T("freeNoLoans", "No active loans.")}`;
 
@@ -160,10 +171,19 @@ export function freeAnswer(rawText, ctx = {}) {
     const monthlyLoans = activeLoans.reduce((s, l) => s + toMonthly(l.monthly_payment, l.payment_frequency), 0);
     const total = monthlyBills + monthlyLoans;
 
-    return T(
-      "freeBurnRate",
-      `**${T("freeBurnTitle", "Monthly Burn Rate")}** 🔥\n\n**${T("freeMonthlyBills", "Bills")}** — ${formatCurrency(monthlyBills)}/mo\n${billLines}\n\n**${T("freeMonthlyLoans", "Loan payments")}** — ${formatCurrency(monthlyLoans)}/mo\n${loanLines}\n\n—\n**${T("freeBurnTotal", "Your fixed monthly survival number")}: ${formatCurrency(total)}/mo**`
-    );
+    const tmpl = T("freeBurnRate", "**{burnTitle}** 🔥\n\n**{billsLabel}** — {monthlyBills}{perMo}\n{billLines}\n\n**{loansLabel}** — {monthlyLoans}{perMo}\n{loanLines}\n\n—\n**{totalLabel}: {total}{perMo}**");
+    return fill(tmpl, {
+      burnTitle: T("freeBurnTitle", "Monthly Burn Rate"),
+      billsLabel: T("freeMonthlyBills", "Bills"),
+      monthlyBills: formatCurrency(monthlyBills),
+      perMo,
+      billLines,
+      loansLabel: T("freeMonthlyLoans", "Loan payments"),
+      monthlyLoans: formatCurrency(monthlyLoans),
+      loanLines,
+      totalLabel: T("freeBurnTotal", "Your fixed monthly survival number"),
+      total: formatCurrency(total),
+    });
   }
 
   if (/(recent\s*spending|recent\s*transactions|last\s*transactions|my\s*spending)/.test(text)) {
@@ -174,7 +194,8 @@ export function freeAnswer(rawText, ctx = {}) {
     const list = recent
       .map((t) => `  • ${t.description || "—"} — ${formatCurrency(Math.abs(t.amount || 0))}${t.date ? ` · ${t.date}` : ""}`)
       .join("\n");
-    return T("freeRecentSpending", `**Recent Spending** 💸\n\n${list}`);
+    const tmpl = T("freeRecentSpending", "**Recent Spending** 💸\n\n{list}");
+    return fill(tmpl, { list });
   }
 
   return null;
