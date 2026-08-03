@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { Mail, Lock, User, Loader2, ArrowRight, Chrome, Fingerprint } from "lucide-react";
+import { Mail, Lock, User, Loader2, ArrowRight, Fingerprint } from "lucide-react";
 import { Link } from "react-router-dom";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/components/ui/use-toast";
 import { isNativeMobileApp } from "@/lib/iap";
 import { supabase } from "@/lib/supabaseClientFrontend";
-import { useLanguage, useT } from "@/lib/LanguageContext";
+import { useT } from "@/lib/LanguageContext";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);

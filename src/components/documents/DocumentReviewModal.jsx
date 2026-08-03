@@ -1,12 +1,10 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
 import { Sparkles, Check, X, Archive, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/lib/supabaseClientFrontend";
 import { createRecord, updateRecord, deleteRecord, ensureSupabaseSession } from "@/lib/supabaseHelpers";
 import { toast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";

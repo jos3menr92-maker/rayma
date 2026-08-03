@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Landmark, Pencil, Trash2, TrendingUp, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, SplitSquareHorizontal, ChevronLeft } from "lucide-react";
+import { Plus, Landmark, Pencil, Trash2, CreditCard, Wallet, Download, RefreshCw, PiggyBank, BarChart3, SplitSquareHorizontal, ChevronLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { SplitTransactionDialog } from "@/components/transactions/SplitTransactionDialog";
 import { LogTransactionDialog } from "@/components/transactions/LogTransactionDialog";
@@ -18,7 +18,6 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeBankAccountPreview } from "@/utils/logPreviewMath";
 import { format } from "date-fns";
-import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 
 function buildTypeConfig(T) {

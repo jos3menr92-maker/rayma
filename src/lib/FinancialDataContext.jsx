@@ -44,7 +44,7 @@ export function FinancialDataProvider({ children }) {
   const [supaUser, setSupaUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadInFlight = useRef(false);
+  const inFlightPromise = useRef(null);
   const mountedRef = useRef(true);
   const pendingReload = useRef(false);
   const meRef = useRef(null);          // cached Base44 user — avoids base44.auth.me() on every background refresh
@@ -52,18 +52,19 @@ export function FinancialDataProvider({ children }) {
   const reloadTimerRef = useRef(null);
   const profileTimerRef = useRef(null);
 
-  async function loadAll({ fresh = false } = {}) {
-    if (loadInFlight.current) {
+  function loadAll({ fresh = false } = {}) {
+    if (inFlightPromise.current) {
       pendingReload.current = true;
-      return;
+      return inFlightPromise.current;
     }
-    loadInFlight.current = true;
-    // Only the very first load flashes the full-screen spinner. Every later
-    // refresh (realtime, token-refresh, explicit reload) updates the data
-    // silently so pages re-render without a jarring loader flash.
-    if (!hasLoadedRef.current) setLoading(true);
 
-    try {
+    const doFetch = async () => {
+      // Only the very first load flashes the full-screen spinner. Every later
+      // refresh (realtime, token-refresh, explicit reload) updates the data
+      // silently so pages re-render without a jarring loader flash.
+      if (!hasLoadedRef.current) setLoading(true);
+
+      try {
       const [meRaw, { data: { session } }] = await Promise.all([
         // Reuse the cached Base44 user on background/realtime refreshes —
         // base44.auth.me() is a network round-trip we don't need on every tick.
@@ -127,7 +128,7 @@ export function FinancialDataProvider({ children }) {
           } finally {
             hasLoadedRef.current = true;
             if (mountedRef.current) setLoading(false);
-            loadInFlight.current = false;
+            inFlightPromise.current = null;
             if (pendingReload.current) {
               pendingReload.current = false;
               loadAll();
@@ -151,7 +152,7 @@ export function FinancialDataProvider({ children }) {
           hasLoadedRef.current = true;
           setLoading(false);
         }
-        loadInFlight.current = false;
+        inFlightPromise.current = null;
         return;
       }
 
@@ -227,13 +228,17 @@ export function FinancialDataProvider({ children }) {
     } finally {
       hasLoadedRef.current = true;
       if (mountedRef.current) setLoading(false);
-      loadInFlight.current = false;
+      inFlightPromise.current = null;
       if (pendingReload.current) {
         pendingReload.current = false;
         loadAll();
       }
     }
-  }
+  };
+
+  inFlightPromise.current = doFetch();
+  return inFlightPromise.current;
+}
 
   async function refreshUserProfile() {
     try {

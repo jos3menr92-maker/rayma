@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Trash2 } from "lucide-react";
-import { format } from "date-fns";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
