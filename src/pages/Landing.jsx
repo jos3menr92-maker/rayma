@@ -1,4 +1,3 @@
-import { base44 } from "@/api/base44Client";
 import { ShieldCheck, TrendingDown, Brain, CalendarCheck, BarChart2, FileText, Star, CheckCircle2, ChevronRight, Menu, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";

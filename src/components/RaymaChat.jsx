@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Trash2, Loader2, ScanLine, Copy, Check, History } from "lucide-react";
+import { X, Send, Trash2, Loader2, ScanLine, History } from "lucide-react";
 import { freeAnswer } from "@/lib/raymaClassifier";
 import QuickReplyChips from "@/components/rayma/QuickReplyChips";
 import CostTag from "@/components/rayma/CostTag";

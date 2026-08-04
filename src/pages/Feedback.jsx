@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Star, Send, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { Star, Send, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";

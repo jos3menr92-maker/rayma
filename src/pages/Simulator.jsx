@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Play, TrendingDown, TrendingUp, DollarSign, Zap, RefreshCw } from "lucide-react";
+import { Sparkles, Play, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SimulationResults from "../components/simulator/SimulationResults";
 import SimulationControls from "../components/simulator/SimulationControls";

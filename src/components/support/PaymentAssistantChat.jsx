@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useT } from "@/lib/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2, Headset, RefreshCw } from "lucide-react";
+import { Send, Loader2, Headset } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 const AGENT_NAME = "payment-assistant";

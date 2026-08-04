@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createRecord, updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";

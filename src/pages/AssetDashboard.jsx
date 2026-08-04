@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createRecord, updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit3, TrendingUp, PieChart as PieIcon } from "lucide-react";
+import { Plus, Trash2, Edit3, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
