@@ -14,12 +14,12 @@ const ALLOWED_TABLES = {
   incomes: ['amount', 'source', 'frequency', 'week_start', 'note', 'is_active', 'is_recurring', 'recurring_frequency', 'recurring_active', 'recurring_source_id', 'description'],
   assets: ['name', 'amount', 'type', 'notes'],
   savings_goals: ['name', 'target_amount', 'current_saved', 'weekly_contribution', 'target_date', 'notes', 'status'],
-  bank_accounts: ['name', 'institution', 'account_type', 'balance', 'currency', 'last_synced', 'plaid_account_id', 'link_method', 'notes', 'is_active'],
-  transactions: ['bank_account_id', 'date', 'description', 'amount', 'category', 'type', 'notes'],
+  bank_accounts: ['name', 'institution', 'account_type', 'balance', 'currency', 'last_synced', 'plaid_account_id', 'link_method', 'notes', 'is_active', 'type'],
+  transactions: ['bank_account_id', 'date', 'description', 'amount', 'category', 'type', 'notes', 'transaction_date'],
   budget_categories: ['name', 'category_key', 'monthly_limit', 'color', 'icon', 'description'],
   loan_adjustments: ['loan_id', 'amount', 'direction', 'reason', 'date', 'description'],
   net_worth_snapshots: ['snapshot_date', 'total_assets', 'total_liabilities', 'net_worth', 'description'],
-  documents: ['file_url', 'file_name', 'folder', 'status', 'document_type', 'extracted_data', 'loggable', 'notes', 'scan_date', 'logged_entity_type', 'logged_entity_id', 'merchant', 'amount', 'document_date'],
+  documents: ['file_url', 'file_name', 'folder', 'status', 'document_type', 'extracted_data', 'loggable', 'notes', 'scan_date', 'logged_entity_type', 'logged_entity_id', 'merchant', 'amount', 'document_date', '_analysis', 'updated_at'],
   transaction_splits: ['transaction_id', 'category', 'amount', 'date', 'description', 'note'],
   profiles: ['preferred_name', 'avatar_id', 'avatar_emoji', 'avatar_photo_url', 'preferred_currency', 'preferred_language', 'pay_frequency', 'pay_day', 'compact_mode', 'smart_alerts', 'auto_insights', 'subscription_type', 'ai_tokens_daily_limit'],
 };
@@ -45,14 +45,17 @@ Deno.serve(async (req) => {
 
     const { client: supabaseAdmin } = getSupabaseAdmin();
 
-    // Resolve Supabase UUID from Base44 user email
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
-    if (listError) throw listError;
-    const supabaseUser = users.find(u => u.email === user.email);
-    if (!supabaseUser) {
+    // Resolve Supabase UUID from Base44 user email with an exact match
+    const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+    if (usersError) throw usersError;
+    
+    // Force an exact, case-insensitive match instead of a fuzzy search
+    const targetUser = usersData.users.find(u => u.email?.toLowerCase() === user.email.toLowerCase());
+    
+    if (!targetUser) {
       return Response.json({ error: 'Supabase user not found' }, { status: 404 });
     }
-    const uid = supabaseUser.id;
+    const uid = targetUser.id;
 
     if (action === 'create') {
       if (!data) return Response.json({ error: 'data is required for create' }, { status: 400 });
@@ -138,8 +141,8 @@ Deno.serve(async (req) => {
       }
       let query;
       if (table === 'profiles') {
-        // profiles table uses 'id' as the user ID column (no separate user_id)
-        query = supabaseAdmin.from(table).update(sanitized).eq('id', uid);
+        // profiles table uses 'user_id' as the user ID column
+        query = supabaseAdmin.from(table).update(sanitized).eq('user_id', uid);
       } else {
         if (!record_id) return Response.json({ error: 'record_id is required for update' }, { status: 400 });
         query = supabaseAdmin.from(table).update(sanitized).eq('id', record_id).eq('user_id', uid);
