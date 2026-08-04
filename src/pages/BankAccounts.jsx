@@ -323,7 +323,7 @@ export default function BankAccounts() {
       {showTxDialog && (
         <LogTransactionDialog
           accounts={accounts}
-          defaultAccountId={accounts[0]?.id || ""}
+          defaultAccountId={(accounts.find(a => a.is_primary) ?? accounts[0])?.id || ""}
           onClose={() => setShowTxDialog(false)}
           onSaved={() => { setShowTxDialog(false); reload(); }}
         />

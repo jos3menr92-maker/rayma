@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { createRecord } from "@/lib/supabaseHelpers";
+import { supabase } from "@/lib/supabaseClientFrontend";
 import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: To get the User ID
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -41,7 +42,7 @@ function ProgressDots({ step }) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { lang, setLang, setLocale } = useLanguage();
-  const { supaUser, reload } = useFinancialData(); // 🚀 NEW: Grab the Supabase ID
+  const { supaUser, reload, userProfile } = useFinancialData(); // 🚀 NEW: Grab the Supabase ID
 
   const T = useMemo(() =>
     (key, fallback) => {
@@ -86,6 +87,34 @@ export default function Onboarding() {
 
   // Hand everything to Rayma's logging path (createRecord — same one manual forms use,
   // with session recovery + manageFinancialRecord fallback). Free: direct Supabase write, no AI tokens.
+  async function ensureDefaultBankAccount(me) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+      const uid = session.user.id;
+      const { data: existing } = await supabase
+        .from("bank_accounts")
+        .select("id")
+        .eq("user_id", uid)
+        .limit(1);
+      if (existing && existing.length > 0) return;
+      const firstName = me?.preferred_name || me?.full_name?.split(" ")[0] || "";
+      const accountName = firstName
+        ? `${firstName}'s Checking`
+        : T("primaryCheckingName", "Primary Checking");
+      await createRecord("bank_accounts", {
+        name: accountName,
+        institution: T("primaryInstitution", "Primary"),
+        account_type: "checking",
+        balance: 0.00,
+        is_primary: true,
+        is_active: true,
+      });
+    } catch (err) {
+      console.error("ensureDefaultBankAccount failed:", err?.message);
+    }
+  }
+
   async function finish() {
     if (finishRef.current) return;
     finishRef.current = true;
@@ -145,6 +174,9 @@ export default function Onboarding() {
         console.error("Onboarding loan log failed:", err?.message);
       }
     }
+
+    // Ensure the user has at least one primary bank account (create default if none exist)
+    await ensureDefaultBankAccount(userProfile);
 
     try { await reload(); } catch (e) {}
 
