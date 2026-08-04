@@ -19,7 +19,7 @@ const ALLOWED_TABLES = {
   budget_categories: ['name', 'category_key', 'monthly_limit', 'color', 'icon', 'description'],
   loan_adjustments: ['loan_id', 'amount', 'direction', 'reason', 'date', 'description'],
   net_worth_snapshots: ['snapshot_date', 'total_assets', 'total_liabilities', 'net_worth', 'description'],
-  documents: ['file_url', 'file_name', 'folder', 'status', 'document_type', 'extracted_data', 'loggable', 'notes', 'scan_date', 'logged_entity_type', 'logged_entity_id'],
+  documents: ['file_url', 'file_name', 'folder', 'status', 'document_type', 'extracted_data', 'loggable', 'notes', 'scan_date', 'logged_entity_type', 'logged_entity_id', 'merchant', 'amount', 'document_date'],
   transaction_splits: ['transaction_id', 'category', 'amount', 'date', 'description', 'note'],
   profiles: ['preferred_name', 'avatar_id', 'avatar_emoji', 'avatar_photo_url', 'preferred_currency', 'preferred_language', 'pay_frequency', 'pay_day', 'compact_mode', 'smart_alerts', 'auto_insights', 'subscription_type', 'ai_tokens_daily_limit'],
 };
@@ -77,6 +77,29 @@ Deno.serve(async (req) => {
       }
 
       if (error) throw error;
+
+      // When a loan payment is created, automatically decrement the loan's current_balance
+      if (table === 'payments' && sanitized.loan_id && sanitized.amount) {
+        try {
+          const { data: loanRow } = await supabaseAdmin
+            .from('loans')
+            .select('current_balance')
+            .eq('id', sanitized.loan_id)
+            .eq('user_id', uid)
+            .single();
+          if (loanRow) {
+            const newBalance = Math.max((loanRow.current_balance || 0) - Number(sanitized.amount), 0);
+            await supabaseAdmin
+              .from('loans')
+              .update({ current_balance: newBalance, status: newBalance <= 0 ? 'paid_off' : 'active' })
+              .eq('id', sanitized.loan_id)
+              .eq('user_id', uid);
+          }
+        } catch (balanceErr) {
+          console.error('[manageFinancialRecord] Loan balance update failed (non-fatal):', balanceErr.message);
+        }
+      }
+
       return Response.json({ success: true, record: result });
     }
 
