@@ -56,15 +56,21 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
       // Guarantee the Supabase session is alive so writes use the free path
       await ensureSupabaseSession();
 
-      if (folder === "payments" && fields.amount != null && fields.date) {
-        // A scanned receipt is an expense — log it as a Transaction so it shows
-        // up in Recent Transactions and Merchant Insights (which both read the
-        // transactions table). Previously this matched a loan and logged a loan
-        // payment, so non-loan receipts were never logged anywhere.
+      if (doc.document_type === "paystub" && fields.amount != null) {
+        const income = await createRecord("incomes", {
+          amount: parseFloat(fields.amount) || 0,
+          date: fields.date || new Date().toISOString().split("T")[0],
+          note: fields.description || `Imported paystub: ${doc.file_name || ""}`,
+          source: fields.payee || fields.employer || "Paystub",
+          is_recurring: false
+        });
+        await updateRecord("documents", doc.id, {
+          status: "logged", folder, extracted_data: fields,
+          logged_entity_type: "income", logged_entity_id: income?.id
+        });
+      } else if ((folder === "payments" || doc.document_type === "receipt") && fields.amount != null && fields.date) {
         const amount = parseFloat(fields.amount);
         if (!isNaN(amount)) {
-          // Use today's date for the transaction (when the document was logged),
-          // not the printed receipt date, to keep the ledger current.
           const today = new Date().toISOString().split("T")[0];
           const tx = await createRecord("transactions", {
             date: today,
@@ -280,7 +286,7 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
 
             <div className="flex gap-2 pt-2">
               <Button onClick={handleApprove} disabled={saving} className="flex-1 rounded-xl text-xs h-9">
-                <Check className="w-3.5 h-3.5 mr-1" /> {folder === "payments" || folder === "bills" ? T("approveAndLog", "Approve & Log") : T("approveAndSave", "Approve & Save")}
+                <Check className="w-3.5 h-3.5 mr-1" /> {folder === "payments" || folder === "bills" || doc.document_type === "paystub" || doc.document_type === "receipt" ? T("approveAndLog", "Approve & Log") : T("approveAndSave", "Approve & Save")}
               </Button>
               <Button variant="outline" onClick={handleArchive} disabled={saving} className="rounded-xl text-xs h-9 px-3">
                 <Archive className="w-3.5 h-3.5" />
