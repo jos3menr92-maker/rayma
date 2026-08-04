@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { createRecord } from "@/lib/supabaseHelpers";
 import { useFinancialData } from "@/lib/FinancialDataContext";
@@ -9,6 +9,9 @@ import { ChevronRight, DollarSign, Receipt, CreditCard, CheckCircle2, Loader2, G
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { useCurrency } from "@/hooks/useCurrency";
+import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
+import { computeIncomePreview, computeBillPreview, computeLoanPreview } from "@/utils/logPreviewMath";
 
 const STEPS = ["language", "welcome", "income", "bill", "loan", "done"];
 
@@ -42,6 +45,7 @@ export default function Onboarding() {
   const { lang, setLang, setLocale } = useLanguage();
   const { reload, userProfile, bankAccounts } = useFinancialData();
   const T = useT();
+  const { formatCurrency: fmt } = useCurrency();
 
   const [step, setStep] = useState("language");
   const [loading, setLoading] = useState(false);
@@ -57,6 +61,33 @@ export default function Onboarding() {
   const [loanDueDay, setLoanDueDay] = useState("");
   const [savingLang, setSavingLang] = useState(false);
   const finishRef = useRef(false);
+
+  // --- SMART PREVIEWS ---
+  const incomePreview = useMemo(() => computeIncomePreview({ 
+    amount: weeklyIncome, frequency: "weekly" 
+  }, { fmt, T }), [weeklyIncome, fmt, T]);
+
+  const billPreview = useMemo(() => computeBillPreview({
+    amount: billAmount, payment_frequency: "monthly", due_day: billDueDay
+  }, { fmt, T, locale: lang === "es" ? "es" : "en-US" }), [billAmount, billDueDay, fmt, T, lang]);
+
+  const loanPreview = useMemo(() => computeLoanPreview({
+    original_amount: loanBalance, current_balance: loanBalance,
+    monthly_payment: loanPayment, payment_frequency: "monthly",
+    interest_rate: 0, due_day: loanDueDay
+  }, { fmt, T, locale: lang === "es" ? "es" : "en-US" }), [loanBalance, loanPayment, loanDueDay, fmt, T, lang]);
+
+  // Handlers for chip suggestions
+  const handleIncomeAccept = (field, value) => { if (field === 'amount') setWeeklyIncome(value); };
+  const handleBillAccept = (field, value) => {
+    if (field === 'amount') setBillAmount(value);
+    if (field === 'due_day') setBillDueDay(value);
+  };
+  const handleLoanAccept = (field, value) => {
+    if (field === 'current_balance' || field === 'original_amount') setLoanBalance(value);
+    if (field === 'monthly_payment') setLoanPayment(value);
+    if (field === 'due_day') setLoanDueDay(value);
+  };
 
   async function selectLanguage(code, localeCode) {
     setSavingLang(true);
@@ -76,8 +107,6 @@ export default function Onboarding() {
   function handleBill() { setStep("loan"); }
   function handleLoan() { setStep("done"); }
 
-  // Hand everything to Rayma's logging path (createRecord — same one manual forms use,
-  // with session recovery + manageFinancialRecord fallback). Free: direct Supabase write, no AI tokens.
   async function finish() {
     if (finishRef.current) return;
     finishRef.current = true;
@@ -236,10 +265,13 @@ export default function Onboarding() {
               </div>
               <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("howMuchEarn", "How much do you earn weekly?")}</h2>
               <p className="text-sm text-muted-foreground mb-6">{T("incomeHelps", "This helps Rayma AI calculate your monthly cash flow. You can update it anytime.")}</p>
-              <div className="relative mb-6">
+              <div className="relative mb-3">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                 <Input type="number" placeholder={T("exampleAmount", "e.g. 800")} value={weeklyIncome} onChange={e => setWeeklyIncome(e.target.value)} className="pl-7 rounded-xl h-12 text-base" />
               </div>
+              
+              <div className="mb-6"><LogSuggestionStrip preview={incomePreview} onAccept={handleIncomeAccept} /></div>
+
               <Button className="w-full rounded-2xl h-12" onClick={handleIncome} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
               </Button>
@@ -256,7 +288,7 @@ export default function Onboarding() {
               </div>
               <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("addFirstBill", "Add your first bill")}</h2>
               <p className="text-sm text-muted-foreground mb-6">{T("billExamples", "Rent, Netflix, electricity — anything you pay regularly.")}</p>
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-3">
                 <Input placeholder={T("billNameEx", "Bill name (e.g. Netflix)")} value={billName} onChange={e => setBillName(e.target.value)} className="rounded-xl h-12" />
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
@@ -264,6 +296,9 @@ export default function Onboarding() {
                 </div>
                 <Input type="number" min="1" max="31" placeholder={T("dueDayOptional", "Due day of month (1-31, optional — recurs monthly)")} value={billDueDay} onChange={e => setBillDueDay(e.target.value)} className="rounded-xl h-12" />
               </div>
+              
+              <div className="mb-6"><LogSuggestionStrip preview={billPreview} onAccept={handleBillAccept} /></div>
+
               <Button className="w-full rounded-2xl h-12" onClick={handleBill} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
               </Button>
@@ -280,7 +315,7 @@ export default function Onboarding() {
               </div>
               <h2 className="text-2xl font-bold font-heading text-foreground mb-2">{T("anyLoans", "Any loans or debt?")}</h2>
               <p className="text-sm text-muted-foreground mb-6">{T("loanExamples", "Car loan, student debt, credit card — Rayma AI tracks it all.")}</p>
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-3">
                 <Input placeholder={T("loanNameEx", "Loan name (e.g. Car Loan)")} value={loanName} onChange={e => setLoanName(e.target.value)} className="rounded-xl h-12" />
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
@@ -292,6 +327,9 @@ export default function Onboarding() {
                 </div>
                 <Input type="number" min="1" max="31" placeholder={T("dueDayOptional", "Due day of month (1-31, optional — recurs monthly)")} value={loanDueDay} onChange={e => setLoanDueDay(e.target.value)} className="rounded-xl h-12" />
               </div>
+              
+              <div className="mb-6"><LogSuggestionStrip preview={loanPreview} onAccept={handleLoanAccept} /></div>
+
               <Button className="w-full rounded-2xl h-12" onClick={handleLoan} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : T("continue", "Continue")}
               </Button>
