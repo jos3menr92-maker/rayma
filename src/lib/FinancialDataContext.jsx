@@ -47,6 +47,7 @@ export function FinancialDataProvider({ children }) {
   const inFlightPromise = useRef(null);
   const mountedRef = useRef(true);
   const pendingReload = useRef(false);
+  const lastReloadTimeRef = useRef(0);
   const meRef = useRef(null);          // cached Base44 user — avoids base44.auth.me() on every background refresh
   const hasLoadedRef = useRef(false);  // true after first load — background refreshes skip the loading spinner
   const reloadTimerRef = useRef(null);
@@ -420,6 +421,7 @@ export function FinancialDataProvider({ children }) {
   }
 
   useEffect(() => {
+    mountedRef.current = true;
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         setSupaUser(session?.user || null);
@@ -491,7 +493,14 @@ export function FinancialDataProvider({ children }) {
         userProfile,
         supaUser,
         loading,
-        reload: () => loadAll({ fresh: true }),
+        reload: () => {
+          const now = Date.now();
+          if (now - lastReloadTimeRef.current < 1000) {
+            return inFlightPromise.current || Promise.resolve();
+          }
+          lastReloadTimeRef.current = now;
+          return loadAll({ fresh: true });
+        },
         refreshUserProfile,
         payBill,
         payLoan,
@@ -506,6 +515,30 @@ export function FinancialDataProvider({ children }) {
 
 export function useFinancialData() {
   const ctx = useContext(FinancialDataContext);
-  if (!ctx) throw new Error("useFinancialData must be used within FinancialDataProvider");
+  if (!ctx) {
+    console.warn("useFinancialData must be used within FinancialDataProvider");
+    return {
+      loans: [],
+      bills: [],
+      incomes: [],
+      payments: [],
+      transactions: [],
+      assets: [],
+      savingsGoals: [],
+      bankAccounts: [],
+      documents: [],
+      transactionSplits: [],
+      budgetCategories: [],
+      userProfile: null,
+      supaUser: null,
+      loading: false,
+      reload: async () => {},
+      refreshUserProfile: async () => null,
+      payBill: async () => {},
+      payLoan: async () => {},
+      updateLoan: async () => {},
+      addTransaction: async () => {}
+    };
+  }
   return ctx;
 }
