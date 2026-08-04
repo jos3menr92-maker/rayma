@@ -20,12 +20,12 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
     try {
       await payLoan(loan.id, loan.monthly_payment);
       reload();
+      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+      setSwiped(false);
     } catch(err) {
       console.error(err);
     }
     setPaying(false);
-    animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
-    setSwiped(false);
   };
 
   const { lang } = useLanguage();

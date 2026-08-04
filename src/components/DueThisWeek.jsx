@@ -65,7 +65,7 @@ export default function DueThisWeek({ loans, bills }) {
       }
     });
 
-        bills.forEach(bill => {
+    bills.forEach(bill => {
       if (!bill.is_active) return;
       
       const isPaidMonthly = bill.last_paid_date && new Date(bill.last_paid_date).getMonth() === today.getMonth() && new Date(bill.last_paid_date).getFullYear() === today.getFullYear();
