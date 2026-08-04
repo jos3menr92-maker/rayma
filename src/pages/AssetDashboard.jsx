@@ -29,7 +29,7 @@ const TYPE_COLORS = {
 const emptyForm = { name: "", amount: "", type: "cash", notes: "" };
 
 export default function AssetDashboard() {
-  const { loans, assets, reload, userProfile, supaUser, loading: contextLoading } = useFinancialData();
+  const { loans, assets, bankAccounts, reload, userProfile, supaUser, loading: contextLoading } = useFinancialData();
   const { lang } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
 
@@ -55,8 +55,10 @@ export default function AssetDashboard() {
   // 🧮 Net Worth Math
   const activeLoans = loans.filter(x => x.status !== "paid_off");
   const totalAssets = assets.reduce((s, a) => s + (a.amount || 0), 0);
+  const totalBankBalances = (bankAccounts || []).reduce((s, a) => s + (a.balance || 0), 0);
+  const combinedAssets = totalAssets + totalBankBalances;
   const totalLiabilities = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
-  const netWorth = totalAssets - totalLiabilities;
+  const netWorth = combinedAssets - totalLiabilities;
 
   const pieData = assets.map(a => ({ name: a.name, value: a.amount || 0, type: a.type }));
   const byType = assets.reduce((acc, a) => {
@@ -136,7 +138,7 @@ export default function AssetDashboard() {
           <div className="flex justify-center gap-6 mt-3">
             <div>
               <p className="text-xs text-muted-foreground">{T("assets2", "Assets")}</p>
-              <p className="text-sm font-semibold text-foreground">{fmt(totalAssets)}</p>
+              <p className="text-sm font-semibold text-foreground">{fmt(combinedAssets)}</p>
             </div>
             <div className="w-px bg-border" />
             <div>

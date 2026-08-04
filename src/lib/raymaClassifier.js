@@ -112,10 +112,12 @@ export function freeAnswer(rawText, ctx = {}) {
   // --- Financial lookups (pure app math — free) ---
   if (/net\s*worth/.test(text)) {
     const totalAssets = (assets || []).reduce((s, a) => s + (a.amount || 0), 0);
+    const totalBankBalances = (ctx.bankAccounts || []).reduce((s, a) => s + (a.balance || 0), 0);
+    const combinedAssets = totalAssets + totalBankBalances;
     const totalDebt = (loans || []).reduce((s, l) => s + (l.current_balance || 0), 0);
-    const nw = totalAssets - totalDebt;
+    const nw = combinedAssets - totalDebt;
     const tmpl = T("freeNetWorth", "**Your Net Worth** 💰\n\n• Total assets: {assets}\n• Total debt: {debt}\n• **Net worth: {nw}**\n\n*Calculated from your assets minus your loan balances.*");
-    return fill(tmpl, { assets: formatCurrency(totalAssets), debt: formatCurrency(totalDebt), nw: formatCurrency(nw) });
+    return fill(tmpl, { assets: formatCurrency(combinedAssets), debt: formatCurrency(totalDebt), nw: formatCurrency(nw) });
   }
   if (/(how\s*much\s*do\s*i\s*owe|total\s*debt|what\s*do\s*i\s*owe)/.test(text)) {
     const totalDebt = (loans || []).reduce((s, l) => s + (l.current_balance || 0), 0);

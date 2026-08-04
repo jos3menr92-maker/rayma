@@ -310,13 +310,37 @@ export function FinancialDataProvider({ children }) {
     const tempId = `temp_${Date.now()}`;
     const optimisticRecord = { ...transactionData, id: tempId, created_at: new Date().toISOString() };
 
-    setPayments(prev => [optimisticRecord, ...prev]);
+    setTransactions(prev => [optimisticRecord, ...prev]);
+
+    let originalBalance = null;
+    let targetAccountId = transactionData.bank_account_id;
+
+    if (targetAccountId) {
+      setBankAccounts(prev => prev.map(acc => {
+        if (acc.id === targetAccountId) {
+          originalBalance = acc.balance;
+          // Expenses are negative, so adding a negative reduces the balance
+          return { ...acc, balance: Number(acc.balance) + Number(transactionData.amount) };
+        }
+        return acc;
+      }));
+    }
 
     try {
-      const data = await createRecord('payments', transactionData);
-      setPayments(prev => prev.map(p => (p.id === tempId ? data : p)));
+      const data = await createRecord('transactions', transactionData);
+      setTransactions(prev => prev.map(p => (p.id === tempId ? data : p)));
+      
+      if (targetAccountId && originalBalance !== null) {
+        const newBalance = Number(originalBalance) + Number(transactionData.amount);
+        await updateRecord('bank_accounts', targetAccountId, { balance: newBalance });
+      }
     } catch (e) {
-      setPayments(prev => prev.filter(p => p.id !== tempId));
+      setTransactions(prev => prev.filter(p => p.id !== tempId));
+      if (targetAccountId && originalBalance !== null) {
+        setBankAccounts(prev => prev.map(acc => 
+          acc.id === targetAccountId ? { ...acc, balance: originalBalance } : acc
+        ));
+      }
       toast({ title: "Failed to add transaction", description: e.message, variant: "destructive" });
     }
   }

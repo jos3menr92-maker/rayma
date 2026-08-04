@@ -53,9 +53,9 @@ function sanitizeForDiagnostic(obj) {
 
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
-  assets = [], savingsGoals = [], taxes = [], transactions = [], userProfile = null,
+  assets = [], bankAccounts = [], savingsGoals = [], taxes = [], transactions = [], userProfile = null,
   currentPage = "", forceOpen, onClose, autoOpen, prefillPrompt = "", onPrefillConsumed,
-  showGreeting = false, onGreetingConsumed
+  showGreeting = false, onGreetingConsumed, addTransaction
 }) {
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -194,7 +194,7 @@ export default function RaymaChat({
     const text = sourceText.toLowerCase();
 
     // --- 0. SILENT CLASSIFIER (free vs paid) — runs before any coin is spent ---
-    const freeReply = freeAnswer(sourceText, { loans, bills, incomes, payments, assets, savingsGoals, transactions, userProfile, currentPage, formatCurrency, T });
+    const freeReply = freeAnswer(sourceText, { loans, bills, incomes, payments, assets, bankAccounts, savingsGoals, transactions, userProfile, currentPage, formatCurrency, T });
     if (freeReply) {
       setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
@@ -318,13 +318,26 @@ export default function RaymaChat({
       
       try {
         const todayISO = new Date().toISOString().split("T")[0];
-        await createRecord('transactions', {
+        
+        const payload = {
           date: todayISO,
           description: merchant,
           amount: -amount,
           category: "other",
           type: "debit"
-        });
+        };
+
+        // Use primary bank account if available
+        if (bankAccounts && bankAccounts.length > 0) {
+          payload.bank_account_id = bankAccounts[0].id;
+        }
+
+        if (addTransaction) {
+          await addTransaction(payload);
+        } else {
+          await createRecord('transactions', payload);
+        }
+        
         setMessages(prev => [...prev, { role: "assistant", content: T("spentLoggedSuccess", `✅ **Transaction Logged!** I recorded a ${formatCurrency(amount)} transaction at ${merchant}. \n\n*💡 Tip: If you have a receipt, tap the scan button to upload it. It's not required, but it's a great habit for keeping your records bulletproof!*`) }]);
         reload();
       } catch (error) {
