@@ -68,9 +68,11 @@ Deno.serve(async (req) => {
       // Retry without missing columns (handles schema drift gracefully — loops for multiple missing columns)
       let retryCount = 0;
       let currentPayload = { ...sanitized };
+      let strippedFields = [];
       while (error && /Could not find the .+ column/i.test(error.message) && retryCount < 5) {
         const match = error.message.match(/Could not find the ['"`]?(\w+)['"`]? column/i);
         if (!match) break;
+        strippedFields.push(match[1]);
         delete currentPayload[match[1]];
         ({ data: result, error } = await supabaseAdmin.from(table).insert([currentPayload]).select().single());
         retryCount++;
@@ -79,7 +81,7 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       // When a loan payment is created, automatically decrement the loan's current_balance
-      if (table === 'payments' && sanitized.loan_id && sanitized.amount) {
+      if (table === 'payments' && sanitized.payment_type === 'loan' && sanitized.loan_id && sanitized.amount) {
         try {
           const { data: loanRow } = await supabaseAdmin
             .from('loans')
@@ -100,7 +102,31 @@ Deno.serve(async (req) => {
         }
       }
 
-      return Response.json({ success: true, record: result });
+      if (table === 'transactions' && sanitized.bank_account_id) {
+        try {
+          const { data: bankAccount } = await supabaseAdmin
+            .from('bank_accounts')
+            .select('balance')
+            .eq('id', sanitized.bank_account_id)
+            .eq('user_id', uid)
+            .single();
+          if (bankAccount) {
+            await supabaseAdmin
+              .from('assets')
+              .update({ amount: bankAccount.balance })
+              .ilike('name', 'Bank Cash%')
+              .eq('user_id', uid);
+          }
+        } catch (bankErr) {
+          console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message);
+        }
+      }
+
+      const responsePayload: any = { success: true, record: result };
+      if (strippedFields.length > 0) {
+        responsePayload.warnings = [`Fields stripped due to missing DB columns: ${strippedFields.join(', ')}`];
+      }
+      return Response.json(responsePayload);
     }
 
     if (action === 'update') {
