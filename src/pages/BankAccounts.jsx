@@ -129,8 +129,16 @@ export default function BankAccounts() {
     URL.revokeObjectURL(url);
   };
 
-  const totalAssets = accounts.filter(a => a.is_active && a.account_type !== "credit").reduce((s, a) => s + (a.balance || 0), 0);
-  const totalCredit = accounts.filter(a => a.account_type === "credit").reduce((s, a) => s + (a.balance || 0), 0);
+  const activeAccounts = accounts.filter(a => a.is_active !== false);
+  const totalAssets = activeAccounts
+    .filter(a => a.account_type !== "credit" && (a.balance || 0) > 0)
+    .reduce((s, a) => s + (a.balance || 0), 0);
+  const totalCredit = activeAccounts
+    .filter(a => a.account_type === "credit")
+    .reduce((s, a) => s + (a.balance || 0), 0)
+    + activeAccounts
+    .filter(a => a.account_type !== "credit" && (a.balance || 0) < 0)
+    .reduce((s, a) => s + Math.abs(a.balance || 0), 0);
   const netBalance = totalAssets - totalCredit;
   const visibleTxs = selectedAccount ? transactions.filter(t => t.bank_account_id === selectedAccount) : transactions;
 

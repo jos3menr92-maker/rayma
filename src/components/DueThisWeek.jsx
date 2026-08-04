@@ -1,5 +1,7 @@
 import { useMemo } from "react";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -7,6 +9,24 @@ import { t } from "@/lib/i18n";
 const DOW_ORDER = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 export default function DueThisWeek({ loans, bills }) {
+  const { payBill, payLoan, reload } = useFinancialData();
+  const [payingId, setPayingId] = useState(null);
+
+  const handlePay = async (item) => {
+    setPayingId(item.id);
+    try {
+      if (item.type === "bill") {
+        const bill = bills.find(b => b.id === item.id);
+        if (bill) await payBill(bill, item.amount);
+      } else if (item.type === "loan") {
+        await payLoan(item.id, item.amount);
+      }
+      reload();
+    } catch(err) {
+      console.error(err);
+    }
+    setPayingId(null);
+  };
   const { formatCurrency: fmt } = useCurrency();
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -47,7 +67,12 @@ export default function DueThisWeek({ loans, bills }) {
 
     bills.forEach(bill => {
       if (!bill.is_active) return;
+      
+      const isPaidMonthly = bill.last_paid_date && new Date(bill.last_paid_date).getMonth() === today.getMonth() && new Date(bill.last_paid_date).getFullYear() === today.getFullYear();
+      const isPaidWeekly = bill.last_paid_date && (today.getTime() - new Date(bill.last_paid_date).getTime() < 7 * 24 * 60 * 60 * 1000);
+
       if (bill.payment_frequency === "weekly" || bill.payment_frequency === "biweekly") {
+        if (isPaidWeekly) return;
         if (bill.due_day_of_week) {
           const dueDayIdx = DOW_ORDER.indexOf(bill.due_day_of_week);
           if (dueDayIdx === -1) return;
@@ -57,6 +82,7 @@ export default function DueThisWeek({ loans, bills }) {
           }
         }
       } else if (bill.due_day) {
+        if (isPaidMonthly) return;
         const dueDate = new Date(today.getFullYear(), today.getMonth(), bill.due_day);
         if (dueDate >= weekStart && dueDate <= weekEnd) {
           const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
@@ -93,15 +119,26 @@ export default function DueThisWeek({ loans, bills }) {
                 </p>
               </div>
             </div>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${
-              item.daysUntil <= 1
-                ? "bg-destructive/10 text-destructive"
-                : item.daysUntil <= 3
-                ? "bg-amber-500/10 text-amber-500"
-                : "bg-primary/10 text-primary"
-            }`}>
-              {fmt(item.amount)}
-            </span>
+            {/* Wrap the amount in a flex container with the pay button */}
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${
+                item.daysUntil <= 1
+                  ? "bg-destructive/10 text-destructive"
+                  : item.daysUntil <= 3
+                  ? "bg-amber-500/10 text-amber-500"
+                  : "bg-primary/10 text-primary"
+              }`}>
+                {fmt(item.amount)}
+              </span>
+              <button 
+                onClick={() => handlePay(item)} 
+                disabled={payingId === item.id} 
+                className="p-1.5 text-muted-foreground hover:text-primary transition-colors" 
+                title={T("markPaid", "Mark as Paid")}
+              >
+                <CheckCircle2 className={`w-4 h-4 ${payingId === item.id ? "text-primary animate-pulse" : ""}`} />
+              </button>
+            </div>
           </div>
         ))}
       </div>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronRight, AlertCircle, Calendar, DollarSign, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
-import PaymentButton from "./PaymentButton";
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 
@@ -12,6 +12,22 @@ const categoryIcons = {
 };
 
 export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
+  const { payLoan, reload } = useFinancialData();
+  const [paying, setPaying] = useState(false);
+  
+  const handlePay = async () => {
+    setPaying(true);
+    try {
+      await payLoan(loan.id, loan.monthly_payment);
+      reload();
+      animate(x, 0, { type: "spring", stiffness: 300, damping: 30 });
+      setSwiped(false);
+    } catch(err) {
+      console.error(err);
+    }
+    setPaying(false);
+  };
+
   const { lang } = useLanguage();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   const { formatCurrency } = useCurrency();
@@ -44,12 +60,10 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
       {/* Swipe reveal actions: Pay (top) + Delete (bottom) */}
       <div className="absolute inset-y-0 right-0 w-[72px] flex flex-col rounded-xl overflow-hidden">
         <motion.div style={{ opacity: revealOpacity }} className="h-full flex flex-col" onClick={() => { animate(x, 0, { type: "spring", stiffness: 300, damping: 30 }); setSwiped(false); }}>
-          <PaymentButton planId={loan.id} amount={loan.monthly_payment}>
-            <div className="flex-1 bg-primary flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:bg-primary/90 transition-colors">
-              <DollarSign className="w-4 h-4 text-primary-foreground" />
-              <span className="text-[9px] font-bold text-primary-foreground uppercase tracking-wide">{T("pay", "Pay")}</span>
-            </div>
-          </PaymentButton>
+          <button type="button" onClick={(e) => { e.stopPropagation(); handlePay(); }} disabled={paying} className="flex-1 bg-primary flex flex-col items-center justify-center gap-0.5 hover:bg-primary/90 transition-colors">
+              <DollarSign className={`w-4 h-4 text-primary-foreground ${paying ? "animate-pulse" : ""}`} />
+              <span className="text-[9px] font-bold text-primary-foreground uppercase tracking-wide">{paying ? T("paying", "Paying") : T("pay", "Pay")}</span>
+            </button>
           {onDelete && (
             <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(loan); }} className="flex-1 bg-destructive flex flex-col items-center justify-center gap-0.5 hover:bg-destructive/90 transition-colors">
               <Trash2 className="w-4 h-4 text-destructive-foreground" />

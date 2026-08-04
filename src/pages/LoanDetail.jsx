@@ -31,7 +31,7 @@ export default function LoanDetail() {
   const navigate = useNavigate(); 
   const { formatCurrency: fmt } = useCurrency(); 
   // 🚀 FIXED: Extracted supaUser to secure the database inserts
-  const { reload, supaUser } = useFinancialData(); 
+  const { reload, supaUser, payLoan } = useFinancialData(); 
   const { lang } = useLanguage();
   const T = (key, fallback) => t(lang, key) !== key ? t(lang, key) : fallback;
   
@@ -128,19 +128,7 @@ export default function LoanDetail() {
     const amount = parseFloat(payForm.amount); 
     
     try {
-      const { error: payError } = await supabase.from('payments').insert([{ 
-        loan_id: id, 
-        user_id: supaUser.id, 
-        amount, 
-        payment_date: payForm.payment_date, 
-        note: payForm.note,
-        payment_type: 'loan'
-      }]); 
-      if (payError) throw payError;
-
-      const newBalance = Math.max((loan.current_balance || 0) - amount, 0); 
-      const { error: loanError } = await supabase.from('loans').update({ current_balance: newBalance, status: newBalance <= 0 ? "paid_off" : "active" }).eq('id', id); 
-      if (loanError) throw loanError;
+      await payLoan(id, amount, payForm.payment_date, payForm.note);
       
       reload(); 
       setPayForm({ amount: "", payment_date: new Date().toISOString().split("T")[0], note: "" }); 

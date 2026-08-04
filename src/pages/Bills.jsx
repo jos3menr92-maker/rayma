@@ -27,7 +27,7 @@ export default function Bills() {
   const T = useT();
   
   // 🧠 Pulling real data from your Supabase Brain
-  const { bills, userProfile, reload, loading } = useFinancialData();
+  const { bills, userProfile, reload, loading, payBill } = useFinancialData();
   const location = useLocation();
   
   const categories = [
@@ -131,13 +131,7 @@ export default function Bills() {
     setPaidBillId(bill.id);
 
     try {
-      await createRecord('payments', {
-        bill_id: bill.id,
-        amount: bill.amount,
-        payment_type: "bill",
-        payment_date: format(new Date(), "yyyy-MM-dd"),
-        note: "Auto-logged from Bills page",
-      });
+      await payBill(bill, bill.amount, format(new Date(), "yyyy-MM-dd"));
       reload();
     } catch (err) {
       console.error("Failed to log payment:", err);

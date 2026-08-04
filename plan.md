@@ -1,0 +1,5 @@
+- [ ] Step 1: Standardize Context Functions (`src/lib/FinancialDataContext.jsx`)
+- [ ] Step 2: Fix Bank Account Math (`src/pages/BankAccounts.jsx`)
+- [ ] Step 3: Fix Bill Checkmarks & DueThisWeek (`src/pages/Bills.jsx`, `src/components/DueThisWeek.jsx`)
+- [ ] Step 4: Fix Loan Payment UI (`src/components/LoanCard.jsx`, `src/pages/LoanDetail.jsx`)
+- [ ] Step 5: Fix AI Chat Auto-Logger (`src/components/RaymaChat.jsx`)
