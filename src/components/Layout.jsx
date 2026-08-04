@@ -70,7 +70,8 @@ export default function Layout() {
     bankAccounts = [], // Ready for net worth and recent spending
     savingsGoals = [], // Ready for the Savings Vault
     transactions = [], // Ready for recent-spending lookup
-    userProfile
+    userProfile,
+    addTransaction
   } = useFinancialData();
 
   useEffect(() => {
@@ -222,6 +223,7 @@ export default function Layout() {
         transactions={transactions} // <-- NEW: Recent spending lookup
         userProfile={userProfile}
         currentPage={location.pathname} // <-- NEW: Page Awareness / Context
+        addTransaction={addTransaction}
       />
     </div>);
 
