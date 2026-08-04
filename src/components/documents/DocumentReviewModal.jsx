@@ -63,8 +63,11 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
         // payment, so non-loan receipts were never logged anywhere.
         const amount = parseFloat(fields.amount);
         if (!isNaN(amount)) {
+          // Use today's date for the transaction (when the document was logged),
+          // not the printed receipt date, to keep the ledger current.
+          const today = new Date().toISOString().split("T")[0];
           const tx = await createRecord("transactions", {
-            date: fields.date,
+            date: today,
             description: fields.description || fields.payee || T("scannedReceipt", "Scanned receipt"),
             amount: -Math.abs(amount),
             category: normalizeTxCategory(fields.category),

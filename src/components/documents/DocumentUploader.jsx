@@ -111,16 +111,21 @@ Today's date: ${today}`,
 
       // --- Save the document (always runs, even if analysis timed out) ---
       setUploadStep(T("saving", "Saving…"));
+      const ex = analysis.extracted_data || {};
       const doc = await createRecord('documents', {
         file_url: file_uri,
         file_name: file.name,
         folder: analysis.folder || "misc",
         status: "pending_review",
         document_type: analysis.document_type,
-        extracted_data: analysis.extracted_data || {},
+        extracted_data: ex,
         loggable: analysis.loggable !== false,
         notes: analysis.rayma_message || analysis.summary,
         scan_date: today,
+        // Promote key fields to top-level columns for easier querying/display
+        merchant: ex.payee || null,
+        amount: ex.amount != null ? parseFloat(ex.amount) || null : null,
+        document_date: ex.date || null,
       });
       // 🪙 Deduct 3 coins for the scan (best-effort; unlimited users skip)
       if (!isUnlimited) {

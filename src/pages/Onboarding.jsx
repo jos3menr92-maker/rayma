@@ -1,11 +1,10 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { createRecord } from "@/lib/supabaseHelpers";
-import { useFinancialData } from "@/lib/FinancialDataContext"; // 🚀 NEW: To get the User ID
+import { useFinancialData } from "@/lib/FinancialDataContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "@/lib/LanguageContext";
-import { t } from "@/lib/i18n";
+import { useLanguage, useT } from "@/lib/LanguageContext";
 import { ChevronRight, DollarSign, Receipt, CreditCard, CheckCircle2, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,15 +40,8 @@ function ProgressDots({ step }) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { lang, setLang, setLocale } = useLanguage();
-  const { supaUser, reload } = useFinancialData(); // 🚀 NEW: Grab the Supabase ID
-
-  const T = useMemo(() =>
-    (key, fallback) => {
-      const translated = t(lang, key);
-      return translated !== key ? translated : fallback;
-    },
-    [lang]
-  );
+  const { reload } = useFinancialData();
+  const T = useT();
 
   const [step, setStep] = useState("language");
   const [loading, setLoading] = useState(false);
