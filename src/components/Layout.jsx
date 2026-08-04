@@ -67,6 +67,7 @@ export default function Layout() {
     incomes,
     payments = [], // Ready for the calendar/transactions
     assets = [], // Ready for net worth
+    bankAccounts = [], // Ready for net worth and recent spending
     savingsGoals = [], // Ready for the Savings Vault
     transactions = [], // Ready for recent-spending lookup
     userProfile
@@ -216,6 +217,7 @@ export default function Layout() {
         incomes={incomes}
         payments={payments} // <-- NEW: Transaction History
         assets={assets} // <-- NEW: Net Worth Tracking
+        bankAccounts={bankAccounts} // <-- NEW: Bank Accounts for Net Worth
         savingsGoals={savingsGoals} // <-- NEW: Savings Vault
         transactions={transactions} // <-- NEW: Recent spending lookup
         userProfile={userProfile}

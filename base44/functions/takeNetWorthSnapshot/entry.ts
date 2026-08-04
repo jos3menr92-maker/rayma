@@ -55,22 +55,25 @@ Deno.serve(async (req) => {
           .limit(1);
         if (existing && existing.length > 0) continue;
 
-        // Read assets and loans from Supabase
-        const [assetsRes, loansRes] = await Promise.all([
+        // Read assets, bank accounts, and loans from Supabase
+        const [assetsRes, loansRes, banksRes] = await Promise.all([
           supabaseAdmin.from('assets').select('amount').eq('user_id', uid),
           supabaseAdmin.from('loans').select('current_balance, status').eq('user_id', uid),
+          supabaseAdmin.from('bank_accounts').select('balance').eq('user_id', uid),
         ]);
 
         const totalAssets = (assetsRes.data || []).reduce((sum, a) => sum + (a.amount || 0), 0);
+        const totalBankBalances = (banksRes.data || []).reduce((sum, a) => sum + (a.balance || 0), 0);
+        const combinedAssets = totalAssets + totalBankBalances;
         const totalLiabilities = (loansRes.data || [])
           .filter(l => l.status === 'active')
           .reduce((sum, l) => sum + (l.current_balance || 0), 0);
-        const netWorth = totalAssets - totalLiabilities;
+        const netWorth = combinedAssets - totalLiabilities;
 
         await supabaseAdmin.from('net_worth_snapshots').insert([{
           user_id: uid,
           snapshot_date: today,
-          total_assets: totalAssets,
+          total_assets: combinedAssets,
           total_liabilities: totalLiabilities,
           net_worth: netWorth,
         }]);

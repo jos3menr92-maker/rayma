@@ -53,7 +53,7 @@ function sanitizeForDiagnostic(obj) {
 
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
-  assets = [], savingsGoals = [], taxes = [], transactions = [], userProfile = null,
+  assets = [], bankAccounts = [], savingsGoals = [], taxes = [], transactions = [], userProfile = null,
   currentPage = "", forceOpen, onClose, autoOpen, prefillPrompt = "", onPrefillConsumed,
   showGreeting = false, onGreetingConsumed
 }) {
@@ -194,7 +194,7 @@ export default function RaymaChat({
     const text = sourceText.toLowerCase();
 
     // --- 0. SILENT CLASSIFIER (free vs paid) — runs before any coin is spent ---
-    const freeReply = freeAnswer(sourceText, { loans, bills, incomes, payments, assets, savingsGoals, transactions, userProfile, currentPage, formatCurrency, T });
+    const freeReply = freeAnswer(sourceText, { loans, bills, incomes, payments, assets, bankAccounts, savingsGoals, transactions, userProfile, currentPage, formatCurrency, T });
     if (freeReply) {
       setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
