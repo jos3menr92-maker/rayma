@@ -311,7 +311,7 @@ export default function RaymaChat({
             type: "debit"
           };
           if (bankAccounts && bankAccounts.length > 0) {
-            payload.bank_account_id = bankAccounts[0].id;
+            payload.bank_account_id = (bankAccounts.find(a => a.is_primary) || bankAccounts[0]).id;
           }
           if (addTransaction) {
             await addTransaction(payload);
@@ -352,7 +352,7 @@ export default function RaymaChat({
 
         // Use primary bank account if available
         if (bankAccounts && bankAccounts.length > 0) {
-          payload.bank_account_id = bankAccounts[0].id;
+          payload.bank_account_id = (bankAccounts.find(a => a.is_primary) || bankAccounts[0]).id;
         }
 
         if (addTransaction) {

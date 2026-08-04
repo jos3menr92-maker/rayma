@@ -40,7 +40,7 @@ function ProgressDots({ step }) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { lang, setLang, setLocale } = useLanguage();
-  const { reload } = useFinancialData();
+  const { reload, userProfile, bankAccounts } = useFinancialData();
   const T = useT();
 
   const [step, setStep] = useState("language");
@@ -135,6 +135,27 @@ export default function Onboarding() {
         logged.push("loan");
       } catch (err) {
         console.error("Onboarding loan log failed:", err?.message);
+      }
+    }
+
+    // Auto-provision default checking account if user has no accounts
+    if (bankAccounts && bankAccounts.length === 0) {
+      try {
+        const firstName = userProfile?.preferred_name || userProfile?.full_name?.split(' ')[0];
+        const accountName = firstName ? `${firstName}'s Checking` : "Primary Checking";
+        
+        await createRecord('bank_accounts', {
+          name: accountName,
+          institution: "Primary",
+          account_type: "checking",
+          balance: 0.00,
+          currency: userProfile?.preferred_currency || "USD",
+          is_primary: true,
+          is_active: true,
+          link_method: "manual"
+        });
+      } catch (err) {
+        console.error("Onboarding auto-provision bank account failed:", err?.message);
       }
     }
 
