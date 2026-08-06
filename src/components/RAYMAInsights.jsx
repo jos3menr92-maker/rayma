@@ -63,9 +63,15 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
     if (userProfile?.pay_day && bills.length > 0) {
       localAlerts.push({ type: 'opportunity', title: T("paydayCollisionGuard", "Payday Collision Guard"), body: T("paydayCollisionBody", "I'm tracking your bills against your {pay_day} payday to prevent overdrafts.").replace("{pay_day}", userProfile.pay_day)});
     }
+    
+    // ⬇️ THE FIX: Removed the 15% hallucination text.
     const loanMissingAPR = loans.find(l => !l.interest_rate && !l.apr);
     if (loanMissingAPR) {
-      localAlerts.push({ type: 'tip', title: T("missingInterestData", "Missing Interest Data"), body: T("missingInterestBody", "You left the interest blank on your {name}. I'm estimating it at 15% for now.").replace("{name}", loanMissingAPR.name || 'recent loan')});
+      localAlerts.push({ 
+        type: 'tip', 
+        title: T("missingInterestData", "Missing Interest Data"), 
+        body: T("missingInterestBody", "You left the interest blank on your {name}. Please edit this loan to add the correct rate so your payoff math is accurate.").replace("{name}", loanMissingAPR.name || 'recent loan')
+      });
     }
 
     let result;
