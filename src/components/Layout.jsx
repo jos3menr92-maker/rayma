@@ -11,21 +11,10 @@ import GlobalBatteryBar from "./GlobalBatteryBar";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import AppTour from "./AppTour";
 import { useFinancialData } from "@/lib/FinancialDataContext";
-import { getInitialsColor } from "@/components/AvatarPicker";
 import { useT } from "@/lib/LanguageContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import { useBackHandler } from "@/hooks/useBackHandler";
-
-const HUMAN_AVATARS = [
-{ id: "face1", url: "https://i.pravatar.cc/150?img=11" }, { id: "face2", url: "https://i.pravatar.cc/150?img=12" },
-{ id: "face3", url: "https://i.pravatar.cc/150?img=14" }, { id: "face4", url: "https://i.pravatar.cc/150?img=32" },
-{ id: "face5", url: "https://i.pravatar.cc/150?img=33" }, { id: "face6", url: "https://i.pravatar.cc/150?img=37" },
-{ id: "face7", url: "https://i.pravatar.cc/150?img=38" }, { id: "face8", url: "https://i.pravatar.cc/150?img=47" },
-{ id: "face9", url: "https://i.pravatar.cc/150?img=49" }, { id: "face10", url: "https://i.pravatar.cc/150?img=50" },
-{ id: "face11", url: "https://i.pravatar.cc/150?img=51" }, { id: "face12", url: "https://i.pravatar.cc/150?img=52" },
-{ id: "face13", url: "https://i.pravatar.cc/150?img=56" }, { id: "face14", url: "https://i.pravatar.cc/150?img=59" },
-{ id: "face15", url: "https://i.pravatar.cc/150?img=60" }];
 
 
 export default function Layout() {
@@ -95,12 +84,6 @@ export default function Layout() {
     return () => window.removeEventListener("rayma:open", handler);
   }, []);
 
-  useEffect(() => {
-    setImageError(false);
-  }, [userProfile?.avatar_photo_url, userProfile?.avatar_id]);
-
-  const presetAvatar = HUMAN_AVATARS.find((a) => a.id === userProfile?.avatar_id);
-  const imageToShow = userProfile?.avatar_photo_url || presetAvatar?.url;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -113,14 +96,12 @@ export default function Layout() {
           <div className="flex items-center gap-3">
             <div
               className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm"
-              style={{ backgroundColor: userProfile?.avatar_id ? getInitialsColor(userProfile?.preferred_name || userProfile?.full_name, userProfile?.avatar_id) : "#9ca3af" }}>
-              {imageToShow && !imageError ?
-              <img src={imageToShow} className="w-full h-full object-cover" alt={T("profile", "Profile")} onError={() => setImageError(true)} /> :
-
-              <span className="text-xs font-bold text-white">
-                  {userProfile?.preferred_name?.charAt(0) || userProfile?.full_name?.charAt(0) || "R"}
-                </span>
-              }
+              style={{ backgroundColor: "#0dcfba" }}>
+              {!imageError ? (
+                <img src="/icon-192.png" className="w-full h-full object-cover" alt={T("raymaAiLogo", "Rayma AI logo")} onError={() => setImageError(true)} />
+              ) : (
+                <span className="text-xs font-bold text-white">R</span>
+              )}
             </div>
             <span className="text-sm font-semibold font-heading text-foreground tracking-wide">Rayma AI</span>
           </div>
