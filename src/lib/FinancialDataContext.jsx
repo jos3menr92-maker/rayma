@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { supabase } from "./supabaseClientFrontend";
 import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
 import { applyPayment } from "@/utils/loanEngine";
+import { syncBankCashAsset } from "@/lib/syncBankCashAsset";
 import { toast } from "@/components/ui/use-toast";
 import { useT } from "@/lib/LanguageContext";
 
@@ -412,6 +413,8 @@ export function FinancialDataProvider({ children }) {
       if (targetAccountId && originalBalance !== null) {
         const newBalance = Number(originalBalance) + Number(transactionData.amount);
         await updateRecord('bank_accounts', targetAccountId, { balance: newBalance });
+        // Bug 2: mirror the updated bank balance onto the "Bank Cash" asset.
+        await syncBankCashAsset(targetAccountId);
       }
     } catch (e) {
       setTransactions(prev => prev.filter(p => p.id !== tempId));

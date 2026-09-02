@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { createRecord, updateRecord, deleteRecord } from "@/lib/supabaseHelpers";
+import { syncBankCashAsset } from "@/lib/syncBankCashAsset";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -71,8 +72,10 @@ export default function BankAccounts() {
     try {
       if (editing) {
         await updateRecord('bank_accounts', editing.id, data);
+        await syncBankCashAsset(editing.id);
       } else {
-        await createRecord('bank_accounts', data);
+        const rec = await createRecord('bank_accounts', data);
+        await syncBankCashAsset(rec?.id);
       }
     } catch (err) {
       console.error("BankAccounts Error:", err.message);

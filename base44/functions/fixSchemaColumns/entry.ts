@@ -30,10 +30,16 @@ ALTER TABLE loans ADD COLUMN IF NOT EXISTS loan_type_attributes JSONB DEFAULT '{
 
 -- Bug 1 fix: unique constraint so concurrent duplicate-payment inserts are
 -- rejected atomically at the DB level (manageFinancialRecord surfaces a 409).
+-- Wrapped in an inner EXCEPTION so existing duplicate rows (which would make
+-- ADD CONSTRAINT fail) don't abort the rest of this migration batch.
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payments_user_loan_date_amount_unique') THEN
-    ALTER TABLE payments ADD CONSTRAINT payments_user_loan_date_amount_unique UNIQUE (user_id, loan_id, payment_date, amount);
+    BEGIN
+      ALTER TABLE payments ADD CONSTRAINT payments_user_loan_date_amount_unique UNIQUE (user_id, loan_id, payment_date, amount);
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE 'Could not add payments unique constraint (existing duplicates?): %', SQLERRM;
+    END;
   END IF;
 END $$;
     `.trim();
