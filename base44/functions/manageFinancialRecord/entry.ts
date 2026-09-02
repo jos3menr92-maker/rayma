@@ -24,6 +24,24 @@ const ALLOWED_TABLES = {
   profiles: ['preferred_name', 'avatar_id', 'avatar_emoji', 'avatar_photo_url', 'preferred_currency', 'preferred_language', 'pay_frequency', 'pay_day', 'compact_mode', 'smart_alerts', 'auto_insights', 'subscription_type', 'ai_tokens_daily_limit'],
 };
 
+// Mirrors a bank account's balance onto the user's "Bank Cash" asset row so the
+// asset dashboard stays in sync whenever transactions or balances change (Bug 2).
+async function syncBankCashAsset(supabaseAdmin: any, uid: string, bankAccountId: string) {
+  const { data: bankAccount } = await supabaseAdmin
+    .from('bank_accounts')
+    .select('balance')
+    .eq('id', bankAccountId)
+    .eq('user_id', uid)
+    .single();
+  if (bankAccount) {
+    await supabaseAdmin
+      .from('assets')
+      .update({ amount: bankAccount.balance })
+      .ilike('name', 'Bank Cash%')
+      .eq('user_id', uid);
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -119,6 +137,23 @@ Deno.serve(async (req) => {
         retryCount++;
       }
 
+      // Race-window guard (Bug 1): if a duplicate payment slipped in between our
+      // pre-check and the insert, the unique constraint rejects it — surface as 409.
+      if (error && table === 'payments' && sanitized.loan_id && sanitized.payment_date
+          && /duplicate key value violates unique constraint/i.test(error.message)) {
+        const { data: existing } = await supabaseAdmin
+          .from('payments')
+          .select('id, amount, payment_date')
+          .eq('user_id', uid)
+          .eq('loan_id', sanitized.loan_id)
+          .eq('payment_date', sanitized.payment_date)
+          .eq('amount', Number(sanitized.amount));
+        return Response.json({
+          error: `Duplicate payment blocked: a payment of ${sanitized.amount} on ${sanitized.payment_date} for this loan already exists (id: ${existing?.[0]?.id}).`,
+          duplicate: existing?.[0] || null,
+        }, { status: 409 });
+      }
+
       if (error) throw error;
 
       // When a loan payment is created, automatically decrement the loan's current_balance
@@ -144,23 +179,8 @@ Deno.serve(async (req) => {
       }
 
       if (table === 'transactions' && sanitized.bank_account_id) {
-        try {
-          const { data: bankAccount } = await supabaseAdmin
-            .from('bank_accounts')
-            .select('balance')
-            .eq('id', sanitized.bank_account_id)
-            .eq('user_id', uid)
-            .single();
-          if (bankAccount) {
-            await supabaseAdmin
-              .from('assets')
-              .update({ amount: bankAccount.balance })
-              .ilike('name', 'Bank Cash%')
-              .eq('user_id', uid);
-          }
-        } catch (bankErr) {
-          console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message);
-        }
+        try { await syncBankCashAsset(supabaseAdmin, uid, sanitized.bank_account_id); }
+        catch (bankErr) { console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message); }
       }
 
       const responsePayload: any = { success: true, record: result };
@@ -264,6 +284,18 @@ Deno.serve(async (req) => {
       }
       const { data: result, error } = await query.select().single();
       if (error) throw error;
+
+      // Asset ↔ bank balance sync (Bug 2): keep the "Bank Cash" asset mirrored
+      // when a transaction or a bank account's balance is updated directly.
+      if (table === 'transactions' && result?.bank_account_id) {
+        try { await syncBankCashAsset(supabaseAdmin, uid, result.bank_account_id); }
+        catch (bankErr) { console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message); }
+      }
+      if (table === 'bank_accounts' && record_id) {
+        try { await syncBankCashAsset(supabaseAdmin, uid, record_id); }
+        catch (bankErr) { console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message); }
+      }
+
       const updateResponsePayload: any = { success: true, record: result };
       if (updateWarnings.length > 0) updateResponsePayload.warnings = updateWarnings;
       return Response.json(updateResponsePayload);
@@ -271,8 +303,24 @@ Deno.serve(async (req) => {
 
     if (action === 'delete') {
       if (!record_id) return Response.json({ error: 'record_id is required for delete' }, { status: 400 });
+
+      // For transactions, capture the linked bank account before deleting so we
+      // can re-sync the "Bank Cash" asset afterward (Bug 2).
+      let deletedBankAccountId: string | null = null;
+      if (table === 'transactions') {
+        const { data: tx } = await supabaseAdmin.from('transactions')
+          .select('bank_account_id').eq('id', record_id).eq('user_id', uid).single();
+        deletedBankAccountId = tx?.bank_account_id || null;
+      }
+
       const { error } = await supabaseAdmin.from(table).delete().eq('id', record_id).eq('user_id', uid);
       if (error) throw error;
+
+      if (table === 'transactions' && deletedBankAccountId) {
+        try { await syncBankCashAsset(supabaseAdmin, uid, deletedBankAccountId); }
+        catch (bankErr) { console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message); }
+      }
+
       return Response.json({ success: true, deleted: record_id });
     }
   } catch (error) {

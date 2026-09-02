@@ -27,6 +27,15 @@ ALTER TABLE net_worth_snapshots ADD COLUMN IF NOT EXISTS total_assets NUMERIC;
 ALTER TABLE net_worth_snapshots ADD COLUMN IF NOT EXISTS total_liabilities NUMERIC;
 ALTER TABLE loans ADD COLUMN IF NOT EXISTS payment_amount_type TEXT DEFAULT 'per_period';
 ALTER TABLE loans ADD COLUMN IF NOT EXISTS loan_type_attributes JSONB DEFAULT '{}'::jsonb;
+
+-- Bug 1 fix: unique constraint so concurrent duplicate-payment inserts are
+-- rejected atomically at the DB level (manageFinancialRecord surfaces a 409).
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payments_user_loan_date_amount_unique') THEN
+    ALTER TABLE payments ADD CONSTRAINT payments_user_loan_date_amount_unique UNIQUE (user_id, loan_id, payment_date, amount);
+  END IF;
+END $$;
     `.trim();
 
     // Approach 1: Try calling an exec_sql RPC function (if one exists in the DB)
