@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
         user: {
           client_user_id: user.id,
         },
-        client_name: 'RAYMA Financial Dashboard',
+        client_name: 'Rayma AI',
         language: 'en',
         country_codes: ['US'],
         products: ['auth', 'transactions'],

@@ -225,7 +225,7 @@ export default function Bills() {
             <DialogTitle>{editing ? T("editBill", "Edit Bill") : T("addBill", "Add Bill")}</DialogTitle>
           </DialogHeader>
           
-          {/* ✨ RAYMA AI INTEGRATION BUTTON ✨ */}
+          {/* ✨ Rayma AI INTEGRATION BUTTON ✨ */}
           {!editing && (
             <button
               type="button"

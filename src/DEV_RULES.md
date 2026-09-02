@@ -1,4 +1,4 @@
-# RAYMA — Development Rules & Compliance Guard
+# Rayma AI — Development Rules & Compliance Guard
 
 **This file is LAW for all future development on this app.**  
 Every code change, new feature, new page, and new backend function MUST comply with these rules.  
@@ -8,7 +8,7 @@ Violating any rule risks Google Play or Apple App Store rejection, legal liabili
 
 ## 🔴 RULE 1 — PAYMENTS: Never use Stripe for in-app digital goods on iOS/Android
 
-- Stripe checkout is **only legal on the web version** of RAYMA.
+- Stripe checkout is **only legal on the web version** of Rayma AI.
 - On iOS (native): use **Apple StoreKit / IAP**.
 - On Android (native): use **Google Play Billing**.
 - The `isStripeAllowed()` check from `lib/iap.js` MUST be called before every purchase action.
@@ -30,7 +30,7 @@ if (!isStripeAllowed()) {
 
 Every page that shows AI insights, financial calculations, or purchase options **must** display:
 
-> "RAYMA is a personal finance tracking tool, not a financial advisor. Always consult a qualified professional before making major financial decisions."
+> "Rayma AI is a personal finance tracking tool, not a financial advisor. Always consult a qualified professional before making major financial decisions."
 
 - ✅ Already on: Landing, Onboarding, Support, Profile, Terms, Privacy Policy
 - **Any new page that shows AI output, loan projections, savings estimates, or budget advice must include this disclaimer.**
@@ -40,7 +40,7 @@ Every page that shows AI insights, financial calculations, or purchase options *
 <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-2xl">
   <p className="text-xs font-semibold text-destructive mb-1">⚠️ Financial Disclaimer</p>
   <p className="text-xs text-muted-foreground">
-    RAYMA provides tools for personal finance tracking only. Not financial advice.
+    Rayma AI provides tools for personal finance tracking only. Not financial advice.
     Consult a qualified financial professional before making financial decisions.
   </p>
 </div>
@@ -56,7 +56,7 @@ The following words/phrases are **banned** from all user-facing copy (UI, landin
 |---|---|
 | "guaranteed" | "estimated", "projected" |
 | "will save you $X" | "may help identify savings of up to $X" |
-| "I paid off $X using RAYMA" | "I tracked $X in debt using RAYMA" |
+| "I paid off $X using Rayma AI" | "I tracked $X in debt using Rayma AI" |
 | "financial advice" | "financial insights" / "tracking tools" |
 | "investment advice" | "investment tracking" |
 | "earn money" / "make money" | do not use |

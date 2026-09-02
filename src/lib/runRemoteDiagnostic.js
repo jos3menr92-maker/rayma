@@ -2,9 +2,9 @@ import { base44 } from "@/api/base44Client";
 
 export async function runRemoteDiagnostic(pin, connectionLogs) {
   try {
-    // We use the exact same InvokeLLM method you used for RAYMA Insights
+    // We use the exact same InvokeLLM method you used for Rayma AI Insights
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are RAYMA's automated backend diagnostic system. The user provided support PIN: ${pin}. 
+      prompt: `You are Rayma AI's automated backend diagnostic system. The user provided support PIN: ${pin}. 
       Analyze the following connection logs and identify the primary sync error. 
       
       CONNECTION LOGS:

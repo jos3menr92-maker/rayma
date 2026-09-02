@@ -35,7 +35,7 @@
     },
     "extracted_data": {
       "type": "object",
-      "description": "Raw extracted data from RAYMA analysis"
+      "description": "Raw extracted data from Rayma AI analysis"
     },
     "document_type": {
       "type": "string",
@@ -43,7 +43,7 @@
     },
     "notes": {
       "type": "string",
-      "description": "User or RAYMA notes about this document"
+      "description": "User or Rayma AI notes about this document"
     },
     "loggable": {
       "type": "boolean",

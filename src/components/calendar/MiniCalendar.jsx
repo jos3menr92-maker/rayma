@@ -21,7 +21,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
   const monthName = useMemo(() => getMonthName(month, locale, "long"), [year, month, locale]);
   const dayHeaders = useMemo(() => getWeekdayNames(locale, "narrow"), [locale]);
 
-  // 🧠 RAYMA HELPER: Safely extracts the day number from "YYYY-MM-DD" without timezone bugs
+  // 🧠 Rayma AI HELPER: Safely extracts the day number from "YYYY-MM-DD" without timezone bugs
   const extractDay = (dateStr) => {
     if (!dateStr) return null;
     return parseInt(dateStr.split('T')[0].split('-')[2], 10);

@@ -329,7 +329,7 @@ export default function Budget() {
                 <div className="mb-4 flex items-center justify-between">
                   <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-bold text-amber-700">
                     <Sparkles className="w-4 h-4" />
-                    RAYMA WIN
+                    {T("raymaWin", "Rayma AI Win")}
                   </div>
                   <button
                     onClick={() => setWinOverlay(null)}

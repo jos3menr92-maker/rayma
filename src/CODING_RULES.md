@@ -1,7 +1,7 @@
 Markdown
-# RAYMA — Coding Rules & Compliance Standards
+# Rayma AI — Coding Rules & Compliance Standards
 
-**Purpose:** Every future code change must follow these rules to keep RAYMA legally compliant with Apple App Store, Google Play Store, GDPR, CCPA, and FTC requirements.
+**Purpose:** Every future code change must follow these rules to keep Rayma AI legally compliant with Apple App Store, Google Play Store, GDPR, CCPA, and FTC requirements.
 
 ---
 
@@ -9,7 +9,7 @@ Markdown
 
 **Apple Rule 3.1.1 / Google Play Billing Policy:**
 
-- Stripe checkout is ONLY allowed on the **web** version of RAYMA.
+- Stripe checkout is ONLY allowed on the **web** version of Rayma AI.
 - On iOS/Android native mobile → you MUST use the React Native bridge (`isNativeApp` check).
 - NEVER link directly to Stripe on a mobile wrapper. 
 - If adding a new purchase flow, you must intercept the click and post the `TRIGGER_NATIVE_PAYMENT` message to the React Native shell.
@@ -39,7 +39,7 @@ JavaScript
 <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-2xl">
   <p className="text-xs font-semibold text-destructive mb-1">⚠️ Financial Disclaimer</p>
   <p className="text-xs text-muted-foreground">
-    RAYMA provides tools for personal finance tracking only. Not financial advice.
+    Rayma AI provides tools for personal finance tracking only. Not financial advice.
     Consult a qualified financial professional before making financial decisions.
     See <a href="/privacy" className="underline text-primary">Privacy Policy</a> for full terms.
   </p>
@@ -52,7 +52,7 @@ NEVER use these words or phrases anywhere in the app (UI, copy, metadata, store 
 ❌ Forbidden	✅ Use Instead
 "guaranteed"	"may help", "can help", "designed to"
 "will save you $X"	"helped identify potential savings of $X"
-"I paid off $X using RAYMA"	"I tracked $X in debt and paid it off"
+"I paid off $X using Rayma AI"	"I tracked $X in debt and paid it off"
 "financial advice"	"financial insights" / "financial tracking"
 "investment advice"	"investment tracking"
 "we guarantee"	"we aim to"
@@ -138,7 +138,7 @@ Add auto-renewal disclosure if it's a recurring charge  
 Add the financial disclaimer if the feature involves financial data or advice   
 
 🟠 RULE 10 — CHILDREN'S PRIVACY (COPPA / GDPR-K)
-RAYMA is for users 13+ (18+ in some jurisdictions). NEVER:   
+Rayma AI is for users 13+ (18+ in some jurisdictions). NEVER:   
 
 Add features that could appeal to children as the primary audience   
 
@@ -160,7 +160,7 @@ Keep apple-touch-icon and manifest icons pointing to the same image  
 🟡 RULE 12 — STORE-SAFE COPY STANDARDS
 When writing any user-facing text (UI labels, tooltips, error messages, onboarding):   
 
-Insights, not advice — "RAYMA suggests..." not "You should..."   
+Insights, not advice — "Rayma AI suggests..." not "You should..."   
 
 Tracking, not managing — "track your debt" not "manage your finances for you"   
 
@@ -182,6 +182,6 @@ Last reviewed: June 22, 2026  
 
 ***
 
-Now it looks like it was written by the lead architect of RAYMA. 
+Now it looks like it was written by the lead architect of Rayma AI. 
 
 Let's keep up this momentum. Do you want to dive into fixing that **"Ghost User" UI bug** next, where the dashboard spins forever for unauthenticated users? Or did you spot something else while reviewing the code?

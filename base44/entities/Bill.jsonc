@@ -61,7 +61,7 @@
     "suggested_by_rayma": {
       "type": "boolean",
       "default": false,
-      "description": "Flag if RAYMA auto-detected this recurring payment from bank transactions"
+      "description": "Flag if Rayma AI auto-detected this recurring payment from bank transactions"
     },
     "rayma_approval_status": {
       "type": "string",
@@ -72,7 +72,7 @@
         "ignored"
       ],
       "default": "pending",
-      "description": "User approval status for RAYMA-suggested bills"
+      "description": "User approval status for Rayma AI-suggested bills"
     },
     "detected_from_merchant": {
       "type": "string",
