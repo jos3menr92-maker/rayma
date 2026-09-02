@@ -60,11 +60,41 @@ Deno.serve(async (req) => {
     if (action === 'create') {
       if (!data) return Response.json({ error: 'data is required for create' }, { status: 400 });
       const allowedFields = ALLOWED_TABLES[table];
+      const createWarnings: string[] = [];
       const sanitized = { user_id: uid };
       const defaults = TABLE_DEFAULTS[table] || {};
       for (const field of allowedFields) {
         if (data[field] !== undefined) sanitized[field] = data[field];
         else if (defaults[field] !== undefined) sanitized[field] = defaults[field];
+      }
+      // GUARDRAIL 1 (create): source-verification flag for loan interest rates
+      if (table === 'loans' && sanitized.interest_rate !== undefined) {
+        const note = String(sanitized.notes || '');
+        if (!/ESTIMATED:|VERIFIED:/i.test(note)) {
+          createWarnings.push('interest_rate set without a source flag — prefix notes with "ESTIMATED:" for estimates or "VERIFIED:" for confirmed APR.');
+        }
+      }
+      // GUARDRAIL 2: duplicate / zero-amount payment detection
+      if (table === 'payments') {
+        const amt = Number(sanitized.amount);
+        if (!Number.isFinite(amt) || amt <= 0) {
+          return Response.json({ error: 'Payment amount must be greater than zero. Zero or negative payments are blocked.' }, { status: 400 });
+        }
+        if (sanitized.loan_id && sanitized.payment_date) {
+          const { data: existing } = await supabaseAdmin
+            .from('payments')
+            .select('id, amount, payment_date')
+            .eq('user_id', uid)
+            .eq('loan_id', sanitized.loan_id)
+            .eq('payment_date', sanitized.payment_date)
+            .eq('amount', amt);
+          if (existing && existing.length > 0) {
+            return Response.json({
+              error: `Duplicate payment blocked: a payment of ${amt} on ${sanitized.payment_date} for this loan already exists (id: ${existing[0].id}).`,
+              duplicate: existing[0],
+            }, { status: 409 });
+          }
+        }
       }
       let { data: result, error } = await supabaseAdmin.from(table).insert([sanitized]).select().single();
 
@@ -126,9 +156,10 @@ Deno.serve(async (req) => {
       }
 
       const responsePayload: any = { success: true, record: result };
-      if (strippedFields.length > 0) {
-        responsePayload.warnings = [`Fields stripped due to missing DB columns: ${strippedFields.join(', ')}`];
-      }
+      const createResponseWarnings: string[] = [];
+      if (strippedFields.length > 0) createResponseWarnings.push(`Fields stripped due to missing DB columns: ${strippedFields.join(', ')}`);
+      createResponseWarnings.push(...createWarnings);
+      if (createResponseWarnings.length > 0) responsePayload.warnings = createResponseWarnings;
       return Response.json(responsePayload);
     }
 
@@ -138,6 +169,59 @@ Deno.serve(async (req) => {
       const sanitized = {};
       for (const field of allowedFields) {
         if (data[field] !== undefined) sanitized[field] = data[field];
+      }
+      // GUARDRAIL 1 (update): APR source flag
+      // GUARDRAIL 3: payment-balance reconciliation
+      // GUARDRAIL 4: document-loan cross-reference
+      const updateWarnings: string[] = [];
+      if (table === 'loans' && record_id) {
+        try {
+          if (sanitized.interest_rate !== undefined) {
+            const note = String(sanitized.notes || '');
+            if (!/ESTIMATED:|VERIFIED:/i.test(note)) {
+              updateWarnings.push('interest_rate updated without a source flag — prefix notes with "ESTIMATED:" for estimates or "VERIFIED:" for confirmed APR.');
+            }
+          }
+          if (sanitized.current_balance !== undefined) {
+            const { data: loanRow } = await supabaseAdmin.from('loans')
+              .select('current_balance, updated_date')
+              .eq('id', record_id).eq('user_id', uid).single();
+            if (loanRow) {
+              const ref = loanRow.updated_date ? String(loanRow.updated_date).slice(0, 10) : null;
+              if (ref) {
+                const { data: rp } = await supabaseAdmin.from('payments')
+                  .select('amount, payment_date')
+                  .eq('user_id', uid).eq('loan_id', record_id).eq('payment_type', 'loan')
+                  .gt('payment_date', ref);
+                const postPayments = (rp || []).filter((p: any) => p.payment_date && new Date(p.payment_date) > new Date(ref));
+                const missed = postPayments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+                if (missed > 0) {
+                  const reconciled = Math.max(Number(sanitized.current_balance) - missed, 0);
+                  updateWarnings.push(`Reconciliation: ${postPayments.length} payment(s) totaling ${missed} were logged after ${ref}. current_balance adjusted from ${sanitized.current_balance} to ${reconciled} to preserve them.`);
+                  sanitized.current_balance = reconciled;
+                }
+              }
+            }
+          }
+          const { data: docs } = await supabaseAdmin.from('documents')
+            .select('file_name, extracted_data')
+            .eq('user_id', uid).eq('logged_entity_id', record_id).eq('logged_entity_type', 'loan');
+          for (const d of (docs || [])) {
+            const ex: any = (d as any).extracted_data || {};
+            const checks = [
+              { field: 'current_balance', doc: ex.current_balance ?? ex.balance, payload: sanitized.current_balance },
+              { field: 'interest_rate', doc: ex.interest_rate ?? ex.apr, payload: sanitized.interest_rate },
+              { field: 'original_amount', doc: ex.original_amount ?? ex.loan_amount, payload: sanitized.original_amount },
+            ];
+            for (const c of checks) {
+              if (c.payload !== undefined && c.doc !== undefined && c.doc !== null && Number(c.doc) !== Number(c.payload)) {
+                updateWarnings.push(`Doc "${d.file_name}" mismatch on ${c.field}: document says ${c.doc}, payload says ${c.payload}. Verify before trusting.`);
+              }
+            }
+          }
+        } catch (gErr) {
+          console.error('[manageFinancialRecord] Guardrail check failed (non-fatal):', gErr.message);
+        }
       }
       let query;
       if (table === 'profiles') {
@@ -149,7 +233,9 @@ Deno.serve(async (req) => {
       }
       const { data: result, error } = await query.select().single();
       if (error) throw error;
-      return Response.json({ success: true, record: result });
+      const updateResponsePayload: any = { success: true, record: result };
+      if (updateWarnings.length > 0) updateResponsePayload.warnings = updateWarnings;
+      return Response.json(updateResponsePayload);
     }
 
     if (action === 'delete') {
