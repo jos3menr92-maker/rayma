@@ -71,6 +71,7 @@ export default function RaymaChat({
   const pendingAICostRef = useRef(0);
   const costByIdRef = useRef({});
   const ZOOM_PX = [13, 15, 17, 19];
+  const CONV_STORAGE_KEY = "rayma_active_conversation_id";
   const { lang } = useLanguage();
   const { formatCurrency } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -125,7 +126,14 @@ export default function RaymaChat({
   }, [keyboardHeight]);
 
   useEffect(() => {
-    if ((forceOpen || autoOpen) && !conversation && !initializing) {
+    if (conversation || initializing) return;
+    // 🔄 Resume the last conversation across reloads/navigation instead of starting fresh.
+    const savedId = localStorage.getItem(CONV_STORAGE_KEY);
+    if (savedId) {
+      setConversation({ id: savedId }); // subscription effect repopulates messages
+      return;
+    }
+    if (forceOpen || autoOpen) {
       startConversation();
     }
   }, [forceOpen, autoOpen, conversation, initializing]);
@@ -175,6 +183,7 @@ export default function RaymaChat({
     try {
       const conv = await base44.agents.createConversation({ agent_name: "rayma" });
       setConversation(conv);
+      localStorage.setItem(CONV_STORAGE_KEY, conv.id);
       setMessages(conv.messages || []);
       if (showGreeting) {
         setOnboardingGreeting(T("onboardingGreeting", "Good job logging your first financial information! 🎉 I've added it for you. I'm here to help. I've analyzed it — please add more so I can help you have better control of your finances. We're here to help. 💪"));
@@ -206,16 +215,35 @@ export default function RaymaChat({
       return;
     }
     
-    // --- 1. THE CASH FLOW SMOOTHER ---
+    // --- 1. THE CASH FLOW SMOOTHER (real analysis from actual bills) ---
     if (text.includes("balance my bills") || text.includes("smooth my cash flow") || text.includes("move my due dates")) {
       setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setLoading(true);
       setTimeout(() => {
-        const response = T("cashFlowSmootherResponse", `I analyzed your cash flow. You have **${formatCurrency(bills.reduce((a,b)=>a+b.amount,0))}** in bills, mostly concentrated in the first week of the month. \n\nI recommend shifting your **Netflix** and **Car Insurance** due dates to the 15th to align with your mid-month payday. \n\n*Script to use:* "Hi, I'm calling to align my billing cycle with my pay schedule. Can we permanently shift my monthly due date to the 15th?"`);
+        const activeBills = bills.filter(b => b.is_active !== false && (b.payment_frequency || "monthly") === "monthly");
+        const totalMonthly = activeBills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+        const firstHalf = activeBills
+          .filter(b => (b.due_day || 0) > 0 && (b.due_day || 0) <= 14)
+          .sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+        const firstHalfTotal = firstHalf.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+        const secondHalfTotal = totalMonthly - firstHalfTotal;
+        let response;
+        if (activeBills.length === 0) {
+          response = T("cashFlowNoBills", "I don't see any monthly bills logged yet. Add your bills first and I'll help you balance their due dates across the month.");
+        } else if (firstHalf.length === 0) {
+          response = T("cashFlowAlreadyBalanced", `Your monthly bills total **${formatCurrency(totalMonthly)}** and they're all in the second half of the month — your cash flow is already balanced. No shifts needed right now.`);
+        } else {
+          const shiftBills = firstHalf.slice(0, 2);
+          const shiftList = shiftBills.map(b => `**${b.name}** (${formatCurrency(Number(b.amount) || 0)}, due day ${b.due_day})`).join(" and ");
+          const afterShift = firstHalfTotal - shiftBills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+          response = T("cashFlowSmootherResponse",
+            `I analyzed your cash flow. Your monthly bills total **${formatCurrency(totalMonthly)}** — **${formatCurrency(firstHalfTotal)}** fall in the first half of the month (days 1–14) vs **${formatCurrency(secondHalfTotal)}** in the second half.\n\nTo align with a mid-month payday, I recommend shifting ${shiftList} to the **15th**. That brings your first-half total down to **${formatCurrency(afterShift)}** and spreads the load more evenly.\n\n*Script to use:* "Hi, I'm calling to align my billing cycle with my pay schedule. Can we permanently shift my monthly due date to the 15th?"`
+          );
+        }
         setMessages(prev => [...prev, { role: "assistant", content: response }]);
         setLoading(false);
-      }, 800);
+      }, 600);
       return;
     }
 
@@ -468,7 +496,7 @@ export default function RaymaChat({
       setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setMessages(prev => [...prev, { role: "assistant", content: T("loggingOut", "Logging you out securely. See you next time!") }]);
-      setTimeout(async () => { await base44.auth.logout(); window.location.href = "/auth"; }, 1500);
+      setTimeout(async () => { localStorage.removeItem(CONV_STORAGE_KEY); await base44.auth.logout(); window.location.href = "/auth"; }, 1500);
       return;
     }
 
@@ -528,23 +556,31 @@ export default function RaymaChat({
       return;
     }
 
-    // 🪙 Deduct 3 coins for this AI consultation.
-    try {
-      const meNow = await base44.auth.me();
-      const remaining = (meNow?.ai_tokens ?? 0) - 3;
-      if (remaining >= 0) {
-        await base44.auth.updateMe({ ai_tokens: remaining });
-        refreshUserProfile?.();
-      }
-    } catch (e) { console.warn('Token deduction failed:', e.message); }
-
+    // 🪙 Queue the question first; only deduct 3 coins if it actually reaches the AI.
     const messageContent = sourceText; 
     setInput("");
     setLoading(true);
-    const timeout = setTimeout(() => setLoading(false), 30000);
     pendingAICostRef.current = 3;
-    await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
-    clearTimeout(timeout);
+    const safetyTimeout = setTimeout(() => setLoading(false), 30000);
+    try {
+      await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
+      clearTimeout(safetyTimeout);
+      // Success — deduct 3 coins for this AI consultation.
+      try {
+        const meNow = await base44.auth.me();
+        const remaining = (meNow?.ai_tokens ?? 0) - 3;
+        if (remaining >= 0) {
+          await base44.auth.updateMe({ ai_tokens: remaining });
+          refreshUserProfile?.();
+        }
+      } catch (e) { console.warn('Token deduction failed:', e.message); }
+    } catch (err) {
+      clearTimeout(safetyTimeout);
+      pendingAICostRef.current = 0;
+      setLoading(false);
+      console.error('AI message send failed:', err.message);
+      setMessages(prev => [...prev, { role: "assistant", content: T("aiSendError", "I couldn't reach the AI right now. No coins were charged — please try again in a moment.") }]);
+    }
   }
   async function handleScanFile(e) {
     const file = e.target.files?.[0];
@@ -576,6 +612,7 @@ export default function RaymaChat({
     setInitializing(true);
     const conv = await base44.agents.createConversation({ agent_name: "rayma" });
     setConversation(conv);
+    localStorage.setItem(CONV_STORAGE_KEY, conv.id);
     setMessages(conv.messages || []);
     setInitializing(false);
   }

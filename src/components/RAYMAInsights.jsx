@@ -39,10 +39,10 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
     const cached = loadCache();
     if (cached && cached.length > 0) {
       setInsights(cached);
-    } else if (loans.length > 0 || bills.length > 0) {
+    } else if (loans.length > 0 || bills.length > 0 || incomes.length > 0) {
       fetchInsights();
     }
-  }, [loans.length, bills.length]);
+  }, [loans.length, bills.length, incomes.length]);
 
   async function fetchInsights(force = false) {
     if (loading) return;
@@ -82,10 +82,25 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
       });
     }
 
+    // Build a compact snapshot of the user's actual finances so the LLM gives
+    // personalized, number-specific insights instead of generic advice.
+    const dataContext = JSON.stringify({
+      monthlyIncome: Math.round(monthlyIncome),
+      monthlyBills: Math.round(monthlyBills),
+      monthlyLoans: Math.round(monthlyLoans),
+      dti: monthlyIncome > 0 ? Math.round((totalObligations / monthlyIncome) * 100) : null,
+      loans: loans.filter(l => l.status !== "paid_off").map(l => ({
+        name: l.name, balance: l.current_balance, apr: l.interest_rate,
+        monthly: l.monthly_payment, category: l.category
+      })),
+      bills: bills.map(b => ({ name: b.name, amount: b.amount, frequency: b.payment_frequency, due_day: b.due_day })),
+      incomes: incomes.map(i => ({ amount: i.amount, frequency: i.frequency || i.recurring_frequency, source: i.source }))
+    });
+
     let result;
     try {
       result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Rayma AI, a proactive personal finance AI. Based on the user's financial data below, generate exactly 4 short, personalized, actionable insights...`,
+        prompt: `You are Rayma AI, a proactive personal finance AI. Based on the user's financial data below, generate exactly 4 short, personalized, actionable insights. Each insight MUST reference the user's actual numbers (names, amounts, rates). Keep each body under 2 sentences. Return JSON.\n\nUSER DATA:\n${dataContext}`,
         response_json_schema: { type: "object", properties: { insights: { type: "array", items: { type: "object", properties: { title: { type: "string" }, body: { type: "string" }, type: { type: "string" } } } } } }
       });
     } catch (e) {
