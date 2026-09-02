@@ -161,9 +161,10 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-lg font-semibold mb-3">{T("paymentsRefunds", "11. Payments & Refunds")}</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li><strong>{T("insertCoinOneTime", "Insert Coin ($1.99):")}</strong> {T("insertCoinOneTimeDesc", "One-time purchase. Not a subscription. Does not auto-renew.")}</li>
-            <li><strong>{T("lithiumSubscription", "Lithium ($5.99/month or $49.99/year):")}</strong> {T("lithiumSubscriptionDesc", "Auto-renewing subscription billed monthly or annually depending on your selection. You can cancel anytime by turning off auto-renewal in your app store settings.")}</li>
-            <li><strong>{T("generatorSubscription", "Generator ($11.99/month or $95.99/year):")}</strong> {T("generatorSubscriptionDesc", "Auto-renewing subscription billed monthly or annually depending on your selection. You can cancel anytime by turning off auto-renewal in your app store settings.")}</li>
+            <li><strong>{T("insertCoinOneTime", "Insert Coin ($2.99):")}</strong> {T("insertCoinOneTimeDesc", "One-time purchase. Not a subscription. Does not auto-renew.")}</li>
+            <li><strong>{T("lithiumSubscription", "Lithium ($4.99/month):")}</strong> {T("lithiumSubscriptionDesc", "Auto-renewing subscription billed monthly. You can cancel anytime by turning off auto-renewal in your app store settings.")}</li>
+            <li><strong>{T("generatorSubscription", "Generator ($9.99/month):")}</strong> {T("generatorSubscriptionDesc", "Auto-renewing subscription billed monthly. You can cancel anytime by turning off auto-renewal in your app store settings.")}</li>
+            <li><strong>{T("unlimitedSubscription", "Unlimited ($34.99/month):")}</strong> {T("unlimitedSubscriptionDesc", "Auto-renewing subscription billed monthly. Grants unlimited AI questions and scans. You can cancel anytime by turning off auto-renewal in your app store settings.")}</li>
             <li>{T("subscriptionManagement", "Subscriptions can be managed or cancelled at any time from your Apple App Store or Google Play Store account settings.")}</li>
             <li>{T("nonRefundable", "One-time purchases are non-refundable once completed.")}</li>
             <li>{T("pricingSubject", "Pricing is subject to change at any time")}</li>
