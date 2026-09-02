@@ -78,6 +78,7 @@ export default async function(req: Request): Promise<Response> {
           .insert([{
             amount: tmpl.amount,
             week_start: periodStart,
+            frequency: tmpl.recurring_frequency,
             note: tmpl.note,
             source: tmpl.note || 'Auto-logged',
             user_id: tmpl.user_id,
