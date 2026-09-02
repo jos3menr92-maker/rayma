@@ -8,6 +8,7 @@ import { useLanguage, useT } from "@/lib/LanguageContext";
 import { ChevronRight, DollarSign, Receipt, CreditCard, CheckCircle2, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
@@ -57,6 +58,7 @@ export default function Onboarding() {
   const [loanName, setLoanName] = useState("");
   const [loanBalance, setLoanBalance] = useState("");
   const [loanPayment, setLoanPayment] = useState("");
+  const [loanCategory, setLoanCategory] = useState("personal");
   const [billDueDay, setBillDueDay] = useState("");
   const [loanDueDay, setLoanDueDay] = useState("");
   const [savingLang, setSavingLang] = useState(false);
@@ -158,7 +160,7 @@ export default function Onboarding() {
           payment_frequency: "monthly",
           due_day: dueDay,
           start_date: new Date().toISOString().split("T")[0],
-          category: "other",
+          category: loanCategory,
           status: "active"
         });
         logged.push("loan");
@@ -317,6 +319,18 @@ export default function Onboarding() {
               <p className="text-sm text-muted-foreground mb-6">{T("loanExamples", "Car loan, student debt, credit card — Rayma AI tracks it all.")}</p>
               <div className="space-y-3 mb-3">
                 <Input placeholder={T("loanNameEx", "Loan name (e.g. Car Loan)")} value={loanName} onChange={e => setLoanName(e.target.value)} className="rounded-xl h-12" />
+                <Select value={loanCategory} onValueChange={setLoanCategory}>
+                  <SelectTrigger className="rounded-xl h-12"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mortgage">🏠 {T("catMortgage", "Mortgage")}</SelectItem>
+                    <SelectItem value="auto">🚗 {T("catAuto", "Auto Loan")}</SelectItem>
+                    <SelectItem value="student">🎓 {T("catStudent", "Student Loan")}</SelectItem>
+                    <SelectItem value="personal">💰 {T("catPersonal", "Personal Loan")}</SelectItem>
+                    <SelectItem value="credit_card">💳 {T("catCreditCard", "Credit Card")}</SelectItem>
+                    <SelectItem value="medical">🏥 {T("catMedical", "Medical")}</SelectItem>
+                    <SelectItem value="other">📋 {T("catOther", "Other")}</SelectItem>
+                  </SelectContent>
+                </Select>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
                   <Input type="number" placeholder={T("currentBalance", "Current balance")} value={loanBalance} onChange={e => setLoanBalance(e.target.value)} className="pl-7 rounded-xl h-12" />

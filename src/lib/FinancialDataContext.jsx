@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "./supabaseClientFrontend";
 import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
+import { applyPayment } from "@/utils/loanEngine";
 import { toast } from "@/components/ui/use-toast";
 
 const FinancialDataContext = createContext(null);
@@ -326,7 +327,7 @@ export function FinancialDataProvider({ children }) {
 
       setPayments(prev => [data, ...prev]);
 
-      const newBalance = Math.max((loan.current_balance || 0) - paymentAmount, 0);
+      const { newBalance } = applyPayment(loan, paymentAmount);
       const updates = { 
         current_balance: newBalance, 
         status: newBalance <= 0 ? "paid_off" : "active" 

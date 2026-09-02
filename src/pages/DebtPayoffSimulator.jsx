@@ -11,28 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingDown, DollarSign, Zap } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
-
-function simulateLoan(balance, annualRate, monthlyPayment, extraPayment = 0) {
-  const rate = annualRate / 100 / 12;
-  let remaining = balance;
-  let months = 0;
-  let totalInterest = 0;
-  const schedule = [];
-
-  while (remaining > 0 && months < 600) {
-    const interest = remaining * rate;
-    const payment = Math.min(monthlyPayment + extraPayment, remaining + interest);
-    const principal = payment - interest;
-    remaining = Math.max(remaining - principal, 0);
-    totalInterest += interest;
-    months++;
-    if (months <= 60 || months % 12 === 0) {
-      schedule.push({ month: months, balance: Math.round(remaining), interest: Math.round(totalInterest) });
-    }
-    if (remaining <= 0) break;
-  }
-  return { months, totalInterest, schedule };
-}
+import { simulateWithExtra } from "@/utils/loanEngine";
 
 function calcAvalanche(loans) {
   return [...loans].sort((a, b) => (b.interest_rate || 0) - (a.interest_rate || 0));
@@ -61,11 +40,11 @@ export default function DebtPayoffSimulator() {
   }, [allLoans]);
 
   const loan = loans.find(l => l.id === selectedLoan);
-  const base = loan ? simulateLoan(loan.current_balance, loan.interest_rate || 0, loan.monthly_payment || 0, 0) : null;
-  const boosted = loan ? simulateLoan(loan.current_balance, loan.interest_rate || 0, loan.monthly_payment || 0, extraPayment) : null;
+  const base = loan ? simulateWithExtra(loan, 0) : null;
+  const boosted = loan ? simulateWithExtra(loan, extraPayment) : null;
 
-  const monthsSaved = base && boosted ? Math.max(0, base.months - boosted.months) : 0;
-  const interestSaved = base && boosted ? Math.max(0, base.totalInterest - boosted.totalInterest) : 0;
+  const monthsSaved = base && boosted ? Math.max(0, (base.months || 0) - (boosted.months || 0)) : 0;
+  const interestSaved = base && boosted ? Math.max(0, (base.totalInterest || 0) - (boosted.totalInterest || 0)) : 0;
 
   const orderedLoans = strategy === "avalanche" ? calcAvalanche(loans) : calcSnowball(loans);
 
@@ -73,7 +52,7 @@ export default function DebtPayoffSimulator() {
   const totalMonthly = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
 
   const chartData = boosted?.schedule.map((s, i) => ({
-    month: s.month,
+    month: s.period,
     [T("withExtraLabel", "With Extra")]: s.balance,
     [T("baselineLabel", "Baseline")]: base?.schedule[i]?.balance ?? s.balance,
   })) || [];
@@ -154,15 +133,15 @@ export default function DebtPayoffSimulator() {
                   <Card className="bg-card border-border">
                     <CardContent className="p-3">
                       <p className="text-xs text-muted-foreground mb-1">{T("withoutExtraPayment", "Without Extra Payment")}</p>
-                      <p className="font-semibold text-foreground">{base.months} {T("months", "months")}</p>
-                      <p className="text-muted-foreground text-xs">{fmt(base.totalInterest)} {T("inInterest", "in interest")}</p>
+                      <p className="font-semibold text-foreground">{base.months ?? T("never", "Never")} {base.months ? T("months", "months") : ""}</p>
+                      <p className="text-muted-foreground text-xs">{fmt(base.totalInterest || 0)} {T("inInterest", "in interest")}</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-card border-primary/30 border">
                     <CardContent className="p-3">
                       <p className="text-xs text-muted-foreground mb-1">{T("withExtra", "With")} +{fmt(extraPayment)}/mo</p>
-                      <p className="font-semibold text-primary">{boosted.months} {T("months", "months")}</p>
-                      <p className="text-primary text-xs">{fmt(boosted.totalInterest)} {T("inInterest", "in interest")}</p>
+                      <p className="font-semibold text-primary">{boosted.months ?? T("never", "Never")} {boosted.months ? T("months", "months") : ""}</p>
+                      <p className="text-primary text-xs">{fmt(boosted.totalInterest || 0)} {T("inInterest", "in interest")}</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -215,7 +194,7 @@ export default function DebtPayoffSimulator() {
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{T("recommendedOrder", "Recommended Order")}</h3>
               {orderedLoans.map((l, i) => {
-                const sim = simulateLoan(l.current_balance, l.interest_rate || 0, l.monthly_payment || 0);
+                const sim = simulateWithExtra(l, 0);
                 return (
                   <Card key={l.id} className={`bg-card border-border ${i === 0 ? "border-primary/40" : ""}`}>
                     <CardContent className="p-3 flex items-center gap-3">

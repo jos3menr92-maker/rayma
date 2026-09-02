@@ -9,6 +9,7 @@ import { t } from "@/lib/i18n";
 import { useCurrency } from "@/hooks/useCurrency";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeLoanPreview } from "@/utils/logPreviewMath";
+import { suggestPayment, suggestDefaults, getLoanMode } from "@/utils/loanEngine";
 
 const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
@@ -39,8 +40,11 @@ export default function EditLoanForm({ loan, onSave }) {
     due_day_of_week: loan.due_day_of_week || "Friday",
     start_date: loan.start_date || "",
     category: loan.category || "personal",
+    term_months: loan.term_months || "",
     notes: loan.notes || "",
   });
+
+  const mode = getLoanMode(form.category);
 
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -48,6 +52,28 @@ export default function EditLoanForm({ loan, onSave }) {
 
   const { formatCurrency: fmt } = useCurrency();
   const loanPreview = useMemo(() => computeLoanPreview(form, { fmt, T, locale: lang === "es" ? "es" : "en-US" }), [form, fmt, T, lang]);
+
+  // Category-aware suggestion chips from the shared engine
+  const engineChips = useMemo(() => {
+    const chips = [];
+    const balance = parseFloat(form.current_balance) || parseFloat(form.original_amount) || 0;
+    const defaults = suggestDefaults(form.category);
+    if (!form.interest_rate && defaults.rate > 0) {
+      chips.push({ label: T("suggestApr", "Suggest {n}% APR").replace("{n}", defaults.rate), field: "interest_rate", value: String(defaults.rate) });
+    }
+    if (mode === "amortizing" && !form.term_months && defaults.term) {
+      chips.push({ label: T("suggestTerm", "Suggest {n}-mo term").replace("{n}", defaults.term), field: "term_months", value: String(defaults.term) });
+    }
+    if (balance > 0 && !form.monthly_payment) {
+      const { suggestedPayment } = suggestPayment(form.category, balance);
+      if (suggestedPayment > 0) {
+        chips.push({ label: T("suggestPayment", "Suggest {n}/mo").replace("{n}", fmt(suggestedPayment)), field: "monthly_payment", value: String(suggestedPayment.toFixed(2)) });
+      }
+    }
+    return chips;
+  }, [form, mode, fmt, T]);
+
+  const mergedPreview = useMemo(() => ({ lines: loanPreview.lines, chips: [...(loanPreview.chips || []), ...engineChips] }), [loanPreview, engineChips]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -58,6 +84,7 @@ export default function EditLoanForm({ loan, onSave }) {
       current_balance: parseFloat(form.current_balance) || 0,
       interest_rate: parseFloat(form.interest_rate) || 0,
       monthly_payment: parseFloat(form.monthly_payment) || 0,
+      term_months: mode === "amortizing" ? (parseInt(form.term_months) || null) : null,
       due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
       due_day_of_week: form.payment_frequency !== "monthly" ? form.due_day_of_week : null,
     });
@@ -105,6 +132,12 @@ export default function EditLoanForm({ loan, onSave }) {
           <Input type="number" step="0.01" value={form.monthly_payment} onChange={(e) => handleChange("monthly_payment", e.target.value)} className="mt-1 rounded-xl" />
         </div>
       </div>
+      {mode === "amortizing" && (
+        <div>
+          <Label className="text-xs text-muted-foreground">{T("termMonths", "Term (months)")}</Label>
+          <Input type="number" value={form.term_months} onChange={(e) => handleChange("term_months", e.target.value)} placeholder="e.g. 60" className="mt-1 rounded-xl" />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className="text-xs text-muted-foreground">{T("paymentFrequency", "Payment Frequency")}</Label>
@@ -142,7 +175,7 @@ export default function EditLoanForm({ loan, onSave }) {
         <Label className="text-xs text-muted-foreground">{T("notes", "Notes")}</Label>
         <Textarea value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} className="mt-1 rounded-xl" rows={2} />
       </div>
-      <LogSuggestionStrip preview={loanPreview} onAccept={handleChange} />
+      <LogSuggestionStrip preview={mergedPreview} onAccept={handleChange} />
       <Button type="submit" disabled={saving} className="w-full rounded-xl">
         {saving ? T("saving", "Saving...") : T("saveChanges", "Save Changes")}
       </Button>

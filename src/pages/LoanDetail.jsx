@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"; 
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom"; 
 import { supabase } from "@/lib/supabaseClientFrontend";
 import { deleteRecord, updateRecord } from "@/lib/supabaseHelpers";
@@ -20,6 +20,7 @@ import LatePaymentLog from "../components/LatePaymentLog";
 import PaymentItem from "../components/PaymentItem";
 import EditLoanForm from "../components/EditLoanForm";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { buildLoanSummary } from "@/utils/loanEngine";
 
 const categoryIcons = {
   mortgage: "🏠", auto: "🚗", student: "🎓", personal: "💰",
@@ -153,6 +154,8 @@ export default function LoanDetail() {
     }
   }
 
+  const summary = useMemo(() => buildLoanSummary(loan || {}, { fmt, T }), [loan, fmt, T]);
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!loan) return <div className="text-center pt-20 text-muted-foreground">{T("loanNotFound", "Loan not found")}</div>;
 
@@ -237,6 +240,21 @@ export default function LoanDetail() {
           </div>
         )}
       </div>
+
+      {/* Payoff Projection (mode-aware from shared engine) */}
+      {summary.lines.length > 1 && (
+        <div className="bg-card border border-border rounded-2xl p-5 mb-5">
+          <p className="text-sm font-semibold text-foreground mb-3">{T("payoffProjection", "Payoff Projection")}</p>
+          <div className="space-y-2">
+            {summary.lines.map((line, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{line.label}</span>
+                <span className={`font-medium ${line.tone === "destructive" ? "text-destructive" : line.tone === "primary" ? "text-primary" : "text-foreground"}`}>{line.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-3 mb-5">
