@@ -6,9 +6,10 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
 
-    // Allow admin batch run OR single-user call from the agent
-    const isBatchAdmin = user && user.role === 'admin';
-    const isSingleUser = user && user.role !== 'admin';
+    // Batch mode runs ONLY from the scheduled automation (no user session).
+    // Any authenticated call — agent or direct — is single-user regardless of role,
+    // so an admin chatting with Rayma can never trigger a full-database sweep.
+    const isSingleUser = !!user;
 
     const { client: supabaseAdmin } = getSupabaseAdmin();
     const today = new Date().toISOString().split("T")[0];
@@ -25,7 +26,7 @@ Deno.serve(async (req) => {
       if (!supaUser) return Response.json({ error: 'Supabase user not found' }, { status: 404 });
       targetUsers = [supaUser];
     } else {
-      // Admin/scheduler batch — paginate all users
+      // Scheduled batch (no user session) — paginate all users
       let page = 0;
       const PAGE_SIZE = 50;
       let hasMore = true;
