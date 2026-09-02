@@ -14,8 +14,15 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
   const forecast = useMemo(() => {
     const today = new Date();
     const dayNames = getWeekdayNames(locale, "short");
-    const avgWeeklyIncome = incomes.length > 0
-      ? incomes.slice(0, 8).reduce((s, i) => s + (i.amount || 0), 0) / Math.min(incomes.length, 8)
+    // Normalize each income entry to a daily rate by its own frequency so a
+    // monthly paycheck isn't mistaken for a weekly one. Weekly case is unchanged.
+    const avgDailyIncome = incomes.length > 0
+      ? incomes.slice(0, 8).reduce((s, i) => {
+          const amt = i.amount || 0;
+          const freq = i.frequency || i.recurring_frequency || "weekly";
+          const daily = freq === "monthly" ? amt / 30.44 : freq === "biweekly" ? amt / 14 : amt / 7;
+          return s + daily;
+        }, 0) / Math.min(incomes.length, 8)
       : 0;
 
     const days = [];
@@ -32,7 +39,7 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
       let dayExpense = 0;
       const events = [];
 
-      dayIncome += avgWeeklyIncome / 7;
+      dayIncome += avgDailyIncome;
 
       loans.forEach(loan => {
         if (loan.payment_frequency === "monthly" && loan.due_day === dayOfMonth) {

@@ -100,6 +100,7 @@ export default function Finance() {
       note: incomeForm.note, 
       source: incomeForm.note || "Manual Log",
       is_recurring: incomeForm.is_recurring || false,
+      frequency: incomeForm.recurring_frequency || "weekly",
       recurring_frequency: incomeForm.recurring_frequency || "weekly",
       recurring_active: incomeForm.is_recurring ? true : false
     };

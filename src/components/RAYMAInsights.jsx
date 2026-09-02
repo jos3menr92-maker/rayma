@@ -51,8 +51,16 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
 
     const monthlyBills = bills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
     const monthlyLoans = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (Number(l.monthly_payment) || 0), 0);
-    const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (Number(i.amount) || 0), 0) / incomes.length : 0;
-    const monthlyIncome = avgWeeklyIncome * 4.33;
+    // Normalize each entry to a monthly equivalent by its own frequency so a
+    // monthly paycheck isn't treated as a weekly one. Weekly case is unchanged.
+    const monthlyIncome = incomes.length > 0
+      ? incomes.reduce((s, i) => {
+          const amt = Number(i.amount) || 0;
+          const freq = i.frequency || i.recurring_frequency || "weekly";
+          const monthly = freq === "monthly" ? amt : freq === "biweekly" ? amt * 2.17 : amt * 4.33;
+          return s + monthly;
+        }, 0) / incomes.length
+      : 0;
     
     let localAlerts = [];
     const totalObligations = monthlyBills + monthlyLoans;
