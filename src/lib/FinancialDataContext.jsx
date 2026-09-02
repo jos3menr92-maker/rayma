@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClientFrontend";
 import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
 import { applyPayment } from "@/utils/loanEngine";
 import { toast } from "@/components/ui/use-toast";
+import { useT } from "@/lib/LanguageContext";
 
 const FinancialDataContext = createContext(null);
 
@@ -44,6 +45,7 @@ export function FinancialDataProvider({ children }) {
   const [userProfile, setUserProfile] = useState(null);
   const [supaUser, setSupaUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const T = useT();
 
   const inFlightPromise = useRef(null);
   const mountedRef = useRef(true);
@@ -223,8 +225,8 @@ export function FinancialDataProvider({ children }) {
     } catch (e) {
       console.error("Failed to load financial data:", e);
       toast({
-        title: "Connection Error",
-        description: "Could not sync latest data. Check connection.",
+        title: T("toastConnectionError", "Connection Error"),
+        description: T("toastSyncFailed", "Could not sync latest data. Check connection."),
         variant: "destructive"
       });
     } finally {
@@ -253,7 +255,7 @@ export function FinancialDataProvider({ children }) {
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
       if (mountedRef.current) setLoading(false);
-      toast({ title: "Connection Error", description: "Taking too long to load. Check your connection.", variant: "destructive" });
+      toast({ title: T("toastConnectionError", "Connection Error"), description: T("toastLoadTimeout", "Taking too long to load. Check your connection."), variant: "destructive" });
     }
   }, 20000);
   p.finally(() => clearTimeout(timeoutId));
@@ -323,7 +325,7 @@ export function FinancialDataProvider({ children }) {
     } catch (e) {
       setBills(prevBills);
       setPayments(prevPayments);
-      toast({ title: "Payment failed", description: e.message, variant: "destructive" });
+      toast({ title: T("toastPaymentFailed", "Payment failed"), description: e.message, variant: "destructive" });
     }
   }
 
@@ -367,7 +369,7 @@ export function FinancialDataProvider({ children }) {
     } catch (e) {
       setLoans(prevLoans);
       setPayments(prevPayments);
-      toast({ title: "Payment failed", description: e.message, variant: "destructive" });
+      toast({ title: T("toastPaymentFailed", "Payment failed"), description: e.message, variant: "destructive" });
     }
   }
 
@@ -379,7 +381,7 @@ export function FinancialDataProvider({ children }) {
       await updateRecord('loans', loanId, updates);
     } catch (e) {
       setLoans(prevLoans);
-      toast({ title: "Update failed", description: e.message, variant: "destructive" });
+      toast({ title: T("toastUpdateFailed", "Update failed"), description: e.message, variant: "destructive" });
     }
   }
 
@@ -418,7 +420,7 @@ export function FinancialDataProvider({ children }) {
           acc.id === targetAccountId ? { ...acc, balance: originalBalance } : acc
         ));
       }
-      toast({ title: "Failed to add transaction", description: e.message, variant: "destructive" });
+      toast({ title: T("toastAddTransactionFailed", "Failed to add transaction"), description: e.message, variant: "destructive" });
     }
   }
 

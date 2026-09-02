@@ -14,7 +14,7 @@ export const LANGUAGES = [
 
 export const translations = {
   en: {
-    appName: "Debt & Bills", raymaAiLogo: "Rayma AI logo", dashboard: "Dashboard", loans: "Loans", bills: "Bills", finance: "Finance", more: "More", signIn: "Sign in", signOut: "Sign Out", getStartedFree: "Get Started Free",
+    appName: "Debt & Bills", raymaAiLogo: "Rayma AI logo", toastConnectionError: "Connection Error", toastSyncFailed: "Could not sync latest data. Check connection.", toastLoadTimeout: "Taking too long to load. Check your connection.", toastPaymentFailed: "Payment failed", toastUpdateFailed: "Update failed", toastAddTransactionFailed: "Failed to add transaction", dashboard: "Dashboard", loans: "Loans", bills: "Bills", finance: "Finance", more: "More", signIn: "Sign in", signOut: "Sign Out", getStartedFree: "Get Started Free",
     hello: "Hi", stayOnTop: "Stay on top of your finances", cashLeft: "Cash Left This Month", overspent: "overspent", income: "income", obligations: "obligations",
     monthlyRecap: "Monthly Recap", summary: "Income & spending summary", assets: "Assets", netWorthTracker: "Net worth tracker", expenseBreakdown: "Expense Breakdown",
     totalMonthly: "Total Monthly", loanBalances: "Loan Balances", remaining: "Remaining", totalPaid: "Total Paid", monthlyDue: "Monthly Due", activeLoans: "Active Loans", noLoans: "No loans yet",
