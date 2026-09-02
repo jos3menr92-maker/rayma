@@ -238,8 +238,26 @@ export function FinancialDataProvider({ children }) {
     }
   };
 
-  inFlightPromise.current = doFetch();
-  return inFlightPromise.current;
+  const p = doFetch();
+  inFlightPromise.current = p;
+  // Safety net: if the data fetch hangs (slow/unreachable Supabase or the backend
+  // fallback), unblock the UI instead of spinning forever — mirrors the auth
+  // timeout guard in AuthContext. The hung promise may still resolve later and
+  // update data idempotently; this just guarantees the loader releases and the
+  // reload lock clears so the user can pull-to-refresh or a realtime tick can retry.
+  const timeoutId = setTimeout(() => {
+    if (inFlightPromise.current !== p) return;
+    console.warn('[FinancialDataContext] Data load timed out — releasing lock.');
+    inFlightPromise.current = null;
+    pendingReload.current = false;
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      if (mountedRef.current) setLoading(false);
+      toast({ title: "Connection Error", description: "Taking too long to load. Check your connection.", variant: "destructive" });
+    }
+  }, 20000);
+  p.finally(() => clearTimeout(timeoutId));
+  return p;
 }
 
   async function refreshUserProfile() {

@@ -44,7 +44,7 @@ function ProgressDots({ step }) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { lang, setLang, setLocale } = useLanguage();
-  const { reload, userProfile, bankAccounts } = useFinancialData();
+  const { reload, refreshUserProfile, userProfile, bankAccounts } = useFinancialData();
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
 
@@ -197,7 +197,14 @@ export default function Onboarding() {
       try { sessionStorage.setItem("rayma_post_tour_greeting", "true"); } catch (e) {}
     }
 
+    // Persist the onboarding flag, then refresh the Base44 profile into context
+    // BEFORE navigating. Previously updateMe ran after reload, leaving the cached
+    // profile stale — so Dashboard's onboarding guard bounced the user back here
+    // in a loop until a hard refresh. refreshUserProfile does a fresh
+    // base44.auth.me() (un-throttled, unlike reload) so userProfile.onboarding_complete
+    // is true by the time we leave.
     await base44.auth.updateMe({ onboarding_complete: true });
+    try { await refreshUserProfile(); } catch (e) {}
     setLoading(false);
     navigate("/");
   }
