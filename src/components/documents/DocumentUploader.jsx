@@ -7,6 +7,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 import { compressImage } from "@/utils/compressImage";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit before compression
@@ -15,6 +16,7 @@ export default function DocumentUploader({ onDocumentScanned }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const fileRef = useRef(null);
+  const cameraRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -189,6 +191,15 @@ Today's date: ${today}`,
                 <Camera className="w-3 h-3" /> {T("camera", "Camera")}
               </span>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={(e) => { e.stopPropagation(); cameraRef.current?.click(); }}
+            >
+              <Camera className="w-4 h-4" /> {T("takePhoto", "Take Photo")}
+            </Button>
           </div>
         )}
       </motion.div>
@@ -196,6 +207,14 @@ Today's date: ${today}`,
         ref={fileRef}
         type="file"
         accept="image/*,application/pdf"
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />

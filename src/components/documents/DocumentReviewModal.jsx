@@ -43,6 +43,7 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
     misc: T("folderMisc", "📁 Miscellaneous"),
   };
 
+  const isPaystub = /pay\s*stub/i.test(doc.document_type || "") || (doc.document_type || "").toLowerCase().includes("paystub");
   const [folder, setFolder] = useState(doc.folder || "misc");
   const [fields, setFields] = useState(doc.extracted_data || {});
   const [saving, setSaving] = useState(false);
@@ -56,9 +57,10 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
       // Guarantee the Supabase session is alive so writes use the free path
       await ensureSupabaseSession();
 
-      if (doc.document_type === "paystub" && fields.amount != null) {
+      const payAmount = fields.amount != null ? fields.amount : fields.income_amount;
+      if (isPaystub && payAmount != null) {
         const income = await createRecord("incomes", {
-          amount: parseFloat(fields.amount) || 0,
+          amount: parseFloat(payAmount) || 0,
           date: fields.date || new Date().toISOString().split("T")[0],
           note: fields.description || `Imported paystub: ${doc.file_name || ""}`,
           source: fields.payee || fields.employer || "Paystub",
@@ -66,14 +68,16 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
         });
         await updateRecord("documents", doc.id, {
           status: "logged", folder, extracted_data: fields,
-          logged_entity_type: "income", logged_entity_id: income?.id
+          logged_entity_type: "income", logged_entity_id: income?.id,
+          document_date: fields.date || null,
         });
-      } else if ((folder === "payments" || doc.document_type === "receipt") && fields.amount != null && fields.date) {
+      } else if ((folder === "payments" || /receipt/i.test(doc.document_type || "")) && fields.amount != null && fields.date) {
         const amount = parseFloat(fields.amount);
         if (!isNaN(amount)) {
           const today = new Date().toISOString().split("T")[0];
+          const txDate = fields.date || today;
           const tx = await createRecord("transactions", {
-            date: today,
+            date: txDate,
             description: fields.description || fields.payee || T("scannedReceipt", "Scanned receipt"),
             amount: -Math.abs(amount),
             category: normalizeTxCategory(fields.category),
@@ -82,10 +86,11 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
           });
           await updateRecord("documents", doc.id, {
             status: "logged", folder, extracted_data: fields,
-            logged_entity_type: "transaction", logged_entity_id: tx?.id
+            logged_entity_type: "transaction", logged_entity_id: tx?.id,
+            document_date: fields.date || null,
           });
         } else {
-          await updateRecord("documents", doc.id, { status: "approved", folder, extracted_data: fields });
+          await updateRecord("documents", doc.id, { status: "approved", folder, extracted_data: fields, document_date: fields.date || null });
         }
       } else if (folder === "bills" && fields.amount != null) {
         const bill = await createRecord("bills", {
@@ -244,6 +249,13 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
                     className="mt-0.5 rounded-xl h-8 text-sm" type="number" step="0.01" />
                 </div>
               )}
+              {fields.income_amount != null && fields.amount == null && (
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">{T("incomeAmountLabel", "Income Amount")}</Label>
+                  <Input value={fields.income_amount} onChange={e => setFields(f => ({ ...f, income_amount: e.target.value }))}
+                    className="mt-0.5 rounded-xl h-8 text-sm" type="number" step="0.01" />
+                </div>
+              )}
               {fields.date && (
                 <div>
                   <Label className="text-[10px] text-muted-foreground">{T("dateLabel", "Date")}</Label>
@@ -286,7 +298,7 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
 
             <div className="flex gap-2 pt-2">
               <Button onClick={handleApprove} disabled={saving} className="flex-1 rounded-xl text-xs h-9">
-                <Check className="w-3.5 h-3.5 mr-1" /> {folder === "payments" || folder === "bills" || doc.document_type === "paystub" || doc.document_type === "receipt" ? T("approveAndLog", "Approve & Log") : T("approveAndSave", "Approve & Save")}
+                <Check className="w-3.5 h-3.5 mr-1" /> {folder === "payments" || folder === "bills" || isPaystub || /receipt/i.test(doc.document_type || "") ? T("approveAndLog", "Approve & Log") : T("approveAndSave", "Approve & Save")}
               </Button>
               <Button variant="outline" onClick={handleArchive} disabled={saving} className="rounded-xl text-xs h-9 px-3">
                 <Archive className="w-3.5 h-3.5" />
