@@ -10,6 +10,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeLoanPreview } from "@/utils/logPreviewMath";
 import { suggestPayment, suggestDefaults, getLoanMode } from "@/utils/loanEngine";
+import LoanTypeAttributesFields from "@/components/LoanTypeAttributesFields";
 
 const DOW = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
@@ -23,6 +24,9 @@ export default function EditLoanForm({ loan, onSave }) {
     { value: "student", label: `🎓 ${T("catStudent", "Student Loan")}` },
     { value: "personal", label: `💰 ${T("catPersonal", "Personal Loan")}` },
     { value: "credit_card", label: `💳 ${T("catCreditCard", "Credit Card")}` },
+    { value: "line_of_credit", label: `🏦 ${T("catLineOfCredit", "Line of Credit")}` },
+    { value: "lease", label: `🔑 ${T("catLease", "Lease")}` },
+    { value: "bankruptcy", label: `⚖️ ${T("catBankruptcy", "Bankruptcy")}` },
     { value: "medical", label: `🏥 ${T("catMedical", "Medical")}` },
     { value: "other", label: `📋 ${T("catOther", "Other")}` },
   ];
@@ -35,12 +39,14 @@ export default function EditLoanForm({ loan, onSave }) {
     current_balance: loan.current_balance || "",
     interest_rate: loan.interest_rate || "",
     monthly_payment: loan.monthly_payment || "",
+    payment_amount_type: loan.payment_amount_type || "per_period",
     payment_frequency: loan.payment_frequency || "monthly",
     due_day: loan.due_day || "",
     due_day_of_week: loan.due_day_of_week || "Friday",
     start_date: loan.start_date || "",
     category: loan.category || "personal",
     term_months: loan.term_months || "",
+    loan_type_attributes: loan.loan_type_attributes || {},
     notes: loan.notes || "",
   });
 
@@ -128,7 +134,13 @@ export default function EditLoanForm({ loan, onSave }) {
           <Input type="number" step="0.01" value={form.interest_rate} onChange={(e) => handleChange("interest_rate", e.target.value)} className="mt-1 rounded-xl" />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">{T("monthlyPayment", "Monthly Payment")}</Label>
+          <Label className="text-xs text-muted-foreground">
+            {form.payment_frequency === "monthly"
+              ? T("monthlyPayment", "Monthly Payment")
+              : form.payment_amount_type === "monthly_equivalent"
+                ? T("monthlyEquivalentPayment", "Monthly Equivalent Payment")
+                : T("perPeriodPayment", "Payment (per period)")}
+          </Label>
           <Input type="number" step="0.01" value={form.monthly_payment} onChange={(e) => handleChange("monthly_payment", e.target.value)} className="mt-1 rounded-xl" />
         </div>
       </div>
@@ -175,6 +187,24 @@ export default function EditLoanForm({ loan, onSave }) {
         <Label className="text-xs text-muted-foreground">{T("notes", "Notes")}</Label>
         <Textarea value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} className="mt-1 rounded-xl" rows={2} />
       </div>
+      {form.payment_frequency !== "monthly" && (
+        <div>
+          <Label className="text-xs text-muted-foreground">{T("paymentAmountType", "Payment Amount Type")}</Label>
+          <Select value={form.payment_amount_type} onValueChange={(v) => handleChange("payment_amount_type", v)}>
+            <SelectTrigger className="mt-1 rounded-xl"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="per_period">{T("perPeriod", "Per period")}</SelectItem>
+              <SelectItem value="monthly_equivalent">{T("monthlyEquivalent", "Monthly equivalent")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <LoanTypeAttributesFields
+        category={form.category}
+        attributes={form.loan_type_attributes || {}}
+        onChange={(attrs) => handleChange("loan_type_attributes", attrs)}
+        T={T}
+      />
       <LogSuggestionStrip preview={mergedPreview} onAccept={handleChange} />
       <Button type="submit" disabled={saving} className="w-full rounded-xl">
         {saving ? T("saving", "Saving...") : T("saveChanges", "Save Changes")}

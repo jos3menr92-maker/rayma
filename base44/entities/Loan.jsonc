@@ -20,11 +20,20 @@
     },
     "interest_rate": {
       "type": "number",
-      "description": "Annual interest rate percentage"
+      "description": "Annual interest rate percentage (APR)"
     },
     "monthly_payment": {
       "type": "number",
-      "description": "Payment amount per period"
+      "description": "Payment amount \u2014 interpreted per payment_amount_type (per-period or monthly-equivalent)"
+    },
+    "payment_amount_type": {
+      "type": "string",
+      "enum": [
+        "per_period",
+        "monthly_equivalent"
+      ],
+      "default": "per_period",
+      "description": "How monthly_payment is stored: per_period = amount paid each cycle; monthly_equivalent = the monthly-equivalent figure (converted for calc)"
     },
     "payment_frequency": {
       "type": "string",
@@ -35,6 +44,10 @@
       ],
       "default": "monthly",
       "description": "How often loan payments are made"
+    },
+    "term_months": {
+      "type": "number",
+      "description": "Loan term in months (e.g. 360 for 30-yr mortgage). Null for revolving (credit card / line of credit) or unknown."
     },
     "due_day": {
       "type": "number",
@@ -66,9 +79,17 @@
         "student",
         "personal",
         "credit_card",
+        "line_of_credit",
+        "lease",
+        "bankruptcy",
         "medical",
         "other"
-      ]
+      ],
+      "description": "Loan type \u2014 drives the math mode (amortizing, revolving, simple)"
+    },
+    "loan_type_attributes": {
+      "type": "object",
+      "description": "Type-specific structured fields (mortgage escrow/PMI/address, auto vehicle/VIN, credit card limit/utilization, line of credit limit/draw, lease buyout, bankruptcy case/trustee)"
     },
     "notes": {
       "type": "string"

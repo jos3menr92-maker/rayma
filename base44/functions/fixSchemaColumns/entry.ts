@@ -25,6 +25,8 @@ ALTER TABLE transactions ADD COLUMN IF NOT EXISTS bank_account_id UUID;
 ALTER TABLE net_worth_snapshots ADD COLUMN IF NOT EXISTS net_worth NUMERIC;
 ALTER TABLE net_worth_snapshots ADD COLUMN IF NOT EXISTS total_assets NUMERIC;
 ALTER TABLE net_worth_snapshots ADD COLUMN IF NOT EXISTS total_liabilities NUMERIC;
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS payment_amount_type TEXT DEFAULT 'per_period';
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS loan_type_attributes JSONB DEFAULT '{}'::jsonb;
     `.trim();
 
     // Approach 1: Try calling an exec_sql RPC function (if one exists in the DB)

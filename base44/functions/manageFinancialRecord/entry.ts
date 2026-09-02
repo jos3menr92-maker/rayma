@@ -8,7 +8,7 @@ const TABLE_DEFAULTS = {
 
 // Whitelist of tables the agent can manage
 const ALLOWED_TABLES = {
-  loans: ['name', 'lender', 'original_amount', 'current_balance', 'remaining_balance', 'interest_rate', 'monthly_payment', 'payment_frequency', 'total_payments', 'due_date', 'due_day', 'due_day_of_week', 'start_date', 'category', 'notes', 'status'],
+  loans: ['name', 'lender', 'original_amount', 'current_balance', 'remaining_balance', 'interest_rate', 'monthly_payment', 'payment_amount_type', 'payment_frequency', 'total_payments', 'due_date', 'due_day', 'due_day_of_week', 'start_date', 'category', 'term_months', 'loan_type_attributes', 'notes', 'status'],
   bills: ['name', 'amount', 'payment_frequency', 'due_day', 'due_day_of_week', 'category', 'notes', 'is_active', 'is_paid', 'autopay', 'suggested_by_rayma', 'rayma_approval_status', 'detected_from_merchant'],
   payments: ['loan_id', 'bill_id', 'payment_type', 'amount', 'payment_date', 'note', 'description'],
   incomes: ['amount', 'source', 'frequency', 'week_start', 'note', 'is_active', 'is_recurring', 'recurring_frequency', 'recurring_active', 'recurring_source_id', 'description'],

@@ -13,6 +13,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeLoanPreview } from "@/utils/logPreviewMath";
 import { suggestPayment, suggestDefaults, getLoanMode } from "@/utils/loanEngine";
+import LoanTypeAttributesFields from "@/components/LoanTypeAttributesFields";
 
 const DOW = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -22,6 +23,9 @@ const CATEGORIES = [
   { value: "student", emoji: "🎓" },
   { value: "personal", emoji: "💰" },
   { value: "credit_card", emoji: "💳" },
+  { value: "line_of_credit", emoji: "🏦" },
+  { value: "lease", emoji: "🔑" },
+  { value: "bankruptcy", emoji: "⚖️" },
   { value: "medical", emoji: "🏥" },
   { value: "other", emoji: "📋" },
 ];
@@ -46,11 +50,13 @@ export default function AddLoan() {
     current_balance: "",
     interest_rate: "",
     monthly_payment: "",
+    payment_amount_type: "per_period",
     payment_frequency: "monthly",
     term_months: "",
     due_day: "",
     due_day_of_week: "Friday",
     start_date: new Date().toISOString().split("T")[0],
+    loan_type_attributes: {},
     notes: "",
   });
 
@@ -129,11 +135,13 @@ export default function AddLoan() {
         current_balance: balance,
         interest_rate: parseFloat(form.interest_rate) || 0,
         monthly_payment: parseFloat(form.monthly_payment) || 0,
+        payment_amount_type: form.payment_amount_type || "per_period",
         payment_frequency: form.payment_frequency,
         term_months: mode === "amortizing" ? (parseInt(form.term_months) || null) : null,
         due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
         due_day_of_week: form.payment_frequency !== "monthly" ? form.due_day_of_week : null,
         start_date: form.start_date || null,
+        loan_type_attributes: form.loan_type_attributes || {},
         notes: form.notes || null,
         status: "active",
       };
@@ -245,7 +253,13 @@ export default function AddLoan() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-foreground">{T("monthlyPayment", "Monthly Payment")}</Label>
+            <Label className="text-sm font-semibold text-foreground">
+              {form.payment_frequency === "monthly"
+                ? T("monthlyPayment", "Monthly Payment")
+                : form.payment_amount_type === "monthly_equivalent"
+                  ? T("monthlyEquivalentPayment", "Monthly Equivalent Payment")
+                  : T("perPeriodPayment", "Payment (per period)")}
+            </Label>
             <Input
               type="number"
               step="0.01"
@@ -322,6 +336,26 @@ export default function AddLoan() {
             </div>
           )}
         </div>
+
+        {form.payment_frequency !== "monthly" && (
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-foreground">{T("paymentAmountType", "Payment Amount Type")}</Label>
+            <Select value={form.payment_amount_type} onValueChange={(v) => handleChange("payment_amount_type", v)}>
+              <SelectTrigger className="w-full h-[50px] rounded-2xl bg-card border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="per_period">{T("perPeriod", "Per period")}</SelectItem>
+                <SelectItem value="monthly_equivalent">{T("monthlyEquivalent", "Monthly equivalent")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <LoanTypeAttributesFields
+          category={form.category}
+          attributes={form.loan_type_attributes || {}}
+          onChange={(attrs) => handleChange("loan_type_attributes", attrs)}
+          T={T}
+        />
 
         <LogSuggestionStrip preview={mergedPreview} onAccept={handleAccept} />
 

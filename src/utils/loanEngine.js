@@ -22,6 +22,9 @@ const CATEGORY_MODES = {
   personal: "amortizing",
   medical: "amortizing",
   credit_card: "revolving",
+  line_of_credit: "revolving",
+  lease: "amortizing",
+  bankruptcy: "amortizing",
   other: "simple",
 };
 
@@ -44,6 +47,20 @@ function periodsPerYear(freq) {
 // Convert any-frequency payment to a monthly equivalent for comparison/calc
 export function toMonthly(amount, freq) {
   return num(amount) * (periodsPerYear(freq) / 12);
+}
+
+// Convert a stored payment amount to the actual per-period payment,
+// accounting for the payment_amount_type convention:
+//   - per_period        : stored value IS the per-period amount (default).
+//   - monthly_equivalent: stored value is the monthly figure → convert to per-period.
+export function paymentPerPeriod(loan) {
+  const pmt = num(loan?.monthly_payment);
+  const freq = loan?.payment_frequency || "monthly";
+  const type = loan?.payment_amount_type || "per_period";
+  if (type === "monthly_equivalent" && freq !== "monthly") {
+    return pmt * (12 / periodsPerYear(freq));
+  }
+  return pmt;
 }
 
 // ─── amortizing (installment loans) ─────────────────────────
@@ -158,7 +175,7 @@ export function projectPayoff(loan) {
   const freq = loan?.payment_frequency || "monthly";
   const balance = num(loan?.current_balance) || num(loan?.original_amount);
   const rate = num(loan?.interest_rate);
-  const pmt = num(loan?.monthly_payment);
+  const pmt = paymentPerPeriod(loan);
   const term = num(loan?.term_months);
 
   if (balance <= 0) {
@@ -201,7 +218,7 @@ export function simulateWithExtra(loan, extraPayment = 0) {
   const freq = loan?.payment_frequency || "monthly";
   const balance = num(loan?.current_balance) || num(loan?.original_amount);
   const rate = num(loan?.interest_rate);
-  const basePmt = num(loan?.monthly_payment);
+  const basePmt = paymentPerPeriod(loan);
   const term = num(loan?.term_months);
 
   if (mode === "amortizing" && term > 0) {
@@ -259,6 +276,9 @@ const CATEGORY_DEFAULTS = {
   personal: { term: 36, rate: 11.5 },
   medical: { term: 24, rate: 0 },
   credit_card: { term: 18, rate: 24.9 },
+  line_of_credit: { term: null, rate: 8 },
+  lease: { term: 24, rate: 0 },
+  bankruptcy: { term: 60, rate: 0 },
   other: { term: 12, rate: 12 },
 };
 
