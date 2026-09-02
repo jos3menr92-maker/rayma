@@ -16,6 +16,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useT } from "@/lib/LanguageContext";
+import { monthlyObligation } from "@/utils/loanEngine";
 import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
 
 const HUMAN_AVATARS = [
@@ -95,7 +96,7 @@ export default function Dashboard() {
     const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
     const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || l.remaining_balance || 0), 0);
     const totalPaid = totalDebt - totalRemaining;
-    const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+    const monthlyLoans = activeLoans.reduce((s, l) => s + monthlyObligation(l), 0);
     const monthlyBills = bills.filter((b) => b.is_active !== false).reduce((s, b) => s + (b.amount || 0), 0);
     const monthlyTotal = monthlyLoans + monthlyBills;
     

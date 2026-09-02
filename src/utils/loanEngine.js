@@ -63,6 +63,19 @@ export function paymentPerPeriod(loan) {
   return pmt;
 }
 
+// Monthly-equivalent obligation of a loan, honoring payment_amount_type:
+//   - per_period        : convert the per-period payment up to a monthly figure.
+//   - monthly_equivalent: the stored value is already monthly (no conversion).
+// Used by Dashboard / recap / budget so weekly & biweekly loans are counted
+// at their true monthly weight, not their raw per-period amount.
+export function monthlyObligation(loan) {
+  const pmt = num(loan?.monthly_payment);
+  const type = loan?.payment_amount_type || "per_period";
+  const freq = loan?.payment_frequency || "monthly";
+  if (type === "monthly_equivalent") return pmt;
+  return pmt * (periodsPerYear(freq) / 12);
+}
+
 // ─── amortizing (installment loans) ─────────────────────────
 /**
  * Standard amortization: fixed payment that fully retires the loan over `termMonths`.
