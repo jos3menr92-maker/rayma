@@ -67,11 +67,19 @@ Deno.serve(async (req) => {
         if (data[field] !== undefined) sanitized[field] = data[field];
         else if (defaults[field] !== undefined) sanitized[field] = defaults[field];
       }
-      // GUARDRAIL 1 (create): source-verification flag for loan interest rates
-      if (table === 'loans' && sanitized.interest_rate !== undefined) {
-        const note = String(sanitized.notes || '');
-        if (!/ESTIMATED:|VERIFIED:/i.test(note)) {
-          createWarnings.push('interest_rate set without a source flag — prefix notes with "ESTIMATED:" for estimates or "VERIFIED:" for confirmed APR.');
+      // GUARDRAIL 1 (create): source-verification for loan APR + assumed due_day
+      if (table === 'loans') {
+        if (sanitized.interest_rate !== undefined) {
+          const note = String(sanitized.notes || '');
+          if (!/ESTIMATED:|VERIFIED:/i.test(note)) {
+            createWarnings.push('interest_rate set without a source flag — prefix notes with "ESTIMATED:" for estimates or "VERIFIED:" for confirmed APR.');
+          }
+        }
+        if (sanitized.due_day !== undefined && sanitized.start_date) {
+          const sd = new Date(sanitized.start_date);
+          if (!isNaN(sd.getTime()) && Number(sanitized.due_day) === sd.getDate()) {
+            createWarnings.push('due_day matches the start_date day-of-month — verify this is the real due day, not an assumption from the start date.');
+          }
         }
       }
       // GUARDRAIL 2: duplicate / zero-amount payment detection
@@ -176,29 +184,52 @@ Deno.serve(async (req) => {
       const updateWarnings: string[] = [];
       if (table === 'loans' && record_id) {
         try {
+          // GUARDRAIL 1 (update): APR source flag + assumed due_day
           if (sanitized.interest_rate !== undefined) {
             const note = String(sanitized.notes || '');
             if (!/ESTIMATED:|VERIFIED:/i.test(note)) {
               updateWarnings.push('interest_rate updated without a source flag — prefix notes with "ESTIMATED:" for estimates or "VERIFIED:" for confirmed APR.');
             }
           }
+          if (sanitized.due_day !== undefined && sanitized.start_date) {
+            const sd = new Date(sanitized.start_date);
+            if (!isNaN(sd.getTime()) && Number(sanitized.due_day) === sd.getDate()) {
+              updateWarnings.push('due_day matches the start_date day-of-month — verify this is the real due day, not an assumption from the start date.');
+            }
+          }
+          // GUARDRAIL 3: payment-balance reconciliation.
+          // Detect a balance INCREASE that matches logged payment(s) — the agent is
+          // reverting a payment with a stale pre-payment document figure (Bug 3).
           if (sanitized.current_balance !== undefined) {
             const { data: loanRow } = await supabaseAdmin.from('loans')
-              .select('current_balance, updated_date')
+              .select('current_balance')
               .eq('id', record_id).eq('user_id', uid).single();
             if (loanRow) {
-              const ref = loanRow.updated_date ? String(loanRow.updated_date).slice(0, 10) : null;
-              if (ref) {
-                const { data: rp } = await supabaseAdmin.from('payments')
-                  .select('amount, payment_date')
+              const stored = Number(loanRow.current_balance ?? 0);
+              const stated = Number(sanitized.current_balance);
+              if (stated > stored) {
+                const { data: allPays } = await supabaseAdmin.from('payments')
+                  .select('id, amount, payment_date')
                   .eq('user_id', uid).eq('loan_id', record_id).eq('payment_type', 'loan')
-                  .gt('payment_date', ref);
-                const postPayments = (rp || []).filter((p: any) => p.payment_date && new Date(p.payment_date) > new Date(ref));
-                const missed = postPayments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
-                if (missed > 0) {
-                  const reconciled = Math.max(Number(sanitized.current_balance) - missed, 0);
-                  updateWarnings.push(`Reconciliation: ${postPayments.length} payment(s) totaling ${missed} were logged after ${ref}. current_balance adjusted from ${sanitized.current_balance} to ${reconciled} to preserve them.`);
-                  sanitized.current_balance = reconciled;
+                  .order('payment_date', { ascending: false });
+                const pays = (allPays || []).map((p: any) => ({ id: p.id, amount: Number(p.amount) || 0 }));
+                if (pays.length > 0) {
+                  const gap = Math.round((stated - stored) * 100) / 100;
+                  let acc = 0;
+                  const matched: any[] = [];
+                  for (const p of pays) {
+                    if (acc + p.amount <= gap + 0.01) {
+                      acc += p.amount;
+                      matched.push(p);
+                      if (Math.abs(acc - gap) < 0.01) break;
+                    }
+                  }
+                  if (Math.abs(acc - gap) < 0.01 && matched.length > 0) {
+                    updateWarnings.push(`Reconciliation: new balance ${stated} exceeds current ${stored} by ${gap}, matching ${matched.length} logged payment(s) totaling ${gap}. This looks like a pre-payment figure reverting a logged payment — keeping current_balance at ${stored}.`);
+                    sanitized.current_balance = stored;
+                  } else {
+                    updateWarnings.push(`Reconciliation: balance increasing ${stored} → ${stated} (gap ${gap}); ${pays.length} payment(s) on file do not match this gap. Verify this is a legitimate increase (e.g. new charges) and not a stale document figure.`);
+                  }
                 }
               }
             }
