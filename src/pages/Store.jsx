@@ -246,7 +246,7 @@ export default function Store() {
 
         {nativeApp && (
           <div className="mb-4 bg-primary/5 border border-primary/30 rounded-xl p-3 text-xs text-muted-foreground text-center">
-            {T("nativeStoreNote", "Purchases are processed by the App Store.")}
+            {getPlatform() === "ios" ? T("nativeStoreNote", "Purchases are processed by the App Store.") : T("googlePlayNote", "Purchases are processed by Google Play.")}
           </div>
         )}
 
@@ -315,7 +315,8 @@ export default function Store() {
         <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
           {T("paymentsSecure", "Payments are securely processed. Purchases are tied to your Rayma AI account.")}<br />
           {T("currencyNote", "Prices may vary automatically based on your local currency to ensure fair access globally.")}<br />
-          {T("seeTerms", "See")} <a href="/terms" className="underline text-primary">{T("termsOfService", "Terms of Service")}</a> {T("forFullDetails", "for full details.")}
+          {T("autoRenewNote", "Subscriptions auto-renew until cancelled. You can cancel anytime from your subscription settings.")}<br />
+          {T("seeTerms", "See")} <a href="/terms" className="underline text-primary">{T("termsOfService", "Terms of Service")}</a> {T("andPrivacy", "and")} <a href="/privacy" className="underline text-primary">{T("privacyPolicy", "Privacy Policy")}</a> {T("forFullDetails", "for full details.")}
         </p>
 
         {isNativeMobileApp && isNativeMobileApp() && (

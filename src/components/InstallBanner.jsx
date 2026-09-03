@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, useT } from '@/lib/LanguageContext';
+import { isNativeMobileApp } from '@/lib/iap';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -10,6 +11,9 @@ export default function InstallBanner() {
   const T = useT();
 
   useEffect(() => {
+    // Native app store builds must never prompt to "install" the PWA (App Store guidelines)
+    if (isNativeMobileApp()) return;
+
     // 1. Check if it's an iOS device (Safari doesn't support the auto-prompt)
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(isIosDevice);

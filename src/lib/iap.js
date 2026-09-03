@@ -134,9 +134,8 @@ export async function restoreNativePurchases() {
 export const APPLE_PRODUCT_IDS = {
   power_insert_coin: "com.rayma.power.insert_coin",
   power_lithium_monthly: "com.rayma.power.lithium.monthly",
-  power_lithium_annual: "com.rayma.power.lithium.annual",
   power_generator_monthly: "com.rayma.power.generator.monthly",
-  power_generator_annual: "com.rayma.power.generator.annual",
+  power_unlimited_monthly: "com.rayma.power.unlimited.monthly",
 };
 
 /**
@@ -165,7 +164,6 @@ export function logBridgeStatus() {
 export const GOOGLE_PRODUCT_IDS = {
   power_insert_coin: "rayma_power_insert_coin",
   power_lithium_monthly: "rayma_power_lithium_monthly",
-  power_lithium_annual: "rayma_power_lithium_annual",
   power_generator_monthly: "rayma_power_generator_monthly",
-  power_generator_annual: "rayma_power_generator_annual",
+  power_unlimited_monthly: "rayma_power_unlimited_monthly",
 };
