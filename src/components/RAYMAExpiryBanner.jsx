@@ -4,15 +4,18 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { useMemo } from "react";
 
-function getEffectiveExpiry(user) {
-  if (user?.annual_pass_expires_at) return new Date(user.annual_pass_expires_at + "T00:00:00");
-  if (user?.rayma_expires_at) return new Date(user.rayma_expires_at + "T00:00:00");
-  if (user?.created_date) {
-    const trial = new Date(user.created_date);
-    trial.setMonth(trial.getMonth() + 6);
-    return trial;
-  }
-  return null;
+/**
+ * RAYMAExpiryBanner — warns ONLY when a real AI pass
+ * (annual_pass_expires_at, granted via promo codes) is ending within 30 days,
+ * or has just ended (shown for 7 days after expiry). Free users are free
+ * forever (15 coins / week) and never see a trial banner. Paid subscribers
+ * keep their own subscription benefits, so they never see this either.
+ */
+
+function getPassExpiry(user) {
+  if (!user?.annual_pass_expires_at) return null;
+  const raw = String(user.annual_pass_expires_at);
+  return new Date(raw.includes("T") ? raw : `${raw}T23:59:59Z`);
 }
 
 export default function RAYMAExpiryBanner({ user }) {
@@ -20,26 +23,26 @@ export default function RAYMAExpiryBanner({ user }) {
   const { lang } = useLanguage();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
-  const expiry = getEffectiveExpiry(user);
-  if (!expiry) return null;
+  const expiry = getPassExpiry(user);
+  const hasPaidSub = user?.subscription_type && user.subscription_type !== "free";
+  if (!expiry || hasPaidSub) return null;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-  if (daysLeft > 30) return null;
+  if (daysLeft > 30 || daysLeft < -7) return null;
 
   const isExpired = daysLeft <= 0;
-  const isDonated = !!(user?.annual_pass_expires_at || user?.rayma_expires_at);
 
   if (isExpired) {
     return (
       <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-2xl p-3 mb-3">
         <XCircle className="w-4 h-4 text-destructive shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-foreground">{T("raymaStopped", "Rayma AI has stopped")}</p>
+          <p className="text-xs font-semibold text-foreground">{T("passEnded", "Your AI pass has ended")}</p>
           <p className="text-[11px] text-muted-foreground">
-            {isDonated ? T("annualPassExpired", "Your Annual Pass has expired.") : T("trialEnded", "Your free 6-month trial has ended.")} {T("getAnnualPassRestore", "Get an Annual Pass to restore AI features.")}
+            {T("passEndedBody", "You're back on the free plan — 15 coins (5 questions) per week. Upgrade for unlimited AI.")}
           </p>
         </div>
         <button
@@ -57,10 +60,10 @@ export default function RAYMAExpiryBanner({ user }) {
       <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-foreground">
-          {T("raymaExpiresIn", "Rayma AI {type} in {n} day(s)").replace("{type}", isDonated ? T("raymaExpiresType", "expires") : T("raymaTrialType", "free trial ends")).replace("{n}", daysLeft)}
+          {T("passEndsIn", "Your AI pass ends in {n} day(s)").replace("{n}", daysLeft)}
         </p>
         <p className="text-[11px] text-muted-foreground">
-          {T("getAnnualPassBefore", "Get the Annual Pass before it expires to keep AI features running.")}
+          {T("passEndsInBody", "After it ends you'll return to the free plan — 15 coins (5 questions) per week. Upgrade to keep unlimited AI.")}
         </p>
       </div>
       <button

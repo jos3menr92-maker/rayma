@@ -20,6 +20,7 @@ import { X, Send, Trash2, Loader2, ScanLine, History } from "lucide-react";
 import { freeAnswer } from "@/lib/raymaClassifier";
 import QuickReplyChips from "@/components/rayma/QuickReplyChips";
 import CostTag from "@/components/rayma/CostTag";
+import { getEnergyState } from "@/components/MembershipBattery";
 import ChatHistory, { saveHistory } from "@/components/rayma/ChatHistory";
 import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
@@ -541,10 +542,11 @@ export default function RaymaChat({
 // --- 8. MAIN AI FALLBACK LOGIC (WITH BATTERY DRAIN) ---
     if (!sourceText || loading || !conversation) return;
 
-    // 🔋 THE TOKEN TOLL BOOTH — single unified "Battery" field (ai_tokens)
+    // 🔋 THE TOKEN TOLL BOOTH — unlimited subscribers & annual-pass holders never pay per question
+    const { isUnlimited } = getEnergyState(userProfile);
     const aiTokens = userProfile?.ai_tokens ?? 0;
 
-    if (aiTokens <= 0) {
+    if (!isUnlimited && aiTokens <= 0) {
       setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setTimeout(() => {
@@ -560,20 +562,22 @@ export default function RaymaChat({
     const messageContent = sourceText; 
     setInput("");
     setLoading(true);
-    pendingAICostRef.current = 3;
+    pendingAICostRef.current = isUnlimited ? 0 : 3;
     const safetyTimeout = setTimeout(() => setLoading(false), 30000);
     try {
       await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
       clearTimeout(safetyTimeout);
-      // Success — deduct 3 coins for this AI consultation.
-      try {
-        const meNow = await base44.auth.me();
-        const remaining = (meNow?.ai_tokens ?? 0) - 3;
-        if (remaining >= 0) {
-          await base44.auth.updateMe({ ai_tokens: remaining });
-          refreshUserProfile?.();
-        }
-      } catch (e) { console.warn('Token deduction failed:', e.message); }
+      // Success — deduct 3 coins for this AI consultation (unlimited users ride free).
+      if (!isUnlimited) {
+        try {
+          const meNow = await base44.auth.me();
+          const remaining = (meNow?.ai_tokens ?? 0) - 3;
+          if (remaining >= 0) {
+            await base44.auth.updateMe({ ai_tokens: remaining });
+            refreshUserProfile?.();
+          }
+        } catch (e) { console.warn('Token deduction failed:', e.message); }
+      }
     } catch (err) {
       clearTimeout(safetyTimeout);
       pendingAICostRef.current = 0;
