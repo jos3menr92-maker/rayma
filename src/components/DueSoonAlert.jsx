@@ -25,6 +25,14 @@ export default function DueSoonAlert({ loans, bills, payments = [] }) {
 
   const urgentBills = bills
     .filter((b) => b.due_day && b.is_active !== false)
+    // Hide bills already marked paid this month (same rule as DueThisWeek)
+    .filter((b) => {
+      if (b.last_paid_date) {
+        const pd = new Date(b.last_paid_date);
+        if (pd.getMonth() === now.getMonth() && pd.getFullYear() === now.getFullYear()) return false;
+      }
+      return true;
+    })
     .map((b) => {
       const diff = b.due_day >= today ? b.due_day - today : b.due_day + 31 - today;
       return { ...b, daysLeft: diff, type: "bill" };

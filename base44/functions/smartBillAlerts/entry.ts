@@ -34,13 +34,18 @@ export default async function(req: Request): Promise<Response> {
 
           // Pull this user's active bills
           const { data: bills } = await supabaseAdmin.from('bills')
-            .select('name, amount, due_day, payment_frequency')
+            .select('name, amount, due_day, payment_frequency, last_paid_date')
             .eq('user_id', uid)
             .eq('is_active', true);
 
           // Filter to bills due in the next 3 days (by day-of-month)
           const upcoming = (bills || []).filter((b: any) => {
             if (!b.due_day) return false;
+            // Skip bills already marked paid this month (mirrors DueThisWeek)
+            if (b.last_paid_date) {
+              const pd = new Date(b.last_paid_date);
+              if (pd.getMonth() === now.getMonth() && pd.getFullYear() === now.getFullYear()) return false;
+            }
             const day = Number(b.due_day);
             if (!day || day < 1 || day > 31) return false;
             const due = new Date(now.getFullYear(), now.getMonth(), day);
