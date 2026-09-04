@@ -6,6 +6,9 @@ import { useT } from "@/lib/LanguageContext";
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 // Small delay on boot so the check never competes with startup
 const BOOT_DELAY_MS = 8000;
+// Skip a check if the last one ran less than this long ago (throttles
+// rapid app-switching on mobile, where visibilitychange fires often)
+const MIN_GAP_MS = 5 * 60 * 1000;
 
 /** The hashed entry script of the version currently running in this tab */
 function getRunningEntry() {
@@ -31,11 +34,15 @@ export default function UpdateChecker() {
   const T = useT();
   const [updateReady, setUpdateReady] = useState(false);
   const checking = useRef(false);
+  const lastCheck = useRef(0);
+  const dismissed = useRef(false);
 
   useEffect(() => {
     async function checkForUpdate() {
-      if (checking.current || updateReady) return;
+      if (checking.current || updateReady || dismissed.current) return;
+      if (lastCheck.current && Date.now() - lastCheck.current < MIN_GAP_MS) return;
       checking.current = true;
+      lastCheck.current = Date.now();
       try {
         const running = getRunningEntry();
         const live = await getLiveEntry();
@@ -97,7 +104,7 @@ export default function UpdateChecker() {
           {T("refreshNow", "Refresh")}
         </button>
         <button
-          onClick={() => setUpdateReady(false)}
+          onClick={() => { dismissed.current = true; setUpdateReady(false); }}
           aria-label={T("dismissLabel", "Dismiss")}
           className="text-muted-foreground shrink-0 p-1"
         >
