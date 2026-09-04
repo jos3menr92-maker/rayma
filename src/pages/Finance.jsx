@@ -4,7 +4,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage, useT } from "@/lib/LanguageContext";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt, Trash2, Repeat } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt, Trash2, Repeat, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import CashFlowForecast from "../components/CashFlowForecast";
 import { getWeekdayNames } from "@/utils/formatLocalized";
 import { useToast } from "@/components/ui/use-toast";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
@@ -41,6 +41,7 @@ export default function Finance() {
   const { bills, loans, incomes, userProfile, supaUser, reload, loading } = useFinancialData();
   const { toast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [incomeDialog, setIncomeDialog] = useState(() => !!location.state?.autoOpenIncome);
   const [editingIncome, setEditingIncome] = useState(null);
@@ -197,9 +198,21 @@ export default function Finance() {
         </div>
         
         {/* Forecast Component */}
-        <div className="mb-8">
+        <div className="mb-4">
           <CashFlowForecast loans={loans} bills={bills} incomes={incomes} />
         </div>
+
+        {/* Trend entry point — full multi-month income vs spending view */}
+        <button onClick={() => navigate("/trend")} className="w-full flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left mb-8">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-foreground">{T("spendingTrend", "Spending Trend")}</p>
+            <p className="text-[10px] text-muted-foreground">{T("trendCardDesc", "Compare income vs spending up to a year")}</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        </button>
 
         {/* 🚀 RESTORED: Recent Income Logs UI */}
         <div>

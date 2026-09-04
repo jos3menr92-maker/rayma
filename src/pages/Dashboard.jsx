@@ -271,10 +271,10 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
       </div>
 
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <div onClick={() => navigate("/trend?type=totalDebt")} className="cursor-pointer"><StatsCard label={T("totalDebt", "Total Debt")} value={formatCurrency(totalDebt)} icon={Wallet} color="destructive" /></div>
-        <div onClick={() => navigate("/trend?type=remaining")} className="cursor-pointer"><StatsCard label={T("remaining", "Remaining")} value={formatCurrency(totalRemaining)} icon={TrendingDown} color="accent" /></div>
-        <div onClick={() => navigate("/trend?type=totalPaid")} className="cursor-pointer"><StatsCard label={T("totalPaid", "Total Paid")} value={formatCurrency(totalPaid)} icon={TrendingUp} color="primary" /></div>
-        <div onClick={() => navigate("/trend?type=monthlyDue")} className="cursor-pointer"><StatsCard label={T("monthlyDue", "Monthly Due")} value={formatCurrency(monthlyTotal)} icon={CreditCard} color="muted" /></div>
+        <div onClick={() => navigate("/trend?series=debtPaid")} className="cursor-pointer"><StatsCard label={T("totalDebt", "Total Debt")} value={formatCurrency(totalDebt)} icon={Wallet} color="destructive" /></div>
+        <div onClick={() => navigate("/trend?series=debtPaid")} className="cursor-pointer"><StatsCard label={T("remaining", "Remaining")} value={formatCurrency(totalRemaining)} icon={TrendingDown} color="accent" /></div>
+        <div onClick={() => navigate("/trend?series=debtPaid,billsPaid")} className="cursor-pointer"><StatsCard label={T("totalPaid", "Total Paid")} value={formatCurrency(totalPaid)} icon={TrendingUp} color="primary" /></div>
+        <div onClick={() => navigate("/trend?series=billsPaid,debtPaid")} className="cursor-pointer"><StatsCard label={T("monthlyDue", "Monthly Due")} value={formatCurrency(monthlyTotal)} icon={CreditCard} color="muted" /></div>
       </div>
     </div>
   );
