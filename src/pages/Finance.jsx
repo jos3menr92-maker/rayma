@@ -4,7 +4,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage, useT } from "@/lib/LanguageContext";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt, Trash2, Repeat, ChevronRight } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, MessageSquare, Receipt, Trash2, Repeat, ChevronRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,6 +85,21 @@ export default function Finance() {
   }, [incomes]);
 
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
+
+  // Auto-income visibility: sequence numbers for auto-logged entries (Auto · #1, #2, #3…)
+  const autoNumbers = useMemo(() => {
+    const bySource = {};
+    incomes.forEach((i) => { if (i.recurring_source_id) (bySource[i.recurring_source_id] ||= []).push(i); });
+    const nums = {};
+    Object.values(bySource).forEach((list) => {
+      list.sort((a, b) => (a.week_start || "").localeCompare(b.week_start || ""));
+      list.forEach((i, idx) => { nums[i.id] = idx + 1; });
+    });
+    return nums;
+  }, [incomes]);
+
+  // Active recurring income templates (the "faucets" that auto-log each period)
+  const activeAutoIncomes = useMemo(() => incomes.filter((i) => i.is_recurring && i.recurring_active && !i.recurring_source_id), [incomes]);
 
   const today = new Date();
   const dayNames = useMemo(() => getWeekdayNames(locale, "long"), [locale]);
@@ -169,6 +184,24 @@ export default function Finance() {
           </div>
         )}
 
+        {/* Auto-income status banner — visibility for the recurring "faucets" */}
+        {activeAutoIncomes.length > 0 && (
+          <div className={`rounded-2xl p-3 mb-4 flex items-center gap-3 border ${activeAutoIncomes.length > 1 ? "bg-amber-400/10 border-amber-400/30" : "bg-primary/5 border-primary/20"}`}>
+            <RefreshCw className={`w-4 h-4 shrink-0 ${activeAutoIncomes.length > 1 ? "text-amber-500" : "text-primary"}`} />
+            <p className="text-xs leading-relaxed">
+              {activeAutoIncomes.length > 1 ? (
+                <span className="text-foreground font-medium">{T("multipleAutoIncomes", "Multiple auto-incomes are active — your income may be double-logged. Tap an entry to turn one off.")}</span>
+              ) : (
+                <span className="text-muted-foreground">
+                  {T("autoIncomeActive", "Auto-income on: {amount} / {frequency}")
+                    .replace("{amount}", fmt(activeAutoIncomes[0].amount))
+                    .replace("{frequency}", T(activeAutoIncomes[0].recurring_frequency || "weekly", activeAutoIncomes[0].recurring_frequency || "weekly"))}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+
         {/* 🚀 RESTORED: The Top Metric Cards */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
@@ -240,10 +273,15 @@ export default function Finance() {
                            </Badge>
                          )}
                          {inc.recurring_source_id && (
-                           <Badge variant="outline" className="text-[9px] py-0 px-1.5 shrink-0">{T("auto", "Auto")}</Badge>
+                           <Badge variant="outline" className="text-[9px] py-0 px-1.5 shrink-0">{T("auto", "Auto")} · #{autoNumbers[inc.id] || "?"}</Badge>
                          )}
                        </div>
-                       <p className="text-xs text-muted-foreground">{T("weekOf", "Week of")} {getWeekLabel(inc.week_start, locale)}</p>
+                       <p className="text-xs text-muted-foreground">
+                         {inc.is_recurring && inc.recurring_active && !inc.recurring_source_id && (
+                           <span className="text-primary font-medium">{T("autoLogsNote", "Auto-logs {frequency}").replace("{frequency}", T(inc.recurring_frequency || "weekly", inc.recurring_frequency || "weekly"))} · </span>
+                         )}
+                         {T("weekOf", "Week of")} {getWeekLabel(inc.week_start, locale)}
+                       </p>
                      </div>
                    </div>
                    <div className="flex items-center gap-2">

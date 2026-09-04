@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Sparkles, Check, X, Archive, AlertTriangle, FileText } from "lucide-react";
+import { Sparkles, Check, X, Archive, AlertTriangle, FileText, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { createRecord, updateRecord, deleteRecord, ensureSupabaseSession } from 
 import { toast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import { useDisplayUrl } from "@/hooks/useDisplayUrl";
 
 // Map the AI's free-text category (and common merchant keywords) onto the
@@ -32,6 +34,8 @@ function normalizeTxCategory(raw) {
 
 export default function DocumentReviewModal({ doc, analysis, loans, bills, onClose, onDone }) {
   const { lang } = useLanguage();
+  const { incomes, reload } = useFinancialData();
+  const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const { url: displayUrl } = useDisplayUrl(doc.file_url);
 
@@ -48,8 +52,73 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
   const [fields, setFields] = useState(doc.extracted_data || {});
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(doc.loggable === false ? "misc_prompt" : "review");
+  const [replaceTarget, setReplaceTarget] = useState(null); // closest existing income entry to the scanned pay date
 
   const raymaMessage = analysis?.rayma_message || doc.notes || T("raymaAnalyzedMsg", "I've analyzed this document. Please review the extracted details below.");
+
+  // Find the income entry closest to the scanned pay date (within ~7 days)
+  function findClosestIncome(payDate) {
+    if (!payDate) return null;
+    const target = new Date(payDate + "T00:00:00").getTime();
+    let best = null;
+    let bestDiff = Infinity;
+    for (const inc of incomes) {
+      const ws = inc.week_start || inc.date;
+      if (!ws) continue;
+      const diff = Math.abs(new Date(ws + "T00:00:00").getTime() - target);
+      if (diff <= bestDiff) { best = inc; bestDiff = diff; }
+    }
+    return bestDiff <= 7 * 24 * 60 * 60 * 1000 ? best : null;
+  }
+
+  // Log the scanned paystub — either replacing the closest existing entry
+  // (turning it into a REAL paycheck that feeds the auto-average) or as a new entry.
+  async function logPaystubIncome(replace) {
+    setSaving(true);
+    try {
+      await ensureSupabaseSession();
+      const payAmount = fields.amount != null ? fields.amount : fields.income_amount;
+      const payDate = fields.date || new Date().toISOString().split("T")[0];
+      const payload = {
+        amount: parseFloat(payAmount) || 0,
+        note: fields.description || `Imported paystub: ${doc.file_name || ""}`,
+        source: fields.payee || fields.employer || "Paystub",
+      };
+      if (replace && replaceTarget) {
+        await updateRecord("incomes", replaceTarget.id, {
+          ...payload,
+          week_start: payDate,
+          ...(replaceTarget.is_recurring ? {} : { recurring_source_id: null, is_recurring: false, recurring_active: false }),
+        });
+        await updateRecord("documents", doc.id, {
+          status: "logged", folder, extracted_data: fields,
+          logged_entity_type: "income", logged_entity_id: replaceTarget.id,
+          document_date: fields.date || null,
+        });
+      } else {
+        const income = await createRecord("incomes", {
+          ...payload,
+          date: payDate,
+          week_start: payDate,
+          is_recurring: false,
+        });
+        await updateRecord("documents", doc.id, {
+          status: "logged", folder, extracted_data: fields,
+          logged_entity_type: "income", logged_entity_id: income?.id,
+          document_date: fields.date || null,
+        });
+      }
+      await reload();
+      toast({ title: T("approved", "Approved"), description: T("docSaved", "Document saved successfully.") });
+    } catch (err) {
+      console.error("Failed to log paystub income:", err);
+      toast({ title: T("approveFailed", "Approve Failed"), description: err?.message || T("tryAgain", "Please try again."), variant: "destructive" });
+      return;
+    } finally {
+      setSaving(false);
+    }
+    onDone();
+  }
 
   async function handleApprove() {
     setSaving(true);
@@ -59,18 +128,16 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
 
       const payAmount = fields.amount != null ? fields.amount : fields.income_amount;
       if (isPaystub && payAmount != null) {
-        const income = await createRecord("incomes", {
-          amount: parseFloat(payAmount) || 0,
-          date: fields.date || new Date().toISOString().split("T")[0],
-          note: fields.description || `Imported paystub: ${doc.file_name || ""}`,
-          source: fields.payee || fields.employer || "Paystub",
-          is_recurring: false
-        });
-        await updateRecord("documents", doc.id, {
-          status: "logged", folder, extracted_data: fields,
-          logged_entity_type: "income", logged_entity_id: income?.id,
-          document_date: fields.date || null,
-        });
+        // Paystub: check for an existing entry near the pay date first —
+        // a scan should replace the closest pay period, not silently duplicate it
+        const payDate = fields.date || new Date().toISOString().split("T")[0];
+        const closest = findClosestIncome(payDate);
+        if (closest) {
+          setReplaceTarget(closest);
+          return; // ask the user: replace the closest entry, or keep both?
+        }
+        await logPaystubIncome(false);
+        return;
       } else if ((folder === "payments" || /receipt/i.test(doc.document_type || "")) && fields.amount != null && fields.date) {
         const amount = parseFloat(fields.amount);
         if (!isNaN(amount)) {
@@ -216,6 +283,26 @@ export default function DocumentReviewModal({ doc, analysis, loans, bills, onClo
               </Button>
               <Button variant="ghost" className="rounded-xl text-xs text-destructive hover:text-destructive" onClick={() => handleKeepMisc(false)} disabled={saving}>
                 <X className="w-3.5 h-3.5 mr-1" /> {T("noDiscard", "No, Discard")}
+              </Button>
+            </div>
+          </div>
+        ) : replaceTarget ? (
+          <div className="space-y-3">
+            <div className="bg-amber-400/10 border border-amber-400/20 rounded-xl p-3 flex gap-2">
+              <RefreshCw className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-foreground leading-relaxed">
+                {T("replaceIncomePrompt", "You already have an income entry for {date} ({oldAmount}). Replace it with the amount from this paystub ({newAmount})?")
+                  .replace("{date}", new Date((replaceTarget.week_start || replaceTarget.date || "") + "T00:00:00").toLocaleDateString(lang, { month: "short", day: "numeric", year: "numeric" }))
+                  .replace("{oldAmount}", fmt(replaceTarget.amount || 0))
+                  .replace("{newAmount}", fmt(parseFloat(fields.amount ?? fields.income_amount) || 0))}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={() => logPaystubIncome(true)} disabled={saving} className="rounded-xl text-xs h-9">
+                <Check className="w-3.5 h-3.5 mr-1" /> {T("replace", "Replace")}
+              </Button>
+              <Button variant="outline" onClick={() => logPaystubIncome(false)} disabled={saving} className="rounded-xl text-xs h-9">
+                {T("keepBoth", "Keep Both")}
               </Button>
             </div>
           </div>
