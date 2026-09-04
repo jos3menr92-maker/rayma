@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useT } from "@/lib/LanguageContext";
-import { X, ChevronRight, ChevronLeft, Sparkles, Plus, Receipt, TrendingUp, LayoutDashboard, MoreHorizontal, CheckCircle2 } from "lucide-react";
+import { X, ChevronRight, ChevronLeft, Sparkles, CreditCard, Receipt, TrendingUp, LayoutDashboard, MoreHorizontal, CheckCircle2 } from "lucide-react";
 
 const TOUR_STEPS = [
   {
@@ -15,9 +15,9 @@ const TOUR_STEPS = [
     descKey: "tourDashboardDesc", descFallback: "This is your command center. See your cash flow, upcoming bills, loans, and financial health score at a glance.",
   },
   {
-    icon: Plus,
-    titleKey: "tourQuickAdd", titleFallback: "Quick Add Button",
-    descKey: "tourQuickAddDesc", descFallback: "Tap the floating + button anytime to quickly add a bill, loan, payment, or income. You can even drag it anywhere on screen.",
+    icon: CreditCard,
+    titleKey: "tourLoans", titleFallback: "Loans & Debt",
+    descKey: "tourLoansDesc", descFallback: "Tap the Loans tab in the bottom menu to track balances, log payments, and watch your debt shrink.",
   },
   {
     icon: Receipt,
@@ -32,7 +32,7 @@ const TOUR_STEPS = [
   {
     icon: Sparkles,
     titleKey: "tourChat", titleFallback: "Rayma AI Assistant",
-    descKey: "tourChatDesc", descFallback: "Tap the sparkles button to chat with Rayma AI. Log transactions, get advice, or just ask for help anytime!",
+    descKey: "tourChatDesc", descFallback: "Tap the floating Rayma button anytime to chat, log transactions, or get advice — you can even drag it anywhere on screen.",
   },
   {
     icon: MoreHorizontal,

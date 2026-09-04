@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 /**
  * useTabNavigation — preserves an independent navigation stack per bottom tab.
  *
- * Each of the three primary tabs (Home / Finance / Bills) remembers the last
+ * Each of the four primary tabs (Home / Finance / Loans / Bills) remembers the last
  * route the user visited while inside it. Switching to another tab and coming
  * back restores that remembered route instead of resetting to the tab root.
  * Tapping the already-active tab resets it to its root route.
@@ -17,12 +17,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 export const TAB_ROOTS = {
   home: "/dashboard",
   finance: "/finance",
+  loans: "/loans",
   bills: "/bills",
 };
 
 const TAB_PATHS = {
-  home: ["/dashboard", "/loans", "/add-loan", "/loan", "/trend", "/assets", "/monthly-recap", "/merchants"],
+  home: ["/dashboard", "/trend", "/assets", "/monthly-recap", "/merchants"],
   finance: ["/finance", "/bank-accounts", "/budget-dashboard", "/budget", "/debt-simulator", "/simulator", "/calendar"],
+  loans: ["/loans", "/add-loan", "/loan"],
   bills: ["/bills"],
 };
 
@@ -42,6 +44,7 @@ export function useTabNavigation() {
   const tabLastPath = useRef({
     home: TAB_ROOTS.home,
     finance: TAB_ROOTS.finance,
+    loans: TAB_ROOTS.loans,
     bills: TAB_ROOTS.bills,
   });
 

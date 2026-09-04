@@ -2,8 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Plus, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
-import QuickAddMenu from "./QuickAddMenu";
+import { LayoutDashboard, CreditCard, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import MoreMenu from "./MoreMenu";
@@ -24,7 +23,6 @@ export default function Layout() {
   const { deletionCancelled, clearDeletionCancelled } = useAuth();
   const { toast } = useToast();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [raymaOpen, setRaymaOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -36,7 +34,6 @@ export default function Layout() {
 
   useBackHandler([
     { isOpen: drawerOpen, onClose: () => setDrawerOpen(false) },
-    { isOpen: quickAddOpen, onClose: () => setQuickAddOpen(false) },
     { isOpen: moreOpen, onClose: () => setMoreOpen(false) },
     { isOpen: raymaOpen, onClose: () => setRaymaOpen(false) },
   ]);
@@ -88,7 +85,6 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      <QuickAddMenu open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
       <MoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
       
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
@@ -128,33 +124,36 @@ export default function Layout() {
         </AnimatePresence>
       </main>
 
-      <motion.button
-        drag
-        dragMomentum={false}
-        dragElastic={0.1}
-        whileTap={{ scale: 0.9 }}
-        whileHover={{ scale: 1.08 }}
-        whileDrag={{ scale: 1.12, boxShadow: "0 12px 40px rgba(0,0,0,0.3)" }}
-        onDragStart={(_, info) => {dragStartPos.current = { x: info.point.x, y: info.point.y };isDragging.current = false;}}
-        onDrag={(_, info) => {
-          const dx = Math.abs(info.point.x - dragStartPos.current.x);
-          const dy = Math.abs(info.point.y - dragStartPos.current.y);
-          if (dx > 5 || dy > 5) isDragging.current = true;
-        }}
-        onDragEnd={() => setTimeout(() => {isDragging.current = false;}, 100)}
-        onClick={(e) => {if (isDragging.current) {e.preventDefault();return;}setQuickAddOpen(true);}}
-        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
-        id="quick-add-button"
-        className="fixed left-4 z-40 w-14 h-14 rounded-full bg-primary shadow-xl shadow-primary/40 flex items-center justify-center cursor-grab active:cursor-grabbing"
-        title="Quick Add (drag to move)">
-        <Plus className="w-6 h-6 text-primary-foreground" />
-      </motion.button>
+      {!raymaOpen && (
+        <motion.button
+          drag
+          dragMomentum={false}
+          dragElastic={0.1}
+          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.08 }}
+          whileDrag={{ scale: 1.12, boxShadow: "0 12px 40px rgba(0,0,0,0.3)" }}
+          onDragStart={(_, info) => {dragStartPos.current = { x: info.point.x, y: info.point.y };isDragging.current = false;}}
+          onDrag={(_, info) => {
+            const dx = Math.abs(info.point.x - dragStartPos.current.x);
+            const dy = Math.abs(info.point.y - dragStartPos.current.y);
+            if (dx > 5 || dy > 5) isDragging.current = true;
+          }}
+          onDragEnd={() => setTimeout(() => {isDragging.current = false;}, 100)}
+          onClick={(e) => {if (isDragging.current) {e.preventDefault();return;}setRaymaOpen(true);}}
+          style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+          id="rayma-fab"
+          className="fixed right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 shadow-[0_4px_20px_rgba(56,189,248,0.35)] flex items-center justify-center cursor-grab active:cursor-grabbing"
+          title={T("raymaChatButton", "Rayma AI — tap to chat, drag to move")}
+          aria-label={T("raymaChatButton", "Rayma AI — tap to chat, drag to move")}>
+          <Sparkles className="w-6 h-6 text-cyan-400 dark:text-cyan-600" />
+        </motion.button>
+      )}
 
       <PushNotificationPrompt />
       <AppTour onboardingComplete={userProfile?.onboarding_complete === true} />
       
       <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16 relative">
+        <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16">
           <button onClick={() => handleTabClick("home")} className={`flex flex-col items-center gap-0.5 w-12 ${activeTab === "home" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <LayoutDashboard className="w-5 h-5" />
             <span className="text-[10px] font-medium">{T("dashboard", "Home")}</span>
@@ -164,15 +163,10 @@ export default function Layout() {
             <span className="text-[10px] font-medium">{T("finance", "Finance")}</span>
           </button>
 
-          <div className="relative -top-5 flex justify-center w-16">
-            <button
-              onClick={() => setRaymaOpen(true)}
-              className="absolute flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 shadow-[0_4px_20px_rgba(56,189,248,0.35)] hover:scale-105 transition-transform group">
-              
-              <Sparkles className="w-6 h-6 text-cyan-400 dark:text-cyan-600 group-hover:animate-pulse" />
-              <div className="absolute inset-0 rounded-full border border-cyan-400/30 animate-[ping_3s_ease-in-out_infinite]" />
-            </button>
-          </div>
+          <button onClick={() => handleTabClick("loans")} className={`flex flex-col items-center gap-0.5 w-12 ${activeTab === "loans" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+            <CreditCard className="w-5 h-5" />
+            <span className="text-[10px] font-medium">{T("loans", "Loans")}</span>
+          </button>
 
           <button onClick={() => handleTabClick("bills")} className={`flex flex-col items-center gap-0.5 w-12 ${activeTab === "bills" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <Receipt className="w-5 h-5" />

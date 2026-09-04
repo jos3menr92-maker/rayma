@@ -14,6 +14,7 @@ export const LANGUAGES = [
 
 export const translations = {
   en: {
+    tourLoans: "Loans & Debt", tourLoansDesc: "Tap the Loans tab in the bottom menu to track balances, log payments, and watch your debt shrink.", raymaChatButton: "Rayma AI — tap to chat, drag to move",
     appName: "Debt & Bills", raymaAiLogo: "Rayma AI logo", toastConnectionError: "Connection Error", toastSyncFailed: "Could not sync latest data. Check connection.", toastLoadTimeout: "Taking too long to load. Check your connection.", toastPaymentFailed: "Payment failed", toastUpdateFailed: "Update failed", toastAddTransactionFailed: "Failed to add transaction", dashboard: "Dashboard", loans: "Loans", bills: "Bills", finance: "Finance", more: "More", signIn: "Sign in", signOut: "Sign Out", getStartedFree: "Get Started Free",
     hello: "Hi", stayOnTop: "Stay on top of your finances", cashLeft: "Cash Left This Month", overspent: "overspent", income: "income", obligations: "obligations",
     monthlyRecap: "Monthly Recap", summary: "Income & spending summary", assets: "Assets", netWorthTracker: "Net worth tracker", expenseBreakdown: "Expense Breakdown",
@@ -97,6 +98,7 @@ export const translations = {
     passEndsIn: "Your AI pass ends in {n} day(s)", passEndsInBody: "After it ends you'll return to the free plan — 15 coins (5 questions) per week. Upgrade to keep unlimited AI.", passEnded: "Your AI pass has ended", passEndedBody: "You're back on the free plan — 15 coins (5 questions) per week. Upgrade for unlimited AI.", upgrade: "Upgrade", autoRenewNote: "Subscriptions auto-renew until cancelled. You can cancel anytime from your subscription settings.", andPrivacy: "and", googlePlayNote: "Purchases are processed by Google Play.",
   },
   zh: {
+    tourLoans: "贷款与债务", tourLoansDesc: "点击底部菜单中的“贷款”标签，追踪余额、记录还款，看着你的债务逐步减少。", raymaChatButton: "Rayma AI — 点击聊天，拖动移动",
     appName: "债务与账单", raymaAiLogo: "Rayma AI 标志", dashboard: "仪表板", loans: "贷款", bills: "账单", finance: "财务", more: "更多", signIn: "登录", signOut: "退出登录", getStartedFree: "免费开始",
     hello: "你好", stayOnTop: "掌控您的财务", cashLeft: "本月剩余现金", overspent: "超支", income: "收入", obligations: "负债",
     monthlyRecap: "月度总结", summary: "收支汇总", assets: "资产", netWorthTracker: "净资产追踪", expenseBreakdown: "支出明细",
@@ -142,6 +144,7 @@ export const translations = {
     deleteAccountTitle: "删除账户", deletionGracePeriodNotice: "您的账户将在30天后被安排永久删除。如果您在此期间重新登录，删除将被取消，您的数据将恢复。30天后，您的所有数据将被永久清除且无法恢复。", scheduleDeletion: "安排删除", cancel: "取消", deletionScheduledTitle: "已安排删除", deletionScheduledBody: "您的账户已安排于{date}永久删除。在此之前随时重新登录即可取消并恢复您的账户。", deletionScheduleFailed: "安排账户删除失败。请重试。", welcomeBackDeletionCancelled: "欢迎回来！您的账户删除已取消，数据已恢复。", accountPermanentlyDeleted: "此账户已被永久删除。", accountExistsLoginInstead: "此邮箱已存在账户。请改为登录。"
   },
   es: {
+    tourLoans: "Préstamos y Deuda", tourLoansDesc: "Toca la pestaña Préstamos en el menú inferior para seguir saldos, registrar pagos y ver tu deuda reducirse.", raymaChatButton: "Rayma AI — toca para chatear, arrastra para mover",
     appName: "Deudas y Facturas", raymaAiLogo: "Logotipo de Rayma AI", dashboard: "Panel", loans: "Préstamos", bills: "Facturas", finance: "Finanzas", more: "Más", signIn: "Iniciar sesión", signOut: "Cerrar sesión", getStartedFree: "Empezar gratis",
     hello: "Hola", stayOnTop: "Mantén el control de tus finanzas", cashLeft: "Dinero disponible este mes", overspent: "gastado de más", income: "ingresos", obligations: "obligaciones",
     monthlyRecap: "Resumen mensual", summary: "Resumen de ingresos y gastos", assets: "Activos", netWorthTracker: "Seguimiento de patrimonio neto", expenseBreakdown: "Desglose de gastos",
@@ -201,6 +204,7 @@ export const translations = {
     passEndsIn: "Tu pase de IA termina en {n} día(s)", passEndsInBody: "Al terminar volverás al plan gratuito — 15 monedas (5 preguntas) por semana. Mejora para mantener la IA ilimitada.", passEnded: "Tu pase de IA ha terminado", passEndedBody: "Volviste al plan gratuito — 15 monedas (5 preguntas) por semana. Mejora para tener IA ilimitada.", upgrade: "Mejorar", autoRenewNote: "Las suscripciones se renuevan automáticamente hasta que las canceles. Puedes cancelar en cualquier momento desde la configuración de tu suscripción.", andPrivacy: "y", googlePlayNote: "Las compras se procesan a través de Google Play.",
   },
   hi: {
+    tourLoans: "लोन और कर्ज़", tourLoansDesc: "बैलेंस ट्रैक करने, पेमेंट लॉग करने और अपने कर्ज़ को घटते देखने के लिए नीचे के मेनू में लोन टैब दबाएँ।", raymaChatButton: "Rayma AI — चैट के लिए टैप करें, खिसकाने के लिए ड्रैग करें",
     appName: "कर्ज और बिल", raymaAiLogo: "Rayma AI लोगो", dashboard: "डैशबोर्ड", loans: "ऋण", bills: "बिल", finance: "वित्त", more: "अधिक", signIn: "साइन इन करें", signOut: "साइन आउट करें", getStartedFree: "निःशुल्क प्रारंभ करें",
     hello: "नमस्ते", stayOnTop: "अपने वित्त पर नियंत्रण रखें", cashLeft: "इस महीने नकद बचा", overspent: "ज्यादा खर्च", income: "आय", obligations: "बाध्यताएं",
     accountSection: "खाता", raymaAISection: "Rayma AI", navigateSection: "नेविगेट करें", toolsSection: "उपकरण", aboutRAYMASection: "Rayma AI के बारे में", privacyLegalSection: "गोपनीयता और कानूनी",
@@ -230,6 +234,7 @@ export const translations = {
     deleteAccountTitle: "खाता हटाएं", deletionGracePeriodNotice: "आपका खाता 30 दिनों में स्थायी हटाने के लिए निर्धारित किया जाएगा। यदि आप इससे पहले वापस लॉग इन करते हैं, तो हटाना रद्द हो जाएगा और आपका डेटा बहाल हो जाएगा। 30 दिनों के बाद, आपका सभी डेटा स्थायी रूप से मिट जाएगा और वापस नहीं मिल सकेगा।", scheduleDeletion: "हटाना निर्धारित करें", cancel: "रद्द करें", deletionScheduledTitle: "हटाना निर्धारित", deletionScheduledBody: "आपका खाता {date} को स्थायी हटाने के लिए निर्धारित है। उससे पहले कभी भी वापस लॉग इन करके इसे रद्द करें और अपना खाता बहाल करें।", deletionScheduleFailed: "खाता हटाना निर्धारित करने में विफल। कृपया पुनः प्रयास करें।", welcomeBackDeletionCancelled: "वापसी पर स्वागत है! आपके खाते की हटाना रद्द कर दी गई है और डेटा बहाल है।", accountPermanentlyDeleted: "यह खाता स्थायी रूप से हटा दिया गया है।", accountExistsLoginInstead: "इस ईमेल पर पहले से एक खाता मौजूद है। कृपया लॉग इन करें।"
   },
   fr: {
+    tourLoans: "Prêts & Dettes", tourLoansDesc: "Appuyez sur l'onglet Prêts dans le menu du bas pour suivre vos soldes, enregistrer vos paiements et voir votre dette diminuer.", raymaChatButton: "Rayma AI — appuyez pour discuter, faites glisser pour déplacer",
     appName: "Dettes et Factures", raymaAiLogo: "Logo Rayma AI", dashboard: "Tableau de bord", loans: "Prêts", bills: "Factures", finance: "Finance", more: "Plus", signIn: "Se connecter", signOut: "Déconnexion", getStartedFree: "Commencer gratuitement",
     hello: "Bonjour", stayOnTop: "Maîtrisez vos finances", cashLeft: "Argent restant ce mois", overspent: "dépensé en excès", income: "revenu", obligations: "obligations",
     accountSection: "Compte", raymaAISection: "Rayma AI", navigateSection: "Naviguer", toolsSection: "Outils", aboutRAYMASection: "À propos de Rayma AI", privacyLegalSection: "Confidentialité et légal",
@@ -259,6 +264,7 @@ export const translations = {
     deleteAccountTitle: "Supprimer le compte", deletionGracePeriodNotice: "Votre compte sera programmé pour une suppression permanente dans 30 jours. Si vous vous reconnectez avant, la suppression sera annulée et vos données restaurées. Après 30 jours, toutes vos données seront effacées définitivement et ne pourront être récupérées.", scheduleDeletion: "Programmer la suppression", cancel: "Annuler", deletionScheduledTitle: "Suppression programmée", deletionScheduledBody: "Votre compte est programmé pour une suppression permanente le {date}. Reconnectez-vous à tout moment avant cette date pour annuler et restaurer votre compte.", deletionScheduleFailed: "Échec de la programmation de la suppression du compte. Veuillez réessayer.", welcomeBackDeletionCancelled: "Bon retour ! La suppression de votre compte a été annulée et vos données sont restaurées.", accountPermanentlyDeleted: "Ce compte a été supprimé définitivement.", accountExistsLoginInstead: "Un compte existe déjà avec cet e-mail. Veuillez vous connecter à la place."
   },
   ar: {
+    tourLoans: "القروض والديون", tourLoansDesc: "اضغط على تبويب القروض في القائمة السفلية لمتابعة الأرصدة وتسجيل المدفوعات ومشاهدة دينك يتناقص.", raymaChatButton: "Rayma AI — اضغط للمحادثة، اسحب للتحريك",
     appName: "الديون والفواتير", raymaAiLogo: "شعار Rayma AI", dashboard: "لوحة التحكم", loans: "القروض", bills: "الفواتير", finance: "التمويل", more: "المزيد", signIn: "دخول", signOut: "تسجيل الخروج", getStartedFree: "ابدأ مجاناً",
     hello: "مرحبا", stayOnTop: "تحكم في أموالك", cashLeft: "النقد المتبقي هذا الشهر", overspent: "إنفاق زائد", income: "دخل", obligations: "الالتزامات",
     accountSection: "الحساب", raymaAISection: "Rayma AI", navigateSection: "التنقل", toolsSection: "الأدوات", aboutRAYMASection: "حول Rayma AI", privacyLegalSection: "الخصوصية والشؤون القانونية",
@@ -288,6 +294,7 @@ export const translations = {
     deleteAccountTitle: "حذف الحساب", deletionGracePeriodNotice: "سيتم جدولة حسابك للحذف الدائم خلال 30 يومًا. إذا سجلت الدخول مرة أخرى قبل ذلك، سيتم إلغاء الحذف واستعادة بياناتك. بعد 30 يومًا، سيتم مسح جميع بياناتك نهائيًا ولا يمكن استعادتها.", scheduleDeletion: "جدولة الحذف", cancel: "إلغاء", deletionScheduledTitle: "تمت جدولة الحذف", deletionScheduledBody: "تمت جدولة حسابك للحذف الدائم في {date}. سجل الدخول مرة أخرى في أي وقت قبل ذلك لإلغاء واستعادة حسابك.", deletionScheduleFailed: "فشل جدولة حذف الحساب. حاول مرة أخرى.", welcomeBackDeletionCancelled: "مرحبًا بعودتك! تم إلغاء حذف حسابك واستعادة بياناتك.", accountPermanentlyDeleted: "تم حذف هذا الحساب نهائيًا.", accountExistsLoginInstead: "يوجد حساب بهذا البريد الإلكتروني بالفعل. يرجى تسجيل الدخول بدلاً من ذلك."
   },
   bn: {
+    tourLoans: "ঋণ ও দেনা", tourLoansDesc: "ব্যালেন্স ট্র্যাক করতে, পেমেন্ট লগ করতে এবং আপনার ঋণ কমতে দেখতে নিচের মেনুতে ঋণ ট্যাবে ট্যাপ করুন।", raymaChatButton: "Rayma AI — চ্যাট করতে ট্যাপ করুন, সরাতে ড্র্যাগ করুন",
     appName: "ঋণ এবং বিল", raymaAiLogo: "Rayma AI লোগো", dashboard: "ড্যাশবোর্ড", loans: "ঋণ", bills: "বিল", finance: "অর্থ", more: "আরও", signIn: "প্রবেশ করুন", signOut: "প্রস্থান করুন", getStartedFree: "বিনামূল্যে শুরু করুন",
     hello: "নমস্কার", stayOnTop: "আপনার অর্থ নিয়ন্ত্রণ করুন", cashLeft: "এই মাসে অবশিষ্ট নগদ", overspent: "অতিরিক্ত খরচ", income: "আয়", obligations: "দায়বদ্ধতা",
     accountSection: "অ্যাকাউন্ট", raymaAISection: "Rayma AI", navigateSection: "নেভিগেট করুন", toolsSection: "সরঞ্জাম", aboutRAYMASection: "Rayma AI সম্পর্কে", privacyLegalSection: "গোপনীয়তা এবং আইনি",
@@ -317,6 +324,7 @@ export const translations = {
     deleteAccountTitle: "অ্যাকাউন্ট মুছুন", deletionGracePeriodNotice: "আপনার অ্যাকাউন্ট ৩০ দিনের মধ্যে স্থায়ীভাবে মোছার জন্য নির্ধারিত হবে। এর আগে আবার লগ ইন করলে মোছা বাতিল হবে এবং আপনার ডেটা ফিরে পাবেন। ৩০ দিন পরে, আপনার সব ডেটা স্থায়ীভাবে মুছে যাবে এবং পুনরুদ্ধার করা যাবে না।", scheduleDeletion: "মোছার সময় নির্ধারণ", cancel: "বাতিল", deletionScheduledTitle: "মোছার সময় নির্ধারিত", deletionScheduledBody: "আপনার অ্যাকাউন্ট {date} তারিখে স্থায়ীভাবে মোছার জন্য নির্ধারিত। এর আগে যেকোনো সময় আবার লগ ইন করে বাতিল করুন এবং অ্যাকাউন্ট ফিরিয়ে নিন।", deletionScheduleFailed: "অ্যাকাউন্ট মোছার সময় নির্ধারণে ব্যর্থ। আবার চেষ্টা করুন।", welcomeBackDeletionCancelled: "স্বাগতম! আপনার অ্যাকাউন্ট মোছা বাতিল হয়েছে এবং ডেটা ফিরিয়ে আনা হয়েছে।", accountPermanentlyDeleted: "এই অ্যাকাউন্টটি স্থায়ীভাবে মুছে ফেলা হয়েছে।", accountExistsLoginInstead: "এই ইমেলে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে। দয়া করে লগ ইন করুন।"
   },
   pt: {
+    tourLoans: "Empréstimos & Dívidas", tourLoansDesc: "Toque na aba Empréstimos no menu inferior para acompanhar saldos, registrar pagamentos e ver sua dívida diminuir.", raymaChatButton: "Rayma AI — toque para conversar, arraste para mover",
     appName: "Dívidas e Contas", raymaAiLogo: "Logotipo do Rayma AI", dashboard: "Painel", loans: "Empréstimos", bills: "Contas", finance: "Finanças", more: "Mais", signIn: "Conectar", signOut: "Sair", getStartedFree: "Começar gratuitamente",
     hello: "Olá", stayOnTop: "Controle suas finanças", cashLeft: "Dinheiro restante este mês", overspent: "gasto em excesso", income: "renda", obligations: "obrigações",
     accountSection: "Conta", raymaAISection: "Rayma AI", navigateSection: "Navegar", toolsSection: "Ferramentas", aboutRAYMASection: "Sobre Rayma AI", privacyLegalSection: "Privacidade e Legal",
@@ -346,6 +354,7 @@ export const translations = {
     deleteAccountTitle: "Excluir conta", deletionGracePeriodNotice: "Sua conta será agendada para exclusão permanente em 30 dias. Se você entrar novamente antes disso, a exclusão será cancelada e seus dados restaurados. Após 30 dias, todos os seus dados serão apagados permanentemente e não poderão ser recuperados.", scheduleDeletion: "Agendar exclusão", cancel: "Cancelar", deletionScheduledTitle: "Exclusão agendada", deletionScheduledBody: "Sua conta está agendada para exclusão permanente em {date}. Entre novamente a qualquer momento antes disso para cancelar e restaurar sua conta.", deletionScheduleFailed: "Falha ao agendar a exclusão da conta. Tente novamente.", welcomeBackDeletionCancelled: "Bem-vindo de volta! A exclusão da sua conta foi cancelada e seus dados foram restaurados.", accountPermanentlyDeleted: "Esta conta foi excluída permanentemente.", accountExistsLoginInstead: "Já existe uma conta com este e-mail. Faça login em vez disso."
   },
   ru: {
+    tourLoans: "Кредиты и долги", tourLoansDesc: "Нажмите на вкладку «Кредиты» в нижнем меню, чтобы отслеживать балансы, записывать платежи и видеть, как уменьшается ваш долг.", raymaChatButton: "Rayma AI — нажмите, чтобы открыть чат; перетащите, чтобы переместить",
     appName: "Долги и счета", raymaAiLogo: "Логотип Rayma AI", dashboard: "Панель управления", loans: "Кредиты", bills: "Счета", finance: "Финансы", more: "Ещё", signIn: "Войти", signOut: "Выйти", getStartedFree: "Начать бесплатно",
     hello: "Привет", stayOnTop: "Контролируйте свои финансы", cashLeft: "Денег осталось на этот месяц", overspent: "перерасходованно", income: "доход", obligations: "обязательства",
     accountSection: "Аккаунт", raymaAISection: "Rayma AI", navigateSection: "Навигация", toolsSection: "Инструменты", aboutRAYMASection: "О Rayma AI", privacyLegalSection: "Конфиденциальность и право",
@@ -375,6 +384,7 @@ export const translations = {
     deleteAccountTitle: "Удалить аккаунт", deletionGracePeriodNotice: "Ваш аккаунт будет запланирован к удалению через 30 дней. Если вы войдёте снова до этого, удаление будет отменено, а данные восстановлены. Через 30 дней все ваши данные будут удалены навсегда и не подлежат восстановлению.", scheduleDeletion: "Запланировать удаление", cancel: "Отмена", deletionScheduledTitle: "Удаление запланировано", deletionScheduledBody: "Ваш аккаунт запланирован к удалению {date}. Войдите снова в любое время до этой даты, чтобы отменить и восстановить аккаунт.", deletionScheduleFailed: "Не удалось запланировать удаление аккаунта. Попробуйте снова.", welcomeBackDeletionCancelled: "С возвращением! Удаление вашего аккаунта отменено, данные восстановлены.", accountPermanentlyDeleted: "Этот аккаунт был удалён навсегда.", accountExistsLoginInstead: "Аккаунт с этим e-mail уже существует. Войдите вместо регистрации."
   },
   ja: {
+    tourLoans: "ローンと債務", tourLoansDesc: "下のメニューの「ローン」タブをタップして、残高の確認、支払いの記録、借入の減少を追跡しましょう。", raymaChatButton: "Rayma AI — タップでチャット、ドラッグで移動",
     appName: "債務と請求書", raymaAiLogo: "Rayma AI ロゴ", dashboard: "ダッシュボード", loans: "ローン", bills: "請求書", finance: "ファイナンス", more: "その他", signIn: "ログイン", signOut: "ログアウト", getStartedFree: "無料で始める",
     hello: "こんにちは", stayOnTop: "財務を管理する", cashLeft: "今月残っている現金", overspent: "使いすぎ", income: "収入", obligations: "義務",
     accountSection: "アカウント", raymaAISection: "Rayma AI", navigateSection: "ナビゲート", toolsSection: "ツール", aboutRAYMASection: "Rayma AIについて", privacyLegalSection: "プライバシーと法務",
