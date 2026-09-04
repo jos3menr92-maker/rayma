@@ -18,6 +18,9 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
     const sql = `
+-- Bills "mark as paid" (DueThisWeek checkmark) stores the paid date here;
+-- missing column made the save fail and bills never left the due list.
+ALTER TABLE bills ADD COLUMN IF NOT EXISTS last_paid_date DATE;
 ALTER TABLE loan_adjustments ADD COLUMN IF NOT EXISTS reason TEXT;
 ALTER TABLE loan_adjustments ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE savings_goals ADD COLUMN IF NOT EXISTS target_date DATE;

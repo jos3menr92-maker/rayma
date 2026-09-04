@@ -9,7 +9,7 @@ const TABLE_DEFAULTS = {
 // Whitelist of tables the agent can manage
 const ALLOWED_TABLES = {
   loans: ['name', 'lender', 'original_amount', 'current_balance', 'remaining_balance', 'interest_rate', 'monthly_payment', 'payment_amount_type', 'payment_frequency', 'total_payments', 'due_date', 'due_day', 'due_day_of_week', 'start_date', 'category', 'term_months', 'loan_type_attributes', 'notes', 'status'],
-  bills: ['name', 'amount', 'payment_frequency', 'due_day', 'due_day_of_week', 'category', 'notes', 'is_active', 'is_paid', 'autopay', 'suggested_by_rayma', 'rayma_approval_status', 'detected_from_merchant'],
+  bills: ['name', 'amount', 'payment_frequency', 'due_day', 'due_day_of_week', 'category', 'notes', 'is_active', 'is_paid', 'autopay', 'suggested_by_rayma', 'rayma_approval_status', 'detected_from_merchant', 'last_paid_date'],
   payments: ['loan_id', 'bill_id', 'payment_type', 'amount', 'payment_date', 'note', 'description'],
   incomes: ['amount', 'source', 'frequency', 'week_start', 'note', 'is_active', 'is_recurring', 'recurring_frequency', 'recurring_active', 'recurring_source_id', 'description'],
   assets: ['name', 'amount', 'type', 'notes'],
@@ -102,6 +102,25 @@ Deno.serve(async (req) => {
       }
       // GUARDRAIL 2: duplicate / zero-amount payment detection
       if (table === 'payments') {
+        // Ownership guard: the referenced loan/bill must belong to the resolved
+        // uid. If the Base44 email maps to a different Supabase user than the
+        // record owner, the insert would save "invisibly" under the wrong
+        // account — fail clearly instead.
+        if (sanitized.loan_id || sanitized.bill_id) {
+          const refTable = sanitized.loan_id ? 'loans' : 'bills';
+          const refId = sanitized.loan_id || sanitized.bill_id;
+          const { data: refRow } = await supabaseAdmin
+            .from(refTable)
+            .select('id')
+            .eq('id', refId)
+            .eq('user_id', uid)
+            .maybeSingle();
+          if (!refRow) {
+            return Response.json({
+              error: `This ${refTable === 'loans' ? 'loan' : 'bill'} was not found under your account. Please refresh the app and try again — if it keeps failing, log out and back in.`,
+            }, { status: 404 });
+          }
+        }
         const amt = Number(sanitized.amount);
         if (!Number.isFinite(amt) || amt <= 0) {
           return Response.json({ error: 'Payment amount must be greater than zero. Zero or negative payments are blocked.' }, { status: 400 });
@@ -274,6 +293,9 @@ Deno.serve(async (req) => {
           console.error('[manageFinancialRecord] Guardrail check failed (non-fatal):', gErr.message);
         }
       }
+      if (Object.keys(sanitized).length === 0) {
+        return Response.json({ error: `No updatable fields were provided for ${table}.` }, { status: 400 });
+      }
       let query;
       if (table === 'profiles') {
         // profiles table uses 'user_id' as the user ID column
@@ -282,8 +304,16 @@ Deno.serve(async (req) => {
         if (!record_id) return Response.json({ error: 'record_id is required for update' }, { status: 400 });
         query = supabaseAdmin.from(table).update(sanitized).eq('id', record_id).eq('user_id', uid);
       }
-      const { data: result, error } = await query.select().single();
+      const { data: resultList, error } = await query.select();
       if (error) throw error;
+      if (!resultList || resultList.length === 0) {
+        // Was previously a cryptic ".single()" crash ("Cannot coerce the result
+        // to a single JSON object") — give the user something actionable instead.
+        return Response.json({
+          error: `Record not found in ${table} for your account. Please refresh the app and try again — if it keeps failing, log out and back in.`,
+        }, { status: 404 });
+      }
+      const result = resultList[0];
 
       // Asset ↔ bank balance sync (Bug 2): keep the "Bank Cash" asset mirrored
       // when a transaction or a bank account's balance is updated directly.

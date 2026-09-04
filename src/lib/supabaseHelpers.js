@@ -208,7 +208,7 @@ export async function updateRecord(table, recordId, data) {
     .update(data)
     .eq("id", recordId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error && isAuthError(error)) {
     const refreshedUser = await tryRefreshSession();
@@ -219,14 +219,19 @@ export async function updateRecord(table, recordId, data) {
       .update(data)
       .eq("id", recordId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (retryError && isAuthError(retryError)) return backendUpdate(table, recordId, data);
     if (retryError) throw new Error(buildErrorMessage(table, "update", retryError));
+    if (!retryRecord) throw new Error(buildErrorMessage(table, "update", { message: "no matching record found — it may have been deleted or your session is out of sync. Try refreshing." }));
     return retryRecord;
   }
 
   if (error) throw new Error(buildErrorMessage(table, "update", error));
+  // .maybeSingle() returns null instead of crashing when no row matched —
+  // previously ".single()" threw the cryptic "Cannot coerce the result to a
+  // single JSON object" error here.
+  if (!record) return backendUpdate(table, recordId, data);
   return record;
 }
 
