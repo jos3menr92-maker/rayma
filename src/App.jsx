@@ -8,6 +8,7 @@ import { FinancialDataProvider } from '@/lib/FinancialDataContext'; // ⬅️ Re
 import { Toaster } from "@/components/ui/toaster";
 
 import InstallBanner from './components/InstallBanner';
+import UpdateChecker from './components/UpdateChecker';
 import PageNotFound from './lib/PageNotFound';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
@@ -159,6 +160,7 @@ export default function App() {
           </Router>
           <Toaster />
           <InstallBanner />
+          <UpdateChecker />
         </QueryClientProvider>
       </LanguageProvider>
     </AuthProvider>
