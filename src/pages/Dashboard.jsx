@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useFinancialData } from "@/lib/FinancialDataContext"; 
@@ -75,7 +75,6 @@ export default function Dashboard() {
   const { formatCurrency } = useCurrency();
   
   const { loans, bills, incomes, userProfile, loading, reload } = useFinancialData();
-  const [payments, setPayments] = useState([]); 
   const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh(reload);
 
   useEffect(() => {
@@ -197,7 +196,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
           <button onClick={() => navigate("/bills")} className="text-xs text-primary font-semibold flex items-center">{T("viewAll", "View All")} <ChevronRight className="w-3 h-3 ml-0.5" /></button>
         </div>
         <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar">
-          {bills.length > 0 ? bills.map(bill => (
+          {bills.filter((b) => b.is_active !== false).length > 0 ? bills.filter((b) => b.is_active !== false).map(bill => (
             <div key={bill.id} onClick={() => navigate("/bills")} className="min-w-[130px] w-[130px] bg-card border border-border rounded-2xl p-3 snap-start shrink-0 shadow-sm cursor-pointer active:scale-95 transition-transform">
                <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-base mb-2">{iconMap[bill.category] || "📋"}</div>
                <p className="text-xs font-semibold text-foreground truncate">{bill.name}</p>

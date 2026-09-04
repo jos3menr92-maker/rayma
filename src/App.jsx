@@ -8,7 +8,6 @@ import { FinancialDataProvider } from '@/lib/FinancialDataContext'; // ⬅️ Re
 import { Toaster } from "@/components/ui/toaster";
 
 import InstallBanner from './components/InstallBanner';
-import RemoteSupport from './pages/RemoteSupport';
 import PageNotFound from './lib/PageNotFound';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
@@ -17,12 +16,15 @@ import PageTransition from './components/PageTransition';
 import RootGate from './components/RootGate';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
-import LoansList from './pages/LoansList';
-import AddLoan from './pages/AddLoan';
-import LoanDetail from './pages/LoanDetail';
-import Bills from './pages/Bills';
 import Landing from './pages/Landing';
-import Onboarding from './pages/Onboarding';
+
+// Lazy app pages — keeps the initial bundle (and first paint) small
+const LoansList = lazy(() => import('./pages/LoansList'));
+const AddLoan = lazy(() => import('./pages/AddLoan'));
+const LoanDetail = lazy(() => import('./pages/LoanDetail'));
+const Bills = lazy(() => import('./pages/Bills'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const RemoteSupport = lazy(() => import('./pages/RemoteSupport'));
 
 // 🛋️ THE LAZY LOUNGE: Lightning fast boot times!
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -79,12 +81,12 @@ const AuthenticatedApp = () => {
         <Route element={<Layout />}>
           {/* Core App Pages (Immediate Load) - Protected */}
           <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
-          <Route path="/loans" element={<ProtectedLayout><LoansList /></ProtectedLayout>} />
-          <Route path="/add-loan" element={<ProtectedLayout><AddLoan /></ProtectedLayout>} />
-          <Route path="/loan/:id" element={<ProtectedLayout><LoanDetail /></ProtectedLayout>} />
-          <Route path="/bills" element={<ProtectedLayout><Bills /></ProtectedLayout>} />
-          <Route path="/onboarding" element={<ProtectedLayout><Onboarding /></ProtectedLayout>} />
-          <Route path="/remote-support" element={<ProtectedLayout><RemoteSupport /></ProtectedLayout>} />
+          <Route path="/loans" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><LoansList /></Suspense></ProtectedLayout>} />
+          <Route path="/add-loan" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><AddLoan /></Suspense></ProtectedLayout>} />
+          <Route path="/loan/:id" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><LoanDetail /></Suspense></ProtectedLayout>} />
+          <Route path="/bills" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Bills /></Suspense></ProtectedLayout>} />
+          <Route path="/onboarding" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></ProtectedLayout>} />
+          <Route path="/remote-support" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><RemoteSupport /></Suspense></ProtectedLayout>} />
 
           {/* Lazy App Pages (Protected from crashing with Suspense + Authentication) */}
           <Route path="/reminders" element={<ProtectedLayout><Suspense fallback={<PageLoader />}><Reminders /></Suspense></ProtectedLayout>} />

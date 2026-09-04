@@ -1,4 +1,4 @@
-import { Shield, Lock, AlertTriangle, Info, Landmark, Zap, Clock } from "lucide-react";
+import { Shield, Lock, AlertTriangle, Info, Landmark } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -90,30 +90,6 @@ export default function BankSyncNotice() {
             </p>
           </div>
         )}
-      </div>
-
-      {/* Coming Soon: Bank Sync */}
-      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Zap className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-sm font-semibold text-foreground">{T("automaticBankSync", "Automatic Bank Sync")}</p>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                {T("comingSoon", "Coming Soon")}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {T("bankSyncDesc", "We're working on secure, read-only bank connectivity via a regulated open-banking API (e.g. Plaid or a similar provider). When available, it will allow you to automatically import transactions and balances — with your explicit consent — without ever sharing your banking credentials with this app.")}
-            </p>
-            <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Clock className="w-3 h-3" />
-              <span>{T("plannedFutureRelease", "Planned for a future release — no release date confirmed yet.")}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
     </div>
