@@ -31,6 +31,7 @@ export default function TrendChart({ data, active, T, fmt, locale, currency }) {
         />
         <Tooltip
           formatter={(v, name) => [fmt(v), labelByKey[name] || name]}
+          labelFormatter={(label, payload) => payload?.[0]?.payload?.fullLabel || label}
           contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 11 }}
           labelStyle={{ fontWeight: 600 }}
         />

@@ -6,7 +6,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { SERIES, RANGES, buildMonthlySeries, isValidSeriesKey } from "@/utils/trendMath";
+import { SERIES, RANGES, buildMonthlySeries, buildCurrentMonthSeries, isValidSeriesKey } from "@/utils/trendMath";
 import RangeSelector from "@/components/trend/RangeSelector";
 import SeriesToggles from "@/components/trend/SeriesToggles";
 import TrendChart from "@/components/trend/TrendChart";
@@ -34,8 +34,10 @@ export default function MonthlyTrend() {
 
   const months = useMemo(() => RANGES.find((r) => r.key === range)?.months || 12, [range]);
   const data = useMemo(
-    () => buildMonthlySeries({ incomes, transactions, transactionSplits, payments }, months, locale),
-    [incomes, transactions, transactionSplits, payments, months, locale]
+    () => range === "month"
+      ? buildCurrentMonthSeries({ incomes, transactions, transactionSplits, payments }, locale)
+      : buildMonthlySeries({ incomes, transactions, transactionSplits, payments }, months, locale),
+    [range, incomes, transactions, transactionSplits, payments, months, locale]
   );
 
   const latest = data[data.length - 1];
@@ -79,7 +81,7 @@ export default function MonthlyTrend() {
           <div className="bg-card border border-border rounded-3xl p-5 mb-6">
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{T("currentNetFlow", "Current Net Flow")}</p>
             <p className="text-3xl font-bold font-heading text-foreground mb-1">{fmt(latestNet)}</p>
-            {data.length >= 2 && (
+            {range !== "month" && data.length >= 2 && (
               <p className={`text-sm font-medium ${delta >= 0 ? "text-primary" : "text-destructive"}`}>
                 {delta >= 0 ? "+" : ""}{fmt(delta)} {T("vsLastMonth", "vs last month")}
               </p>
@@ -126,7 +128,13 @@ export default function MonthlyTrend() {
             )}
           </div>
         ) : (
-          <MonthlyBreakdownTable data={data} active={active} T={T} fmt={fmt} />
+          <MonthlyBreakdownTable
+            data={data}
+            active={active}
+            T={T}
+            fmt={fmt}
+            title={range === "month" ? T("dailyBreakdown", "Daily Breakdown") : T("monthlyBreakdown", "Monthly Breakdown")}
+          />
         )}
       </motion.div>
     </div>

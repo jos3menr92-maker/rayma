@@ -1,12 +1,12 @@
 import { SERIES } from "@/utils/trendMath";
 
-export default function MonthlyBreakdownTable({ data, active, T, fmt }) {
+export default function MonthlyBreakdownTable({ data, active, T, fmt, title }) {
   const visible = SERIES.filter((s) => active.has(s.key));
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBreakdown", "Monthly Breakdown")}</h2>
+        <h2 className="text-sm font-semibold font-heading text-foreground">{title || T("monthlyBreakdown", "Monthly Breakdown")}</h2>
         <div className="flex flex-wrap gap-2">
           {visible.map((s) => (
             <span key={s.key} className="flex items-center gap-1 text-[9px] text-muted-foreground">
