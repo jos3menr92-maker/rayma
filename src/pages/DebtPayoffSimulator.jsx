@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingDown, DollarSign, Zap } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
-import { simulateWithExtra } from "@/utils/loanEngine";
+import { simulateWithExtra, monthlyObligation } from "@/utils/loanEngine";
 
 function calcAvalanche(loans) {
   return [...loans].sort((a, b) => (b.interest_rate || 0) - (a.interest_rate || 0));
@@ -21,9 +21,13 @@ function calcSnowball(loans) {
   return [...loans].sort((a, b) => (a.current_balance || 0) - (b.current_balance || 0));
 }
 
+// Weeks/biweeks → months, so payoff numbers stay comparable across frequencies
+const PERIODS_PER_YEAR = { weekly: 52, biweekly: 26, monthly: 12 };
+const periodsToMonths = (periods, freq) => periods * (12 / (PERIODS_PER_YEAR[freq] || 12));
+
 export default function DebtPayoffSimulator() {
   const { lang } = useLanguage();
-  const { formatCurrency: fmt, formatCurrencyValue: fmtFull } = useCurrency();
+  const { formatCurrency: fmt, formatCurrencyValue: fmtFull, formatCurrencyNoDecimal } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
   const { loans: allLoans } = useFinancialData();
   const [loans, setLoans] = useState([]);
@@ -39,22 +43,29 @@ export default function DebtPayoffSimulator() {
     setLoading(false);
   }, [allLoans]);
 
+  // Chart series names must match the Line dataKeys exactly (i18n-safe)
+  const seriesWithExtra = T("withExtraLabel", "With Extra");
+  const seriesBaseline = T("baselineLabel", "Baseline");
+
   const loan = loans.find(l => l.id === selectedLoan);
+  const loanFreq = loan?.payment_frequency || "monthly";
   const base = loan ? simulateWithExtra(loan, 0) : null;
   const boosted = loan ? simulateWithExtra(loan, extraPayment) : null;
 
-  const monthsSaved = base && boosted ? Math.max(0, (base.months || 0) - (boosted.months || 0)) : 0;
+  const monthsSaved = base && boosted && base.months && boosted.months
+    ? Math.max(0, Math.round(periodsToMonths(base.months - boosted.months, loanFreq)))
+    : 0;
   const interestSaved = base && boosted ? Math.max(0, (base.totalInterest || 0) - (boosted.totalInterest || 0)) : 0;
 
   const orderedLoans = strategy === "avalanche" ? calcAvalanche(loans) : calcSnowball(loans);
 
   const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
-  const totalMonthly = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const totalMonthly = loans.reduce((s, l) => s + monthlyObligation(l), 0);
 
   const chartData = boosted?.schedule.map((s, i) => ({
-    month: s.period,
-    [T("withExtraLabel", "With Extra")]: s.balance,
-    [T("baselineLabel", "Baseline")]: base?.schedule[i]?.balance ?? s.balance,
+    month: Math.round(periodsToMonths(s.period, loanFreq)),
+    [seriesWithExtra]: s.balance,
+    [seriesBaseline]: base?.schedule[i]?.balance ?? s.balance,
   })) || [];
 
   return (
@@ -103,7 +114,7 @@ export default function DebtPayoffSimulator() {
                 <div>
                   <Label>{T("extraMonthlyPayment", "Extra Monthly Payment")}: <span className="text-primary font-bold">{fmt(extraPayment)}</span></Label>
                   <Slider className="mt-2" min={0} max={1000} step={25} value={[extraPayment]} onValueChange={([v]) => setExtraPayment(v)} />
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>$0</span><span>$1,000</span></div>
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>{fmt(0)}</span><span>{fmt(1000)}</span></div>
                 </div>
               </CardContent>
             </Card>
@@ -133,14 +144,14 @@ export default function DebtPayoffSimulator() {
                   <Card className="bg-card border-border">
                     <CardContent className="p-3">
                       <p className="text-xs text-muted-foreground mb-1">{T("withoutExtraPayment", "Without Extra Payment")}</p>
-                      <p className="font-semibold text-foreground">{base.months ?? T("never", "Never")} {base.months ? T("months", "months") : ""}</p>
+                      <p className="font-semibold text-foreground">{base.months ? Math.round(periodsToMonths(base.months, loanFreq)) : T("never", "Never")} {base.months ? T("months", "months") : ""}</p>
                       <p className="text-muted-foreground text-xs">{fmt(base.totalInterest || 0)} {T("inInterest", "in interest")}</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-card border-primary/30 border">
                     <CardContent className="p-3">
                       <p className="text-xs text-muted-foreground mb-1">{T("withExtra", "With")} +{fmt(extraPayment)}/mo</p>
-                      <p className="font-semibold text-primary">{boosted.months ?? T("never", "Never")} {boosted.months ? T("months", "months") : ""}</p>
+                      <p className="font-semibold text-primary">{boosted.months ? Math.round(periodsToMonths(boosted.months, loanFreq)) : T("never", "Never")} {boosted.months ? T("months", "months") : ""}</p>
                       <p className="text-primary text-xs">{fmt(boosted.totalInterest || 0)} {T("inInterest", "in interest")}</p>
                     </CardContent>
                   </Card>
@@ -154,10 +165,10 @@ export default function DebtPayoffSimulator() {
                         <LineChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                           <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} label={{ value: T("monthsAxisLabel", "Months"), position: "insideBottom", offset: -2, fontSize: 10 }} />
-                          <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
+                          <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => formatCurrencyNoDecimal(v)} width={48} />
                           <Tooltip formatter={(v) => fmt(v)} contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 12 }} />
-                          <Line type="monotone" dataKey="Baseline" stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" dot={false} />
-                          <Line type="monotone" dataKey="With Extra" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                          <Line type="monotone" dataKey={seriesBaseline} stroke="hsl(var(--muted-foreground))" strokeDasharray="4 4" dot={false} />
+                          <Line type="monotone" dataKey={seriesWithExtra} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                         </LineChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -201,7 +212,7 @@ export default function DebtPayoffSimulator() {
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{i + 1}</div>
                       <div className="flex-1">
                         <p className="font-medium text-foreground text-sm">{l.name}</p>
-                        <p className="text-xs text-muted-foreground">{fmt(l.current_balance)} · {l.interest_rate || 0}% APR · {sim.months}{T("moToPayoff", "mo to payoff")}</p>
+                        <p className="text-xs text-muted-foreground">{fmt(l.current_balance)} · {l.interest_rate || 0}% APR · {sim.months ? Math.round(periodsToMonths(sim.months, l.payment_frequency || "monthly")) : "—"} {T("moToPayoff", "mo to payoff")}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">{T("interest", "Interest")}</p>
