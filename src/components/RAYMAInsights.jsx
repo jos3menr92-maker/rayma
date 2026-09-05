@@ -6,13 +6,15 @@ import {
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
+import { monthlyObligation } from "@/utils/loanEngine";
+import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
 
 const CACHE_KEY = "rayma_insights_cache";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
-function loadCache() {
+function loadCache(userKey) {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(`${CACHE_KEY}_${userKey}`);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Date.now() - parsed.timestamp > CACHE_TTL_MS) return null;
@@ -22,8 +24,8 @@ function loadCache() {
   }
 }
 
-function saveCache(insights) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify({ insights, timestamp: Date.now() }));
+function saveCache(insights, userKey) {
+  localStorage.setItem(`${CACHE_KEY}_${userKey}`, JSON.stringify({ insights, timestamp: Date.now() }));
 }
 
 export default function RAYMAInsights({ loans = [], bills = [], incomes = [], userProfile = null }) {
@@ -35,32 +37,28 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
   const [dismissed, setDismissed] = useState(false);
   const touchStartX = useRef(null);
 
+  // Per-user cache key — prevents a previous account's insights from leaking
+  // after a sign-out/sign-in on the same device.
+  const userKey = userProfile?.id || userProfile?.email || "guest";
   useEffect(() => {
-    const cached = loadCache();
+    const cached = loadCache(userKey);
     if (cached && cached.length > 0) {
       setInsights(cached);
     } else if (loans.length > 0 || bills.length > 0 || incomes.length > 0) {
       fetchInsights();
     }
-  }, [loans.length, bills.length, incomes.length]);
+  }, [userKey, loans.length, bills.length, incomes.length]);
 
   async function fetchInsights(force = false) {
     if (loading) return;
     setLoading(true);
     setDismissed(false);
 
-    const monthlyBills = bills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
-    const monthlyLoans = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + (Number(l.monthly_payment) || 0), 0);
-    // Normalize each entry to a monthly equivalent by its own frequency so a
-    // monthly paycheck isn't treated as a weekly one. Weekly case is unchanged.
-    const monthlyIncome = incomes.length > 0
-      ? incomes.reduce((s, i) => {
-          const amt = Number(i.amount) || 0;
-          const freq = i.frequency || i.recurring_frequency || "weekly";
-          const monthly = freq === "monthly" ? amt : freq === "biweekly" ? amt * 2.17 : amt * 4.33;
-          return s + monthly;
-        }, 0) / incomes.length
-      : 0;
+    const monthlyBills = bills.filter(b => b.is_active !== false).reduce((s, b) => s + monthlyBillAmount(b), 0);
+    const monthlyLoans = loans.filter(l => l.status !== "paid_off").reduce((s, l) => s + monthlyObligation(l), 0);
+    // Same income definition as the Dashboard (this month's real income entries)
+    const now = new Date();
+    const monthlyIncome = incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
     
     let localAlerts = [];
     const totalObligations = monthlyBills + monthlyLoans;
@@ -91,7 +89,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
       dti: monthlyIncome > 0 ? Math.round((totalObligations / monthlyIncome) * 100) : null,
       loans: loans.filter(l => l.status !== "paid_off").map(l => ({
         name: l.name, balance: l.current_balance, apr: l.interest_rate,
-        monthly: l.monthly_payment, category: l.category
+        monthly: monthlyObligation(l), category: l.category
       })),
       bills: bills.map(b => ({ name: b.name, amount: b.amount, frequency: b.payment_frequency, due_day: b.due_day })),
       incomes: incomes.map(i => ({ amount: i.amount, frequency: i.frequency || i.recurring_frequency, source: i.source }))
@@ -113,7 +111,7 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
     if (combinedList.length > 0) {
       setInsights(combinedList);
       setIndex(0);
-      saveCache(combinedList);
+      saveCache(combinedList, userKey);
     }
     setLoading(false);
   }

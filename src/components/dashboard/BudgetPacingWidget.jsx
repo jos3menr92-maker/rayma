@@ -1,12 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClientFrontend";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { motion } from "framer-motion";
 import { PieChart as PieChartIcon, ChevronRight } from "lucide-react";
-import { startOfMonth, endOfMonth, isWithinInterval, parseISO, format } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
 
 // 🕐 Same pacing logic as BudgetDashboard.jsx
 function getPacingStatus(spent, limit, dayOfMonth, daysInMonth) {
@@ -24,25 +23,9 @@ export default function BudgetPacingWidget() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
   const navigate = useNavigate();
-  const { supaUser } = useFinancialData();
-  const [budgets, setBudgets] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!supaUser?.id) { setLoading(false); return; }
-    const now = new Date();
-    const ms = startOfMonth(now);
-    const me = endOfMonth(now);
-    Promise.all([
-      supabase.from("budget_categories").select("*").eq("user_id", supaUser.id),
-      supabase.from("transactions").select("*").eq("user_id", supaUser.id).gte("date", format(ms, "yyyy-MM-dd")).lte("date", format(me, "yyyy-MM-dd")),
-    ]).then(([catRes, txRes]) => {
-      if (catRes.data) setBudgets(catRes.data);
-      if (txRes.data) setTransactions(txRes.data);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, [supaUser?.id]);
+  // Uses the shared FinancialDataContext — same data as every other widget,
+  // so it stays in sync via realtime instead of its own one-shot fetch.
+  const { budgetCategories: budgets, transactions } = useFinancialData();
 
   const { onTrack, watchOut, overPace, totalBudgeted, totalSpent, worstColor } = useMemo(() => {
     const now = new Date();
@@ -73,7 +56,7 @@ export default function BudgetPacingWidget() {
     return { onTrack, watchOut, overPace, totalBudgeted, totalSpent, worstColor: worst };
   }, [budgets, transactions]);
 
-  if (loading || budgets.length === 0) return null;
+  if (budgets.length === 0) return null;
 
   const overallPct = totalBudgeted > 0 ? Math.min((totalSpent / totalBudgeted) * 100, 100) : 0;
   const summaryParts = [];

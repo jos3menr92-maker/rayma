@@ -15,6 +15,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 import { useT } from "@/lib/LanguageContext";
 import { monthlyObligation } from "@/utils/loanEngine";
+import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
 import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
 import ExpenseBreakdownCard from "../components/dashboard/ExpenseBreakdownCard";
 
@@ -62,27 +63,19 @@ export default function Dashboard() {
 
   // Pull-to-refresh is provided by the usePullToRefresh hook (see pullHandlers).
 
-  const { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal } = useMemo(() => {
+  const { activeLoans, totalRemaining, monthlyLoans, monthlyBills, monthlyTotal } = useMemo(() => {
     const activeLoans = loans.filter((l) => l.status !== "paid_off");
-    const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
     const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || l.remaining_balance || 0), 0);
-    const totalPaid = totalDebt - totalRemaining;
     const monthlyLoans = activeLoans.reduce((s, l) => s + monthlyObligation(l), 0);
-    const monthlyBills = bills.filter((b) => b.is_active !== false).reduce((s, b) => s + (b.amount || 0), 0);
+    const monthlyBills = bills.filter((b) => b.is_active !== false).reduce((s, b) => s + monthlyBillAmount(b), 0);
     const monthlyTotal = monthlyLoans + monthlyBills;
-    
-    return { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal };
+
+    return { activeLoans, totalRemaining, monthlyLoans, monthlyBills, monthlyTotal };
   }, [loans, bills]);
 
   const monthlyIncome = useMemo(() => {
-    if (incomes.length === 0) return 0;
     const now = new Date();
-    const thisMonthIncomes = incomes.filter((i) => {
-      if (!i.week_start) return false;
-      const d = new Date(i.week_start + "T00:00:00");
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
-    return thisMonthIncomes.reduce((s, i) => s + (i.amount || 0), 0);
+    return incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
   }, [incomes]);
   const cashLeft = monthlyIncome - (monthlyTotal || 0);
 

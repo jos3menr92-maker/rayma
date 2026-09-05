@@ -5,6 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { monthlyObligation } from "@/utils/loanEngine";
+import { monthlyBillAmount } from "@/utils/financeMath";
 
 const COLORS = [
   "hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))",
@@ -68,7 +69,7 @@ export default function ExpenseBreakdownCard({ loans, bills }) {
     const byCategory = {};
     activeBills.forEach((b) => {
       const key = b.category || "other";
-      byCategory[key] = (byCategory[key] || 0) + (b.amount || 0);
+      byCategory[key] = (byCategory[key] || 0) + monthlyBillAmount(b);
     });
     const slices = Object.entries(byCategory)
       .filter(([, v]) => v > 0)

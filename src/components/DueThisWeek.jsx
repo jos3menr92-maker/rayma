@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { CalendarCheck, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
+import { paymentPerPeriod } from "@/utils/loanEngine";
+import { toast } from "@/components/ui/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -9,7 +11,7 @@ import { t } from "@/lib/i18n";
 const DOW_ORDER = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 export default function DueThisWeek({ loans, bills }) {
-  const { payBill, payLoan, reload } = useFinancialData();
+  const { payBill, payLoan, reload, payments } = useFinancialData();
   const [payingId, setPayingId] = useState(null);
 
   const handlePay = async (item) => {
@@ -24,6 +26,7 @@ export default function DueThisWeek({ loans, bills }) {
       reload();
     } catch(err) {
       console.error(err);
+      toast({ title: T("toastPaymentFailed", "Payment failed"), variant: "destructive" });
     }
     setPayingId(null);
   };
@@ -45,12 +48,24 @@ export default function DueThisWeek({ loans, bills }) {
 
     const result = [];
 
+    // Loans have no last_paid_date — use the payments history instead.
+    const loanPaidThisMonth = (loanId) => (payments || []).some(p => {
+      if (p.payment_type !== "loan" || p.loan_id !== loanId || !p.payment_date) return false;
+      const d = new Date(p.payment_date + "T00:00:00");
+      return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    });
+    const loanPaidRecently = (loanId, days) => (payments || []).some(p => {
+      if (p.payment_type !== "loan" || p.loan_id !== loanId || !p.payment_date) return false;
+      return (today.getTime() - new Date(p.payment_date + "T00:00:00").getTime()) <= days * 24 * 60 * 60 * 1000;
+    });
+
     loans.forEach(loan => {
       if (!loan.due_day || loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly") return;
+      if (loanPaidThisMonth(loan.id)) return;
       const dueDate = new Date(today.getFullYear(), today.getMonth(), loan.due_day);
       if (dueDate >= weekStart && dueDate <= weekEnd) {
         const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-        result.push({ id: loan.id, name: loan.name, amount: loan.monthly_payment, type: "loan", daysUntil: diffDays, dueDate });
+        result.push({ id: loan.id, name: loan.name, amount: paymentPerPeriod(loan), type: "loan", daysUntil: diffDays, dueDate });
       }
     });
 
@@ -58,9 +73,10 @@ export default function DueThisWeek({ loans, bills }) {
       if ((loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly") && loan.due_day_of_week) {
         const dueDayIdx = DOW_ORDER.indexOf(loan.due_day_of_week);
         if (dueDayIdx === -1) return;
+        if (loanPaidRecently(loan.id, loan.payment_frequency === "weekly" ? 6 : 13)) return;
         const diffDays = (dueDayIdx - dayOfWeek + 7) % 7;
         if (diffDays <= 6) {
-          result.push({ id: loan.id, name: loan.name, amount: loan.monthly_payment, type: "loan", daysUntil: diffDays });
+          result.push({ id: loan.id, name: loan.name, amount: paymentPerPeriod(loan), type: "loan", daysUntil: diffDays });
         }
       }
     });
@@ -92,7 +108,7 @@ export default function DueThisWeek({ loans, bills }) {
     });
 
     return result.sort((a, b) => a.daysUntil - b.daysUntil);
-  }, [loans, bills]);
+  }, [loans, bills, payments]);
 
   if (items.length === 0) return null;
 

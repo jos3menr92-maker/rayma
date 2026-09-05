@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useLanguage, useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getMonthName, getWeekdayNames } from "@/utils/formatLocalized";
+import { paymentPerPeriod } from "@/utils/loanEngine";
 
 export default function MiniCalendar({ bills, loans, userProfile }) {
   const { lang, locale } = useLanguage();
@@ -27,23 +28,42 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
     return parseInt(dateStr.split('T')[0].split('-')[2], 10);
   };
 
-  // Build day map: bills, loans, paydays
+  // Build day map: bills, loans, paydays.
+  // Weekly/biweekly items are marked on every matching weekday of the month
+  // (at their per-period amount); monthly items on their due day.
+  const DOW_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const dayMap = {};
-  
-  bills.forEach(b => {
-    const day = extractDay(b.due_date) || b.due_day;
-    if (day) {
-      if (!dayMap[day]) dayMap[day] = [];
-      dayMap[day].push({ ...b, _type: "bill" });
+
+  const addToDay = (day, item) => {
+    if (!day) return;
+    if (!dayMap[day]) dayMap[day] = [];
+    dayMap[day].push(item);
+  };
+
+  (bills || []).filter(b => b.is_active !== false).forEach(b => {
+    const item = { ...b, _type: "bill", _amount: b.amount || 0 };
+    if (b.payment_frequency === "weekly" || b.payment_frequency === "biweekly") {
+      const dow = DOW_NAMES.indexOf(b.due_day_of_week);
+      if (dow === -1) return;
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (new Date(year, month, d).getDay() === dow) addToDay(d, item);
+      }
+      return;
     }
+    addToDay(extractDay(b.due_date) || b.due_day, item);
   });
 
-  loans.forEach(l => {
-    const day = extractDay(l.due_date) || l.due_day;
-    if (day) {
-      if (!dayMap[day]) dayMap[day] = [];
-      dayMap[day].push({ ...l, _type: "loan" });
+  (loans || []).forEach(l => {
+    const item = { ...l, _type: "loan", _amount: paymentPerPeriod(l) };
+    if (l.payment_frequency === "weekly" || l.payment_frequency === "biweekly") {
+      const dow = DOW_NAMES.indexOf(l.due_day_of_week);
+      if (dow === -1) return;
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (new Date(year, month, d).getDay() === dow) addToDay(d, item);
+      }
+      return;
     }
+    addToDay(extractDay(l.due_date) || l.due_day, item);
   });
 
   // Payday markers
@@ -72,7 +92,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
 
   const selectedItems = selectedDay ? (dayMap[selectedDay] || []) : [];
   const isPayday = selectedDay && payDays.includes(selectedDay);
-  const totalDue = selectedItems.reduce((s, x) => s + (x._type === "bill" ? (x.amount || 0) : (x.monthly_payment || 0)), 0);
+  const totalDue = selectedItems.reduce((s, x) => s + (x._amount || 0), 0);
 
   const categoryIcons = {
     utilities: "⚡", subscriptions: "📱", insurance: "🛡️",
@@ -176,10 +196,10 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-foreground">{item.name}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground capitalize">{item._type === "loan" ? T("loanPayment", "Loan payment") : item.category}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground capitalize">{item._type === "loan" ? T("loanPayment", "Loan payment") : T(`billCategory_${item.category}`, (item.category || "other").replace(/_/g, " "))}</p>
                 </div>
               </div>
-              <span className="text-sm font-bold text-destructive">{fmt(item._type === "bill" ? item.amount : item.monthly_payment)}</span>
+              <span className="text-sm font-bold text-destructive">{fmt(item._amount)}</span>
             </div>
           ))}
         </motion.div>

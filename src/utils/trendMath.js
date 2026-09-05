@@ -66,6 +66,8 @@ function aggregateSources({ incomes = [], transactions = [], transactionSplits =
   };
 
   incomes.forEach((inc) => {
+    // Recurring templates are not income events — their auto-logged clones are.
+    if (inc.is_recurring) return;
     const d = parseDay(inc.week_start);
     const k = d && keyOf(d);
     if (k) get(k).income += inc.amount || 0;

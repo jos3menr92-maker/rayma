@@ -3,6 +3,8 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
+import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyObligation } from "@/utils/loanEngine";
 import { getMonthName } from "@/utils/formatLocalized";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -13,7 +15,7 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3
 export default function MonthlyRecap() {
   const { incomes, payments, bills, loans, loading } = useFinancialData();
   const { lang, locale } = useLanguage();
-  const { formatCurrency: fmt } = useCurrency();
+  const { formatCurrency: fmt, currency } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
   const now = new Date();
@@ -22,11 +24,11 @@ export default function MonthlyRecap() {
   const monthName = getMonthName(currentMonth, locale, "long");
 
   const thisMonthIncomes = useMemo(() => incomes.filter(i => {
-    if (!i.week_start) return false;
+    if (i.is_recurring || !i.week_start) return false;
     const d = new Date(i.week_start + "T00:00:00");
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }), [incomes, currentMonth, currentYear]);
-  const totalIncome = useMemo(() => thisMonthIncomes.reduce((s, i) => s + (i.amount || 0), 0), [thisMonthIncomes]);
+  const totalIncome = useMemo(() => incomeTotalForMonth(incomes, currentYear, currentMonth), [incomes, currentYear, currentMonth]);
 
   const thisMonthPayments = useMemo(() => (payments || []).filter(p => {
     if (!p.payment_date) return false;
@@ -40,19 +42,31 @@ export default function MonthlyRecap() {
   const activeBills = useMemo(() => bills.filter(x => x.is_active !== false), [bills]);
   const activeLoans = useMemo(() => loans.filter(x => x.status !== "paid_off"), [loans]);
   const monthlyExpenses = useMemo(() =>
-    activeBills.reduce((s, b) => s + (b.amount || 0), 0) + activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0),
+    activeBills.reduce((s, b) => s + monthlyBillAmount(b), 0) + activeLoans.reduce((s, l) => s + monthlyObligation(l), 0),
   [activeBills, activeLoans]);
   const cashFlow = useMemo(() => totalIncome - monthlyExpenses, [totalIncome, monthlyExpenses]);
 
+  // Previous-month figures for the delta chips (real income + actual payments)
+  const prevIncome = useMemo(() => {
+    const d = new Date(currentYear, currentMonth - 1, 1);
+    return incomeTotalForMonth(incomes, d.getFullYear(), d.getMonth());
+  }, [incomes, currentMonth, currentYear]);
+  const prevPaid = useMemo(() => {
+    const d = new Date(currentYear, currentMonth - 1, 1);
+    return (payments || []).filter(p => {
+      if (!p.payment_date) return false;
+      const pd = new Date(p.payment_date + "T00:00:00");
+      return pd.getMonth() === d.getMonth() && pd.getFullYear() === d.getFullYear();
+    }).reduce((s, p) => s + (p.amount || 0), 0);
+  }, [payments, currentMonth, currentYear]);
+  const delta = (cur, prev) => (prev > 0 && cur !== prev) ? `${cur > prev ? "↑" : "↓"} ${Math.round(Math.abs((cur - prev) / prev) * 100)}%` : "";
+
+  // One consistent definition for every month: income = real income entries,
+  // expenses = payments actually made (no planned-vs-actual mixing).
   const last6 = useMemo(() => Array.from({ length: 6 }, (_, i) => {
     const d = new Date(currentYear, currentMonth - (5 - i), 1);
     const m = d.getMonth();
     const y = d.getFullYear();
-    const monthIncomes = incomes.filter(inc => {
-      if (!inc.week_start) return false;
-      const id = new Date(inc.week_start + "T00:00:00");
-      return id.getMonth() === m && id.getFullYear() === y;
-    });
     const monthPayments = (payments || []).filter(p => {
       if (!p.payment_date) return false;
       const pd = new Date(p.payment_date + "T00:00:00");
@@ -60,16 +74,14 @@ export default function MonthlyRecap() {
     });
     return {
       month: getMonthName(m, locale, "short"),
-      income: monthIncomes.reduce((s, x) => s + (x.amount || 0), 0),
-      expenses: (m === currentMonth && y === currentYear)
-        ? monthlyExpenses
-        : monthPayments.reduce((s, x) => s + (x.amount || 0), 0),
+      income: incomeTotalForMonth(incomes, y, m),
+      expenses: monthPayments.reduce((s, x) => s + (x.amount || 0), 0),
     };
-  }), [incomes, payments, currentMonth, currentYear, monthlyExpenses, locale]);
+  }), [incomes, payments, currentMonth, currentYear, locale]);
 
   const billPieData = useMemo(() => Object.entries(activeBills.reduce((acc, b) => {
     const key = b.category || "other";
-    acc[key] = (acc[key] || 0) + (b.amount || 0);
+    acc[key] = (acc[key] || 0) + monthlyBillAmount(b);
     return acc;
   }, {})).map(([name, value]) => ({ name, value })), [activeBills]);
 
@@ -92,7 +104,7 @@ export default function MonthlyRecap() {
           <div className="bg-card border border-border rounded-2xl p-4">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("incomeLogged", "Income Logged")}</p>
             <p className="text-xl font-bold font-heading text-primary">{fmt(totalIncome)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{thisMonthIncomes.length} {T("entries", "entries")}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{thisMonthIncomes.length} {T("entries", "entries")}{delta(totalIncome, prevIncome) ? ` · ${delta(totalIncome, prevIncome)}` : ""}</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-4">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("fixedExpenses", "Fixed Expenses")}</p>
@@ -123,10 +135,25 @@ export default function MonthlyRecap() {
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("paymentsMade", "Payments Made")}</p>
             <p className="text-xl font-bold font-heading text-foreground">{fmt(totalPaid)}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {loansPaid} {loansPaid === 1 ? T("loanSingular", "loan") : T("loans", "loans")} · {billsPaid} {billsPaid === 1 ? T("billSingular", "bill") : T("bills", "bills")}
+              {loansPaid} {loansPaid === 1 ? T("loanSingular", "loan") : T("loans", "loans")} · {billsPaid} {billsPaid === 1 ? T("billSingular", "bill") : T("bills", "bills")}{delta(totalPaid, prevPaid) ? ` · ${delta(totalPaid, prevPaid)}` : ""}
             </p>
           </div>
         </div>
+
+        {monthlyExpenses > 0 && (
+          <div className="bg-card border border-border rounded-2xl p-4 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold font-heading text-foreground">{T("plannedVsPaid", "Planned vs Paid")}</h2>
+              <span className="text-xs font-semibold text-foreground">{fmt(Math.min(totalPaid, monthlyExpenses))} / {fmt(monthlyExpenses)}</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${Math.min((totalPaid / monthlyExpenses) * 100, 100)}%` }} />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              {T("paidSoFar", "You've paid {paid} of {planned} in fixed obligations this month.").replace("{paid}", fmt(totalPaid)).replace("{planned}", fmt(monthlyExpenses))}
+            </p>
+          </div>
+        )}
 
         <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-2">
           <h2 className="text-sm font-semibold font-heading text-foreground mb-3">{T("monthHighlights", "Month Highlights")}</h2>
@@ -164,7 +191,7 @@ export default function MonthlyRecap() {
               <BarChart data={last6} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} width={36} />
+                <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} tickFormatter={v => new Intl.NumberFormat(locale, { style: "currency", currency, notation: "compact", maximumFractionDigits: 1 }).format(v)} width={44} />
                 <Tooltip formatter={(v, n) => [fmt(v), n === "income" ? T("income", "Income") : T("expensesLabel", "Expenses")]} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
                 <Bar dataKey="income" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
                 <Bar dataKey="expenses" fill="hsl(var(--destructive))" opacity={0.6} radius={[4,4,0,0]} />
@@ -185,7 +212,7 @@ export default function MonthlyRecap() {
                 <div key={item.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="text-sm text-foreground capitalize">{item.name.replace(/_/g, " ")}</span>
+                    <span className="text-sm text-foreground capitalize">{T(`billCategory_${item.name}`, item.name.replace(/_/g, " "))}</span>
                   </div>
                   <span className="text-sm font-semibold text-foreground">{fmt(item.value)}</span>
                 </div>
