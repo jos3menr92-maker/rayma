@@ -5,10 +5,9 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import RAYMAExpiryBanner from "../components/RAYMAExpiryBanner";
 import RAYMAInsights from "../components/RAYMAInsights";
 import MiniCalendar from "../components/calendar/MiniCalendar";
-import { Wallet, TrendingDown, TrendingUp, CreditCard, CalendarDays, BarChart2, ChevronRight, Store } from "lucide-react";
+import { CalendarDays, BarChart2, ChevronRight, Store, Calculator } from "lucide-react";
 import { getInitialsColor } from "@/components/AvatarPicker";
 import FinancialHealthScore from "../components/FinancialHealthScore";
-import StatsCard from "../components/StatsCard";
 import DueThisWeek from "../components/DueThisWeek";
 import { motion } from "framer-motion";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -175,21 +174,6 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
 
       <RAYMAExpiryBanner user={userProfile} />
 
-      <BudgetPacingWidget />
-
-      {monthlyIncome > 0 && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`rounded-2xl border px-4 py-3 mb-4 flex items-center justify-between ${cashLeft >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}>
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("cashLeft", "Cash Left This Month")}</p>
-            <p className={`text-xl font-bold font-heading ${cashLeft >= 0 ? "text-primary" : "text-destructive"}`}>{formatCurrency(Math.abs(cashLeft))}</p>
-          </div>
-          <div className="text-right text-xs text-muted-foreground">
-            <p>{formatCurrency(monthlyIncome)} {T("income", "income")}</p>
-            <p>− {formatCurrency(monthlyTotal)} {T("obligations", "obligations")}</p>
-          </div>
-        </motion.div>
-      )}
-
       <div className="mb-5" id="monthly-bills-section">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBills", "Monthly Bills")}</h2>
@@ -236,8 +220,30 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
       </div>
 
       <DueThisWeek loans={activeLoans} bills={bills} />
-      <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
       <RAYMAInsights loans={activeLoans} bills={bills} incomes={incomes} userProfile={userProfile} />
+
+      <BudgetPacingWidget />
+
+      {monthlyIncome > 0 && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`rounded-2xl border px-4 py-3 mb-4 flex items-center justify-between ${cashLeft >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("cashLeft", "Cash Left This Month")}</p>
+            <p className={`text-xl font-bold font-heading ${cashLeft >= 0 ? "text-primary" : "text-destructive"}`}>{formatCurrency(Math.abs(cashLeft))}</p>
+          </div>
+          <div className="text-right text-xs text-muted-foreground">
+            <p>{formatCurrency(monthlyIncome)} {T("income", "income")}</p>
+            <p>− {formatCurrency(monthlyTotal)} {T("obligations", "obligations")}</p>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
+        <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("expenseBreakdown", "Expense Breakdown")}</h2>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <MiniPie title={T("totalMonthly", "Total Monthly")} data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
+          <MiniPie title={T("loanBalances", "Loan Balances")} data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
+        </div>
+      </div>
       
       <div id="financial-health-score">
         <FinancialHealthScore />
@@ -256,26 +262,14 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><Store className="w-4 h-4 text-primary" /></div>
           <div><p className="text-xs font-semibold text-foreground">{T("merchantInsights", "Merchant Insights")}</p><p className="text-[10px] text-muted-foreground">{T("spendingByMerchant", "Spending by merchant")}</p></div>
         </button>
-        <button onClick={() => navigate("/loans")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
-          <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0"><CreditCard className="w-4 h-4 text-destructive" /></div>
-          <div><p className="text-xs font-semibold text-foreground">{T("loans", "Loans & Debt")}</p><p className="text-[10px] text-muted-foreground">{T("manageActiveLoans", "Manage your active loans")}</p></div>
+        <button onClick={() => navigate("/debt-simulator")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
+          <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0"><Calculator className="w-4 h-4 text-destructive" /></div>
+          <div><p className="text-xs font-semibold text-foreground">{T("debtSimulator", "Debt Simulator")}</p><p className="text-[10px] text-muted-foreground">{T("payoffStrategies", "Compare payoff strategies")}</p></div>
         </button>
       </div>
 
-      <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
-        <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("expenseBreakdown", "Expense Breakdown")}</h2>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <MiniPie title={T("totalMonthly", "Total Monthly")} data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
-          <MiniPie title={T("loanBalances", "Loan Balances")} data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
-        </div>
-      </div>
+      <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
 
-      <div className="grid grid-cols-2 gap-2 mb-4">
-        <div onClick={() => navigate("/trend?series=debtPaid")} className="cursor-pointer"><StatsCard label={T("totalDebt", "Total Debt")} value={formatCurrency(totalDebt)} icon={Wallet} color="destructive" /></div>
-        <div onClick={() => navigate("/trend?series=debtPaid")} className="cursor-pointer"><StatsCard label={T("remaining", "Remaining")} value={formatCurrency(totalRemaining)} icon={TrendingDown} color="accent" /></div>
-        <div onClick={() => navigate("/trend?series=debtPaid,billsPaid")} className="cursor-pointer"><StatsCard label={T("totalPaid", "Total Paid")} value={formatCurrency(totalPaid)} icon={TrendingUp} color="primary" /></div>
-        <div onClick={() => navigate("/trend?series=billsPaid,debtPaid")} className="cursor-pointer"><StatsCard label={T("monthlyDue", "Monthly Due")} value={formatCurrency(monthlyTotal)} icon={CreditCard} color="muted" /></div>
-      </div>
     </div>
   );
 }
