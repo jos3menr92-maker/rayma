@@ -30,6 +30,11 @@ ALTER TABLE net_worth_snapshots ADD COLUMN IF NOT EXISTS total_assets NUMERIC;
 ALTER TABLE net_worth_snapshots ADD COLUMN IF NOT EXISTS total_liabilities NUMERIC;
 ALTER TABLE loans ADD COLUMN IF NOT EXISTS payment_amount_type TEXT DEFAULT 'per_period';
 ALTER TABLE loans ADD COLUMN IF NOT EXISTS loan_type_attributes JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS term_months INTEGER;
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS start_date DATE;
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS due_day INTEGER;
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS due_day_of_week TEXT;
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
 
 -- Bug 1 fix: unique constraint so concurrent duplicate-payment inserts are
 -- rejected atomically at the DB level (manageFinancialRecord surfaces a 409).
