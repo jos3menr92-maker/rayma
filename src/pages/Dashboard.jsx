@@ -13,10 +13,10 @@ import { motion } from "framer-motion";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useT } from "@/lib/LanguageContext";
 import { monthlyObligation } from "@/utils/loanEngine";
 import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
+import ExpenseBreakdownCard from "../components/dashboard/ExpenseBreakdownCard";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -36,37 +36,10 @@ const HUMAN_AVATARS = [
   { id: "face15", url: "https://i.pravatar.cc/150?img=60" },
 ];
 
-const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))"];
-
 const iconMap = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️", rent: "🏠", food: "🍔", transport: "🚗", 
   health: "🏥", mortgage: "🏠", auto: "🚗", student: "🎓", personal: "💰", credit_card: "💳", medical: "🏥", other: "📋"
 };
-
-function MiniPie({ title, data, total, innerRadius = 30, outerRadius = 52, height = 140, formatCurrency }) {
-  const T = useT();
-  const fmt = formatCurrency || ((v) => `$${Math.round(v || 0).toLocaleString()}`);
-  return (
-    <div className="flex flex-col items-center">
-      {data.length === 0 ? (
-        <div style={{ height }} className="flex items-center justify-center">
-          <p className="text-xs text-muted-foreground">{T("noData", "No data")}</p>
-        </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={height}>
-          <PieChart>
-            <Pie data={data} cx="50%" cy="50%" innerRadius={innerRadius} outerRadius={outerRadius} paddingAngle={2} dataKey="value">
-              {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-            </Pie>
-            <Tooltip formatter={(v) => fmt(v)} />
-          </PieChart>
-        </ResponsiveContainer>
-      )}
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium text-center mt-1">{title}</p>
-      <p className="text-sm font-bold font-heading text-foreground">{fmt(total)}</p>
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -89,7 +62,7 @@ export default function Dashboard() {
 
   // Pull-to-refresh is provided by the usePullToRefresh hook (see pullHandlers).
 
-  const { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal, expensePieData, loansPieData } = useMemo(() => {
+  const { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal } = useMemo(() => {
     const activeLoans = loans.filter((l) => l.status !== "paid_off");
     const totalDebt = activeLoans.reduce((s, l) => s + (l.original_amount || 0), 0);
     const totalRemaining = activeLoans.reduce((s, l) => s + (l.current_balance || l.remaining_balance || 0), 0);
@@ -98,10 +71,7 @@ export default function Dashboard() {
     const monthlyBills = bills.filter((b) => b.is_active !== false).reduce((s, b) => s + (b.amount || 0), 0);
     const monthlyTotal = monthlyLoans + monthlyBills;
     
-    return { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal,
-      expensePieData: [...(monthlyLoans > 0 ? [{ name: "Loan Payments", value: monthlyLoans }] : []), ...(monthlyBills > 0 ? [{ name: "Bills", value: monthlyBills }] : [])],
-      loansPieData: activeLoans.map(l => ({ name: l.name || "Unnamed Loan", value: l.current_balance || l.remaining_balance || 0 })),
-    };
+    return { activeLoans, totalDebt, totalRemaining, totalPaid, monthlyLoans, monthlyBills, monthlyTotal };
   }, [loans, bills]);
 
   const monthlyIncome = useMemo(() => {
@@ -237,13 +207,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         </motion.div>
       )}
 
-      <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
-        <h2 className="text-sm font-semibold font-heading text-foreground mb-4">{T("expenseBreakdown", "Expense Breakdown")}</h2>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <MiniPie title={T("totalMonthly", "Total Monthly")} data={expensePieData} total={monthlyTotal} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
-          <MiniPie title={T("loanBalances", "Loan Balances")} data={loansPieData} total={totalRemaining} innerRadius={42} outerRadius={68} height={170} formatCurrency={formatCurrency} />
-        </div>
-      </div>
+      <ExpenseBreakdownCard loans={activeLoans} bills={bills} />
       
       <div id="financial-health-score">
         <FinancialHealthScore />
