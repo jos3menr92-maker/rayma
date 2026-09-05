@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, AlertCircle, Calendar, DollarSign, Trash2, Pencil } from "lucide-react";
+import { AlertCircle, Calendar, DollarSign, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -57,7 +57,6 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
                   {T("paidCheck", "✓ Paid")}
                 </span>
               )}
-              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
           </div>
 
@@ -93,15 +92,6 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
           >
             <DollarSign className={`w-4 h-4 ${paying ? "animate-pulse" : ""}`} />
             {paying ? T("paying", "Paying") : T("pay", "Pay")}
-          </button>
-          <div className="w-px bg-border" />
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onEdit?.(loan); }}
-            className="flex-1 h-10 flex items-center justify-center gap-1.5 text-muted-foreground font-semibold text-xs hover:bg-muted active:bg-muted/70 transition-colors"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            {T("editBtn", "Edit")}
           </button>
           {onDelete && (
             <>

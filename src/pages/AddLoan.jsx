@@ -7,6 +7,7 @@ import { ChevronLeft, Save, AlertTriangle, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { createRecord } from "@/lib/supabaseHelpers";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -18,16 +19,16 @@ import LoanTypeAttributesFields from "@/components/LoanTypeAttributesFields";
 const DOW = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const CATEGORIES = [
-  { value: "mortgage", emoji: "🏠" },
-  { value: "auto", emoji: "🚗" },
-  { value: "student", emoji: "🎓" },
-  { value: "personal", emoji: "💰" },
-  { value: "credit_card", emoji: "💳" },
-  { value: "line_of_credit", emoji: "🏦" },
-  { value: "lease", emoji: "🔑" },
-  { value: "bankruptcy", emoji: "⚖️" },
-  { value: "medical", emoji: "🏥" },
-  { value: "other", emoji: "📋" },
+  { value: "mortgage", emoji: "🏠", key: "catMortgage" },
+  { value: "auto", emoji: "🚗", key: "catAuto" },
+  { value: "student", emoji: "🎓", key: "catStudent" },
+  { value: "personal", emoji: "💰", key: "catPersonal" },
+  { value: "credit_card", emoji: "💳", key: "catCreditCard" },
+  { value: "line_of_credit", emoji: "🏦", key: "catLineOfCredit" },
+  { value: "lease", emoji: "🔑", key: "catLease" },
+  { value: "bankruptcy", emoji: "⚖️", key: "catBankruptcy" },
+  { value: "medical", emoji: "🏥", key: "catMedical" },
+  { value: "other", emoji: "📋", key: "catOther" },
 ];
 
 export default function AddLoan() {
@@ -184,7 +185,7 @@ export default function AddLoan() {
             <SelectContent>
               {CATEGORIES.map((c) => (
                 <SelectItem key={c.value} value={c.value}>
-                  {c.emoji} {T(`cat_${c.value}`, c.value)}
+                  {c.emoji} {T(c.key, c.value)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -349,6 +350,16 @@ export default function AddLoan() {
             </Select>
           </div>
         )}
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-semibold text-foreground">{T("notes", "Notes")}</Label>
+          <Textarea
+            value={form.notes}
+            onChange={(e) => handleChange("notes", e.target.value)}
+            className="rounded-2xl bg-card border-border"
+            rows={2}
+          />
+        </div>
 
         <LoanTypeAttributesFields
           category={form.category}
