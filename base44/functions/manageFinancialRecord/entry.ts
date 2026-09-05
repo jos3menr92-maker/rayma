@@ -298,8 +298,9 @@ Deno.serve(async (req) => {
       }
       let query;
       if (table === 'profiles') {
-        // profiles table uses 'user_id' as the user ID column
-        query = supabaseAdmin.from(table).update(sanitized).eq('user_id', uid);
+        // profiles table is keyed by the Supabase auth user UUID in the 'id' column
+        // (matches how FinancialDataContext / syncSupabaseUser read it)
+        query = supabaseAdmin.from(table).update(sanitized).eq('id', uid);
       } else {
         if (!record_id) return Response.json({ error: 'record_id is required for update' }, { status: 400 });
         query = supabaseAdmin.from(table).update(sanitized).eq('id', record_id).eq('user_id', uid);
