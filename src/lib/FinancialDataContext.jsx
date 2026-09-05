@@ -42,6 +42,7 @@ export function FinancialDataProvider({ children }) {
   // ✅ NEW: Global split transaction container
   const [transactionSplits, setTransactionSplits] = useState([]);
   const [budgetCategories, setBudgetCategories] = useState([]);
+  const [netWorthSnapshots, setNetWorthSnapshots] = useState([]);
 
   const [userProfile, setUserProfile] = useState(null);
   const [supaUser, setSupaUser] = useState(null);
@@ -114,6 +115,7 @@ export function FinancialDataProvider({ children }) {
             setDocuments(d.documents || []);
             setBudgetCategories(d.budget_categories || []);
             setTransactionSplits(d.transaction_splits || []);
+            setNetWorthSnapshots(d.net_worth_snapshots || []);
             setUserProfile(me);
           } catch (fallbackErr) {
             console.error("Fallback data load failed:", fallbackErr);
@@ -129,6 +131,7 @@ export function FinancialDataProvider({ children }) {
               setDocuments([]);
               setBudgetCategories([]);
               setTransactionSplits([]);
+              setNetWorthSnapshots([]);
             }
           } finally {
             hasLoadedRef.current = true;
@@ -154,6 +157,7 @@ export function FinancialDataProvider({ children }) {
           setDocuments([]);
           setBudgetCategories([]);
           setTransactionSplits([]);
+          setNetWorthSnapshots([]);
           hasLoadedRef.current = true;
           setLoading(false);
         }
@@ -176,6 +180,7 @@ export function FinancialDataProvider({ children }) {
         documentsRes,
         budgetCategoriesRes,
         splitsRes,
+        snapshotsRes,
         profileRes
       ] = await Promise.all([
         supabase.from("loans").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
@@ -189,6 +194,7 @@ export function FinancialDataProvider({ children }) {
         supabase.from("documents").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("budget_categories").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
         supabase.from("transaction_splits").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
+        supabase.from("net_worth_snapshots").select("*").eq("user_id", uid).order("snapshot_date", { ascending: false }),
         supabase.from("profiles").select("*").eq("id", uid).single()
       ]);
 
@@ -205,6 +211,7 @@ export function FinancialDataProvider({ children }) {
       setDocuments(documentsRes.data || []);
       setBudgetCategories(budgetCategoriesRes.data || []);
       setTransactionSplits(splitsRes.data || []);
+      setNetWorthSnapshots(snapshotsRes.data || []);
 
       // ✅ Unify profile: merge Supabase profile (tokens, energy_bars) with Base44 user
       // Only override with non-null Supabase values — prevents null columns from
@@ -467,6 +474,7 @@ export function FinancialDataProvider({ children }) {
         setDocuments([]);
         setBudgetCategories([]);
         setTransactionSplits([]);
+        setNetWorthSnapshots([]);
       }
     });
     return () => {
@@ -490,6 +498,7 @@ export function FinancialDataProvider({ children }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "bank_accounts" }, scheduleReload)
       .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, scheduleReload)
       .on("postgres_changes", { event: "*", schema: "public", table: "transaction_splits" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "net_worth_snapshots" }, scheduleReload)
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, scheduleProfileRefresh)
       .subscribe();
 
@@ -514,6 +523,7 @@ export function FinancialDataProvider({ children }) {
         documents,
         transactionSplits,
         budgetCategories,
+        netWorthSnapshots,
         userProfile,
         supaUser,
         loading,
@@ -553,6 +563,7 @@ export function useFinancialData() {
       documents: [],
       transactionSplits: [],
       budgetCategories: [],
+      netWorthSnapshots: [],
       userProfile: null,
       supaUser: null,
       loading: false,

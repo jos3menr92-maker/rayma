@@ -1,19 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
-import { monthlyBillAmount, incomeTotalForMonth, realIncomeEntries } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, realIncomeEntries, netWorthFrom } from "@/utils/financeMath";
 import { monthlyObligation } from "@/utils/loanEngine";
 import { getMonthName } from "@/utils/formatLocalized";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { TrendingUp, TrendingDown, CheckCircle2, DollarSign, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckCircle2, DollarSign, Calendar, PiggyBank, Wallet } from "lucide-react";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))", "#34d399", "#f97316", "#a78bfa"];
 
 export default function MonthlyRecap() {
-  const { incomes, payments, bills, loans, loading } = useFinancialData();
+  const { incomes, payments, bills, loans, assets, bankAccounts, netWorthSnapshots, loading } = useFinancialData();
   const { lang, locale } = useLanguage();
   const { formatCurrency: fmt, currency } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -21,20 +21,32 @@ export default function MonthlyRecap() {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
-  const monthName = getMonthName(currentMonth, locale, "long");
+
+  // Month selector — 0 = current month, -1..-5 = look back (tappable chips)
+  const [viewOffset, setViewOffset] = useState(0);
+  const viewDate = new Date(currentYear, currentMonth + viewOffset, 1);
+  const viewMonth = viewDate.getMonth();
+  const viewYear = viewDate.getFullYear();
+  const monthName = getMonthName(viewMonth, locale, "long");
+
+  // Chip row: current month first, then 5 back (matches the 6-month chart range)
+  const monthChips = useMemo(() => Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(currentYear, currentMonth - i, 1);
+    return { back: i, label: getMonthName(d.getMonth(), locale, "short"), year: d.getFullYear() };
+  }), [currentMonth, currentYear, locale]);
 
   const thisMonthIncomes = useMemo(() => realIncomeEntries(incomes).filter(i => {
     if (!i.week_start) return false;
     const d = new Date(i.week_start + "T00:00:00");
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  }), [incomes, currentMonth, currentYear]);
-  const totalIncome = useMemo(() => incomeTotalForMonth(incomes, currentYear, currentMonth), [incomes, currentYear, currentMonth]);
+    return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+  }), [incomes, viewMonth, viewYear]);
+  const totalIncome = useMemo(() => incomeTotalForMonth(incomes, viewYear, viewMonth), [incomes, viewYear, viewMonth]);
 
   const thisMonthPayments = useMemo(() => (payments || []).filter(p => {
     if (!p.payment_date) return false;
     const d = new Date(p.payment_date + "T00:00:00");
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  }), [payments, currentMonth, currentYear]);
+    return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+  }), [payments, viewMonth, viewYear]);
   const totalPaid = useMemo(() => thisMonthPayments.reduce((s, p) => s + (p.amount || 0), 0), [thisMonthPayments]);
   const billsPaid = useMemo(() => thisMonthPayments.filter(p => p.payment_type === "bill").length, [thisMonthPayments]);
   const loansPaid = useMemo(() => thisMonthPayments.filter(p => p.payment_type === "loan").length, [thisMonthPayments]);
@@ -48,17 +60,17 @@ export default function MonthlyRecap() {
 
   // Previous-month figures for the delta chips (real income + actual payments)
   const prevIncome = useMemo(() => {
-    const d = new Date(currentYear, currentMonth - 1, 1);
+    const d = new Date(viewYear, viewMonth - 1, 1);
     return incomeTotalForMonth(incomes, d.getFullYear(), d.getMonth());
-  }, [incomes, currentMonth, currentYear]);
+  }, [incomes, viewMonth, viewYear]);
   const prevPaid = useMemo(() => {
-    const d = new Date(currentYear, currentMonth - 1, 1);
+    const d = new Date(viewYear, viewMonth - 1, 1);
     return (payments || []).filter(p => {
       if (!p.payment_date) return false;
       const pd = new Date(p.payment_date + "T00:00:00");
       return pd.getMonth() === d.getMonth() && pd.getFullYear() === d.getFullYear();
     }).reduce((s, p) => s + (p.amount || 0), 0);
-  }, [payments, currentMonth, currentYear]);
+  }, [payments, viewMonth, viewYear]);
   const delta = (cur, prev) => (prev > 0 && cur !== prev) ? `${cur > prev ? "↑" : "↓"} ${Math.round(Math.abs((cur - prev) / prev) * 100)}%` : "";
 
   // One consistent definition for every month: income = real income entries,
@@ -85,6 +97,23 @@ export default function MonthlyRecap() {
     return acc;
   }, {})).map(([name, value]) => ({ name, value })), [activeBills]);
 
+  // Savings rate — share of income kept (negative when overspending)
+  const savingsRate = totalIncome > 0 ? cashFlow / totalIncome : null;
+
+  // Net worth at the end of the selected month, from the daily snapshot history.
+  // Snapshots are the ONE source of historical net worth (written by the cron job).
+  const isoDay = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const sortedSnaps = useMemo(() =>
+    [...(netWorthSnapshots || [])].sort((a, b) => String(b.snapshot_date || "").localeCompare(String(a.snapshot_date || ""))),
+  [netWorthSnapshots]);
+  const snapAtOrBefore = (dayStr) => sortedSnaps.find(s => s?.snapshot_date && String(s.snapshot_date).slice(0, 10) <= dayStr);
+  const endSnap = snapAtOrBefore(isoDay(new Date(viewYear, viewMonth + 1, 0)));
+  const prevSnap = snapAtOrBefore(isoDay(new Date(viewYear, viewMonth, 0)));
+  const netWorthValue = endSnap ? (endSnap.net_worth || 0)
+    : (viewOffset === 0 ? netWorthFrom({ assets, bankAccounts, loans }).netWorth : null);
+  const netWorthDeltaValue = (endSnap && prevSnap && endSnap.id !== prevSnap.id)
+    ? (endSnap.net_worth || 0) - (prevSnap.net_worth || 0) : null;
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -96,9 +125,22 @@ export default function MonthlyRecap() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center gap-2 mb-1">
           <Calendar className="w-5 h-5 text-primary" />
-          <h1 className="text-2xl font-bold font-heading text-foreground">{monthName} {T("recap", "Recap")}</h1>
+          <h1 className="text-2xl font-bold font-heading text-foreground">{monthName}{viewYear !== currentYear ? ` ${viewYear}` : ""} {T("recap", "Recap")}</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">{T("recapSubtitle", "Your financial summary for this month")}</p>
+        <p className="text-sm text-muted-foreground mb-3">{T("recapSubtitleFor", "Your financial summary for {month}").replace("{month}", monthName)}</p>
+
+        {/* Month selector — tappable chips, current month first */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-6">
+          {monthChips.map((c) => (
+            <button
+              key={c.back}
+              onClick={() => setViewOffset(-c.back)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${viewOffset === -c.back ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border"}`}
+            >
+              {c.label}{c.year !== currentYear ? ` ${c.year}` : ""}
+            </button>
+          ))}
+        </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-card border border-border rounded-2xl p-4">
@@ -136,6 +178,39 @@ export default function MonthlyRecap() {
             <p className="text-xl font-bold font-heading text-foreground">{fmt(totalPaid)}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {loansPaid} {loansPaid === 1 ? T("loanSingular", "loan") : T("loans", "loans")} · {billsPaid} {billsPaid === 1 ? T("billSingular", "bill") : T("bills", "bills")}{delta(totalPaid, prevPaid) ? ` · ${delta(totalPaid, prevPaid)}` : ""}
+            </p>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("savingsRateLabel", "Savings Rate")}</p>
+            {savingsRate == null ? (
+              <p className="text-xl font-bold font-heading text-muted-foreground">—</p>
+            ) : savingsRate >= 0 ? (
+              <div className="flex items-center gap-1">
+                <PiggyBank className="w-4 h-4 text-primary" />
+                <p className="text-xl font-bold font-heading text-primary">{Math.round(savingsRate * 100)}%</p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <TrendingDown className="w-4 h-4 text-destructive" />
+                <p className="text-xl font-bold font-heading text-destructive">{Math.round(savingsRate * 100)}%</p>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-0.5">{T("ofIncomeKept", "of income kept")}</p>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("netWorthLabel", "Net Worth")}</p>
+            <div className="flex items-center gap-1">
+              <Wallet className="w-4 h-4 text-muted-foreground" />
+              <p className={`text-xl font-bold font-heading ${netWorthValue == null ? "text-muted-foreground" : netWorthValue >= 0 ? "text-foreground" : "text-destructive"}`}>
+                {netWorthValue == null ? "—" : fmt(netWorthValue)}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {netWorthDeltaValue != null
+                ? `${netWorthDeltaValue >= 0 ? "↑" : "↓"} ${fmt(Math.abs(netWorthDeltaValue))} ${T("vsLastMonthShort", "vs last month")}`
+                : viewOffset === 0 && !endSnap
+                  ? T("currentEstimateShort", "current estimate")
+                  : endSnap ? T("endOfMonthShort", "end of month") : T("noSnapshotData", "no data for this month")}
             </p>
           </div>
         </div>

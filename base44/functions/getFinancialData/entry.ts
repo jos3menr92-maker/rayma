@@ -30,7 +30,7 @@ export default async function(req) {
       supabaseAdmin.from('savings_goals').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabaseAdmin.from('bank_accounts').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabaseAdmin.from('transactions').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(200),
-      supabaseAdmin.from('net_worth_snapshots').select('*').eq('user_id', uid).order('snapshot_date', { ascending: false }).limit(12),
+      supabaseAdmin.from('net_worth_snapshots').select('*').eq('user_id', uid).order('snapshot_date', { ascending: false }).limit(200),
       supabaseAdmin.from('budget_categories').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
       supabaseAdmin.from('loan_adjustments').select('*').eq('user_id', uid).order('date', { ascending: false }).limit(50),
       supabaseAdmin.from('documents').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
