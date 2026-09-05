@@ -101,10 +101,10 @@ export default function Layout() {
             </div>
             <span className="text-sm font-semibold font-heading text-foreground tracking-wide">Rayma AI</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <GlobalBatteryBar />
-            <button onClick={() => setDrawerOpen(true)} aria-label={T("openMenu", "Open Menu")} className="w-12 h-12 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-              <Menu className="w-8 h-8" />
+            <button onClick={() => setDrawerOpen(true)} aria-label={T("openMenu", "Open Menu")} className="w-14 h-14 -mr-2 flex items-center justify-center flex-shrink-0 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted active:bg-muted transition-colors">
+              <Menu className="w-7 h-7" />
             </button>
           </div>
         </div>
