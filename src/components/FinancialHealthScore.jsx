@@ -3,7 +3,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { monthlyObligation } from "@/utils/loanEngine";
-import { monthlyBillAmount, incomeTotalForMonth, monthTotalSpent } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, monthSpentByCategory } from "@/utils/financeMath";
 import { ShieldCheck } from "lucide-react";
 
 function ScorePillar({ label, score, max, color }) {
@@ -42,8 +42,13 @@ export default function FinancialHealthScore() {
 
       // Income = real income entries this month (same definition as Dashboard/Recap)
       const income = incomeTotalForMonth(ctxIncomes, now.getFullYear(), now.getMonth());
-      // Split-aware spending — same numbers as Budget Dashboard & Trend
-      const expenses = monthTotalSpent({ transactions, transactionSplits }, now);
+      // True spending = shared spending brain minus internal flows: savings
+      // transfers (money moved to yourself) and app-logged loan payments (debt
+      // service, already scored by the Debt-to-Income & Bill Coverage pillars).
+      // Bill payments stay — they're real spending the score doesn't count elsewhere.
+      const SPEND_OPTS = { excludeCategories: ["savings"], excludeDescPrefixes: ["Paid Loan:"] };
+      const spentByCat = monthSpentByCategory({ transactions, transactionSplits }, now, SPEND_OPTS);
+      const expenses = Object.values(spentByCat).reduce((s, v) => s + v, 0);
       const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
       const monthlyDebt = loans.reduce((s, l) => s + monthlyObligation(l), 0);
       const monthlyBills = bills.reduce((s, b) => s + monthlyBillAmount(b), 0);
@@ -60,13 +65,14 @@ export default function FinancialHealthScore() {
         debtScore = totalDebt === 0 ? 30 : 5;
       }
 
+      // Budget Adherence = per-category: how well each budgeted category
+      // respects its own limit. Unbudgeted spending no longer drags the score,
+      // and a budget with $0 spent counts as fully on track.
       let budgetScore = 25;
-      if (budgets.length > 0 && expenses > 0) {
-        const totalLimit = budgets.reduce((s, b) => s + (b.monthly_limit || 0), 0);
-        if (totalLimit > 0) {
-          const adherence = Math.min(totalLimit / expenses, 1);
-          budgetScore = Math.round(adherence * 25);
-        }
+      const limited = budgets.filter((b) => (b.monthly_limit || 0) > 0);
+      if (limited.length > 0) {
+        const adherence = limited.reduce((s, b) => s + Math.min((spentByCat[b.category_key] || 0) / b.monthly_limit, 1), 0) / limited.length;
+        budgetScore = Math.round(adherence * 25);
       }
 
       let savingsScore = 0;

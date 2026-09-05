@@ -70,8 +70,15 @@ export function netWorthFrom({ assets = [], bankAccounts = [], loans = [] } = {}
  * (Budget Dashboard, Pacing widget, Health Score all use this).
  * Splits are the source of truth; a parent tx counts only if it has no splits.
  * Only negative parent amounts count as spending; the "income" category is excluded.
+ *
+ * Optional `opts` (used by the Health Score for its "true spending" view —
+ * the forecast's dailySpendRate applies the same exclusions):
+ *   - excludeCategories   e.g. ["savings"] — self-transfers, not spending
+ *   - excludeDescPrefixes e.g. ["Paid Loan:"] — app-logged debt service, which
+ *     the score already covers in the Debt-to-Income pillar. Excluded parents
+ *     also drop their splits so nothing leaks through child rows.
  */
-export function monthSpentByCategory({ transactions = [], transactionSplits = [] } = {}, date = new Date()) {
+export function monthSpentByCategory({ transactions = [], transactionSplits = [] } = {}, date = new Date(), { excludeCategories = [], excludeDescPrefixes = [] } = {}) {
   const y = date.getFullYear();
   const m = date.getMonth();
   const inMonth = (v) => {
@@ -82,23 +89,33 @@ export function monthSpentByCategory({ transactions = [], transactionSplits = []
   const monthSplits = (transactionSplits || []).filter((s) => inMonth(s.date));
   const monthTxs = (transactions || []).filter((tx) => inMonth(tx.date));
   const txIdsWithSplits = new Set(monthSplits.map((s) => s.transaction_id).filter(Boolean));
+  const excludedParents = new Set(
+    monthTxs
+      .filter((tx) => {
+        const desc = String(tx.description || "").toLowerCase();
+        return excludeDescPrefixes.some((p) => desc.startsWith(String(p).toLowerCase()));
+      })
+      .map((tx) => tx.id)
+  );
 
   const totals = {};
   const bump = (cat, amt) => {
-    if (!cat || cat === "income") return;
+    if (!cat || cat === "income" || excludeCategories.includes(cat)) return;
     totals[cat] = (totals[cat] || 0) + Math.abs(Number(amt) || 0);
   };
 
-  monthSplits.forEach((s) => bump(s.category, s.amount));
+  monthSplits
+    .filter((s) => !excludedParents.has(s.transaction_id))
+    .forEach((s) => bump(s.category, s.amount));
   monthTxs
-    .filter((tx) => !txIdsWithSplits.has(tx.id) && Number(tx.amount) < 0)
+    .filter((tx) => !txIdsWithSplits.has(tx.id) && !excludedParents.has(tx.id) && Number(tx.amount) < 0)
     .forEach((tx) => bump(tx.category, tx.amount));
   return totals;
 }
 
 /** Total split-aware spending for a month across all categories. */
-export function monthTotalSpent(sources, date = new Date()) {
-  const totals = monthSpentByCategory(sources, date);
+export function monthTotalSpent(sources, date = new Date(), opts) {
+  const totals = monthSpentByCategory(sources, date, opts);
   return Object.values(totals).reduce((s, v) => s + v, 0);
 }
 
