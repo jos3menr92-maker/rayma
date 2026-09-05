@@ -2,102 +2,94 @@ import { useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { projectCashFlow } from "@/utils/financeMath";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceDot } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { getWeekdayNames } from "@/utils/formatLocalized";
-import { realIncomeEntries } from "@/utils/financeMath";
-import { paymentPerPeriod } from "@/utils/loanEngine";
 
+/**
+ * 30-Day Cash Flow Forecast — renders projectCashFlow from financeMath
+ * (the ONE forecast brain): real bank-balance start line, paychecks on
+ * their actual cadence, obligations on their true payment cycle,
+ * savings-goal contributions, and an everyday-spending rate from the
+ * user's transaction history.
+ */
 export default function CashFlowForecast({ loans, bills, incomes }) {
   const { lang, locale } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
-  const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
+  const T = useMemo(() => (key, fallback) => { const tr = t(lang, key); return tr !== key ? tr : fallback; }, [lang]);
+  const ctx = useFinancialData();
 
-  const forecast = useMemo(() => {
-    const today = new Date();
-    const dayNames = getWeekdayNames(locale, "short");
-    // Shared income brain (financeMath): each paycheck counted exactly once,
-    // then normalized to a daily rate by its own frequency.
-    const realIncomes = realIncomeEntries(incomes);
-    const avgDailyIncome = realIncomes.length > 0
-      ? realIncomes.slice(0, 8).reduce((s, i) => {
-          const amt = i.amount || 0;
-          const freq = i.frequency || i.recurring_frequency || "weekly";
-          const daily = freq === "monthly" ? amt / 30.44 : freq === "biweekly" ? amt / 14 : amt / 7;
-          return s + daily;
-        }, 0) / Math.min(realIncomes.length, 8)
-      : 0;
+  const projection = useMemo(() => projectCashFlow({
+    loans: loans ?? ctx.loans ?? [],
+    bills: bills ?? ctx.bills ?? [],
+    incomes: incomes ?? ctx.incomes ?? [],
+    payments: ctx.payments,
+    transactions: ctx.transactions,
+    transactionSplits: ctx.transactionSplits,
+    savingsGoals: ctx.savingsGoals,
+    bankAccounts: ctx.bankAccounts,
+  }), [loans, bills, incomes, ctx.payments, ctx.transactions, ctx.transactionSplits, ctx.savingsGoals, ctx.bankAccounts]);
 
-    const days = [];
-    let runningBalance = 0;
+  if (!projection || !projection.hasIncomeData) return null;
 
-    for (let d = 0; d < 30; d++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + d);
-      const dayOfMonth = date.getDate();
-      const dayOfWeek = dayNames[date.getDay()];
-      const label = `${date.getMonth() + 1}/${dayOfMonth}`;
-
-      let dayIncome = 0;
-      let dayExpense = 0;
-      const events = [];
-
-      dayIncome += avgDailyIncome;
-
-      loans.forEach(loan => {
-        // Per-period amount from the loan engine (handles monthly_equivalent loans)
-        const pmt = paymentPerPeriod(loan);
-        if (loan.payment_frequency === "monthly" && loan.due_day === dayOfMonth) {
-          dayExpense += pmt;
-          events.push({ name: loan.name, amount: -pmt });
-        }
-        if ((loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly") && loan.due_day_of_week === dayOfWeek) {
-          if (loan.payment_frequency === "weekly" || (loan.payment_frequency === "biweekly" && d % 14 === 0)) {
-            dayExpense += pmt;
-            events.push({ name: loan.name, amount: -pmt });
-          }
-        }
-      });
-
-      bills.forEach(bill => {
-        if (bill.is_active === false) return;
-        if (bill.payment_frequency === "monthly" && bill.due_day === dayOfMonth) {
-          dayExpense += bill.amount || 0;
-          events.push({ name: bill.name, amount: -(bill.amount || 0) });
-        }
-        if ((bill.payment_frequency === "weekly" || bill.payment_frequency === "biweekly") && bill.due_day_of_week === dayOfWeek) {
-          if (bill.payment_frequency === "weekly" || (bill.payment_frequency === "biweekly" && d % 14 === 0)) {
-            dayExpense += bill.amount || 0;
-            events.push({ name: bill.name, amount: -(bill.amount || 0) });
-          }
-        }
-      });
-
-      runningBalance += dayIncome - dayExpense;
-      days.push({ label, balance: Math.round(runningBalance), events, dayExpense: Math.round(dayExpense) });
-    }
-    return days;
-  }, [loans, bills, incomes, locale]);
-
-  const finalBalance = forecast[forecast.length - 1]?.balance || 0;
-  const lowestPoint = Math.min(...forecast.map(d => d.balance));
+  const { startBalance, dailySpend, finalBalance, lowestBalance, lowestDate, estimatedIncome, days } = projection;
   const isPositive = finalBalance >= 0;
 
-  if (incomes.length === 0) return null;
+  let minIdx = 0;
+  const chartData = days.map((d, i) => {
+    const dt = new Date(d.date);
+    if (d.balance < days[minIdx].balance) minIdx = i;
+    return {
+      label: dt.toLocaleDateString(locale, { month: "numeric", day: "numeric" }),
+      fullLabel: dt.toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" }),
+      balance: Math.round(d.balance),
+      events: d.events,
+      variableSpend: d.variableSpend,
+    };
+  });
+
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const day = payload[0].payload;
+    return (
+      <div className="bg-card border border-border rounded-xl p-2.5 text-[10px] shadow-lg max-w-[190px]">
+        <p className="font-semibold text-foreground mb-0.5">{day.fullLabel}</p>
+        <p className={`font-bold ${day.balance >= 0 ? "text-primary" : "text-destructive"}`}>{fmt(day.balance)}</p>
+        {day.events.length > 0 && (
+          <div className="mt-1.5 pt-1.5 border-t border-border space-y-0.5">
+            {day.events.map((e, i) => (
+              <div key={i} className="flex justify-between gap-2">
+                <span className="text-muted-foreground truncate">{e.name || T("paycheck", "Paycheck")}</span>
+                <span className={`font-medium shrink-0 ${e.amount > 0 ? "text-primary" : "text-destructive"}`}>
+                  {e.amount > 0 ? "+" : "−"}{fmt(Math.abs(e.amount))}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-muted-foreground mt-1.5">{T("everydaySpending", "Everyday spending")}: −{fmt(day.variableSpend)}</p>
+      </div>
+    );
+  };
 
   return (
     <div className="mb-6 bg-card border border-border rounded-3xl p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="text-sm font-semibold font-heading text-foreground">{T("cashFlowForecast30", "30-Day Cash Flow Forecast")}</h2>
-        <div className={`flex items-center gap-1 text-xs font-semibold ${isPositive ? "text-primary" : "text-destructive"}`}>
-          {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+      <div className="flex items-start justify-between mb-1">
+        <div>
+          <h2 className="text-sm font-semibold font-heading text-foreground">{T("cashFlowForecast30", "30-Day Cash Flow Forecast")}</h2>
+          <p className="text-[10px] text-muted-foreground">
+            {T("forecastFromBalance", "From today's {amount} balance").replace("{amount}", fmt(startBalance))}
+          </p>
+        </div>
+        <div className={`flex items-center gap-1 text-base font-bold font-heading ${isPositive ? "text-primary" : "text-destructive"}`}>
+          {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           {fmt(finalBalance)}
         </div>
       </div>
-      <p className="text-[10px] text-muted-foreground mb-3">{T("forecastBasedOn", "Based on avg income & scheduled payments")}</p>
 
-      <ResponsiveContainer width="100%" height={110}>
-        <AreaChart data={forecast} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={130}>
+        <AreaChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
           <defs>
             <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={isPositive ? "hsl(var(--primary))" : "hsl(var(--destructive))"} stopOpacity={0.3} />
@@ -105,23 +97,49 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
             </linearGradient>
           </defs>
           <XAxis dataKey="label" tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} interval={4} axisLine={false} tickLine={false} />
-          <YAxis hide />
-          <ReferenceLine y={0} stroke="hsl(var(--border))" strokeDasharray="3 3" />
-          <Tooltip
-            formatter={(v) => [fmt(v), T("balanceLabel", "Balance")]}
-            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 10 }}
-            labelStyle={{ color: "hsl(var(--muted-foreground))" }}
-          />
-          <Area type="monotone" dataKey="balance" stroke={isPositive ? "hsl(var(--primary))" : "hsl(var(--destructive))"}
-            strokeWidth={2} fill="url(#balGrad)" dot={false} />
+          <YAxis hide domain={["auto", "auto"]} />
+          <Tooltip content={renderTooltip} />
+          <ReferenceLine y={0} stroke="hsl(var(--destructive))" strokeDasharray="3 3" strokeOpacity={0.5} />
+          <ReferenceLine y={startBalance} stroke="hsl(var(--border))" strokeDasharray="2 4" />
+          {lowestBalance < startBalance && (
+            <ReferenceDot
+              x={chartData[minIdx].label}
+              y={Math.round(lowestBalance)}
+              r={3}
+              fill={lowestBalance < 0 ? "hsl(var(--destructive))" : "hsl(var(--primary))"}
+              stroke="hsl(var(--card))"
+            />
+          )}
+          <Area type="monotone" dataKey="balance" stroke={isPositive ? "hsl(var(--primary))" : "hsl(var(--destructive))"} strokeWidth={2} fill="url(#balGrad)" dot={false} />
         </AreaChart>
       </ResponsiveContainer>
 
-      {lowestPoint < 0 && (
-        <p className="text-[10px] text-destructive mt-2 text-center">
-          {T("projectedDeficit", "⚠️ Projected deficit of {amount} at lowest point").replace("{amount}", fmt(Math.abs(lowestPoint)))}
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="bg-muted/50 rounded-xl p-2 text-center">
+          <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">{T("today", "Today")}</p>
+          <p className="text-xs font-bold text-foreground">{fmt(startBalance)}</p>
+        </div>
+        <div className="bg-muted/50 rounded-xl p-2 text-center">
+          <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">{T("lowestPoint", "Lowest")}</p>
+          <p className={`text-xs font-bold ${lowestBalance < 0 ? "text-destructive" : "text-foreground"}`}>{fmt(lowestBalance)}</p>
+        </div>
+        <div className="bg-muted/50 rounded-xl p-2 text-center">
+          <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">{T("dailySpend", "Daily spend")}</p>
+          <p className="text-xs font-bold text-foreground">{fmt(dailySpend)}</p>
+        </div>
+      </div>
+
+      {lowestBalance < 0 ? (
+        <p className="text-[10px] text-destructive mt-2 text-center font-medium">
+          {T("projectedDeficit", "⚠️ Projected deficit of {amount} at lowest point")
+            .replace("{amount}", fmt(Math.abs(lowestBalance)))}
+          {lowestDate ? ` · ${new Date(lowestDate).toLocaleDateString(locale, { month: "short", day: "numeric" })}` : ""}
         </p>
-      )}
+      ) : estimatedIncome ? (
+        <p className="text-[10px] text-muted-foreground mt-2 text-center">
+          {T("forecastEstimateNote", "Paycheck schedule estimated from your recent logs")}
+        </p>
+      ) : null}
     </div>
   );
 }
