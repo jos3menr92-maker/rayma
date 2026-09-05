@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AlertCircle, Calendar, DollarSign, Trash2 } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { monthlyObligation, paymentPerPeriod } from "@/utils/loanEngine";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -18,7 +19,7 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
   const handlePay = async () => {
     setPaying(true);
     try {
-      await payLoan(loan.id, loan.monthly_payment);
+      await payLoan(loan.id, paymentPerPeriod(loan));
       reload();
     } catch (err) {
       console.error(err);
@@ -77,7 +78,7 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
           <div className={`border-t border-border px-3 py-1.5 flex items-center gap-1.5 ${dueDateColor === "destructive" ? "bg-destructive/5" : dueDateColor === "amber" ? "bg-amber-500/5" : "bg-muted/30"}`}>
             {dueDateColor === "destructive" ? <AlertCircle className="w-3 h-3 text-destructive" /> : dueDateColor === "amber" ? <AlertCircle className="w-3 h-3 text-amber-500" /> : <Calendar className="w-3 h-3 text-muted-foreground" />}
             <span className={`text-[10px] font-medium ${dueDateColor === "destructive" ? "text-destructive" : dueDateColor === "amber" ? "text-amber-500" : "text-muted-foreground"}`}>
-              {daysUntil !== null ? `${T("dueIn", "Due in")} ${daysUntil}${T("daysShort", "d")}` : `${T("due", "Due")} ${dueDay}${T("th", "th")}`} · {formatCurrency(loan.monthly_payment)}/mo
+              {daysUntil !== null ? `${T("dueIn", "Due in")} ${daysUntil}${T("daysShort", "d")}` : `${T("due", "Due")} ${dueDay}${T("th", "th")}`} · {formatCurrency(monthlyObligation(loan))}/mo
             </span>
           </div>
         )}

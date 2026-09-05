@@ -9,6 +9,7 @@ import { FileText, Info, TrendingUp, Calculator, Home, GraduationCap, Heart, Ale
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import TaxProfileEditor, { TAX_EVENT_TYPES } from "@/components/tax/TaxProfileEditor";
+import { realIncomeEntries } from "@/utils/financeMath";
 
 // 2025 US Federal Tax Brackets
 const BRACKETS = {
@@ -144,7 +145,8 @@ export default function TaxSummary() {
   const yearEvents = (taxProfile?.tax_events || []).filter(e => !e.date || String(e.date).startsWith(yearStr));
 
   // --- Income ---
-  const yearIncomes = incomes.filter(i => i.week_start?.startsWith(yearStr));
+  // Shared income brain — counts each paycheck exactly once (no template+clone double count)
+  const yearIncomes = realIncomeEntries(incomes).filter(i => i.week_start?.startsWith(yearStr));
   const yearIncomeTx = transactions.filter(tx => tx.amount > 0 && tx.date?.startsWith(yearStr));
   const totalIncome =
     yearIncomes.reduce((s, i) => s + (i.amount || 0), 0) +

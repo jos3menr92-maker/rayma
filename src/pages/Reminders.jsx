@@ -1,6 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { useFinancialData } from "@/lib/FinancialDataContext";
+import { monthlyBillAmount } from "@/utils/financeMath";
+import { monthlyObligation } from "@/utils/loanEngine";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
@@ -21,47 +23,21 @@ export default function Reminders() {
   const { lang } = useLanguage();
   const { formatCurrency: fmt } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
-  const [loans, setLoans] = useState([]);
-  const [bills, setBills] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Shared data brain — same live context every page uses (no private queries)
+  const { loans: allLoans, bills: allBills, loading } = useFinancialData();
+  const loans = allLoans.filter((l) => l.status !== "paid_off");
+  const bills = allBills.filter((b) => b.is_active !== false);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState({});
   const [sent, setSent] = useState({});
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-async function loadData() {
-    try {
-      setLoading(true);
-      const [{ data: { session } }, me] = await Promise.all([
-        supabase.auth.getSession(),
-        base44.auth.me(),
-      ]);
-      const uid = session?.user?.id;
-      setUser(me);
-      if (!uid) return;
-      const [loansRes, billsRes] = await Promise.all([
-        supabase.from("loans").select("*").eq("user_id", uid).order("created_at", { ascending: false }).limit(100),
-        supabase.from("bills").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
-      ]);
-      setLoans(loansRes.data || []);
-      setBills(billsRes.data || []);
-    } catch (error) {
-      console.error("Failed to load reminders:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function sendReminder(item, type) {
     const key = `${type}-${item.id}`;
     setSending(s => ({ ...s, [key]: true }));
 
     const isLoan = type === "loan";
-    const amount = isLoan ? item.monthly_payment : item.amount;
+    // Shared math brain — monthly-normalized amounts, same as Dashboard
+    const amount = isLoan ? monthlyObligation(item) : monthlyBillAmount(item);
     const dueText = item.due_day ? T("dueOnDayOfMonth", "on the {n}th of each month").replace("{n}", item.due_day) : T("soon", "soon");
 
     const subject = T("paymentReminderSubject", "💰 Payment Reminder: {name}").replace("{name}", item.name);
@@ -132,7 +108,7 @@ async function loadData() {
                       <div>
                         <p className="text-sm font-semibold text-foreground">{loan.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {fmt(loan.monthly_payment)}{T("perMonth", "/mo")}{loan.due_day ? ` · ${T("dueOnDay", "Due {n}th").replace("{n}", loan.due_day)}` : ""}
+                          {fmt(monthlyObligation(loan))}{T("perMonth", "/mo")}{loan.due_day ? ` · ${T("dueOnDay", "Due {n}th").replace("{n}", loan.due_day)}` : ""}
                         </p>
                       </div>
                     </div>
@@ -176,7 +152,7 @@ async function loadData() {
                       <div>
                         <p className="text-sm font-semibold text-foreground">{bill.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {fmt(bill.amount)}{T("perMonth", "/mo")}{bill.due_day ? ` · ${T("dueOnDay", "Due {n}th").replace("{n}", bill.due_day)}` : ""}
+                          {fmt(monthlyBillAmount(bill))}{T("perMonth", "/mo")}{bill.due_day ? ` · ${T("dueOnDay", "Due {n}th").replace("{n}", bill.due_day)}` : ""}
                         </p>
                       </div>
                     </div>

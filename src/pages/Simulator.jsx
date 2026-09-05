@@ -9,6 +9,8 @@ import { Sparkles, Play, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SimulationResults from "../components/simulator/SimulationResults";
 import SimulationControls from "../components/simulator/SimulationControls";
+import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyObligation } from "@/utils/loanEngine";
 
 export default function Simulator() {
   const { lang } = useLanguage();
@@ -37,10 +39,11 @@ export default function Simulator() {
     setSimulating(true);
     setResult(null);
 
-    const monthlyBills = bills.reduce((s, b) => s + (b.amount || 0), 0);
-    const monthlyLoans = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
-    const avgWeeklyIncome = incomes.length > 0 ? incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length : 0;
-    const monthlyIncome = avgWeeklyIncome * 4.33;
+    // Shared math brain — identical to Dashboard/Recap
+    const monthlyBills = bills.reduce((s, b) => s + monthlyBillAmount(b), 0);
+    const monthlyLoans = loans.reduce((s, l) => s + monthlyObligation(l), 0);
+    const now = new Date();
+    const monthlyIncome = incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
     const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
     const highestInterestLoan = [...loans].sort((a, b) => (b.interest_rate || 0) - (a.interest_rate || 0))[0];
     const subscriptions = bills.filter(b => b.category === "subscriptions");
@@ -57,15 +60,15 @@ export default function Simulator() {
     const prompt = `You are a financial simulation engine. Analyze this user's finances and run the requested simulation scenario. Be specific with numbers.
 
 CURRENT FINANCIAL DATA:
-- Monthly income: ${fmt(monthlyIncome)} (from weekly average)
+- Monthly income: ${fmt(monthlyIncome)} (this month's real income)
 - Monthly loan payments: ${fmt(monthlyLoans)}
 - Monthly bills: ${fmt(monthlyBills)}
 - Total remaining debt: ${fmt(totalDebt)}
 - Monthly cash flow: ${fmt(monthlyIncome - monthlyLoans - monthlyBills)}
 - Highest interest loan: ${highestInterestLoan ? `${highestInterestLoan.name} at ${highestInterestLoan.interest_rate || 0}% APR, balance ${fmt(highestInterestLoan.current_balance)}` : "none"}
-- Active subscriptions: ${subscriptions.length > 0 ? subscriptions.map(s => `${s.name} $${s.amount}/mo`).join(", ") : "none"}
-- All loans: ${loans.map(l => `${l.name}: balance ${fmt(l.current_balance)}, ${l.interest_rate || 0}% APR, ${fmt(l.monthly_payment)}/mo`).join(" | ")}
-- All bills: ${bills.map(b => `${b.name}: $${b.amount}/mo (${b.category})`).join(" | ")}
+- Active subscriptions: ${subscriptions.length > 0 ? subscriptions.map(s => `${s.name} ${fmt(monthlyBillAmount(s))}/mo`).join(", ") : "none"}
+- All loans: ${loans.map(l => `${l.name}: balance ${fmt(l.current_balance)}, ${l.interest_rate || 0}% APR, ${fmt(monthlyObligation(l))}/mo`).join(" | ")}
+- All bills: ${bills.map(b => `${b.name}: ${fmt(monthlyBillAmount(b))}/mo (${b.category})`).join(" | ")}
 
 SIMULATION SCENARIO: ${scenarioDescriptions[scenario]}
 Extra monthly payment (if relevant): $${extraPayment}

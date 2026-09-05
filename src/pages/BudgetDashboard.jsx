@@ -16,6 +16,8 @@ import { useToast } from "@/components/ui/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeBudgetPreview } from "@/utils/logPreviewMath";
+import { monthlyBillAmount } from "@/utils/financeMath";
+import { monthlyObligation } from "@/utils/loanEngine";
 
 const CATEGORY_COLORS = {
   food: "#f59e0b", transport: "#3b82f6", utilities: "#8b5cf6", subscriptions: "#ec4899",
@@ -138,11 +140,12 @@ export default function BudgetDashboard() {
   const activeBills = useMemo(() => bills.filter((b) => b.is_active !== false), [bills]);
   const activeLoans = useMemo(() => loans.filter((l) => l.status !== "paid_off"), [loans]);
 
+  // Monthly-normalized via the shared brain — a $100/week bill shows as ~$433/mo
   const fixedExpenses = [
-    ...activeBills.map((b) => ({ name: b.name, amount: b.amount, category: b.category })),
+    ...activeBills.map((b) => ({ name: b.name, amount: monthlyBillAmount(b), category: b.category })),
     ...activeLoans.map((l) => ({
       name: `${l.name} ${T("loanSuffix", "(loan)")}`,
-      amount: l.monthly_payment,
+      amount: monthlyObligation(l),
       category: "loan_payment",
     })),
   ];

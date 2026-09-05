@@ -248,7 +248,8 @@ export function computeIncomePreview(form, { fmt, T }) {
   const freq = form.recurring_frequency || "weekly";
   if (amount <= 0) return { lines, chips };
 
-  const monthlyEquiv = freq === "weekly" ? amount * 4.33 : freq === "biweekly" ? amount * 2.17 : amount;
+  // Same brain constants as financeMath (52/12, 26/12) — no private multipliers
+  const monthlyEquiv = freq === "weekly" ? (amount * 52) / 12 : freq === "biweekly" ? (amount * 26) / 12 : amount;
   lines.push({ label: T("previewMonthlyEquiv", "Monthly equiv."), value: fmt(monthlyEquiv), tone: "primary" });
   lines.push({ label: T("previewAnnualEquiv", "Annual"), value: fmt(monthlyEquiv * 12) });
   return { lines, chips };

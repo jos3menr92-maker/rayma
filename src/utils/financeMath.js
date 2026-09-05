@@ -51,3 +51,14 @@ export function incomeTotalForMonth(incomes, year, month) {
     return d && d.getFullYear() === year && d.getMonth() === month ? sum + (Number(i.amount) || 0) : sum;
   }, 0);
 }
+
+/**
+ * Net worth — the ONE definition (matches takeNetWorthSnapshot):
+ * assets + bank balances − active loan balances.
+ */
+export function netWorthFrom({ assets = [], bankAccounts = [], loans = [] } = {}) {
+  const assetSum = (assets || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+  const bankSum = (bankAccounts || []).reduce((s, a) => s + (Number(a.balance) || 0), 0);
+  const debtSum = (loans || []).filter((l) => l.status !== "paid_off").reduce((s, l) => s + (Number(l.current_balance) || 0), 0);
+  return { totalAssets: assetSum + bankSum, totalDebt: debtSum, netWorth: assetSum + bankSum - debtSum };
+}

@@ -108,7 +108,7 @@ export default function DebtPayoffSimulator() {
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">{T("balance", "Balance")}</p><p className="font-bold text-foreground">{fmt(loan.current_balance)}</p></div>
                     <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">{T("rate", "Rate")}</p><p className="font-bold text-foreground">{loan.interest_rate || 0}%</p></div>
-                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">{T("payment", "Payment")}</p><p className="font-bold text-foreground">{fmt(loan.monthly_payment)}/mo</p></div>
+                    <div className="bg-secondary rounded-lg p-2 text-center"><p className="text-muted-foreground text-xs">{T("payment", "Payment")}</p><p className="font-bold text-foreground">{fmt(monthlyObligation(loan))}/mo</p></div>
                   </div>
                 )}
                 <div>

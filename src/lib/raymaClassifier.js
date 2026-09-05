@@ -12,7 +12,7 @@
  * Also exports the quick-reply chip definitions (green = free, red = paid).
  */
 
-import { monthlyBillAmount } from "@/utils/financeMath";
+import { monthlyBillAmount, netWorthFrom } from "@/utils/financeMath";
 import { monthlyObligation } from "@/utils/loanEngine";
 
 // Quick-reply chips shown at the top of Rayma Chat.
@@ -123,11 +123,8 @@ export function freeAnswer(rawText, ctx = {}) {
 
   // --- Financial lookups (pure app math — free) ---
   if (/net\s*worth/.test(text)) {
-    const totalAssets = (assets || []).reduce((s, a) => s + (a.amount || 0), 0);
-    const totalBankBalances = (ctx.bankAccounts || []).reduce((s, a) => s + (a.balance || 0), 0);
-    const combinedAssets = totalAssets + totalBankBalances;
-    const totalDebt = (loans || []).filter((l) => l.status !== "paid_off").reduce((s, l) => s + (l.current_balance || 0), 0);
-    const nw = combinedAssets - totalDebt;
+    const { totalAssets: combinedAssets, totalDebt, netWorth: nw } =
+      netWorthFrom({ assets, bankAccounts: ctx.bankAccounts, loans });
     const tmpl = T("freeNetWorth", "**Your Net Worth** 💰\n\n• Total assets: {assets}\n• Total debt: {debt}\n• **Net worth: {nw}**\n\n*Calculated from your assets minus your loan balances.*");
     return fill(tmpl, { assets: formatCurrency(combinedAssets), debt: formatCurrency(totalDebt), nw: formatCurrency(nw) });
   }

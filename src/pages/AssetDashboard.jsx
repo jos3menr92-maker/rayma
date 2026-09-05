@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeAssetPreview } from "@/utils/logPreviewMath";
+import { netWorthFrom } from "@/utils/financeMath";
 
 const TYPE_ICONS = { cash: "💵", investment: "📈", property: "🏠", savings: "🏦", other: "📦" };
 const TYPE_COLORS = {
@@ -52,13 +53,9 @@ export default function AssetDashboard() {
   const assetPreview = useMemo(() => computeAssetPreview(form, { fmt, T }), [form, fmt, T]);
   const acceptSuggestion = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  // 🧮 Net Worth Math
-  const activeLoans = loans.filter(x => x.status !== "paid_off");
-  const totalAssets = assets.reduce((s, a) => s + (a.amount || 0), 0);
-  const totalBankBalances = (bankAccounts || []).reduce((s, a) => s + (a.balance || 0), 0);
-  const combinedAssets = totalAssets + totalBankBalances;
-  const totalLiabilities = activeLoans.reduce((s, l) => s + (l.current_balance || 0), 0);
-  const netWorth = combinedAssets - totalLiabilities;
+  // 🧮 Net Worth Math — one shared brain (financeMath.netWorthFrom, matches takeNetWorthSnapshot)
+  const { totalAssets: combinedAssets, totalDebt: totalLiabilities, netWorth } =
+    netWorthFrom({ assets, bankAccounts, loans });
 
   const pieData = assets.map(a => ({ name: a.name, value: a.amount || 0, type: a.type }));
   const byType = assets.reduce((acc, a) => {
