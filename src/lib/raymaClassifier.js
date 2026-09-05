@@ -38,7 +38,7 @@ const DOW_ORDER = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 function billsDueWithinDays(bills, days) {
   const today = new Date();
   return (bills || []).filter((b) => {
-    if (!b || !b.is_active) return false;
+    if (!b || b.is_active === false) return false;
     // Weekly/biweekly bills: due on the next matching weekday (same rule as Due This Week)
     if (b.payment_frequency === "weekly" || b.payment_frequency === "biweekly") {
       const dueIdx = DOW_ORDER.indexOf(b.due_day_of_week);
@@ -148,7 +148,7 @@ export function freeAnswer(rawText, ctx = {}) {
     // uses (financeMath.monthlyBillAmount / loanEngine.monthlyObligation).
     // Never re-implement frequency math locally; that's how answers drift.
 
-    const activeBills = (bills || []).filter((b) => b.is_active);
+    const activeBills = (bills || []).filter((b) => b.is_active !== false);
     const activeLoans = (loans || []).filter((l) => l.status !== "paid_off");
     const perMo = T("perMoAbbr", "/mo");
     const freqLabel = (freq) => (freq === "weekly" ? T("freqWeeklyShort", "weekly") : freq === "biweekly" ? T("freqBiweeklyShort", "biweekly") : "");
