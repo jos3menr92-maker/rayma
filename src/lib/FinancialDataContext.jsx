@@ -370,7 +370,11 @@ export function FinancialDataProvider({ children }) {
           date: paymentDate,
           description: `Paid Loan: ${loan.name}`,
           amount: -paymentAmount,
-          category: loan.category || "other",
+          // Debt service files under loan_payment, not the loan's type category
+          // (e.g. 'auto') — keeps budget, trend, and tax views accurate. The
+          // "Paid Loan:" prefix stays: the math brain excludes it from everyday
+          // spending via that prefix.
+          category: "loan_payment",
           type: "debit"
         });
       }
