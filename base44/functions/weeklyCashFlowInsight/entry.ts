@@ -37,7 +37,7 @@ export default async function(req: Request): Promise<Response> {
           const [txRes, billsRes] = await Promise.all([
             supabaseAdmin.from('transactions').select('date, amount, description, category')
               .eq('user_id', uid).gte('date', weekAgoStr),
-            supabaseAdmin.from('bills').select('name, amount')
+            supabaseAdmin.from('bills').select('name, amount, payment_frequency')
               .eq('user_id', uid).eq('is_active', true),
           ]);
 
@@ -47,7 +47,13 @@ export default async function(req: Request): Promise<Response> {
 
           const spending = txs.filter((t: any) => (t.amount || 0) < 0).reduce((s: number, t: any) => s + Math.abs(t.amount), 0);
           const income = txs.filter((t: any) => (t.amount || 0) > 0).reduce((s: number, t: any) => s + t.amount, 0);
-          const monthlyBills = bills.reduce((s: number, b: any) => s + (b.amount || 0), 0);
+          // Same normalization as financeMath.monthlyBillAmount — weekly/biweekly
+          // bills counted at their true monthly weight, not their raw per-period amount.
+          const monthlyBills = bills.reduce((s: number, b: any) => {
+            const freq = b.payment_frequency || 'monthly';
+            const weight = freq === 'weekly' ? 52 / 12 : freq === 'biweekly' ? 26 / 12 : 1;
+            return s + (b.amount || 0) * weight;
+          }, 0);
 
           const summary = `User: ${name}. Last 7 days: spending ${fmtMoney(spending, currency)}, income ${fmtMoney(income, currency)}. Active monthly bills: ${fmtMoney(monthlyBills, currency)} across ${bills.length} bills. Transactions logged: ${txs.length}.`;
 

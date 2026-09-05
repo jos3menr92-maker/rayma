@@ -3,7 +3,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
-import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, realIncomeEntries } from "@/utils/financeMath";
 import { monthlyObligation } from "@/utils/loanEngine";
 import { getMonthName } from "@/utils/formatLocalized";
 import { motion } from "framer-motion";
@@ -23,8 +23,8 @@ export default function MonthlyRecap() {
   const currentYear = now.getFullYear();
   const monthName = getMonthName(currentMonth, locale, "long");
 
-  const thisMonthIncomes = useMemo(() => incomes.filter(i => {
-    if (i.is_recurring || !i.week_start) return false;
+  const thisMonthIncomes = useMemo(() => realIncomeEntries(incomes).filter(i => {
+    if (!i.week_start) return false;
     const d = new Date(i.week_start + "T00:00:00");
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }), [incomes, currentMonth, currentYear]);

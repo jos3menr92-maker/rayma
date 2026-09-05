@@ -1,7 +1,8 @@
 /**
- * financeMath.js — shared cross-entity financial math for Rayma AI.
- * Loans have loanEngine.js; this module covers bills and income so every
- * page computes "monthly", "per-period", and "real income" identically.
+ * financeMath.js — THE single brain for cross-entity financial math in Rayma AI.
+ * Loans have loanEngine.js; this module owns bills and income. Every page,
+ * chart, forecast, and backend job must import from here — never re-implement
+ * income/bill math locally, that's how the "split brain" bugs happened.
  */
 
 const PERIODS_PER_MONTH = { monthly: 1, biweekly: 26 / 12, weekly: 52 / 12 };
@@ -19,18 +20,33 @@ const parseDay = (s) => {
 };
 
 /**
- * Real income entry = an actual paycheck event (manual log, confirmed scan, or
- * an auto-logged clone). Recurring TEMPLATES (is_recurring: true) are not
- * income events themselves — counting them double-counts against their clones.
+ * Real income entries — the ONE definition of "a paycheck actually happened":
+ *   - manual logs, confirmed scans, and auto-logged clones always count;
+ *   - a recurring TEMPLATE also counts for its own week — it was a real
+ *     paycheck when the user logged it with auto-log turned on;
+ *   - legacy safety: if an auto-logged clone already covers the template's
+ *     same week (from the old cron behavior), count only the clone, not both.
+ *
+ * Maintained together with the autoLogRecurringIncome cron, which never clones
+ * the template's own week — so every paycheck is counted exactly once.
  */
-export function isRealIncome(entry) {
-  return !!entry && !entry.is_recurring;
+export function realIncomeEntries(incomes) {
+  const list = incomes || [];
+  const cloneWeeks = new Set();
+  for (const i of list) {
+    if (i.recurring_source_id) {
+      cloneWeeks.add(`${i.recurring_source_id}|${String(i.week_start || "").slice(0, 10)}`);
+    }
+  }
+  return list.filter(i => {
+    if (!i.is_recurring) return true;
+    return !cloneWeeks.has(`${i.id}|${String(i.week_start || "").slice(0, 10)}`);
+  });
 }
 
 /** Sum of real income entries whose week_start falls in the given month (month is 0-based). */
 export function incomeTotalForMonth(incomes, year, month) {
-  return (incomes || []).reduce((sum, i) => {
-    if (i.is_recurring) return sum;
+  return realIncomeEntries(incomes).reduce((sum, i) => {
     const d = parseDay(i.week_start);
     return d && d.getFullYear() === year && d.getMonth() === month ? sum + (Number(i.amount) || 0) : sum;
   }, 0);

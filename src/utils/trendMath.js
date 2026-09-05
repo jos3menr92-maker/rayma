@@ -3,6 +3,7 @@
  * All series are computed locally (zero AI coins) from already-loaded data.
  */
 import { getMonthName } from "@/utils/formatLocalized";
+import { realIncomeEntries } from "@/utils/financeMath";
 
 export const SERIES = [
   { key: "income", color: "hsl(var(--primary))", labelKey: "income", fallback: "Income" },
@@ -65,9 +66,8 @@ function aggregateSources({ incomes = [], transactions = [], transactionSplits =
     return buckets[key];
   };
 
-  incomes.forEach((inc) => {
-    // Recurring templates are not income events — their auto-logged clones are.
-    if (inc.is_recurring) return;
+  // Shared income brain (financeMath) — every paycheck counted exactly once.
+  realIncomeEntries(incomes).forEach((inc) => {
     const d = parseDay(inc.week_start);
     const k = d && keyOf(d);
     if (k) get(k).income += inc.amount || 0;

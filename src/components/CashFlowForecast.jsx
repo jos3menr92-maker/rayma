@@ -5,6 +5,8 @@ import { t } from "@/lib/i18n";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { getWeekdayNames } from "@/utils/formatLocalized";
+import { realIncomeEntries } from "@/utils/financeMath";
+import { paymentPerPeriod } from "@/utils/loanEngine";
 
 export default function CashFlowForecast({ loans, bills, incomes }) {
   const { lang, locale } = useLanguage();
@@ -14,15 +16,16 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
   const forecast = useMemo(() => {
     const today = new Date();
     const dayNames = getWeekdayNames(locale, "short");
-    // Normalize each income entry to a daily rate by its own frequency so a
-    // monthly paycheck isn't mistaken for a weekly one. Weekly case is unchanged.
-    const avgDailyIncome = incomes.length > 0
-      ? incomes.slice(0, 8).reduce((s, i) => {
+    // Shared income brain (financeMath): each paycheck counted exactly once,
+    // then normalized to a daily rate by its own frequency.
+    const realIncomes = realIncomeEntries(incomes);
+    const avgDailyIncome = realIncomes.length > 0
+      ? realIncomes.slice(0, 8).reduce((s, i) => {
           const amt = i.amount || 0;
           const freq = i.frequency || i.recurring_frequency || "weekly";
           const daily = freq === "monthly" ? amt / 30.44 : freq === "biweekly" ? amt / 14 : amt / 7;
           return s + daily;
-        }, 0) / Math.min(incomes.length, 8)
+        }, 0) / Math.min(realIncomes.length, 8)
       : 0;
 
     const days = [];
@@ -42,14 +45,16 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
       dayIncome += avgDailyIncome;
 
       loans.forEach(loan => {
+        // Per-period amount from the loan engine (handles monthly_equivalent loans)
+        const pmt = paymentPerPeriod(loan);
         if (loan.payment_frequency === "monthly" && loan.due_day === dayOfMonth) {
-          dayExpense += loan.monthly_payment || 0;
-          events.push({ name: loan.name, amount: -(loan.monthly_payment || 0) });
+          dayExpense += pmt;
+          events.push({ name: loan.name, amount: -pmt });
         }
         if ((loan.payment_frequency === "weekly" || loan.payment_frequency === "biweekly") && loan.due_day_of_week === dayOfWeek) {
           if (loan.payment_frequency === "weekly" || (loan.payment_frequency === "biweekly" && d % 14 === 0)) {
-            dayExpense += loan.monthly_payment || 0;
-            events.push({ name: loan.name, amount: -(loan.monthly_payment || 0) });
+            dayExpense += pmt;
+            events.push({ name: loan.name, amount: -pmt });
           }
         }
       });

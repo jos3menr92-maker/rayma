@@ -21,6 +21,8 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeIncomePreview } from "@/utils/logPreviewMath";
+import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyObligation } from "@/utils/loanEngine";
 
 function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
@@ -66,22 +68,16 @@ export default function Finance() {
   // --- Financial Calculations ---
   const activeBills = useMemo(() => bills.filter(b => b.is_active !== false), [bills]);
   const activeLoans = useMemo(() => loans.filter(l => l.status !== "paid_off"), [loans]);
-  const monthlyBills = activeBills.reduce((s, b) => s + (b.amount || 0), 0);
-  const monthlyLoans = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const monthlyBills = activeBills.reduce((s, b) => s + monthlyBillAmount(b), 0);
+  const monthlyLoans = activeLoans.reduce((s, l) => s + monthlyObligation(l), 0);
   const monthlyExpenses = monthlyBills + monthlyLoans;
 
   const payFreq = userProfile?.pay_frequency || "weekly";
 
-  // Use this month's actual logged income — consistent with Dashboard & MonthlyRecap
+  // Shared income brain (financeMath) — identical to Dashboard, Recap, Insights & Health Score
   const monthlyIncome = useMemo(() => {
     const now = new Date();
-    return incomes
-      .filter((i) => {
-        if (!i.week_start) return false;
-        const d = new Date(i.week_start + "T00:00:00");
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      })
-      .reduce((s, i) => s + (i.amount || 0), 0);
+    return incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
   }, [incomes]);
 
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;

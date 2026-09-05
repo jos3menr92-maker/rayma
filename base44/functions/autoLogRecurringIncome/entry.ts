@@ -74,8 +74,10 @@ export default async function (req: Request): Promise<Response> {
       try {
         const periodStart = getCurrentPeriodStart(tmpl.recurring_frequency, tmpl.week_start);
 
-        // Skip if the period is before the original entry (don't backfill before creation)
-        if (periodStart < tmpl.week_start) continue;
+        // Skip the template's own period — the template IS that week's real
+        // paycheck (financeMath.realIncomeEntries counts it once). Auto-logged
+        // clones start from the NEXT period so paychecks are never duplicated.
+        if (periodStart <= tmpl.week_start) continue;
         // Skip if the period is in the future
         if (periodStart > todayStr) continue;
 
