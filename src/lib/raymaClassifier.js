@@ -12,6 +12,9 @@
  * Also exports the quick-reply chip definitions (green = free, red = paid).
  */
 
+import { monthlyBillAmount } from "@/utils/financeMath";
+import { monthlyObligation } from "@/utils/loanEngine";
+
 // Quick-reply chips shown at the top of Rayma Chat.
 export const CHIPS = [
   // 🟢 Row 1 — Free silent lookups (local math, 0 credits)
@@ -30,10 +33,19 @@ export const CHIPS = [
   { id: "scan", labelKey: "chipScanReceipt", fallback: "Scan a receipt", tier: "paid", text: "scan a receipt" },
 ];
 
+const DOW_ORDER = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 function billsDueWithinDays(bills, days) {
   const today = new Date();
   return (bills || []).filter((b) => {
-    if (!b || !b.is_active || !b.due_day) return false;
+    if (!b || !b.is_active) return false;
+    // Weekly/biweekly bills: due on the next matching weekday (same rule as Due This Week)
+    if (b.payment_frequency === "weekly" || b.payment_frequency === "biweekly") {
+      const dueIdx = DOW_ORDER.indexOf(b.due_day_of_week);
+      if (dueIdx === -1) return false;
+      return (dueIdx - today.getDay() + 7) % 7 <= days;
+    }
+    if (!b.due_day) return false;
     const day = Number(b.due_day);
     if (!day || day < 1 || day > 31) return false;
     let target = new Date(today.getFullYear(), today.getMonth(), day);
@@ -114,13 +126,13 @@ export function freeAnswer(rawText, ctx = {}) {
     const totalAssets = (assets || []).reduce((s, a) => s + (a.amount || 0), 0);
     const totalBankBalances = (ctx.bankAccounts || []).reduce((s, a) => s + (a.balance || 0), 0);
     const combinedAssets = totalAssets + totalBankBalances;
-    const totalDebt = (loans || []).reduce((s, l) => s + (l.current_balance || 0), 0);
+    const totalDebt = (loans || []).filter((l) => l.status !== "paid_off").reduce((s, l) => s + (l.current_balance || 0), 0);
     const nw = combinedAssets - totalDebt;
     const tmpl = T("freeNetWorth", "**Your Net Worth** 💰\n\n• Total assets: {assets}\n• Total debt: {debt}\n• **Net worth: {nw}**\n\n*Calculated from your assets minus your loan balances.*");
     return fill(tmpl, { assets: formatCurrency(combinedAssets), debt: formatCurrency(totalDebt), nw: formatCurrency(nw) });
   }
   if (/(how\s*much\s*do\s*i\s*owe|total\s*debt|what\s*do\s*i\s*owe)/.test(text)) {
-    const totalDebt = (loans || []).reduce((s, l) => s + (l.current_balance || 0), 0);
+    const totalDebt = (loans || []).filter((l) => l.status !== "paid_off").reduce((s, l) => s + (l.current_balance || 0), 0);
     const activeLoans = (loans || []).filter((l) => l.status !== "paid_off").length;
     const tmpl = T("freeTotalDebt", "**Total Debt** 🏦\n\nYou owe **{total}** across {count} active loan(s).\n\n*Tap any loan on the Loans page to see its payoff progress.*");
     return fill(tmpl, { total: formatCurrency(totalDebt), count: String(activeLoans) });
@@ -135,15 +147,9 @@ export function freeAnswer(rawText, ctx = {}) {
     return fill(tmpl, { list });
   }
   if (/(burn\s*rate|monthly\s*burn|monthly\s*(obligations|payments|bills)|how\s*much.*spend\s*(a\s*)?month)/.test(text)) {
-    // Normalize any payment frequency to a monthly equivalent.
-    const toMonthly = (amount, freq) => {
-      const a = Number(amount || 0);
-      switch (freq) {
-        case "weekly": return a * 4.333;
-        case "biweekly": return a * 2.167;
-        default: return a; // monthly
-      }
-    };
+    // Shared math brain — the exact same monthly-equivalent math the Dashboard
+    // uses (financeMath.monthlyBillAmount / loanEngine.monthlyObligation).
+    // Never re-implement frequency math locally; that's how answers drift.
 
     const activeBills = (bills || []).filter((b) => b.is_active);
     const activeLoans = (loans || []).filter((l) => l.status !== "paid_off");
@@ -152,7 +158,7 @@ export function freeAnswer(rawText, ctx = {}) {
 
     const billLines = activeBills.length
       ? activeBills.map((b) => {
-          const mo = toMonthly(b.amount, b.payment_frequency);
+          const mo = monthlyBillAmount(b);
           const fl = freqLabel(b.payment_frequency);
           const freq = fl ? ` · ${fl}` : "";
           const due = b.due_day ? ` (${T("dueDayShort", "due day")} ${b.due_day})` : "";
@@ -162,15 +168,15 @@ export function freeAnswer(rawText, ctx = {}) {
 
     const loanLines = activeLoans.length
       ? activeLoans.map((l) => {
-          const mo = toMonthly(l.monthly_payment, l.payment_frequency);
+          const mo = monthlyObligation(l);
           const fl = freqLabel(l.payment_frequency);
           const freq = fl ? ` · ${fl}` : "";
           return `  • ${l.name} — ${formatCurrency(mo)}${perMo}${freq} (${T("balanceShort", "balance")} ${formatCurrency(l.current_balance || 0)})`;
         }).join("\n")
       : `  • ${T("freeNoLoans", "No active loans.")}`;
 
-    const monthlyBills = activeBills.reduce((s, b) => s + toMonthly(b.amount, b.payment_frequency), 0);
-    const monthlyLoans = activeLoans.reduce((s, l) => s + toMonthly(l.monthly_payment, l.payment_frequency), 0);
+    const monthlyBills = activeBills.reduce((s, b) => s + monthlyBillAmount(b), 0);
+    const monthlyLoans = activeLoans.reduce((s, l) => s + monthlyObligation(l), 0);
     const total = monthlyBills + monthlyLoans;
 
     const tmpl = T("freeBurnRate", "**{burnTitle}** 🔥\n\n**{billsLabel}** — {monthlyBills}{perMo}\n{billLines}\n\n**{loansLabel}** — {monthlyLoans}{perMo}\n{loanLines}\n\n—\n**{totalLabel}: {total}{perMo}**");

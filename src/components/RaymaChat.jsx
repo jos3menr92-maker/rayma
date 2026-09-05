@@ -27,6 +27,8 @@ import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import { createRecord } from "@/lib/supabaseHelpers";
 import CodeBlock from "@/components/CodeBlock";
+import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyObligation } from "@/utils/loanEngine";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
@@ -443,8 +445,13 @@ export default function RaymaChat({
       setMessages(prev => [...prev, { role: "user", content: sourceText }]);
       setInput("");
       setLoading(true);
-      const totalMonthlyObligations = loans.reduce((s, l) => s + (l.monthly_payment || 0), 0) + bills.reduce((s, b) => s + (b.amount || 0), 0);
-      const monthlyIncome = incomes.length > 0 ? (incomes.reduce((s, i) => s + (i.amount || 0), 0) / incomes.length) * 4.33 : 0;
+      // Shared math brain — identical to Dashboard/Recap: active loans & bills,
+      // frequency-normalized amounts, and real income for the current month.
+      const totalMonthlyObligations =
+        loans.filter((l) => l.status !== "paid_off").reduce((s, l) => s + monthlyObligation(l), 0) +
+        bills.filter((b) => b.is_active !== false).reduce((s, b) => s + monthlyBillAmount(b), 0);
+      const now = new Date();
+      const monthlyIncome = incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
       const dti = monthlyIncome > 0 ? (totalMonthlyObligations / monthlyIncome) * 100 : 100;
       let advisorResponse = "";
       
