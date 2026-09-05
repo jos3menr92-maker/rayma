@@ -11,12 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, TrendingDown } from "lucide-react";
-import { startOfMonth, endOfMonth, format, isWithinInterval, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeBudgetPreview } from "@/utils/logPreviewMath";
-import { monthlyBillAmount } from "@/utils/financeMath";
+import { monthlyBillAmount, monthSpentByCategory } from "@/utils/financeMath";
 import { monthlyObligation } from "@/utils/loanEngine";
 
 const CATEGORY_COLORS = {
@@ -51,8 +51,6 @@ export default function BudgetDashboard() {
   const [budgetToDelete, setBudgetToDelete] = useState(null);
 
   const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
 
   const openAdd = () => {
     setEditing(null);
@@ -108,34 +106,13 @@ export default function BudgetDashboard() {
     reload();
   };
 
-  // split rows = source of truth; parent tx is fallback only when that tx has zero splits
-  const getSpent = (categoryKey) => {
-    const inMonth = (dateValue) => {
-      if (!dateValue) return false;
-      try {
-        return isWithinInterval(parseISO(dateValue), { start: monthStart, end: monthEnd });
-      } catch {
-        return false;
-      }
-    };
-
-    const monthSplits = (transactionSplits || []).filter((s) => inMonth(s.date));
-    const monthTransactions = (transactions || []).filter((tx) => inMonth(tx.date));
-
-    const txIdsWithSplits = new Set(
-      monthSplits.map((s) => s.transaction_id).filter(Boolean)
-    );
-
-    const splitCategoryTotal = monthSplits
-      .filter((s) => s.category === categoryKey)
-      .reduce((sum, s) => sum + Math.abs(Number(s.amount) || 0), 0);
-
-    const parentFallbackTotal = monthTransactions
-      .filter((tx) => tx.category === categoryKey && !txIdsWithSplits.has(tx.id))
-      .reduce((sum, tx) => sum + Math.abs(Number(tx.amount) || 0), 0);
-
-    return splitCategoryTotal + parentFallbackTotal;
-  };
+  // Shared spending brain (financeMath): split rows are the source of truth,
+  // a parent tx only counts when it has zero splits.
+  const spentByCat = useMemo(
+    () => monthSpentByCategory({ transactions, transactionSplits }),
+    [transactions, transactionSplits]
+  );
+  const getSpent = (categoryKey) => spentByCat[categoryKey] || 0;
 
   const activeBills = useMemo(() => bills.filter((b) => b.is_active !== false), [bills]);
   const activeLoans = useMemo(() => loans.filter((l) => l.status !== "paid_off"), [loans]);

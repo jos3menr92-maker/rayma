@@ -1,10 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClientFrontend";
+import { useMemo } from "react";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { monthlyObligation } from "@/utils/loanEngine";
-import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, monthTotalSpent } from "@/utils/financeMath";
 import { ShieldCheck } from "lucide-react";
 
 function ScorePillar({ label, score, max, color }) {
@@ -24,9 +23,9 @@ function ScorePillar({ label, score, max, color }) {
 
 export default function FinancialHealthScore() {
   const { lang } = useLanguage();
-  const { loans: ctxLoans, bills: ctxBills, savingsGoals: ctxGoals, incomes: ctxIncomes, supaUser } = useFinancialData();
+  // Shared data brain — same live context as every widget (no private queries)
+  const { loans: ctxLoans, bills: ctxBills, savingsGoals: ctxGoals, incomes: ctxIncomes, budgetCategories: budgets, transactions, transactionSplits } = useFinancialData();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
-  const [data, setData] = useState(null);
 
   function getColor(score) {
     if (score >= 80) return { ring: "stroke-primary", text: "text-primary", label: T("excellent", "Excellent"), bg: "bg-primary/10" };
@@ -35,25 +34,16 @@ export default function FinancialHealthScore() {
     return { ring: "stroke-destructive", text: "text-destructive", label: T("needsWork", "Needs Work"), bg: "bg-destructive/10" };
   }
 
-  useEffect(() => {
-    let cancelled = false;
-    async function compute() {
+  const data = useMemo(() => {
       const now = new Date();
-      const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      const [txRes, budRes] = await Promise.all([
-        supabase.from('transactions').select('*').eq('user_id', supaUser?.id).order('date', { ascending: false }).limit(200),
-        supabase.from('budget_categories').select('*').eq('user_id', supaUser?.id),
-      ]);
       const loans = ctxLoans.filter(l => l.status !== "paid_off");
       const bills = ctxBills.filter(b => b.is_active !== false);
-      const transactions = txRes.data || [];
-      const budgets = budRes.data || [];
       const goals = ctxGoals.filter(g => g.status !== "completed");
 
-      const monthTxs = transactions.filter(t => t.date?.startsWith(thisMonth));
       // Income = real income entries this month (same definition as Dashboard/Recap)
       const income = incomeTotalForMonth(ctxIncomes, now.getFullYear(), now.getMonth());
-      const expenses = monthTxs.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+      // Split-aware spending — same numbers as Budget Dashboard & Trend
+      const expenses = monthTotalSpent({ transactions, transactionSplits }, now);
       const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
       const monthlyDebt = loans.reduce((s, l) => s + monthlyObligation(l), 0);
       const monthlyBills = bills.reduce((s, b) => s + monthlyBillAmount(b), 0);
@@ -94,20 +84,13 @@ export default function FinancialHealthScore() {
 
       const total = debtScore + budgetScore + savingsScore + coverageScore;
 
-      if (!cancelled) {
-        setData({
-          total,
-          debtScore, budgetScore, savingsScore, coverageScore,
-          income, expenses, totalDebt, totalObligation,
-          savingsRate,
-        });
-      }
-    }
-    compute();
-    return () => { cancelled = true; };
-  }, [ctxLoans, ctxBills, ctxGoals, ctxIncomes, supaUser?.id]);
-
-  if (!data) return null;
+      return {
+        total,
+        debtScore, budgetScore, savingsScore, coverageScore,
+        income, expenses, totalDebt, totalObligation,
+        savingsRate,
+      };
+  }, [ctxLoans, ctxBills, ctxGoals, ctxIncomes, budgets, transactions, transactionSplits]);
 
   const { ring, text, label, bg } = getColor(data.total);
 

@@ -60,7 +60,7 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
       });
 
       bills.forEach(bill => {
-        if (!bill.is_active) return;
+        if (bill.is_active === false) return;
         if (bill.payment_frequency === "monthly" && bill.due_day === dayOfMonth) {
           dayExpense += bill.amount || 0;
           events.push({ name: bill.name, amount: -(bill.amount || 0) });

@@ -6,6 +6,8 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage, useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { getMonthName, getWeekdayNames } from "@/utils/formatLocalized";
+import { realIncomeEntries } from "@/utils/financeMath";
+import { paymentPerPeriod } from "@/utils/loanEngine";
 import CalendarToolbar from "@/components/calendar/CalendarToolbar";
 import CalendarMonthView from "@/components/calendar/CalendarMonthView";
 import CalendarWeekView from "@/components/calendar/CalendarWeekView";
@@ -95,12 +97,12 @@ export default function Calendar() {
       days.forEach(day => {
         if (day >= 1 && day <= daysInMonth) {
           if (!map[day]) map[day] = [];
-          map[day].push({ ...l, _type: "loan", _amount: l.monthly_payment || 0 });
+          map[day].push({ ...l, _type: "loan", _amount: paymentPerPeriod(l) });
         }
       });
     });
 
-    incomes.forEach(inc => {
+    realIncomeEntries(incomes).forEach(inc => {
       const day = extractDay(inc.week_start) || extractDay(inc.date) || extractDay(inc.created_at);
       if (day && day >= 1 && day <= daysInMonth) {
         if (!map[day]) map[day] = [];
@@ -172,7 +174,7 @@ export default function Calendar() {
     }
 
     if (filters.income) {
-      incomes.forEach(inc => {
+      realIncomeEntries(incomes).forEach(inc => {
         const incDay = extractDay(inc.week_start) || extractDay(inc.date) || extractDay(inc.created_at);
         if (incDay === dDay) events.push({ ...inc, _type: "income", _amount: inc.amount || 0 });
       });

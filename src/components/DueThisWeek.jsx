@@ -82,7 +82,7 @@ export default function DueThisWeek({ loans, bills }) {
     });
 
     bills.forEach(bill => {
-      if (!bill.is_active) return;
+      if (bill.is_active === false) return;
       
       const isPaidMonthly = bill.last_paid_date && new Date(bill.last_paid_date).getMonth() === today.getMonth() && new Date(bill.last_paid_date).getFullYear() === today.getFullYear();
       const isPaidWeekly = bill.last_paid_date && (today.getTime() - new Date(bill.last_paid_date).getTime() < 7 * 24 * 60 * 60 * 1000);

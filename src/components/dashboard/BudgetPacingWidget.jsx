@@ -5,7 +5,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { motion } from "framer-motion";
 import { PieChart as PieChartIcon, ChevronRight } from "lucide-react";
-import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import { monthSpentByCategory } from "@/utils/financeMath";
 
 // 🕐 Same pacing logic as BudgetDashboard.jsx
 function getPacingStatus(spent, limit, dayOfMonth, daysInMonth) {
@@ -25,26 +25,21 @@ export default function BudgetPacingWidget() {
   const navigate = useNavigate();
   // Uses the shared FinancialDataContext — same data as every other widget,
   // so it stays in sync via realtime instead of its own one-shot fetch.
-  const { budgetCategories: budgets, transactions } = useFinancialData();
+  const { budgetCategories: budgets, transactions, transactionSplits } = useFinancialData();
 
   const { onTrack, watchOut, overPace, totalBudgeted, totalSpent, worstColor } = useMemo(() => {
     const now = new Date();
     const dayOfMonth = now.getDate();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const ms = startOfMonth(now);
-    const me = endOfMonth(now);
+    // Shared spending brain — split-aware, same numbers as the Budget Dashboard
+    const spentByCat = monthSpentByCategory({ transactions, transactionSplits });
 
     let onTrack = 0, watchOut = 0, overPace = 0;
     let totalBudgeted = 0, totalSpent = 0;
     let worst = "bg-primary";
 
     budgets.forEach(b => {
-      const spent = transactions
-        .filter(tx => {
-          if (tx.category !== b.category_key) return false;
-          try { return isWithinInterval(parseISO(tx.date), { start: ms, end: me }); } catch { return false; }
-        })
-        .reduce((s, tx) => s + Math.abs(tx.amount || 0), 0);
+      const spent = spentByCat[b.category_key] || 0;
       totalBudgeted += b.monthly_limit || 0;
       totalSpent += spent;
       const p = getPacingStatus(spent, b.monthly_limit || 0, dayOfMonth, daysInMonth);
@@ -54,7 +49,7 @@ export default function BudgetPacingWidget() {
     });
 
     return { onTrack, watchOut, overPace, totalBudgeted, totalSpent, worstColor: worst };
-  }, [budgets, transactions]);
+  }, [budgets, transactions, transactionSplits]);
 
   if (budgets.length === 0) return null;
 
