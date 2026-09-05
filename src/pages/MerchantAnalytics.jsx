@@ -12,9 +12,19 @@ const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3
 export default function MerchantAnalytics() {
   const T = useT();
   const { formatCurrency: fmt } = useCurrency();
-  const { transactions, loading } = useFinancialData();
+  const { transactions, transactionSplits, loading } = useFinancialData();
 
   const [period, setPeriod] = useState("month");
+
+  // Shared spending brain rule (same as trendMath/financeMath): when a
+  // transaction has splits, the splits are the truth; otherwise the raw amount.
+  const splitMap = useMemo(() => {
+    const map = {};
+    (transactionSplits || []).forEach(sp => {
+      if (sp.transaction_id) map[sp.transaction_id] = (map[sp.transaction_id] || 0) + Math.abs(sp.amount || 0);
+    });
+    return map;
+  }, [transactionSplits]);
 
   const filteredTransactions = useMemo(() => {
     if (period === "all") return transactions;
@@ -28,16 +38,17 @@ export default function MerchantAnalytics() {
   }, [transactions, period]);
 
   const merchantData = useMemo(() => {
-    const expenses = filteredTransactions.filter(t => t.amount < 0);
+    const expenses = filteredTransactions.filter(t => t.amount < 0 || splitMap[t.id] > 0);
     const grouped = {};
     expenses.forEach(t => {
       const merchant = t.description?.trim() || T("unknown", "Unknown");
+      const spent = splitMap[t.id] || Math.abs(t.amount);
       if (!grouped[merchant]) grouped[merchant] = { name: merchant, total: 0, count: 0, category: t.category };
-      grouped[merchant].total += Math.abs(t.amount);
+      grouped[merchant].total += spent;
       grouped[merchant].count += 1;
     });
     return Object.values(grouped).sort((a, b) => b.total - a.total);
-  }, [filteredTransactions, T]);
+  }, [filteredTransactions, splitMap, T]);
 
   const topMerchants = merchantData.slice(0, 10);
   const totalSpending = merchantData.reduce((s, m) => s + m.total, 0);
