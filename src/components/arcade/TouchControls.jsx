@@ -23,8 +23,10 @@ export default function TouchControls({
   actionLabel = "FIRE",
   showUpDown = false,
 }) {
+  // The ::before pseudo-element silently extends the tappable area ~8px past
+  // the visual edge, so near-miss taps still register instead of "failing".
   const dirBtn =
-    "w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white active:bg-primary/60 active:scale-95 transition-all select-none touch-none";
+    "relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white active:bg-primary/60 active:scale-95 transition-all select-none touch-none before:content-[''] before:absolute before:-inset-2";
 
   const handleDirStart = (e, dir) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function TouchControls({
   return (
     <div className="absolute bottom-0 left-0 right-0 z-[55] p-4 pb-8 flex items-end justify-between pointer-events-none">
       {/* D-Pad */}
-      <div className={`grid ${showUpDown ? "grid-cols-3 grid-rows-3" : "grid-cols-3"} gap-1 pointer-events-auto`}>
+      <div className={`grid ${showUpDown ? "grid-cols-3 grid-rows-3" : "grid-cols-3"} gap-2 pointer-events-auto`}>
         {showUpDown && (
           <button
             className={`${dirBtn} col-start-2 row-start-1`}
@@ -86,7 +88,7 @@ export default function TouchControls({
       {/* Action Button */}
       {onAction && (
         <button
-          className="pointer-events-auto w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-full bg-primary/80 backdrop-blur-sm border-2 border-primary text-primary-foreground font-black text-xs tracking-widest active:scale-90 transition-all select-none touch-none shadow-lg shadow-primary/40"
+          className="relative pointer-events-auto w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-full bg-primary/80 backdrop-blur-sm border-2 border-primary text-primary-foreground font-black text-xs tracking-widest active:scale-90 transition-all select-none touch-none shadow-lg shadow-primary/40 before:content-[''] before:absolute before:-inset-2 before:rounded-full"
           onPointerDown={(e) => {
             e.preventDefault();
             try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) { /* older WebViews */ }
