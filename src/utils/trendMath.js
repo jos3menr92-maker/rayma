@@ -47,7 +47,16 @@ function buildSplitMap(transactionSplits = []) {
   return map;
 }
 
+// Internal flows are NOT spending: income, savings transfers (money moved
+// to yourself), loan_payment category, and the app-logged bill/loan payment
+// placeholders (already shown in the billsPaid/debtPaid series).
+function isInternalTx(tx) {
+  const cat = tx.category || "";
+  return ["income", "loan_payment", "savings"].includes(cat) || /^(Paid Bill:|Paid Loan:)/i.test(String(tx.description || ""));
+}
+
 function spentFromTx(tx, splitMap) {
+  if (isInternalTx(tx)) return 0;
   const split = splitMap[tx.id] || 0;
   return split > 0 ? split : tx.amount < 0 ? Math.abs(tx.amount) : 0;
 }
@@ -55,7 +64,10 @@ function spentFromTx(tx, splitMap) {
 /**
  * Aggregates sources into buckets keyed by keyOf(date); keyOf returns null
  * to skip a record (e.g. outside the current month for the daily view).
- * Spending = bank transactions (splits override the parent amount);
+ * Spending = bank transactions (splits override the parent amount), EXCLUDING
+ * internal flows (savings transfers, loan/bill payment placeholders) — those
+ * already appear in the billsPaid/debtPaid series, so counting them in
+ * spending would show the same money twice.
  * billsPaid/debtPaid come from the payments table.
  */
 function aggregateSources({ incomes = [], transactions = [], transactionSplits = [], payments = [] }, keyOf) {

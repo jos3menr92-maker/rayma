@@ -43,10 +43,10 @@ export default function FinancialHealthScore() {
       // Income = real income entries this month (same definition as Dashboard/Recap)
       const income = incomeTotalForMonth(ctxIncomes, now.getFullYear(), now.getMonth());
       // True spending = shared spending brain minus internal flows: savings
-      // transfers (money moved to yourself) and app-logged loan payments (debt
-      // service, already scored by the Debt-to-Income & Bill Coverage pillars).
-      // Bill payments stay — they're real spending the score doesn't count elsewhere.
-      const SPEND_OPTS = { excludeCategories: ["savings"], excludeDescPrefixes: ["Paid Loan:"] };
+      // transfers (money moved to yourself) and app-logged bill/loan payments —
+      // planned obligations already scored by the Debt-to-Income & Bill
+      // Coverage pillars, so counting them here would double-penalize.
+      const SPEND_OPTS = { excludeCategories: ["savings", "loan_payment"], excludeDescPrefixes: ["Paid Bill:", "Paid Loan:"] };
       const spentByCat = monthSpentByCategory({ transactions, transactionSplits }, now, SPEND_OPTS);
       const expenses = Object.values(spentByCat).reduce((s, v) => s + v, 0);
       const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);

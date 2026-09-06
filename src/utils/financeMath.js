@@ -31,18 +31,31 @@ const parseDay = (s) => {
  *
  * Maintained together with the autoLogRecurringIncome cron, which never clones
  * the template's own week — so every paycheck is counted exactly once.
+ *   - NEW: a manual log in a template's OWN week with the same amount is the
+ *     same paycheck logged twice (user logged it manually while auto-log was
+ *     already covering that week) — count it once.
  */
 export function realIncomeEntries(incomes) {
   const list = incomes || [];
   const cloneWeeks = new Set();
+  const templateAmounts = new Map();
   for (const i of list) {
+    const week = String(i.week_start || "").slice(0, 10);
     if (i.recurring_source_id) {
-      cloneWeeks.add(`${i.recurring_source_id}|${String(i.week_start || "").slice(0, 10)}`);
+      cloneWeeks.add(`${i.recurring_source_id}|${week}`);
+    } else if (i.is_recurring) {
+      templateAmounts.set(week, Number(i.amount) || 0);
     }
   }
   return list.filter(i => {
+    const week = String(i.week_start || "").slice(0, 10);
+    if (!i.is_recurring && !i.recurring_source_id) {
+      const tmplAmt = templateAmounts.get(week);
+      if (tmplAmt !== undefined && Math.abs((Number(i.amount) || 0) - tmplAmt) < 0.01) return false;
+      return true;
+    }
     if (!i.is_recurring) return true;
-    return !cloneWeeks.has(`${i.id}|${String(i.week_start || "").slice(0, 10)}`);
+    return !cloneWeeks.has(`${i.id}|${week}`);
   });
 }
 
@@ -232,8 +245,14 @@ export function projectCashFlow(
 
   // 2) Paychecks: recurring templates on their real cadence; otherwise
   //    per-frequency averages of recent real paychecks (flagged as estimates).
+  // Only the NEWEST active template drives projected paychecks — the
+  // auto-log cron ignores older templates, so streaming them here would
+  // double-count income (matches the Finance page's multiple-faucet warning).
+  const templates = (incomes || [])
+    .filter((i) => i.is_recurring && i.recurring_active !== false && !i.recurring_source_id)
+    .sort((a, b) => String(b.week_start || "").localeCompare(String(a.week_start || "")));
   const streams = [];
-  for (const tpl of (incomes || []).filter((i) => i.is_recurring && i.recurring_active !== false && !i.recurring_source_id)) {
+  for (const tpl of templates.slice(0, 1)) {
     streams.push({
       amount: Number(tpl.amount) || 0,
       freq: tpl.recurring_frequency || tpl.frequency || "weekly",
@@ -278,6 +297,16 @@ export function projectCashFlow(
     cutoff.setDate(cutoff.getDate() - 7);
     return last >= cutoff && last <= date;
   };
+  // Weekly/biweekly cycles: a payment strictly after the PREVIOUS occurrence
+  // means this cycle is already paid. Stops the double-charge that happened
+  // the week after marking a weekly/biweekly bill or loan as paid.
+  const periodCovered = (key, date, periodDays) => {
+    const last = lastPayment[key];
+    if (!last) return false;
+    const prev = new Date(date);
+    prev.setDate(prev.getDate() - periodDays);
+    return last > prev && last <= date;
+  };
 
   const eventsByDay = {};
   const addEvent = (date, ev) => {
@@ -317,6 +346,7 @@ export function projectCashFlow(
     else dates = occurrences(freq, lastPayment[key] || parseDay(loan.start_date) || from);
     dates.forEach((date) => {
       if (freq === "monthly" && loan.due_day && cycleCovered(key, date)) return;
+      if (freq !== "monthly" && periodCovered(key, date, freq === "biweekly" ? 14 : 7)) return;
       addEvent(date, { name: loan.name, amount: -pmt });
     });
   }
@@ -332,6 +362,7 @@ export function projectCashFlow(
     else dates = occurrences(freq, lastPayment[key] || from);
     dates.forEach((date) => {
       if (freq === "monthly" && bill.due_day && cycleCovered(key, date)) return;
+      if (freq !== "monthly" && periodCovered(key, date, freq === "biweekly" ? 14 : 7)) return;
       addEvent(date, { name: bill.name, amount: -amt });
     });
   }

@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
 import { notifyUser, fmtMoney } from '../../shared/notifications.ts';
+import { realIncomeEntries } from '../../shared/incomeMath.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -33,20 +34,28 @@ export default async function(req: Request): Promise<Response> {
           const currency = b44User.preferred_currency || "USD";
           const name = b44User.preferred_name || supaUser.email?.split("@")[0] || "there";
 
-          // Pull last 7 days of transactions + active bills
-          const [txRes, billsRes] = await Promise.all([
+          // Pull last 7 days of transactions, income-table entries + active bills
+          const [txRes, billsRes, incomesRes] = await Promise.all([
             supabaseAdmin.from('transactions').select('date, amount, description, category')
               .eq('user_id', uid).gte('date', weekAgoStr),
             supabaseAdmin.from('bills').select('name, amount, payment_frequency')
               .eq('user_id', uid).eq('is_active', true),
+            supabaseAdmin.from('incomes').select('amount, week_start, is_recurring, recurring_source_id')
+              .eq('user_id', uid).gte('week_start', weekAgoStr),
           ]);
 
           const txs = txRes.data || [];
           const bills = billsRes.data || [];
+          // Income-table entries are the app's official income definition (same
+          // dedupe as the Dashboard); fall back to positive bank transactions
+          // only when nothing is logged in the income table.
+          const tableIncome = realIncomeEntries(incomesRes.data || [])
+            .reduce((s: number, i: any) => s + (i.amount || 0), 0);
           if (txs.length === 0 && bills.length === 0) continue;
 
           const spending = txs.filter((t: any) => (t.amount || 0) < 0).reduce((s: number, t: any) => s + Math.abs(t.amount), 0);
-          const income = txs.filter((t: any) => (t.amount || 0) > 0).reduce((s: number, t: any) => s + t.amount, 0);
+          const bankIncome = txs.filter((t: any) => (t.amount || 0) > 0).reduce((s: number, t: any) => s + t.amount, 0);
+          const income = tableIncome > 0 ? tableIncome : bankIncome;
           // Same normalization as financeMath.monthlyBillAmount — weekly/biweekly
           // bills counted at their true monthly weight, not their raw per-period amount.
           const monthlyBills = bills.reduce((s: number, b: any) => {

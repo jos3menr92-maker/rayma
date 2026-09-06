@@ -37,14 +37,14 @@ export default function MonthlyRecap() {
 
   const thisMonthIncomes = useMemo(() => realIncomeEntries(incomes).filter(i => {
     if (!i.week_start) return false;
-    const d = new Date(i.week_start + "T00:00:00");
+    const d = new Date(String(i.week_start || "").slice(0, 10) + "T00:00:00");
     return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
   }), [incomes, viewMonth, viewYear]);
   const totalIncome = useMemo(() => incomeTotalForMonth(incomes, viewYear, viewMonth), [incomes, viewYear, viewMonth]);
 
   const thisMonthPayments = useMemo(() => (payments || []).filter(p => {
     if (!p.payment_date) return false;
-    const d = new Date(p.payment_date + "T00:00:00");
+    const d = new Date(String(p.payment_date || "").slice(0, 10) + "T00:00:00");
     return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
   }), [payments, viewMonth, viewYear]);
   const totalPaid = useMemo(() => thisMonthPayments.reduce((s, p) => s + (p.amount || 0), 0), [thisMonthPayments]);
@@ -67,7 +67,7 @@ export default function MonthlyRecap() {
     const d = new Date(viewYear, viewMonth - 1, 1);
     return (payments || []).filter(p => {
       if (!p.payment_date) return false;
-      const pd = new Date(p.payment_date + "T00:00:00");
+      const pd = new Date(String(p.payment_date || "").slice(0, 10) + "T00:00:00");
       return pd.getMonth() === d.getMonth() && pd.getFullYear() === d.getFullYear();
     }).reduce((s, p) => s + (p.amount || 0), 0);
   }, [payments, viewMonth, viewYear]);
@@ -81,7 +81,7 @@ export default function MonthlyRecap() {
     const y = d.getFullYear();
     const monthPayments = (payments || []).filter(p => {
       if (!p.payment_date) return false;
-      const pd = new Date(p.payment_date + "T00:00:00");
+      const pd = new Date(String(p.payment_date || "").slice(0, 10) + "T00:00:00");
       return pd.getMonth() === m && pd.getFullYear() === y;
     });
     return {

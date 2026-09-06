@@ -26,7 +26,7 @@ import { monthlyObligation } from "@/utils/loanEngine";
 
 function getWeekLabel(dateStr, lang = "en") {
   if (!dateStr) return "";
-  const d = new Date(dateStr + "T00:00:00");
+  const d = new Date(String(dateStr || "").slice(0, 10) + "T00:00:00");
   return d.toLocaleDateString(lang, { month: "short", day: "numeric" });
 }
 
