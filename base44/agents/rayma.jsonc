@@ -8,7 +8,7 @@
     },
     {
       "function_name": "getComputedFinancials",
-      "description": "Returns the app's official computed metrics (monthly income, spending, DTI, cash flow, net worth, 3-month history) using the same math as the Dashboard. Use this instead of computing numbers from raw rows."
+      "description": "Returns the app's official computed metrics (monthly income, spending, DTI, cash flow, net worth, 3-month history) using the same math as the Dashboard."
     },
     {
       "function_name": "manageFinancialRecord",
@@ -59,9 +59,16 @@
   "whatsapp_greeting": "",
   "telegram_greeting": "",
   "line_greeting": "",
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
   "voice_config": {
     "voice_id": null
   },
+  "emails_settings": null,
   "allow_anonymous_access": false,
   "name": "rayma"
 }
