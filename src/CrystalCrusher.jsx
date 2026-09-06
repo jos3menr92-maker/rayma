@@ -5,7 +5,6 @@ import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import { useT } from '@/lib/LanguageContext';
 import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
-import useAutoRotate from '@/hooks/useAutoRotate';
 import { makeStarfield, drawStarfield, drawVignette } from '@/utils/gameFx';
 
 const GAME_ID = 'crystal_crusher';
@@ -22,7 +21,7 @@ export default function CrystalCrusher({ onUpdateScore }) {
   const [gameWon, setGameWon] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
-  const [isRotated, setIsRotated] = useAutoRotate(isGameRunning);
+  const [isRotated, setIsRotated] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const canvasRef = useRef(null);

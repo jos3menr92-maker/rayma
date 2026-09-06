@@ -5,7 +5,6 @@ import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import { useT } from '@/lib/LanguageContext';
 import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
-import useAutoRotate from '@/hooks/useAutoRotate';
 import { drawSpaceBackdrop, drawStarfield, makeStarfield, glowCircle, glowSlab, drawVignette } from '@/utils/gameFx';
 
 const GAME_ID = 'lunar_lander';
@@ -24,7 +23,7 @@ export default function LunarLander({ onUpdateScore }) {
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
-  const [isRotated, setIsRotated] = useAutoRotate(isGameRunning);
+  const [isRotated, setIsRotated] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const [level, setLevel] = useState(1);

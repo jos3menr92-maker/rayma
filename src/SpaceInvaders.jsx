@@ -6,7 +6,6 @@ import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration';
 import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
-import useAutoRotate from '@/hooks/useAutoRotate';
 import { drawSpaceBackdrop, drawStarfield, makeStarfield, glowSlab } from '@/utils/gameFx';
 
 const GAME_ID = 'space_invaders';
@@ -17,7 +16,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   const [gameWon, setGameWon] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
-  const [isRotated, setIsRotated] = useAutoRotate(isGameRunning);
+  const [isRotated, setIsRotated] = useState(false);
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);

@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy, useEffect } from 'react';
+import React, { useState, useRef, Suspense, lazy, useEffect } from 'react';
 import { Crown, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFinancialData } from '@/lib/FinancialDataContext';
@@ -75,6 +75,14 @@ const Arcade = () => {
   const navigate = useNavigate();
   const { userProfile, reload } = useFinancialData();
   const [activeGame, setActiveGame] = useState(null);
+  const gameSectionRef = useRef(null);
+
+  // Selecting a game from a tile — on phones the game panel sits below the
+  // tiles, so smooth-scroll it into view so the Start button feels responsive.
+  const selectGame = (id) => {
+    setActiveGame(id);
+    setTimeout(() => gameSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  };
   // Last score per game — shown on each game tile, persisted locally
   const [lastScores, setLastScores] = useState({});
 
@@ -184,8 +192,8 @@ const Arcade = () => {
                 key={game.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => { setActiveGame(game.id); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); } }}
+                onClick={() => selectGame(game.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter') selectGame(game.id); }}
                 className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
                   activeGame === game.id ? `bg-card ${borderActive}` : 'bg-transparent border-border hover:bg-card'
                 }`}
@@ -202,7 +210,7 @@ const Arcade = () => {
                       {T('lastScore', 'Last')}: <span className={game.accentColor}>{(lastScores[game.id] || 0).toString().padStart(4, '0')}</span>
                     </span>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); }}
+                      onClick={(e) => { e.stopPropagation(); selectGame(game.id); }}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
                         activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
                       }`}
@@ -227,8 +235,8 @@ const Arcade = () => {
                 key={game.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => { setActiveGame(game.id); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); } }}
+                onClick={() => selectGame(game.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter') selectGame(game.id); }}
                 className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
                   activeGame === game.id ? `bg-card ${borderActive}` : 'bg-transparent border-border hover:bg-card'
                 }`}
@@ -249,7 +257,7 @@ const Arcade = () => {
                       {T('lastScore', 'Last')}: <span className={game.accentColor}>{(lastScores[game.id] || 0).toString().padStart(4, '0')}</span>
                     </span>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); }}
+                      onClick={(e) => { e.stopPropagation(); selectGame(game.id); }}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
                         activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
                       }`}
@@ -263,7 +271,7 @@ const Arcade = () => {
           })}
         </nav>
 
-        <section className="lg:col-span-2">
+        <section ref={gameSectionRef} className="lg:col-span-2 scroll-mt-4">
           <Suspense fallback={<LoadingScreen />}>
             {renderActiveGame()}
           </Suspense>
