@@ -101,6 +101,32 @@ export default async function (req: Request): Promise<Response> {
     const monthlyBillsTotal = activeBills.reduce((s, b) => s + monthlyBillAmount(b), 0);
     const totalObligations = monthlyLoans + monthlyBillsTotal;
 
+    // ─── Projection: what a full month/year looks like IF income continues ───
+    // Same pick as the auto-log cron / projectCashFlow: the NEWEST active
+    // recurring template drives projected paychecks. Without one, fall back
+    // to the frequency-weighted average of the last 3 real paychecks.
+    const activeTemplates = incomes
+      .filter((i) => i.is_recurring && i.recurring_active !== false && !i.recurring_source_id)
+      .sort((a, b) => String(b.week_start || '').localeCompare(String(a.week_start || '')));
+    const projTemplate = activeTemplates[0] || null;
+    let projectedMonthlyIncome = 0;
+    let projectionBasis: string | null = null;
+    if (projTemplate) {
+      const f = projTemplate.recurring_frequency || 'weekly';
+      projectedMonthlyIncome = num(projTemplate.amount) * (PERIODS_PER_MONTH[f] ?? 1);
+      projectionBasis = `recurring ${f} template of ${num(projTemplate.amount)} per period`;
+    } else {
+      const recent = realIncomes
+        .map((i) => ({ amt: num(i.amount), freq: i.recurring_frequency || i.frequency || 'weekly', d: parseDay(i.week_start) }))
+        .filter((i) => i.d)
+        .sort((a, b) => b.d - a.d)
+        .slice(0, 3);
+      if (recent.length > 0) {
+        projectedMonthlyIncome = recent.reduce((s, r) => s + r.amt * (PERIODS_PER_MONTH[r.freq] ?? 1), 0) / recent.length;
+        projectionBasis = `average of last ${recent.length} real paycheck(s), weighted by frequency`;
+      }
+    }
+
     const byCategory = monthSpending(transactions, splits, y, m);
     const monthlySpending = Object.values(byCategory).reduce((s, v) => s + v, 0);
 
@@ -147,7 +173,19 @@ export default async function (req: Request): Promise<Response> {
         entriesThisMonth: monthIncomes.length,
         lastPaycheck: lastPaycheck ? { amount: r2(lastPaycheck.amount), date: lastPaycheck.date } : null,
         recurringTemplate: template ? { amount: r2(template.amount), frequency: template.recurring_frequency || 'weekly' } : null,
+        note: 'Month-to-date: income actually logged so far this calendar month — partial early in the month',
       },
+      projection: projectedMonthlyIncome > 0 ? {
+        monthlyIncome: r2(projectedMonthlyIncome),
+        annualIncome: r2(projectedMonthlyIncome * 12),
+        monthlyObligations: r2(totalObligations),
+        annualObligations: r2(totalObligations * 12),
+        monthlyCashFlow: r2(projectedMonthlyIncome - totalObligations),
+        annualCashFlow: r2((projectedMonthlyIncome - totalObligations) * 12),
+        dti: Math.round((totalObligations / projectedMonthlyIncome) * 100) / 100,
+        basis: projectionBasis,
+        note: 'PROJECTION — money not received yet; assumes income continues on its current pattern',
+      } : null,
       obligations: {
         monthlyBills: r2(monthlyBillsTotal),
         monthlyLoans: r2(monthlyLoans),
