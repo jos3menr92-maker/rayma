@@ -104,7 +104,9 @@ export default async function (req: Request): Promise<Response> {
     const byCategory = monthSpending(transactions, splits, y, m);
     const monthlySpending = Object.values(byCategory).reduce((s, v) => s + v, 0);
 
-    const assetSum = assets.reduce((s, a) => s + num(a.amount), 0)
+    // "Bank Cash" assets are mirrors of bank balances — excluded so cash
+    // isn't double-counted (bankAccounts below adds the real balances).
+    const assetSum = assets.filter((a) => !String(a.name || '').toLowerCase().startsWith('bank cash')).reduce((s, a) => s + num(a.amount), 0)
       + bankAccounts.filter((a) => a.is_active !== false).reduce((s, a) => s + num(a.balance), 0);
     const debtSum = activeLoans.reduce((s, l) => s + num(l.current_balance), 0);
 

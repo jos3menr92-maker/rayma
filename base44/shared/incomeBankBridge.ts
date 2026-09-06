@@ -28,11 +28,14 @@ export async function bridgeIncomeToBank(supabaseAdmin: any, uid: string, income
     .select('id').eq('user_id', uid).eq('notes', marker).limit(1);
   if (existing && existing.length > 0) return { bridged: true, reason: 'already bridged' };
 
-  // Primary bank account (falls back to the first active account).
+  // Bank account to credit: the OLDEST active manually-linked account (the
+  // live table has no is_primary column — oldest = primary). Plaid-synced
+  // balances are authoritative from the bank, so crediting them app-side
+  // would inflate them until the next sync — skipped.
   const { data: banks } = await supabaseAdmin.from('bank_accounts')
-    .select('id, balance, is_primary, is_active').eq('user_id', uid);
-  const bank = (banks || []).find((b: any) => b.is_primary && b.is_active !== false)
-    || (banks || []).find((b: any) => b.is_active !== false);
+    .select('id, balance, is_active, link_method').eq('user_id', uid)
+    .order('created_at', { ascending: true });
+  const bank = (banks || []).find((b: any) => b.is_active !== false && b.link_method !== 'plaid');
   if (!bank) return { bridged: false, reason: 'no bank account' };
 
   const date = String(income.week_start || '').slice(0, 10) || new Date().toISOString().split('T')[0];

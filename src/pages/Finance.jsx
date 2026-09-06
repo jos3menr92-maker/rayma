@@ -111,9 +111,9 @@ export default function Finance() {
   // and editing/deleting the income keeps that link in sync.
   const bridgeMarker = (incomeId) => `income_link:${incomeId}`;
   const linkedBridgeTx = (incomeId) => (transactions || []).find(t => t.notes === bridgeMarker(incomeId));
-  const primaryBankAccount = bankAccounts.find(a => a.is_primary && a.is_active !== false)
-    || bankAccounts.find(a => a.is_active !== false)
-    || bankAccounts[0];
+  // Oldest-style pick matching the backend bridge: first active manually-linked
+  // account (Plaid-synced balances are authoritative from the bank).
+  const primaryBankAccount = bankAccounts.find(a => a.is_active !== false && a.link_method !== "plaid");
 
   async function bridgeNewIncome(rec, payload) {
     if (!rec?.id || !primaryBankAccount || !(Number(payload.amount) > 0)) return;

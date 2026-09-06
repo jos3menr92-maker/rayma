@@ -58,12 +58,16 @@ Deno.serve(async (req) => {
 
         // Read assets, bank accounts, and loans from Supabase
         const [assetsRes, loansRes, banksRes] = await Promise.all([
-          supabaseAdmin.from('assets').select('amount').eq('user_id', uid),
+          supabaseAdmin.from('assets').select('name, amount').eq('user_id', uid),
           supabaseAdmin.from('loans').select('current_balance, status').eq('user_id', uid),
           supabaseAdmin.from('bank_accounts').select('balance').eq('user_id', uid),
         ]);
 
-        const totalAssets = (assetsRes.data || []).reduce((sum, a) => sum + (a.amount || 0), 0);
+        // "Bank Cash" assets are mirrors of bank_accounts balances — excluded
+        // so cash isn't double-counted (totalBankBalances adds the real balances).
+        const totalAssets = (assetsRes.data || [])
+          .filter((a) => !String(a.name || '').toLowerCase().startsWith('bank cash'))
+          .reduce((sum, a) => sum + (a.amount || 0), 0);
         const totalBankBalances = (banksRes.data || []).reduce((sum, a) => sum + (a.balance || 0), 0);
         const combinedAssets = totalAssets + totalBankBalances;
         const totalLiabilities = (loansRes.data || [])

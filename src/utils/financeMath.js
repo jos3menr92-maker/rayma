@@ -72,7 +72,12 @@ export function incomeTotalForMonth(incomes, year, month) {
  * assets + bank balances − active loan balances.
  */
 export function netWorthFrom({ assets = [], bankAccounts = [], loans = [] } = {}) {
-  const assetSum = (assets || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+  // "Bank Cash" assets are MIRRORS of bank_accounts balances (kept in step by
+  // syncBankCashAsset) — bankSum below already counts that money, so including
+  // the mirror here would double-count cash in net worth.
+  const assetSum = (assets || [])
+    .filter((a) => !String(a.name || "").toLowerCase().startsWith("bank cash"))
+    .reduce((s, a) => s + (Number(a.amount) || 0), 0);
   const bankSum = (bankAccounts || []).reduce((s, a) => s + (Number(a.balance) || 0), 0);
   const debtSum = (loans || []).filter((l) => l.status !== "paid_off").reduce((s, l) => s + (Number(l.current_balance) || 0), 0);
   return { totalAssets: assetSum + bankSum, totalDebt: debtSum, netWorth: assetSum + bankSum - debtSum };
