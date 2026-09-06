@@ -5,6 +5,7 @@ import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import { useT } from '@/lib/LanguageContext';
 import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import useAutoRotate from '@/hooks/useAutoRotate';
 import { drawSpaceBackdrop, drawStarfield, makeStarfield, glowCircle, glowSlab, drawVignette } from '@/utils/gameFx';
 
 const GAME_ID = 'lunar_lander';
@@ -17,13 +18,13 @@ const GAME_ID = 'lunar_lander';
  * terrain and it's over.
  * Score-only: no token rewards, just fun.
  */
-export default function LunarLander({ onUpdateScore, autoStart }) {
+export default function LunarLander({ onUpdateScore }) {
   const T = useT();
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
-  const [isRotated, setIsRotated] = useState(false);
+  const [isRotated, setIsRotated] = useAutoRotate(isGameRunning);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const [level, setLevel] = useState(1);
@@ -48,11 +49,6 @@ export default function LunarLander({ onUpdateScore, autoStart }) {
     setLevel(1);
     setIsGameRunning(true);
   };
-
-  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
-  useEffect(() => {
-    if (autoStart) handleStartGame();
-  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver) return;

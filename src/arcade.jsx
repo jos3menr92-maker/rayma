@@ -75,8 +75,6 @@ const Arcade = () => {
   const navigate = useNavigate();
   const { userProfile, reload } = useFinancialData();
   const [activeGame, setActiveGame] = useState(null);
-  // ▶ Start-button launcher: which game was launched from its tile (auto-launch into play)
-  const [pendingAutoStart, setPendingAutoStart] = useState(null);
   // Last score per game — shown on each game tile, persisted locally
   const [lastScores, setLastScores] = useState({});
 
@@ -141,12 +139,12 @@ const Arcade = () => {
       return <PremiumGameLock gameTitle={game.title} />;
     }
     switch(activeGame) {
-      case 'retro_snake': return <RetroSnake autoStart={pendingAutoStart === 'retro_snake'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'space_invaders': return <SpaceInvaders autoStart={pendingAutoStart === 'space_invaders'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'sky_striker': return <SkyStriker autoStart={pendingAutoStart === 'sky_striker'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'lunar_lander': return <LunarLander autoStart={pendingAutoStart === 'lunar_lander'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'crystal_crusher': return <CrystalCrusher autoStart={pendingAutoStart === 'crystal_crusher'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'meteor_storm': return <MeteorStorm autoStart={pendingAutoStart === 'meteor_storm'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'lunar_lander': return <LunarLander onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'crystal_crusher': return <CrystalCrusher onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'meteor_storm': return <MeteorStorm onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       default: return <PlaceholderGame title="Unknown Terminal" description="Signal lost." />;
     }
   };
@@ -186,8 +184,8 @@ const Arcade = () => {
                 key={game.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => { setActiveGame(game.id); setPendingAutoStart(null); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); setPendingAutoStart(null); } }}
+                onClick={() => { setActiveGame(game.id); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); } }}
                 className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
                   activeGame === game.id ? `bg-card ${borderActive}` : 'bg-transparent border-border hover:bg-card'
                 }`}
@@ -204,7 +202,7 @@ const Arcade = () => {
                       {T('lastScore', 'Last')}: <span className={game.accentColor}>{(lastScores[game.id] || 0).toString().padStart(4, '0')}</span>
                     </span>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); setPendingAutoStart(game.id); }}
+                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); }}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
                         activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
                       }`}
@@ -229,8 +227,8 @@ const Arcade = () => {
                 key={game.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => { setActiveGame(game.id); setPendingAutoStart(null); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); setPendingAutoStart(null); } }}
+                onClick={() => { setActiveGame(game.id); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); } }}
                 className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
                   activeGame === game.id ? `bg-card ${borderActive}` : 'bg-transparent border-border hover:bg-card'
                 }`}
@@ -251,7 +249,7 @@ const Arcade = () => {
                       {T('lastScore', 'Last')}: <span className={game.accentColor}>{(lastScores[game.id] || 0).toString().padStart(4, '0')}</span>
                     </span>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); setPendingAutoStart(game.id); }}
+                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); }}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
                         activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
                       }`}

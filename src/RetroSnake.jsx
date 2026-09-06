@@ -6,16 +6,17 @@ import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration';
 import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import useAutoRotate from '@/hooks/useAutoRotate';
 import { drawSpaceBackdrop, glowSlab, glowCircle } from '@/utils/gameFx';
 
 const GAME_ID = 'retro_snake';
 
-export default function RetroSnake({ onUpdateScore, onRewardEarned, autoStart }) {
+export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
-  const [isRotated, setIsRotated] = useState(false);
+  const [isRotated, setIsRotated] = useAutoRotate(isGameRunning);
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
@@ -45,11 +46,6 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned, autoStart })
     setRewardResult(null);
     setIsGameRunning(true);
   };
-
-  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
-  useEffect(() => {
-    if (autoStart) handleStartGame();
-  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver) return;

@@ -5,6 +5,7 @@ import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import { useT } from '@/lib/LanguageContext';
 import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import useAutoRotate from '@/hooks/useAutoRotate';
 import { drawVignette } from '@/utils/gameFx';
 
 const GAME_ID = 'meteor_storm';
@@ -15,13 +16,13 @@ const GAME_ID = 'meteor_storm';
  * Visual: parallax starfield, rotating glowing asteroids, thrust particles, screen shake.
  * Score-only: no token rewards, just fun.
  */
-export default function MeteorStorm({ onUpdateScore, autoStart }) {
+export default function MeteorStorm({ onUpdateScore }) {
   const T = useT();
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
-  const [isRotated, setIsRotated] = useState(false);
+  const [isRotated, setIsRotated] = useAutoRotate(isGameRunning);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const canvasRef = useRef(null);
@@ -44,11 +45,6 @@ export default function MeteorStorm({ onUpdateScore, autoStart }) {
     setScore(0);
     setIsGameRunning(true);
   };
-
-  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
-  useEffect(() => {
-    if (autoStart) handleStartGame();
-  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver) return;
