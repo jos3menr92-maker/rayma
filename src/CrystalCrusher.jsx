@@ -4,6 +4,8 @@ import { saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import { useT } from '@/lib/LanguageContext';
+import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import { makeStarfield, drawStarfield, drawVignette } from '@/utils/gameFx';
 
 const GAME_ID = 'crystal_crusher';
 
@@ -33,6 +35,8 @@ export default function CrystalCrusher({ onUpdateScore }) {
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 📱 Phone guard — auto-pause when the app is backgrounded (call, app switch, lock screen)
+  useAutoPauseOnHide(isGameRunning && !gameOver && !gameWon, () => setIsPaused(true));
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -61,6 +65,7 @@ export default function CrystalCrusher({ onUpdateScore }) {
     let powerUps = [];
     let powerType = null;
     let powerTimer = 0;
+    const dust = makeStarfield(W, H, 3, 25);
 
     // Build crystal grid
     const rows = 5, cols = 10;
@@ -137,6 +142,9 @@ export default function CrystalCrusher({ onUpdateScore }) {
       bgGrad.addColorStop(1, '#1a0a2e');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, W, H);
+      // Drifting crystal dust + vignette for depth
+      drawStarfield(ctx, dust, W, H, ['#3b1d5e', '#831843', '#f472b6']);
+      drawVignette(ctx, W, H, 0.45);
 
       // Move paddle
       paddle.x += paddle.dx;
@@ -248,6 +256,11 @@ export default function CrystalCrusher({ onUpdateScore }) {
       ctx.fillStyle = '#22d3ee';
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fill();
+      // Specular highlight — glossy 3D core
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath();
+      ctx.arc(ball.x - ball.r * 0.35, ball.y - ball.r * 0.35, ball.r * 0.32, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
 

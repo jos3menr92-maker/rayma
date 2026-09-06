@@ -4,6 +4,8 @@ import { saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import { useT } from '@/lib/LanguageContext';
+import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import { drawVignette } from '@/utils/gameFx';
 
 const GAME_ID = 'meteor_storm';
 
@@ -33,6 +35,8 @@ export default function MeteorStorm({ onUpdateScore }) {
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 📱 Phone guard — auto-pause when the app is backgrounded (call, app switch, lock screen)
+  useAutoPauseOnHide(isGameRunning && !gameOver, () => setIsPaused(true));
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -158,6 +162,17 @@ export default function MeteorStorm({ onUpdateScore }) {
       bgGrad.addColorStop(0, '#020617');
       bgGrad.addColorStop(1, '#0c0a1a');
       ctx.fillStyle = bgGrad;
+      ctx.fillRect(-30, -30, W + 60, H + 60);
+      // Deep-space nebula glows — layered depth behind the starfield
+      const nebulaA = ctx.createRadialGradient(W * 0.2, H * 0.3, 5, W * 0.2, H * 0.3, W * 0.4);
+      nebulaA.addColorStop(0, 'rgba(168,85,247,0.12)');
+      nebulaA.addColorStop(1, 'rgba(168,85,247,0)');
+      ctx.fillStyle = nebulaA;
+      ctx.fillRect(-30, -30, W + 60, H + 60);
+      const nebulaB = ctx.createRadialGradient(W * 0.85, H * 0.15, 5, W * 0.85, H * 0.15, W * 0.35);
+      nebulaB.addColorStop(0, 'rgba(244,114,182,0.10)');
+      nebulaB.addColorStop(1, 'rgba(244,114,182,0)');
+      ctx.fillStyle = nebulaB;
       ctx.fillRect(-30, -30, W + 60, H + 60);
 
       // Parallax stars
@@ -295,6 +310,7 @@ export default function MeteorStorm({ onUpdateScore }) {
       currentScore += 1;
       setScore(currentScore);
 
+      drawVignette(ctx, W, H, 0.35);
       ctx.restore();
     };
 

@@ -5,6 +5,8 @@ import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration';
+import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import { drawSpaceBackdrop, drawStarfield, makeStarfield, glowSlab } from '@/utils/gameFx';
 
 const GAME_ID = 'sky_striker';
 
@@ -33,6 +35,8 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
   const onRewardEarnedRef = useRef(onRewardEarned);
   useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 📱 Phone guard — auto-pause when the app is backgrounded (call, app switch, lock screen)
+  useAutoPauseOnHide(isGameRunning && !gameOver, () => setIsPaused(true));
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -58,12 +62,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
     const player = { x: canvas.width / 2, y: canvas.height - 60, width: 30, height: 30, speed: 6, dx: 0 };
     let bullets = [];
     let enemies = [];
-    let stars = Array.from({ length: 50 }).map(() => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      speed: Math.random() * 2 + 0.5,
-      size: Math.random() * 2 + 1
-    }));
+    const bgStars = makeStarfield(canvas.width, canvas.height, 3, 35);
 
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowLeft') player.dx = -player.speed;
@@ -115,15 +114,9 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
       if (isPausedRef.current) return;
 
       frameCount++;
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = '#cbd5e1';
-      stars.forEach(star => {
-        star.y += star.speed;
-        if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; }
-        ctx.fillRect(star.x, star.y, star.size, star.size);
-      });
+      // 2.5D backdrop — sky gradient + 3-layer parallax starfield
+      drawSpaceBackdrop(ctx, canvas.width, canvas.height, { top: '#062a3a', mid: '#0a1a3a', bottom: '#020617', accent: 'rgba(34,211,238,0.10)' });
+      drawStarfield(ctx, bgStars, canvas.width, canvas.height, ['#475569', '#7dd3fc', '#e0f2fe']);
 
       player.x += player.dx;
       if (player.x < 0) player.x = 0;
@@ -133,12 +126,15 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
         bullets.push({ x: player.x + player.width / 2 - 2, y: player.y, width: 4, height: 15, speed: 8 });
       }
 
-      ctx.fillStyle = '#22d3ee';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#22d3ee';
+      ctx.fillStyle = '#a5f3fc';
       bullets.forEach((bullet, index) => {
         bullet.y -= bullet.speed;
         ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
         if (bullet.y + bullet.height < 0) bullets.splice(index, 1);
       });
+      ctx.shadowBlur = 0;
 
       const spawnRate = Math.max(20, 60 - Math.floor(currentScore / 100));
       if (frameCount % spawnRate === 0) {
@@ -151,11 +147,10 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
         });
       }
 
-      ctx.fillStyle = '#c084fc';
       for (let i = enemies.length - 1; i >= 0; i--) {
         let enemy = enemies[i];
         enemy.y += enemy.speed;
-        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+        glowSlab(ctx, enemy.x, enemy.y, enemy.width, enemy.height, '#c084fc', 12);
 
         if (enemy.y > canvas.height) { enemies.splice(i, 1); continue; }
         if (player.x < enemy.x + enemy.width && player.x + player.width > enemy.x && player.y < enemy.y + enemy.height && player.y + player.height > enemy.y) { endGame(); return; }
@@ -179,7 +174,23 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
         }
       }
 
-      ctx.fillStyle = '#06b6d4';
+      // Engine flame (flickers) — motion + depth cue
+      const flameLen = 6 + Math.sin(Date.now() / 40) * 3;
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(player.x + player.width / 2 - 4, player.y + player.height);
+      ctx.lineTo(player.x + player.width / 2, player.y + player.height + flameLen);
+      ctx.lineTo(player.x + player.width / 2 + 4, player.y + player.height);
+      ctx.closePath();
+      ctx.fill();
+
+      // Glossy gradient hull with cyan glow
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = '#22d3ee';
+      const shipGrad = ctx.createLinearGradient(player.x, player.y, player.x, player.y + player.height);
+      shipGrad.addColorStop(0, '#67e8f9');
+      shipGrad.addColorStop(1, '#0e7490');
+      ctx.fillStyle = shipGrad;
       ctx.beginPath();
       ctx.moveTo(player.x + player.width / 2, player.y);
       ctx.lineTo(player.x + player.width, player.y + player.height);
@@ -187,6 +198,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
       ctx.lineTo(player.x, player.y + player.height);
       ctx.closePath();
       ctx.fill();
+      ctx.shadowBlur = 0;
     };
 
     render();

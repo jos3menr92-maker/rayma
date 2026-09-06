@@ -5,6 +5,8 @@ import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration';
+import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import { drawSpaceBackdrop, glowSlab, glowCircle } from '@/utils/gameFx';
 
 const GAME_ID = 'retro_snake';
 
@@ -32,6 +34,8 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
   const onRewardEarnedRef = useRef(onRewardEarned);
   useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 📱 Phone guard — auto-pause when the app is backgrounded (call, app switch, lock screen)
+  useAutoPauseOnHide(isGameRunning && !gameOver, () => setIsPaused(true));
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -125,19 +129,25 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
         food = { x: Math.floor(Math.random() * (canvas.width / gridSize)), y: Math.floor(Math.random() * (canvas.height / gridSize)) };
       } else { snake.pop(); }
 
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // 2.5D backdrop — depth gradient, vignette, lime horizon glow
+      drawSpaceBackdrop(ctx, canvas.width, canvas.height, { top: '#0a1c0e', bottom: '#030803', accent: 'rgba(132,204,22,0.10)' });
 
       ctx.lineWidth = 8;
-      ctx.strokeStyle = '#84cc16';
+      ctx.strokeStyle = 'rgba(132,204,22,0.85)';
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = '#84cc16';
       ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+      ctx.shadowBlur = 0;
       
       ctx.fillStyle = '#ef4444'; 
-      ctx.fillRect(food.x * gridSize + 2, food.y * gridSize + 2, gridSize - 4, gridSize - 4);
+      // Food — pulsing glow orb
+      const foodPulse = 1 + Math.sin(Date.now() / 180) * 0.2;
+      glowCircle(ctx, food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, (gridSize / 2 - 3) * foodPulse, '#ef4444', 18);
 
       snake.forEach((segment, index) => {
         ctx.fillStyle = index === 0 ? '#bef264' : '#84cc16'; 
-        ctx.fillRect(segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2);
+        glowSlab(ctx, segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2,
+          index === 0 ? '#bef264' : '#84cc16', index === 0 ? 14 : 5, { shadow: false });
       });
     };
 

@@ -5,6 +5,8 @@ import { claimArcadeReward, saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import ArcadeRewardCelebration from '@/components/arcade/ArcadeRewardCelebration';
+import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
+import { drawSpaceBackdrop, drawStarfield, makeStarfield, glowSlab } from '@/utils/gameFx';
 
 const GAME_ID = 'space_invaders';
 
@@ -34,6 +36,8 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   const onRewardEarnedRef = useRef(onRewardEarned);
   useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 📱 Phone guard — auto-pause when the app is backgrounded (call, app switch, lock screen)
+  useAutoPauseOnHide(isGameRunning && !gameOver && !gameWon, () => setIsPaused(true));
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -57,6 +61,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
     let currentWave = Math.floor(score / 500) + 1;
     let frameCount = 0;
     let alienBullets = [];
+    const bgStars = makeStarfield(canvas.width, canvas.height);
 
     const player = { x: canvas.width / 2 - 20, y: canvas.height - 50, width: 40, height: 20, speed: 5, dx: 0 };
     let bullets = [];
@@ -151,23 +156,27 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
       if (isPausedRef.current) return;
       frameCount++;
 
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // 2.5D backdrop — nebula gradient + drifting parallax starfield
+      drawSpaceBackdrop(ctx, canvas.width, canvas.height, { top: '#150c2e', mid: '#0d1030', bottom: '#04030f', accent: 'rgba(168,85,247,0.10)' });
+      drawStarfield(ctx, bgStars, canvas.width, canvas.height);
 
       player.x += player.dx;
       if (player.x < 0) player.x = 0;
       if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
       ctx.fillStyle = '#a855f7'; 
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-      ctx.fillRect(player.x + player.width / 2 - 4, player.y - 6, 8, 6);
+      glowSlab(ctx, player.x, player.y, player.width, player.height, '#a855f7', 16);
+      glowSlab(ctx, player.x + player.width / 2 - 5, player.y - 10, 10, 10, '#c084fc', 10, { shadow: false });
 
-      ctx.fillStyle = '#f472b6';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#f472b6';
+      ctx.fillStyle = '#f9a8d4';
       bullets.forEach((b, bIdx) => {
         b.y -= b.speed;
         ctx.fillRect(b.x, b.y, b.width, b.height);
         if (b.y < 0) bullets.splice(bIdx, 1);
       });
+      ctx.shadowBlur = 0;
 
       // Move aliens horizontally as a group; drop + reverse at edges
       const aliveAliens = aliens.filter(a => a.alive);
@@ -204,7 +213,9 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
       }
 
       // Alien bullets — move, render, collide with player
-      ctx.fillStyle = '#f87171';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#f87171';
+      ctx.fillStyle = '#fca5a5';
       for (let abi = alienBullets.length - 1; abi >= 0; abi--) {
         const ab = alienBullets[abi];
         ab.y += ab.speed;
@@ -216,14 +227,14 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
           return;
         }
       }
+      ctx.shadowBlur = 0;
 
       // Render + collision
       let allDead = true;
       aliens.forEach((alien) => {
         if (!alien.alive) return;
         allDead = false;
-        ctx.fillStyle = '#10b981';
-        ctx.fillRect(alien.x, alien.y, alien.width, alien.height);
+        glowSlab(ctx, alien.x, alien.y, alien.width, alien.height, '#10b981', 10);
 
         // Aliens reached player's row → game over
         if (alien.y + alien.height >= player.y) { triggerEnd(false); return; }
@@ -237,6 +248,17 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
           }
         });
       });
+
+      // Glowing defense line — grounds the scene with depth
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = '#a855f7';
+      ctx.strokeStyle = 'rgba(168,85,247,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height - 26);
+      ctx.lineTo(canvas.width, canvas.height - 26);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
 
       if (allDead) {
         currentWave++;

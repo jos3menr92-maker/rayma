@@ -4,6 +4,7 @@ import { saveArcadeScore } from '@/api/arcadeGamesApi';
 import TouchControls from '@/components/arcade/TouchControls';
 import GameTopBar from '@/components/arcade/GameTopBar';
 import { useT } from '@/lib/LanguageContext';
+import useAutoPauseOnHide from '@/hooks/useAutoPauseOnHide';
 
 const GAME_ID = 'neon_drift';
 
@@ -33,6 +34,8 @@ export default function NeonDrift({ onUpdateScore }) {
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
   useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  // 📱 Phone guard — auto-pause when the app is backgrounded (call, app switch, lock screen)
+  useAutoPauseOnHide(isGameRunning && !gameOver, () => setIsPaused(true));
 
   const handleStartGame = () => {
     setGameOver(false);

@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * TouchControls — on-screen D-pad + Action button overlay for mobile arcade games.
+ * TouchControls — on-screen D-pad + Action button overlay for arcade games.
  *
  * Props:
  *   onDirection(direction) — called with 'up' | 'down' | 'left' | 'right'
@@ -10,8 +10,10 @@ import React from "react";
  *   actionLabel — optional label text inside the action button
  *   showUpDown — whether up/down buttons render (false = left/right only)
  *
- * All buttons use onTouchStart/onTouchEnd with preventDefault to avoid
- * synthetic mouse events and ghost clicks on mobile.
+ * Buttons use POINTER EVENTS (not touch events) so they work on every
+ * device — phone, tablet, and desktop preview alike. Pointer capture keeps
+ * the release event on the button even when a finger slides off it, which
+ * fixes the classic "stuck moving" mobile bug.
  */
 export default function TouchControls({
   onDirection,
@@ -25,6 +27,7 @@ export default function TouchControls({
 
   const handleDirStart = (e, dir) => {
     e.preventDefault();
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) { /* older WebViews */ }
     onDirection?.(dir);
   };
   const handleDirEnd = (e, dir) => {
@@ -39,8 +42,9 @@ export default function TouchControls({
         {showUpDown && (
           <button
             className={`${dirBtn} col-start-2 row-start-1`}
-            onTouchStart={(e) => handleDirStart(e, "up")}
-            onTouchEnd={(e) => handleDirEnd(e, "up")}
+            onPointerDown={(e) => handleDirStart(e, "up")}
+            onPointerUp={(e) => handleDirEnd(e, "up")}
+            onPointerCancel={(e) => handleDirEnd(e, "up")}
             aria-label="Up"
           >
             <ChevronUp className="w-7 h-7" />
@@ -48,8 +52,9 @@ export default function TouchControls({
         )}
         <button
           className={`${dirBtn} ${showUpDown ? "col-start-1 row-start-2" : ""}`}
-          onTouchStart={(e) => handleDirStart(e, "left")}
-          onTouchEnd={(e) => handleDirEnd(e, "left")}
+          onPointerDown={(e) => handleDirStart(e, "left")}
+          onPointerUp={(e) => handleDirEnd(e, "left")}
+          onPointerCancel={(e) => handleDirEnd(e, "left")}
           aria-label="Left"
         >
           <ChevronLeft className="w-7 h-7" />
@@ -57,8 +62,9 @@ export default function TouchControls({
         {showUpDown && <div className={showUpDown ? "col-start-2 row-start-2" : ""} />}
         <button
           className={`${dirBtn} ${showUpDown ? "col-start-3 row-start-2" : ""}`}
-          onTouchStart={(e) => handleDirStart(e, "right")}
-          onTouchEnd={(e) => handleDirEnd(e, "right")}
+          onPointerDown={(e) => handleDirStart(e, "right")}
+          onPointerUp={(e) => handleDirEnd(e, "right")}
+          onPointerCancel={(e) => handleDirEnd(e, "right")}
           aria-label="Right"
         >
           <ChevronRight className="w-7 h-7" />
@@ -66,8 +72,9 @@ export default function TouchControls({
         {showUpDown && (
           <button
             className={`${dirBtn} col-start-2 row-start-3`}
-            onTouchStart={(e) => handleDirStart(e, "down")}
-            onTouchEnd={(e) => handleDirEnd(e, "down")}
+            onPointerDown={(e) => handleDirStart(e, "down")}
+            onPointerUp={(e) => handleDirEnd(e, "down")}
+            onPointerCancel={(e) => handleDirEnd(e, "down")}
             aria-label="Down"
           >
             <ChevronDown className="w-7 h-7" />
@@ -79,7 +86,7 @@ export default function TouchControls({
       {onAction && (
         <button
           className="pointer-events-auto w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-full bg-primary/80 backdrop-blur-sm border-2 border-primary text-primary-foreground font-black text-xs tracking-widest active:scale-90 transition-all select-none touch-none shadow-lg shadow-primary/40"
-          onTouchStart={(e) => { e.preventDefault(); onAction(); }}
+          onPointerDown={(e) => { e.preventDefault(); onAction(); }}
           aria-label={actionLabel}
         >
           {actionLabel}
