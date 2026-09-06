@@ -39,7 +39,7 @@ export default async function(req: Request): Promise<Response> {
             supabaseAdmin.from('transactions').select('date, amount, description, category')
               .eq('user_id', uid).gte('date', weekAgoStr),
             supabaseAdmin.from('bills').select('name, amount, payment_frequency')
-              .eq('user_id', uid).eq('is_active', true),
+              .eq('user_id', uid).or('is_active.is.null,is_active.eq.true'),
             supabaseAdmin.from('incomes').select('amount, week_start, is_recurring, recurring_source_id')
               .eq('user_id', uid).gte('week_start', weekAgoStr),
           ]);
@@ -53,7 +53,15 @@ export default async function(req: Request): Promise<Response> {
             .reduce((s: number, i: any) => s + (i.amount || 0), 0);
           if (txs.length === 0 && bills.length === 0) continue;
 
-          const spending = txs.filter((t: any) => (t.amount || 0) < 0).reduce((s: number, t: any) => s + Math.abs(t.amount), 0);
+          // Same "true spending" rules as the dashboard math: savings transfers,
+          // loan payments and the app-logged bill/loan placeholders are internal
+          // flows, not spending (they'd double-report the user's obligations).
+          const isInternal = (t: any) =>
+            ['loan_payment', 'savings'].includes(t.category || '') ||
+            /^(Paid Bill:|Paid Loan:)/i.test(String(t.description || ''));
+          const spending = txs
+            .filter((t: any) => (t.amount || 0) < 0 && !isInternal(t))
+            .reduce((s: number, t: any) => s + Math.abs(t.amount), 0);
           const bankIncome = txs.filter((t: any) => (t.amount || 0) > 0).reduce((s: number, t: any) => s + t.amount, 0);
           const income = tableIncome > 0 ? tableIncome : bankIncome;
           // Same normalization as financeMath.monthlyBillAmount — weekly/biweekly

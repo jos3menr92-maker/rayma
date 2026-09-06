@@ -322,7 +322,7 @@ export function FinancialDataProvider({ children }) {
 
       if (bankAccounts.length > 0) {
         await addTransaction({
-          bank_account_id: (bankAccounts.find(a => a.is_primary) || bankAccounts[0]).id,
+          bank_account_id: (bankAccounts.find(a => a.is_active !== false && a.link_method !== "plaid") || bankAccounts[0]).id,
           date: paymentDate,
           description: `Paid Bill: ${bill.name}`,
           amount: -paymentAmount,
@@ -366,7 +366,7 @@ export function FinancialDataProvider({ children }) {
 
       if (bankAccounts.length > 0) {
         await addTransaction({
-          bank_account_id: (bankAccounts.find(a => a.is_primary) || bankAccounts[0]).id,
+          bank_account_id: (bankAccounts.find(a => a.is_active !== false && a.link_method !== "plaid") || bankAccounts[0]).id,
           date: paymentDate,
           description: `Paid Loan: ${loan.name}`,
           amount: -paymentAmount,

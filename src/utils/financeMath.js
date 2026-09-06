@@ -78,9 +78,20 @@ export function netWorthFrom({ assets = [], bankAccounts = [], loans = [] } = {}
   const assetSum = (assets || [])
     .filter((a) => !String(a.name || "").toLowerCase().startsWith("bank cash"))
     .reduce((s, a) => s + (Number(a.amount) || 0), 0);
-  const bankSum = (bankAccounts || []).reduce((s, a) => s + (Number(a.balance) || 0), 0);
+  // Active accounts only (matches getComputedFinancials / Banking Info).
+  const activeBanks = (bankAccounts || []).filter((a) => a.is_active !== false);
+  // Credit-card accounts hold the amount OWED (the Banking Info convention:
+  // positive credit balance = debt) — a liability, never an asset. Everything
+  // else counts raw: a negative checking balance (overdraft) already reduces
+  // assets, a negative credit balance (overpayment) already reduces debt.
+  const bankSum = activeBanks
+    .filter((a) => String(a.account_type || "").toLowerCase() !== "credit")
+    .reduce((s, a) => s + (Number(a.balance) || 0), 0);
+  const creditDebt = activeBanks
+    .filter((a) => String(a.account_type || "").toLowerCase() === "credit")
+    .reduce((s, a) => s + (Number(a.balance) || 0), 0);
   const debtSum = (loans || []).filter((l) => l.status !== "paid_off").reduce((s, l) => s + (Number(l.current_balance) || 0), 0);
-  return { totalAssets: assetSum + bankSum, totalDebt: debtSum, netWorth: assetSum + bankSum - debtSum };
+  return { totalAssets: assetSum + bankSum, totalDebt: creditDebt + debtSum, netWorth: assetSum + bankSum - creditDebt - debtSum };
 }
 
 /**

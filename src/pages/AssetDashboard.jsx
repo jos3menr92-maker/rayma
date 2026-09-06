@@ -57,8 +57,11 @@ export default function AssetDashboard() {
   const { totalAssets: combinedAssets, totalDebt: totalLiabilities, netWorth } =
     netWorthFrom({ assets, bankAccounts, loans });
 
-  const pieData = assets.map(a => ({ name: a.name, value: a.amount || 0, type: a.type }));
-  const byType = assets.reduce((acc, a) => {
+  // "Bank Cash" rows are auto-managed mirrors of bank balances (excluded from
+  // net worth above) — leave them out of the breakdown so the pie totals match.
+  const userAssets = assets.filter(a => !String(a.name || "").toLowerCase().startsWith("bank cash"));
+  const pieData = userAssets.map(a => ({ name: a.name, value: a.amount || 0, type: a.type }));
+  const byType = userAssets.reduce((acc, a) => {
     const t = a.type || "other";
     acc[t] = (acc[t] || 0) + (a.amount || 0);
     return acc;

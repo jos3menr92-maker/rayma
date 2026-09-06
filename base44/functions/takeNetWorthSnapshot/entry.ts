@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         const [assetsRes, loansRes, banksRes] = await Promise.all([
           supabaseAdmin.from('assets').select('name, amount').eq('user_id', uid),
           supabaseAdmin.from('loans').select('current_balance, status').eq('user_id', uid),
-          supabaseAdmin.from('bank_accounts').select('balance').eq('user_id', uid),
+          supabaseAdmin.from('bank_accounts').select('balance, account_type, is_active').eq('user_id', uid),
         ]);
 
         // "Bank Cash" assets are mirrors of bank_accounts balances — excluded
@@ -68,10 +68,20 @@ Deno.serve(async (req) => {
         const totalAssets = (assetsRes.data || [])
           .filter((a) => !String(a.name || '').toLowerCase().startsWith('bank cash'))
           .reduce((sum, a) => sum + (a.amount || 0), 0);
-        const totalBankBalances = (banksRes.data || []).reduce((sum, a) => sum + (a.balance || 0), 0);
+        // Same conventions as financeMath.netWorthFrom: active accounts only,
+        // credit-card balances are DEBT (amount owed), and a loan counts as a
+        // liability unless explicitly paid_off (null status = active — matches
+        // every live page instead of silently dropping legacy loans).
+        const activeBanks = (banksRes.data || []).filter(a => a.is_active !== false);
+        const totalBankBalances = activeBanks
+          .filter(a => String(a.account_type || '').toLowerCase() !== 'credit')
+          .reduce((sum, a) => sum + (a.balance || 0), 0);
+        const creditDebt = activeBanks
+          .filter(a => String(a.account_type || '').toLowerCase() === 'credit')
+          .reduce((sum, a) => sum + (a.balance || 0), 0);
         const combinedAssets = totalAssets + totalBankBalances;
-        const totalLiabilities = (loansRes.data || [])
-          .filter(l => l.status === 'active')
+        const totalLiabilities = creditDebt + (loansRes.data || [])
+          .filter(l => l.status !== 'paid_off')
           .reduce((sum, l) => sum + (l.current_balance || 0), 0);
         const netWorth = combinedAssets - totalLiabilities;
 

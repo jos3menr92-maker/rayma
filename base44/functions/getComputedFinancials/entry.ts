@@ -106,9 +106,14 @@ export default async function (req: Request): Promise<Response> {
 
     // "Bank Cash" assets are mirrors of bank balances — excluded so cash
     // isn't double-counted (bankAccounts below adds the real balances).
+    // Credit-card accounts hold the amount OWED — a liability, never an asset
+    // (same convention as Banking Info / financeMath.netWorthFrom).
+    const activeBanks = bankAccounts.filter((a) => a.is_active !== false);
+    const nonCreditBanks = activeBanks.filter((a) => String(a.account_type || '').toLowerCase() !== 'credit');
+    const creditDebt = activeBanks.filter((a) => String(a.account_type || '').toLowerCase() === 'credit').reduce((s, a) => s + num(a.balance), 0);
     const assetSum = assets.filter((a) => !String(a.name || '').toLowerCase().startsWith('bank cash')).reduce((s, a) => s + num(a.amount), 0)
-      + bankAccounts.filter((a) => a.is_active !== false).reduce((s, a) => s + num(a.balance), 0);
-    const debtSum = activeLoans.reduce((s, l) => s + num(l.current_balance), 0);
+      + nonCreditBanks.reduce((s, a) => s + num(a.balance), 0);
+    const debtSum = creditDebt + activeLoans.reduce((s, l) => s + num(l.current_balance), 0);
 
     // 3-month history: income-table income, canonical spending, payments made
     const history = [];
