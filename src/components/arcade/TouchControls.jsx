@@ -19,6 +19,7 @@ export default function TouchControls({
   onDirection,
   onDirectionRelease,
   onAction,
+  onActionRelease,
   actionLabel = "FIRE",
   showUpDown = false,
 }) {
@@ -86,7 +87,13 @@ export default function TouchControls({
       {onAction && (
         <button
           className="pointer-events-auto w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-full bg-primary/80 backdrop-blur-sm border-2 border-primary text-primary-foreground font-black text-xs tracking-widest active:scale-90 transition-all select-none touch-none shadow-lg shadow-primary/40"
-          onPointerDown={(e) => { e.preventDefault(); onAction(); }}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) { /* older WebViews */ }
+            onAction();
+          }}
+          onPointerUp={(e) => { e.preventDefault(); onActionRelease?.(); }}
+          onPointerCancel={() => onActionRelease?.()}
           aria-label={actionLabel}
         >
           {actionLabel}

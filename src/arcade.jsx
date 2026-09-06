@@ -8,7 +8,7 @@ import { useT } from '@/lib/LanguageContext';
 const RetroSnake = lazy(() => import('./RetroSnake'));
 const SpaceInvaders = lazy(() => import('./SpaceInvaders'));
 const SkyStriker = lazy(() => import('./SkyStriker'));
-const NeonDrift = lazy(() => import('./NeonDrift'));
+const LunarLander = lazy(() => import('./LunarLander'));
 const CrystalCrusher = lazy(() => import('./CrystalCrusher'));
 const MeteorStorm = lazy(() => import('./MeteorStorm'));
 const PremiumGameLock = lazy(() => import('@/components/arcade/PremiumGameLock'));
@@ -32,10 +32,10 @@ const GAMES_REGISTRY = {
     description: 'Take to the skies! Dogfight through market volatility.',
     accentColor: 'text-cyan-400'
   },
-  neon_drift: {
-    id: 'neon_drift',
-    title: 'Neon Drift',
-    description: 'Synthwave highway. Dodge, collect, survive.',
+  lunar_lander: {
+    id: 'lunar_lander',
+    title: 'Lunar Lander',
+    description: 'Thrust, descend, stick the landing. Every pad is smaller.',
     accentColor: 'text-cyan-400',
     premium: true,
   },
@@ -128,7 +128,7 @@ const Arcade = () => {
       case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'neon_drift': return <NeonDrift onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'lunar_lander': return <LunarLander onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       case 'crystal_crusher': return <CrystalCrusher onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       case 'meteor_storm': return <MeteorStorm onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       default: return <PlaceholderGame title="Unknown Terminal" description="Signal lost." />;
