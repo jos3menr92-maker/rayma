@@ -1,0 +1,39 @@
+{
+  "name": "StripeEvent",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Stripe event ID (evt_...) \u2014 deduplicates webhook deliveries so coin grants are never applied twice"
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Stripe event type (e.g. checkout.session.completed, invoice.paid)"
+    }
+  },
+  "required": [
+    "event_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

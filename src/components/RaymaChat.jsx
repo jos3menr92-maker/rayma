@@ -575,14 +575,11 @@ export default function RaymaChat({
       await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
       clearTimeout(safetyTimeout);
       // Success — deduct 3 coins for this AI consultation (unlimited users ride free).
+      // Deduction happens server-side in spendCoins so it can't be skipped or forged.
       if (!isUnlimited) {
         try {
-          const meNow = await base44.auth.me();
-          const remaining = (meNow?.ai_tokens ?? 0) - 3;
-          if (remaining >= 0) {
-            await base44.auth.updateMe({ ai_tokens: remaining });
-            refreshUserProfile?.();
-          }
+          const res = await base44.functions.invoke('spendCoins', { amount: 3, reason: 'chat_question' });
+          if (res?.data?.success) refreshUserProfile?.();
         } catch (e) { console.warn('Token deduction failed:', e.message); }
       }
     } catch (err) {

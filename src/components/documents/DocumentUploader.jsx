@@ -129,12 +129,11 @@ Today's date: ${today}`,
         amount: ex.amount != null ? parseFloat(ex.amount) || null : null,
         document_date: ex.date || null,
       });
-      // 🪙 Deduct 3 coins for the scan (best-effort; unlimited users skip)
+      // 🪙 Deduct 3 coins for the scan — server-side in spendCoins so it can't
+      // be skipped or forged (unlimited users skip)
       if (!isUnlimited) {
         try {
-          const me = await base44.auth.me();
-          const remaining = (me?.ai_tokens ?? 0) - 3;
-          if (remaining >= 0) await base44.auth.updateMe({ ai_tokens: remaining });
+          await base44.functions.invoke('spendCoins', { amount: 3, reason: 'document_scan' });
         } catch (e) { console.warn('Scan coin deduction failed:', e.message); }
       }
       onDocumentScanned({ ...doc, _analysis: analysis });

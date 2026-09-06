@@ -75,6 +75,16 @@
       "format": "date",
       "description": "Date when the weekly free-coin top-up was last applied"
     },
+    "arcade_coins_earned_today": {
+      "type": "number",
+      "default": 0,
+      "description": "Arcade coins earned today (UTC). Server-side farming guard \u2014 caps Play-to-Earn at 6 coins/day per user."
+    },
+    "arcade_coins_earned_date": {
+      "type": "string",
+      "format": "date",
+      "description": "UTC date for the daily arcade coin cap tracking. When it no longer matches today, the counter resets to 0."
+    },
     "annual_pass_expires_at": {
       "type": "string",
       "format": "date",

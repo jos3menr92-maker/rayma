@@ -56,6 +56,17 @@ Deno.serve(async (req) => {
 
     const base44 = createClientFromRequest(req);
 
+    // ===== Idempotency — Stripe retries event deliveries; never process the same event twice =====
+    const seenEvents = await base44.asServiceRole.entities.StripeEvent.filter({ event_id: event.id });
+    if (seenEvents && seenEvents.length > 0) {
+      console.log(`Event ${event.id} already processed — skipping duplicate delivery`);
+      return Response.json({ received: true, duplicate: true });
+    }
+    await base44.asServiceRole.entities.StripeEvent.create({
+      event_id: event.id,
+      event_type: event.type,
+    });
+
     // ===== checkout.session.completed — initial purchase: set tier + grant coins =====
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
