@@ -55,7 +55,7 @@ export default function ArcadeRewardCelebration({ amount, onDismiss }) {
       <h2 className="text-4xl font-black text-amber-400 uppercase tracking-tight mb-2">You Win!</h2>
       <div className="flex items-center gap-2 text-amber-300 mb-1">
         <Coins className="w-7 h-7" />
-        <span className="text-3xl font-black">+{amount} Energy Bars</span>
+        <span className="text-3xl font-black">+{amount} Coins</span>
       </div>
       <p className="text-slate-400 text-sm mb-8">Added to your Rayma AI account</p>
 

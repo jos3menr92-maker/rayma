@@ -253,7 +253,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
                 <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
                 {score >= 600 && (
                   <div className="text-cyan-400 font-black text-xl mb-8 animate-bounce tracking-widest">
-                    🎉 LEVEL 5+ REACHED: +2 ENERGY BARS PER MILESTONE!
+                    🎉 LEVEL 5+ REACHED: +3 COINS PER MILESTONE!
                   </div>
                 )}
                 <div className="flex gap-4">

@@ -311,7 +311,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
                 <div className="text-white font-mono text-2xl mb-6">SCORE: {score} | BEST: {bestScore}</div>
                 {wave >= 5 && (
                   <div className="text-purple-400 font-black text-xl mb-8 animate-bounce tracking-widest">
-                    🎉 WAVE 5+ REACHED: +2 ENERGY BARS PER MILESTONE!
+                    🎉 WAVE 5+ REACHED: +3 COINS PER MILESTONE!
                   </div>
                 )}
                 <div className="flex gap-4">
