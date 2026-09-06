@@ -100,7 +100,12 @@ const Arcade = () => {
     }
   };
 
-  const hasGameAccess = userProfile?.subscription_tier === 'power_generator'
+  // ⚠️ TEMPORARY TEST MODE — bypasses the sponsor-game lock so all games can be
+  // tested. Set to false (or delete) to restore the PremiumGameLock gating.
+  const TEMP_UNLOCK_SPONSOR_GAMES = true;
+
+  const hasGameAccess = TEMP_UNLOCK_SPONSOR_GAMES
+    || userProfile?.subscription_tier === 'power_generator'
     || userProfile?.subscription_tier === 'power_unlimited'
     || userProfile?.subscription_type === 'power_generator'
     || userProfile?.subscription_type === 'power_unlimited'
