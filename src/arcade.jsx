@@ -64,9 +64,9 @@ const PlaceholderGame = ({ title, description }) => (
 );
 
 const LoadingScreen = () => (
-  <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
-    <div className="w-12 h-12 border-4 border-slate-700 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-    <div className="text-cyan-500 font-mono font-bold tracking-widest animate-pulse">DOWNLOADING GAME DATA...</div>
+  <div className="w-full aspect-video bg-card rounded-2xl border relative overflow-hidden flex flex-col items-center justify-center p-8">
+    <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mb-4"></div>
+    <div className="text-primary font-bold tracking-widest animate-pulse">DOWNLOADING GAME DATA...</div>
   </div>
 );
 
@@ -130,9 +130,9 @@ const Arcade = () => {
   const renderActiveGame = () => {
     if (!activeGame) {
       return (
-        <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8 text-center">
-          <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">{T('arcadeSelectGame', 'Select a Game')}</h3>
-          <p className="text-slate-400 font-mono text-center max-w-md">{T('arcadeSelectPrompt', 'Choose a terminal from the left to start playing.')}</p>
+        <div className="w-full aspect-video bg-card rounded-2xl border relative overflow-hidden flex flex-col items-center justify-center p-8 text-center">
+          <h3 className="text-2xl font-heading font-bold text-foreground tracking-tight mb-2">{T('arcadeSelectGame', 'Select a Game')}</h3>
+          <p className="text-muted-foreground text-center max-w-md">{T('arcadeSelectPrompt', 'Choose a terminal from the left to start playing.')}</p>
         </div>
       );
     }
@@ -152,29 +152,29 @@ const Arcade = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 p-8 font-sans selection:bg-cyan-500/30">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors mb-4 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 font-body selection:bg-primary/30">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 max-w-7xl mx-auto">
         <ChevronLeft className="w-4 h-4" /> {T('back', 'Back')}
       </button>
-      <header className="max-w-7xl mx-auto mb-12 flex justify-between items-end">
+      <header className="max-w-7xl mx-auto mb-6 sm:mb-8 flex justify-between items-end">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
-            <span className="text-xs font-black uppercase tracking-widest text-purple-500">System Online</span>
+            <div className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse" />
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">{T('systemOnline', 'System Online')}</span>
           </div>
-          <h1 className="text-6xl font-black italic uppercase tracking-tighter leading-none">
-            Rayma AI <span className="text-purple-500">Arcade</span>
+          <h1 className="text-3xl sm:text-5xl font-heading font-bold tracking-tight leading-none">
+            Rayma AI <span className="text-primary">Arcade</span>
           </h1>
         </div>
         <div className="text-right hidden md:block">
-          <div className="text-xs font-bold text-slate-500 uppercase mb-1">Player</div>
-          <div className="text-3xl font-mono font-bold text-white">{userProfile?.preferred_name || 'Guest'}</div>
+          <div className="text-xs font-bold text-muted-foreground uppercase mb-1">{T('player', 'Player')}</div>
+          <div className="text-3xl font-mono font-bold text-foreground">{userProfile?.preferred_name || 'Guest'}</div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
         <nav className="lg:col-span-1 space-y-4">
-          <div className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 px-4">{T('freeGames', 'Free Games')}</div>
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 px-4">{T('freeGames', 'Free Games')}</div>
           {Object.values(GAMES_REGISTRY).filter(g => !g.premium).map((game, idx) => {
             const borderActive = {
               'text-purple-500': 'border-purple-500',
@@ -189,14 +189,14 @@ const Arcade = () => {
                 onClick={() => { setActiveGame(game.id); setPendingAutoStart(null); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); setPendingAutoStart(null); } }}
                 className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
-                  activeGame === game.id ? `bg-slate-900 ${borderActive}` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
+                  activeGame === game.id ? `bg-card ${borderActive}` : 'bg-transparent border-border hover:bg-card'
                 }`}
               >
                 <div className="flex flex-col items-start">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${activeGame === game.id ? game.accentColor : 'text-slate-500'}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${activeGame === game.id ? game.accentColor : 'text-muted-foreground'}`}>
                     Terminal {String(idx + 1).padStart(2, '0')}
                   </span>
-                  <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
+                  <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {game.title}
                   </span>
                   <div className="w-full flex items-center justify-between mt-2 gap-2">
@@ -206,7 +206,7 @@ const Arcade = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); setPendingAutoStart(game.id); }}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
-                        activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                        activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
                       }`}
                     >
                       ▶ {T('startGame', 'Start')}
@@ -216,7 +216,7 @@ const Arcade = () => {
               </div>
             );
           })}
-          <div className="text-xs font-black text-primary/70 uppercase tracking-widest mb-4 px-4 pt-4 flex items-center gap-1.5">
+          <div className="text-xs font-bold text-primary/70 uppercase tracking-widest mb-4 px-4 pt-4 flex items-center gap-1.5">
             <Crown className="w-3 h-3" /> {T('sponsorGames', 'Sponsor Games')}
           </div>
           {Object.values(GAMES_REGISTRY).filter(g => g.premium).map((game, idx) => {
@@ -232,15 +232,15 @@ const Arcade = () => {
                 onClick={() => { setActiveGame(game.id); setPendingAutoStart(null); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); setPendingAutoStart(null); } }}
                 className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
-                  activeGame === game.id ? `bg-slate-900 ${borderActive}` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
+                  activeGame === game.id ? `bg-card ${borderActive}` : 'bg-transparent border-border hover:bg-card'
                 }`}
               >
                 <div className="flex flex-col items-start">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1 ${activeGame === game.id ? game.accentColor : 'text-slate-500'}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1 ${activeGame === game.id ? game.accentColor : 'text-muted-foreground'}`}>
                     Terminal {String(idx + 4).padStart(2, '0')}
                     <Crown className="w-2.5 h-2.5" />
                   </span>
-                  <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
+                  <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {game.title}
                   </span>
                   {!hasGameAccess && (
@@ -253,7 +253,7 @@ const Arcade = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); setPendingAutoStart(game.id); }}
                       className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
-                        activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                        activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-muted/70'
                       }`}
                     >
                       ▶ {T('startGame', 'Start')}
@@ -272,12 +272,12 @@ const Arcade = () => {
         </section>
 
         <aside className="space-y-8">
-          <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 relative overflow-hidden">
-            <h2 className="text-xl font-black italic mb-6">TOP SCORES</h2>
+          <div className="bg-card p-6 sm:p-8 rounded-2xl border relative overflow-hidden">
+            <h2 className="text-lg font-heading font-bold mb-6">{T('topScores', 'Top Scores')}</h2>
             <div className="space-y-4">
               {Object.values(GAMES_REGISTRY).map((game) => (
                 <div key={game.id} className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-400 uppercase">{game.title}</span>
+                  <span className="text-xs font-medium text-muted-foreground uppercase">{game.title}</span>
                   <span className={`font-mono text-lg font-bold ${game.accentColor.replace('text-', 'text-').replace('500', '400')}`}>
                     {(highScores[game.id] || 0).toString().padStart(4, '0')}
                   </span>
