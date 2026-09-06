@@ -103,7 +103,7 @@ export default function MeteorStorm({ onUpdateScore }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
-    const spawnAsteroid = (x, y, size, vx, vy) => {
+    const spawnAsteroid = (x, y, size = 30, vx, vy) => {
       const verts = [];
       const numVerts = 8 + Math.floor(Math.random() * 4);
       for (let i = 0; i < numVerts; i++) {
