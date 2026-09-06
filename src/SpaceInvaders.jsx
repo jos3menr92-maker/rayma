@@ -15,6 +15,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [rewardResult, setRewardResult] = useState(null);
@@ -42,7 +43,9 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   const handleStartGame = () => {
     setGameOver(false);
     setGameWon(false);
-    setIsPaused(false);
+    // Enter the game paused on the READY? screen so the player sees the controls first
+    setIsPaused(true);
+    setIsReady(true);
     setScore(0);
     setWave(1);
     setRewardResult(null);
@@ -312,11 +315,25 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
           )}
           
           {isPaused && !gameOver && !gameWon && (
-            <div className="absolute inset-0 z-40 bg-black/50 flex flex-col items-center justify-center gap-6">
-              <h2 className="text-white text-4xl font-black uppercase tracking-widest">Paused</h2>
-              <button onClick={() => { setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
-                <X className="w-5 h-5" /> Exit
-              </button>
+            <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-6 px-6">
+              <h2 className="text-white text-4xl font-black uppercase tracking-widest">{isReady ? T('readyToPlay', 'READY?') : T('paused', 'Paused')}</h2>
+              {isReady && (
+                <p className="text-white/70 text-sm text-center max-w-xs">{T('invadersControlsHint', 'Move with ◀ ▶ · FIRE blasts the descending aliens')}</p>
+              )}
+              {isReady ? (
+                <button onClick={() => { setIsPaused(false); setIsReady(false); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                  ▶ {T('startGame', 'Start Game')}
+                </button>
+              ) : (
+                <button onClick={() => { setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                  <X className="w-5 h-5" /> {T('exit', 'Exit')}
+                </button>
+              )}
+              {isReady && (
+                <button onClick={() => { setIsPaused(false); setIsReady(false); setIsGameRunning(false); }} className="text-slate-400 text-sm font-bold uppercase tracking-widest hover:text-white">
+                  {T('exit', 'Exit')}
+                </button>
+              )}
             </div>
           )}
 
@@ -339,7 +356,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
                   </div>
                 )}
                 <div className="flex gap-4">
-                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); setWave(1); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase rounded-xl">Try Again</button>
+                  <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(true); setIsReady(true); setScore(0); setWave(1); }} className="px-10 py-5 bg-purple-500 text-black font-black text-xl uppercase rounded-xl">Try Again</button>
                   <button onClick={() => { setGameOver(false); setGameWon(false); setIsPaused(false); setScore(0); setWave(1); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
                     <X className="w-5 h-5" /> Exit
                     </button>

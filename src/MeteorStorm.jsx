@@ -20,6 +20,7 @@ export default function MeteorStorm({ onUpdateScore }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [score, setScore] = useState(0);
@@ -40,7 +41,9 @@ export default function MeteorStorm({ onUpdateScore }) {
 
   const handleStartGame = () => {
     setGameOver(false);
-    setIsPaused(false);
+    // Enter the game paused on the READY? screen so the player sees the controls first
+    setIsPaused(true);
+    setIsReady(true);
     setScore(0);
     setIsGameRunning(true);
   };
@@ -349,11 +352,25 @@ export default function MeteorStorm({ onUpdateScore }) {
           />
           <canvas ref={canvasRef} width={800} height={450} className="w-full h-full max-w-7xl object-contain z-10" />
           {isPaused && !gameOver && (
-            <div className="absolute inset-0 z-40 bg-black/50 flex flex-col items-center justify-center gap-6">
-              <h2 className="text-white text-4xl font-black uppercase tracking-widest">{T('paused', 'Paused')}</h2>
-              <button onClick={() => { setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
-                <X className="w-5 h-5" /> {T('exit', 'Exit')}
-              </button>
+            <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-6 px-6">
+              <h2 className="text-white text-4xl font-black uppercase tracking-widest">{isReady ? T('readyToPlay', 'READY?') : T('paused', 'Paused')}</h2>
+              {isReady && (
+                <p className="text-white/70 text-sm text-center max-w-xs">{T('meteorControlsHint', 'Steer with the D-pad · FIRE blasts the meteors before they reach you')}</p>
+              )}
+              {isReady ? (
+                <button onClick={() => { setIsPaused(false); setIsReady(false); }} className="px-10 py-5 bg-pink-600 text-white font-black text-xl uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.4)]">
+                  ▶ {T('startGame', 'Start Game')}
+                </button>
+              ) : (
+                <button onClick={() => { setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-4 bg-slate-800 text-white font-black uppercase tracking-widest rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                  <X className="w-5 h-5" /> {T('exit', 'Exit')}
+                </button>
+              )}
+              {isReady && (
+                <button onClick={() => { setIsPaused(false); setIsReady(false); setIsGameRunning(false); }} className="text-slate-400 text-sm font-bold uppercase tracking-widest hover:text-white">
+                  {T('exit', 'Exit')}
+                </button>
+              )}
             </div>
           )}
           {!gameOver && !isPaused && (
@@ -369,7 +386,7 @@ export default function MeteorStorm({ onUpdateScore }) {
               <div className="font-black text-6xl mb-2 text-red-500">{T('gameOver', 'GAME OVER')}</div>
               <div className="text-white font-mono text-2xl mb-6">{T('score', 'SCORE')}: {score} | {T('best', 'BEST')}: {bestScore}</div>
               <div className="flex gap-4">
-                <button onClick={() => { setGameOver(false); setScore(0); setIsGameRunning(true); }} className="px-10 py-5 bg-pink-600 text-white font-black text-xl uppercase rounded-xl">{T('tryAgain', 'Try Again')}</button>
+                <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(true); setIsReady(true); }} className="px-10 py-5 bg-pink-600 text-white font-black text-xl uppercase rounded-xl">{T('tryAgain', 'Try Again')}</button>
                 <button onClick={() => { setGameOver(false); setScore(0); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
                   <X className="w-5 h-5" /> {T('exit', 'Exit')}
                 </button>
