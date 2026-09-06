@@ -18,6 +18,7 @@ export default function MeteorStorm({ onUpdateScore }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
@@ -31,6 +32,7 @@ export default function MeteorStorm({ onUpdateScore }) {
 
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -40,7 +42,7 @@ export default function MeteorStorm({ onUpdateScore }) {
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || isPaused) return;
+    if (!isGameRunning || gameOver) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -140,6 +142,7 @@ export default function MeteorStorm({ onUpdateScore }) {
 
     const renderLoop = () => {
       animationFrameId = window.requestAnimationFrame(renderLoop);
+      if (isPausedRef.current) return;
 
       // Screen shake
       if (shakeIntensity > 0) {
@@ -301,7 +304,7 @@ export default function MeteorStorm({ onUpdateScore }) {
       window.removeEventListener('keyup', handleKeyUp);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, isPaused]);
+  }, [isGameRunning, gameOver]);
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">

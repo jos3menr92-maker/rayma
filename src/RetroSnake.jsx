@@ -12,6 +12,7 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
@@ -30,6 +31,7 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
   const onRewardEarnedRef = useRef(onRewardEarned);
   useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -41,7 +43,7 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || isPaused) return;
+    if (!isGameRunning || gameOver) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -99,7 +101,7 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
 
     const render = () => {
       animationFrameId = window.requestAnimationFrame(render);
-      if (isPaused) return;
+      if (isPausedRef.current) return;
 
       const currentLevel = Math.floor(currentScore / 50) + 1;
       const dynamicSpeed = Math.max(3, 14 - currentLevel);
@@ -144,7 +146,7 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
       window.removeEventListener('keydown', handleKeyDown);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, isPaused]); 
+  }, [isGameRunning, gameOver]); 
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">

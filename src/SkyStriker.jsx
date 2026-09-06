@@ -12,6 +12,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
@@ -31,6 +32,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
   const onRewardEarnedRef = useRef(onRewardEarned);
   useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -42,7 +44,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || isPaused) return;
+    if (!isGameRunning || gameOver) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -110,7 +112,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
 
     const render = () => {
       animationFrameId = window.requestAnimationFrame(render);
-      if (isPaused) return;
+      if (isPausedRef.current) return;
 
       frameCount++;
       ctx.fillStyle = '#0f172a';
@@ -194,7 +196,7 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
       window.removeEventListener('keyup', handleKeyUp);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, isPaused]);
+  }, [isGameRunning, gameOver]);
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
@@ -257,8 +259,8 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
                   </div>
                 )}
                 <div className="flex gap-4">
-                  <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); }} className="px-10 py-5 bg-cyan-500 text-black font-black text-xl uppercase rounded-xl">Fly Again</button>
-                  <button onClick={() => { setGameOver(false); setScore(0); setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
+                  <button onClick={() => { setGameOver(false); setScore(0); setLevel(1); setIsPaused(false); }} className="px-10 py-5 bg-cyan-500 text-black font-black text-xl uppercase rounded-xl">Fly Again</button>
+                  <button onClick={() => { setGameOver(false); setScore(0); setLevel(1); setIsPaused(false); setIsGameRunning(false); }} className="px-8 py-5 bg-slate-800 text-white font-black text-xl uppercase rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
                     <X className="w-5 h-5" /> Exit
                     </button>
                     </div>

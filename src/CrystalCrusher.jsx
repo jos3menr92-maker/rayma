@@ -18,6 +18,7 @@ export default function CrystalCrusher({ onUpdateScore }) {
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
@@ -31,6 +32,7 @@ export default function CrystalCrusher({ onUpdateScore }) {
 
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -41,7 +43,7 @@ export default function CrystalCrusher({ onUpdateScore }) {
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || gameWon || isPaused) return;
+    if (!isGameRunning || gameOver || gameWon) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -127,6 +129,7 @@ export default function CrystalCrusher({ onUpdateScore }) {
 
     const renderLoop = () => {
       animationFrameId = window.requestAnimationFrame(renderLoop);
+      if (isPausedRef.current) return;
 
       // Gradient background
       const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
@@ -284,7 +287,7 @@ export default function CrystalCrusher({ onUpdateScore }) {
       window.removeEventListener('keyup', handleKeyUp);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, gameWon, isPaused]);
+  }, [isGameRunning, gameOver, gameWon]);
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">

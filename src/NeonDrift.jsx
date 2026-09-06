@@ -18,6 +18,7 @@ export default function NeonDrift({ onUpdateScore }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
@@ -31,6 +32,7 @@ export default function NeonDrift({ onUpdateScore }) {
 
   const latestScoreUpdate = useRef(onUpdateScore);
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -40,7 +42,7 @@ export default function NeonDrift({ onUpdateScore }) {
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || isPaused) return;
+    if (!isGameRunning || gameOver) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -122,6 +124,7 @@ export default function NeonDrift({ onUpdateScore }) {
 
     const renderLoop = () => {
       animationFrameId = window.requestAnimationFrame(renderLoop);
+      if (isPausedRef.current) return;
 
       // Background gradient
       const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
@@ -185,7 +188,7 @@ export default function NeonDrift({ onUpdateScore }) {
         orb.z += speed;
         const { x, y, scale } = project(orb.x, orb.z);
         // Collision
-        if (!orb.collected && scale > 0.7 && Math.abs(x - player.x) < 25 && Math.abs(y - player.y) < 25) {
+        if (!orb.collected && Math.abs(x - player.x) < 25 && Math.abs(y - player.y) < 30) {
           orb.collected = true;
           currentScore += 50;
           setScore(currentScore);
@@ -212,7 +215,7 @@ export default function NeonDrift({ onUpdateScore }) {
       barriers.forEach((bar) => {
         bar.z += speed;
         const { x, y, scale } = project(bar.x, bar.z);
-        if (!bar.hit && scale > 0.6 && Math.abs(x - player.x) < 28 && Math.abs(y - player.y) < 28) {
+        if (!bar.hit && Math.abs(x - player.x) < 28 && Math.abs(y - player.y) < 32) {
           if (player.shield > 0) {
             bar.hit = true;
             for (let i = 0; i < 20; i++) {
@@ -293,7 +296,7 @@ export default function NeonDrift({ onUpdateScore }) {
       window.removeEventListener('keyup', handleKeyUp);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, isPaused]);
+  }, [isGameRunning, gameOver]);
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">

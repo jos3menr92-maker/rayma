@@ -13,6 +13,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
   const [isRotated, setIsRotated] = useState(false);
   const [rewardResult, setRewardResult] = useState(null);
   const [score, setScore] = useState(0);
@@ -32,6 +33,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   useEffect(() => { latestScoreUpdate.current = onUpdateScore; }, [onUpdateScore]);
   const onRewardEarnedRef = useRef(onRewardEarned);
   useEffect(() => { onRewardEarnedRef.current = onRewardEarned; }, [onRewardEarned]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
 
   const handleStartGame = () => {
     setGameOver(false);
@@ -44,7 +46,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
   };
 
   useEffect(() => {
-    if (!isGameRunning || gameOver || gameWon || isPaused) return;
+    if (!isGameRunning || gameOver || gameWon) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -146,7 +148,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
 
     const renderLoop = () => {
       animationFrameId = window.requestAnimationFrame(renderLoop);
-      if (isPaused) return;
+      if (isPausedRef.current) return;
       frameCount++;
 
       ctx.fillStyle = '#0f172a';
@@ -251,7 +253,7 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
       window.removeEventListener('keyup', handleKeyUp);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isGameRunning, gameOver, gameWon, isPaused]); 
+  }, [isGameRunning, gameOver, gameWon]); 
 
   return (
     <div className="w-full aspect-video bg-slate-900 rounded-xl border-4 border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-8">
