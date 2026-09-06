@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
+import { bridgeIncomeToBank, cleanupIncomeBridge } from '../../shared/incomeBankBridge.ts';
 
 // Table-specific defaults for NOT NULL fields that should be optional
 const TABLE_DEFAULTS = {
@@ -198,8 +199,27 @@ Deno.serve(async (req) => {
       }
 
       if (table === 'transactions' && sanitized.bank_account_id) {
-        try { await syncBankCashAsset(supabaseAdmin, uid, sanitized.bank_account_id); }
-        catch (bankErr) { console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message); }
+        // Bank ledger sync: the UI flows update the account balance directly,
+        // so agent-created transactions must too — previously chat-logged
+        // expenses never moved the balance at all.
+        try {
+          const { data: bankRow } = await supabaseAdmin.from('bank_accounts')
+            .select('balance').eq('id', sanitized.bank_account_id).eq('user_id', uid).single();
+          if (bankRow) {
+            const newBalance = Number(bankRow.balance || 0) + Number(sanitized.amount || 0);
+            await supabaseAdmin.from('bank_accounts')
+              .update({ balance: newBalance }).eq('id', sanitized.bank_account_id).eq('user_id', uid);
+            await syncBankCashAsset(supabaseAdmin, uid, sanitized.bank_account_id);
+          }
+        } catch (bankErr) { console.error('[manageFinancialRecord] Bank balance sync failed (non-fatal):', bankErr.message); }
+      }
+
+      // Income → bank bridge: a paycheck recorded in the income ledger also
+      // lands in the bank ledger as a credit transaction, so the account
+      // balance reflects money coming in — not just money going out.
+      if (table === 'incomes' && result?.id) {
+        try { await bridgeIncomeToBank(supabaseAdmin, uid, result); }
+        catch (bridgeErr) { console.error('[manageFinancialRecord] Income bank bridge failed (non-fatal):', bridgeErr.message); }
       }
 
       const responsePayload: any = { success: true, record: result };
@@ -338,18 +358,37 @@ Deno.serve(async (req) => {
       // For transactions, capture the linked bank account before deleting so we
       // can re-sync the "Bank Cash" asset afterward (Bug 2).
       let deletedBankAccountId: string | null = null;
+      let deletedTxAmount: number = 0;
       if (table === 'transactions') {
         const { data: tx } = await supabaseAdmin.from('transactions')
-          .select('bank_account_id').eq('id', record_id).eq('user_id', uid).single();
+          .select('bank_account_id, amount').eq('id', record_id).eq('user_id', uid).single();
         deletedBankAccountId = tx?.bank_account_id || null;
+        deletedTxAmount = Number(tx?.amount) || 0;
       }
 
       const { error } = await supabaseAdmin.from(table).delete().eq('id', record_id).eq('user_id', uid);
       if (error) throw error;
 
       if (table === 'transactions' && deletedBankAccountId) {
-        try { await syncBankCashAsset(supabaseAdmin, uid, deletedBankAccountId); }
-        catch (bankErr) { console.error('[manageFinancialRecord] Bank cash asset sync failed (non-fatal):', bankErr.message); }
+        // Deleting a transaction reverses its effect on the balance — the row
+        // used to vanish while the balance kept the hit.
+        try {
+          const { data: bankRow } = await supabaseAdmin.from('bank_accounts')
+            .select('balance').eq('id', deletedBankAccountId).eq('user_id', uid).single();
+          if (bankRow) {
+            const newBalance = Number(bankRow.balance || 0) - deletedTxAmount;
+            await supabaseAdmin.from('bank_accounts')
+              .update({ balance: newBalance }).eq('id', deletedBankAccountId).eq('user_id', uid);
+          }
+          await syncBankCashAsset(supabaseAdmin, uid, deletedBankAccountId);
+        } catch (bankErr) { console.error('[manageFinancialRecord] Bank balance reversal failed (non-fatal):', bankErr.message); }
+      }
+
+      // Deleting an income removes its bank-bridge transaction and reverses
+      // the credited amount (no-op if this income never reached the bank).
+      if (table === 'incomes') {
+        try { await cleanupIncomeBridge(supabaseAdmin, uid, record_id); }
+        catch (cleanErr) { console.error('[manageFinancialRecord] Income bridge cleanup failed (non-fatal):', cleanErr.message); }
       }
 
       return Response.json({ success: true, deleted: record_id });

@@ -147,7 +147,10 @@ export default function TaxSummary() {
   // --- Income ---
   // Shared income brain — counts each paycheck exactly once (no template+clone double count)
   const yearIncomes = realIncomeEntries(incomes).filter(i => i.week_start?.startsWith(yearStr));
-  const yearIncomeTx = transactions.filter(tx => tx.amount > 0 && tx.date?.startsWith(yearStr));
+  // "income_link" notes mark bank transactions auto-mirrored from income rows —
+  // those paychecks are already counted via the income ledger above, so
+  // counting them here would double the user's income.
+  const yearIncomeTx = transactions.filter(tx => tx.amount > 0 && tx.date?.startsWith(yearStr) && !String(tx.notes || "").includes("income_link"));
   const totalIncome =
     yearIncomes.reduce((s, i) => s + (i.amount || 0), 0) +
     yearIncomeTx.reduce((s, tx) => s + tx.amount, 0);

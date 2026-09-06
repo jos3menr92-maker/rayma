@@ -21,6 +21,8 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import LogSuggestionStrip from "@/components/forms/LogSuggestionStrip";
 import { computeIncomePreview } from "@/utils/logPreviewMath";
+import { supabase } from "@/lib/supabaseClientFrontend";
+import { syncBankCashAsset } from "@/lib/syncBankCashAsset";
 import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
 import { monthlyObligation } from "@/utils/loanEngine";
 
@@ -40,7 +42,7 @@ export default function Finance() {
   const { formatCurrency: fmt } = useCurrency();
   const { lang, locale } = useLanguage();
   const T = useT();
-  const { bills, loans, incomes, userProfile, supaUser, reload, loading } = useFinancialData();
+  const { bills, loans, incomes, transactions, bankAccounts, userProfile, supaUser, reload, loading, addTransaction } = useFinancialData();
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,6 +104,56 @@ export default function Finance() {
   const todayName = dayNames[today.getDay()];
   const isPayday = payFreq && userProfile?.pay_day && todayName === userProfile.pay_day;
 
+  // ── Income → bank bridge ──────────────────────────────────────────
+  // Income used to live only in the income ledger; the bank balance only
+  // ever saw debits, so it "kept subtracting". Each income now also creates
+  // a linked credit transaction (marker in notes) that raises the balance,
+  // and editing/deleting the income keeps that link in sync.
+  const bridgeMarker = (incomeId) => `income_link:${incomeId}`;
+  const linkedBridgeTx = (incomeId) => (transactions || []).find(t => t.notes === bridgeMarker(incomeId));
+  const primaryBankAccount = bankAccounts.find(a => a.is_primary && a.is_active !== false)
+    || bankAccounts.find(a => a.is_active !== false)
+    || bankAccounts[0];
+
+  async function bridgeNewIncome(rec, payload) {
+    if (!rec?.id || !primaryBankAccount || !(Number(payload.amount) > 0)) return;
+    // If the write fell back to the backend (dead session), the backend already
+    // bridged it — detect the marker instead of adding a second credit.
+    try {
+      const { data: existing, error } = await supabase.from("transactions")
+        .select("id").eq("notes", bridgeMarker(rec.id)).limit(1);
+      if (error || existing?.length) return;
+    } catch { return; }
+    await addTransaction({
+      bank_account_id: primaryBankAccount.id,
+      date: payload.week_start,
+      description: `Income: ${payload.note || "Paycheck"}`,
+      amount: Math.abs(Number(payload.amount)),
+      category: "income",
+      type: "credit",
+      notes: bridgeMarker(rec.id),
+    });
+  }
+
+  async function syncBridgeTxAfterEdit(incomeId, payload) {
+    const linked = linkedBridgeTx(incomeId);
+    if (!linked) return; // legacy income with no bridge — leave untouched
+    const newAmount = Math.abs(Number(payload.amount) || 0);
+    const delta = newAmount - (Number(linked.amount) || 0);
+    await updateRecord('transactions', linked.id, {
+      amount: newAmount,
+      date: payload.week_start,
+      description: `Income: ${payload.note || "Paycheck"}`,
+    });
+    if (delta !== 0 && linked.bank_account_id) {
+      const acc = bankAccounts.find(a => a.id === linked.bank_account_id);
+      await updateRecord('bank_accounts', linked.bank_account_id, {
+        balance: (acc?.balance || 0) + delta,
+      });
+      await syncBankCashAsset(linked.bank_account_id);
+    }
+  }
+
   async function handleSaveIncome(e) {
     e.preventDefault();
     setSaving(true);
@@ -120,8 +172,10 @@ export default function Finance() {
     try {
       if (editingIncome) {
         await updateRecord('incomes', editingIncome.id, payload);
+        await syncBridgeTxAfterEdit(editingIncome.id, payload);
       } else {
-        await createRecord('incomes', payload);
+        const rec = await createRecord('incomes', payload);
+        await bridgeNewIncome(rec, payload);
       }
       await reload(); // 🔄 Instantly pull the new data to the screen
       setIncomeDialog(false);
@@ -142,6 +196,19 @@ export default function Finance() {
   async function handleDeleteIncome() {
     if (!deleteTarget) return;
     try {
+      // Remove the bank-bridge credit first (the delete may fall back to the
+      // backend, which also reverses the balance — both paths converge).
+      const linked = linkedBridgeTx(deleteTarget.id);
+      if (linked) {
+        await deleteRecord('transactions', linked.id);
+        if (linked.bank_account_id) {
+          const acc = bankAccounts.find(a => a.id === linked.bank_account_id);
+          await updateRecord('bank_accounts', linked.bank_account_id, {
+            balance: (acc?.balance || 0) - (Number(linked.amount) || 0),
+          });
+          await syncBankCashAsset(linked.bank_account_id);
+        }
+      }
       await deleteRecord('incomes', deleteTarget.id);
       await reload();
     } catch (err) {

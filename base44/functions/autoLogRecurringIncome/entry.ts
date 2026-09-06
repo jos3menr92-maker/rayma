@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
+import { bridgeIncomeToBank } from '../../shared/incomeBankBridge.ts';
 
 /**
  * Auto-logs recurring income entries.
@@ -111,7 +112,7 @@ export default async function (req: Request): Promise<Response> {
         if (existing && existing.length > 0) continue; // already logged
 
         // Create the auto-logged entry (average-based)
-        const { error: insertErr } = await supabaseAdmin
+        const { data: insertedIncome, error: insertErr } = await supabaseAdmin
           .from('incomes')
           .insert([{
             amount,
@@ -124,12 +125,21 @@ export default async function (req: Request): Promise<Response> {
             is_recurring: false,
             recurring_active: false,
             recurring_source_id: tmpl.id
-          }]);
+          }])
+          .select()
+          .single();
 
         if (insertErr) {
           errors.push(`Template ${tmpl.id}: ${insertErr.message}`);
         } else {
           created++;
+          // Bank bridge — the auto-logged paycheck also lands in the bank
+          // ledger so the account balance goes UP on payday, not just down.
+          try {
+            await bridgeIncomeToBank(supabaseAdmin, tmpl.user_id, insertedIncome);
+          } catch (bridgeErr) {
+            errors.push(`Bank bridge for template ${tmpl.id}: ${bridgeErr.message}`);
+          }
         }
       } catch (tmplErr) {
         errors.push(`Template ${tmpl.id}: ${tmplErr.message}`);

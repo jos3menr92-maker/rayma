@@ -111,6 +111,17 @@ export default function BankAccounts() {
     if (!txToDelete) return;
     try {
       await deleteRecord('transactions', txToDelete.id);
+      // Reverse the transaction's effect on the balance — deleting the row
+      // used to leave the balance permanently reduced.
+      if (txToDelete.bank_account_id) {
+        const acc = accounts.find(a => a.id === txToDelete.bank_account_id);
+        if (acc) {
+          await updateRecord('bank_accounts', acc.id, {
+            balance: (acc.balance || 0) - (txToDelete.amount || 0),
+          });
+          await syncBankCashAsset(acc.id);
+        }
+      }
     } catch (err) {
       toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
     }
