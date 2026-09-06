@@ -14,7 +14,7 @@ const GAME_ID = 'crystal_crusher';
  * Shatter crystals, catch power-ups, keep the energy ball alive.
  * Score-only: no token rewards, just fun.
  */
-export default function CrystalCrusher({ onUpdateScore }) {
+export default function CrystalCrusher({ onUpdateScore, autoStart }) {
   const T = useT();
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -45,6 +45,11 @@ export default function CrystalCrusher({ onUpdateScore }) {
     setScore(0);
     setIsGameRunning(true);
   };
+
+  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
+  useEffect(() => {
+    if (autoStart) handleStartGame();
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver || gameWon) return;

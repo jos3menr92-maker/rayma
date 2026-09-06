@@ -10,7 +10,7 @@ import { drawSpaceBackdrop, glowSlab, glowCircle } from '@/utils/gameFx';
 
 const GAME_ID = 'retro_snake';
 
-export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
+export default function RetroSnake({ onUpdateScore, onRewardEarned, autoStart }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -45,6 +45,11 @@ export default function RetroSnake({ onUpdateScore, onRewardEarned }) {
     setRewardResult(null);
     setIsGameRunning(true);
   };
+
+  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
+  useEffect(() => {
+    if (autoStart) handleStartGame();
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver) return;

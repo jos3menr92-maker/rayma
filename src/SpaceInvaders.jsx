@@ -10,7 +10,7 @@ import { drawSpaceBackdrop, drawStarfield, makeStarfield, glowSlab } from '@/uti
 
 const GAME_ID = 'space_invaders';
 
-export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
+export default function SpaceInvaders({ onUpdateScore, onRewardEarned, autoStart }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
@@ -48,6 +48,11 @@ export default function SpaceInvaders({ onUpdateScore, onRewardEarned }) {
     setRewardResult(null);
     setIsGameRunning(true);
   };
+
+  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
+  useEffect(() => {
+    if (autoStart) handleStartGame();
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver || gameWon) return;

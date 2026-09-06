@@ -10,7 +10,7 @@ import { drawSpaceBackdrop, drawStarfield, makeStarfield, glowSlab } from '@/uti
 
 const GAME_ID = 'sky_striker';
 
-export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
+export default function SkyStriker({ onUpdateScore, onRewardEarned, autoStart }) {
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -46,6 +46,11 @@ export default function SkyStriker({ onUpdateScore, onRewardEarned }) {
     setRewardResult(null);
     setIsGameRunning(true);
   };
+
+  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
+  useEffect(() => {
+    if (autoStart) handleStartGame();
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver) return;

@@ -17,7 +17,7 @@ const GAME_ID = 'lunar_lander';
  * terrain and it's over.
  * Score-only: no token rewards, just fun.
  */
-export default function LunarLander({ onUpdateScore }) {
+export default function LunarLander({ onUpdateScore, autoStart }) {
   const T = useT();
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -48,6 +48,11 @@ export default function LunarLander({ onUpdateScore }) {
     setLevel(1);
     setIsGameRunning(true);
   };
+
+  // ▶ Auto-launch straight into gameplay when started from an Arcade tile's Start button
+  useEffect(() => {
+    if (autoStart) handleStartGame();
+  }, [autoStart]);
 
   useEffect(() => {
     if (!isGameRunning || gameOver) return;

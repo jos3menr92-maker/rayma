@@ -75,6 +75,10 @@ const Arcade = () => {
   const navigate = useNavigate();
   const { userProfile, reload } = useFinancialData();
   const [activeGame, setActiveGame] = useState(null);
+  // ▶ Start-button launcher: which game was launched from its tile (auto-launch into play)
+  const [pendingAutoStart, setPendingAutoStart] = useState(null);
+  // Last score per game — shown on each game tile, persisted locally
+  const [lastScores, setLastScores] = useState({});
 
   // Track high scores
   const [highScores, setHighScores] = useState({
@@ -94,10 +98,22 @@ const Arcade = () => {
     fetchScores();
   }, []);
 
+  // Restore last scores from previous sessions
+  useEffect(() => {
+    try {
+      setLastScores(JSON.parse(localStorage.getItem('arcadeLastScores') || '{}'));
+    } catch (_) { /* corrupted cache — ignore */ }
+  }, []);
+
   const handleUpdateScore = (gameId, newScore) => {
     if (newScore > (highScores[gameId] || 0)) {
       setHighScores(prev => ({ ...prev, [gameId]: newScore }));
     }
+    setLastScores(prev => {
+      const next = { ...prev, [gameId]: newScore };
+      try { localStorage.setItem('arcadeLastScores', JSON.stringify(next)); } catch (_) { /* storage full — ignore */ }
+      return next;
+    });
   };
 
   // ⚠️ TEMPORARY TEST MODE — bypasses the sponsor-game lock so all games can be
@@ -125,12 +141,12 @@ const Arcade = () => {
       return <PremiumGameLock gameTitle={game.title} />;
     }
     switch(activeGame) {
-      case 'retro_snake': return <RetroSnake onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'space_invaders': return <SpaceInvaders onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'sky_striker': return <SkyStriker onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'lunar_lander': return <LunarLander onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'crystal_crusher': return <CrystalCrusher onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
-      case 'meteor_storm': return <MeteorStorm onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'retro_snake': return <RetroSnake autoStart={pendingAutoStart === 'retro_snake'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'space_invaders': return <SpaceInvaders autoStart={pendingAutoStart === 'space_invaders'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'sky_striker': return <SkyStriker autoStart={pendingAutoStart === 'sky_striker'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'lunar_lander': return <LunarLander autoStart={pendingAutoStart === 'lunar_lander'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'crystal_crusher': return <CrystalCrusher autoStart={pendingAutoStart === 'crystal_crusher'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
+      case 'meteor_storm': return <MeteorStorm autoStart={pendingAutoStart === 'meteor_storm'} onUpdateScore={handleUpdateScore} onRewardEarned={reload} />;
       default: return <PlaceholderGame title="Unknown Terminal" description="Signal lost." />;
     }
   };
@@ -166,10 +182,13 @@ const Arcade = () => {
               'text-cyan-400': 'border-cyan-400',
             }[game.accentColor] || 'border-slate-600';
             return (
-              <button
+              <div
                 key={game.id}
-                onClick={() => setActiveGame(game.id)}
-                className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
+                role="button"
+                tabIndex={0}
+                onClick={() => { setActiveGame(game.id); setPendingAutoStart(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); setPendingAutoStart(null); } }}
+                className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
                   activeGame === game.id ? `bg-slate-900 ${borderActive}` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
                 }`}
               >
@@ -180,8 +199,21 @@ const Arcade = () => {
                   <span className={`text-lg font-black uppercase tracking-tight ${activeGame === game.id ? 'text-white' : 'text-slate-400'}`}>
                     {game.title}
                   </span>
+                  <div className="w-full flex items-center justify-between mt-2 gap-2">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+                      {T('lastScore', 'Last')}: <span className={game.accentColor}>{(lastScores[game.id] || 0).toString().padStart(4, '0')}</span>
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); setPendingAutoStart(game.id); }}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
+                        activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                      }`}
+                    >
+                      ▶ {T('startGame', 'Start')}
+                    </button>
+                  </div>
                 </div>
-              </button>
+              </div>
             );
           })}
           <div className="text-xs font-black text-primary/70 uppercase tracking-widest mb-4 px-4 pt-4 flex items-center gap-1.5">
@@ -193,10 +225,13 @@ const Arcade = () => {
               'text-pink-400': 'border-pink-400',
             }[game.accentColor] || 'border-primary';
             return (
-              <button
+              <div
                 key={game.id}
-                onClick={() => setActiveGame(game.id)}
-                className={`w-full group relative p-4 transition-all duration-300 border-l-4 text-left ${
+                role="button"
+                tabIndex={0}
+                onClick={() => { setActiveGame(game.id); setPendingAutoStart(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { setActiveGame(game.id); setPendingAutoStart(null); } }}
+                className={`w-full group relative p-4 cursor-pointer transition-all duration-300 border-l-4 text-left ${
                   activeGame === game.id ? `bg-slate-900 ${borderActive}` : 'bg-transparent border-slate-800 hover:bg-slate-900/50 hover:border-slate-700'
                 }`}
               >
@@ -211,8 +246,21 @@ const Arcade = () => {
                   {!hasGameAccess && (
                     <span className="text-[9px] font-bold text-primary/60 uppercase tracking-widest mt-0.5">{T('locked', 'Locked')}</span>
                   )}
+                  <div className="w-full flex items-center justify-between mt-2 gap-2">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">
+                      {T('lastScore', 'Last')}: <span className={game.accentColor}>{(lastScores[game.id] || 0).toString().padStart(4, '0')}</span>
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActiveGame(game.id); setPendingAutoStart(game.id); }}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors ${
+                        activeGame === game.id ? 'bg-primary text-primary-foreground' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                      }`}
+                    >
+                      ▶ {T('startGame', 'Start')}
+                    </button>
+                  </div>
                 </div>
-              </button>
+              </div>
             );
           })}
         </nav>
