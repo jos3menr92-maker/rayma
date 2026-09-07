@@ -211,6 +211,9 @@ export function projectPayoff(loan) {
     if (pmt > 0) {
       const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: pmt, paymentFrequency: freq });
       if (sim) return { mode, ...sim, months: Math.round(periodsToMonths(sim.months, freq)), monthlyPayment: pmt, payoffDate: addPeriods(sim.months, freq), warning: null };
+      // The real payment can't cover the interest — the term schedule below
+      // would be a fantasy payoff, so fail honestly instead.
+      return { mode, months: null, payoffDate: null, totalInterest: null, monthlyPayment: pmt, schedule: [], warning: "payment-below-interest" };
     }
     if (term > 0) {
       const a = computeAmortization({ principal: balance, annualRate: rate, termMonths: term, paymentFrequency: freq });
