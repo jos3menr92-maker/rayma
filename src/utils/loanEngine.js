@@ -63,6 +63,11 @@ export function paymentPerPeriod(loan) {
   return pmt;
 }
 
+/** Convert a period count on the loan's frequency to calendar months (26 biweekly periods ≈ 12 months). */
+export function periodsToMonths(periods, freq) {
+  return num(periods) * (12 / periodsPerYear(freq));
+}
+
 // Monthly-equivalent obligation of a loan, honoring payment_amount_type:
 //   - per_period        : convert the per-period payment up to a monthly figure.
 //   - monthly_equivalent: the stored value is already monthly (no conversion).
@@ -84,7 +89,9 @@ export function monthlyObligation(loan) {
 export function computeAmortization({ principal, annualRate, termMonths, paymentFrequency = "monthly" }) {
   const P = num(principal);
   const r = (num(annualRate) / 100) / periodsPerYear(paymentFrequency);
-  const n = num(termMonths);
+  // termMonths is calendar MONTHS — convert to payment periods for non-monthly
+  // frequencies (a 24-month weekly loan = 104 weekly payments, not 24).
+  const n = Math.max(0, Math.round(num(termMonths) * (periodsPerYear(paymentFrequency) / 12)));
   if (P <= 0 || n <= 0) return { monthlyPayment: 0, totalInterest: 0, totalPaid: 0, schedule: [] };
 
   let paymentPerPeriod;
@@ -119,6 +126,7 @@ export function computeAmortization({ principal, annualRate, termMonths, payment
     monthlyPayment: Number(monthlyPayment.toFixed(2)),
     totalInterest: Number(totalInterest.toFixed(2)),
     totalPaid: Number(totalPaid.toFixed(2)),
+    periods: n,
     schedule,
   };
 }
@@ -196,37 +204,43 @@ export function projectPayoff(loan) {
   }
 
   if (mode === "amortizing") {
+    // Real payment first: simulate the stored per-period payment from the
+    // CURRENT balance — the true remaining time/interest from where the loan
+    // stands today. The term-based schedule below is only a fallback (it
+    // ignores the payments already made).
+    if (pmt > 0) {
+      const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: pmt, paymentFrequency: freq });
+      if (sim) return { mode, ...sim, months: Math.round(periodsToMonths(sim.months, freq)), monthlyPayment: pmt, payoffDate: addPeriods(sim.months, freq), warning: null };
+    }
     if (term > 0) {
       const a = computeAmortization({ principal: balance, annualRate: rate, termMonths: term, paymentFrequency: freq });
-      return { mode, ...a, months: term, payoffDate: addPeriods(term, freq), warning: null };
+      return { mode, ...a, months: term, payoffDate: addPeriods(a.periods, freq), warning: null };
     }
-    // No term but has payment → simulate like revolving (same math, fixed payment)
-    const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: pmt, paymentFrequency: freq });
-    if (!sim) return { mode, months: null, payoffDate: null, totalInterest: null, monthlyPayment: pmt, schedule: [], warning: "payment-below-interest" };
-    return { mode, ...sim, monthlyPayment: pmt, payoffDate: addPeriods(sim.months, freq), warning: null };
+    return { mode, months: null, payoffDate: null, totalInterest: null, monthlyPayment: pmt, schedule: [], warning: "payment-below-interest" };
   }
 
   if (mode === "revolving") {
     const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: pmt, paymentFrequency: freq });
     if (!sim) return { mode, months: null, payoffDate: null, totalInterest: null, monthlyPayment: pmt, schedule: [], warning: "payment-below-interest" };
-    return { mode, ...sim, payoffDate: addPeriods(sim.months, freq), warning: null };
+    return { mode, ...sim, months: Math.round(periodsToMonths(sim.months, freq)), payoffDate: addPeriods(sim.months, freq), warning: null };
   }
 
   // simple
   if (term > 0) {
     const s = computeSimple({ principal: balance, annualRate: rate, termMonths: term, paymentFrequency: freq });
-    return { mode, ...s, months: term, payoffDate: addPeriods(term, freq), schedule: [], warning: null };
+    const periods = Math.max(1, Math.round(term * (periodsPerYear(freq) / 12)));
+    return { mode, ...s, months: term, payoffDate: addPeriods(periods, freq), schedule: [], warning: null };
   }
   const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: pmt, paymentFrequency: freq });
   if (!sim) return { mode, months: null, payoffDate: null, totalInterest: null, monthlyPayment: pmt, schedule: [], warning: "payment-below-interest" };
-  return { mode, ...sim, payoffDate: addPeriods(sim.months, freq), warning: null };
+  return { mode, ...sim, months: Math.round(periodsToMonths(sim.months, freq)), payoffDate: addPeriods(sim.months, freq), warning: null };
 }
 
 /**
  * Mode-aware simulation with an extra monthly payment — for the Debt Payoff Simulator.
  * @returns { months, totalInterest, schedule, monthlyPayment, warning? }
  */
-export function simulateWithExtra(loan, extraPayment = 0) {
+export function simulateWithExtra(loan, extraMonthly = 0) {
   const mode = getLoanMode(loan?.category);
   const freq = loan?.payment_frequency || "monthly";
   const balance = num(loan?.current_balance) || num(loan?.original_amount);
@@ -234,16 +248,21 @@ export function simulateWithExtra(loan, extraPayment = 0) {
   const basePmt = paymentPerPeriod(loan);
   const term = num(loan?.term_months);
 
+  // The simulator's slider is a MONTHLY extra — convert it to this loan's
+  // per-period cadence. Adding the full monthly figure to every period
+  // overstated weekly savings ~4.3x (biweekly ~2.2x).
+  const extraPerPeriod = num(extraMonthly) * (12 / periodsPerYear(freq));
+
   if (mode === "amortizing" && term > 0) {
-    const boosted = basePmt + num(extraPayment);
+    const boosted = basePmt + extraPerPeriod;
     const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: boosted, paymentFrequency: freq });
     if (!sim) return { months: null, totalInterest: null, schedule: [], monthlyPayment: boosted, warning: "payment-below-interest" };
     return { ...sim, monthlyPayment: boosted };
   }
 
-  const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: basePmt, paymentFrequency: freq, extraPayment });
+  const sim = computeRevolving({ balance, annualRate: rate, monthlyPayment: basePmt, paymentFrequency: freq, extraPayment: extraPerPeriod });
   if (!sim) return { months: null, totalInterest: null, schedule: [], monthlyPayment: basePmt, warning: "payment-below-interest" };
-  return { ...sim, monthlyPayment: basePmt + num(extraPayment) };
+  return { ...sim, monthlyPayment: basePmt + extraPerPeriod };
 }
 
 // ─── amortization-aware payment application ─────────────────
@@ -340,7 +359,7 @@ export function buildLoanSummary(loan, { fmt, T }) {
   if (proj.months > 0) {
     lines.push({
       label: T("payoffIn", "Payoff in"),
-      value: `${proj.months} ${T("months", "months")}`,
+      value: `${Math.round(proj.months)} ${T("months", "months")}`,
       tone: "primary",
     });
   }

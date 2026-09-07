@@ -9,9 +9,9 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingDown, DollarSign, Zap } from "lucide-react";
+import { TrendingDown, DollarSign, Zap, AlertTriangle } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
-import { simulateWithExtra, monthlyObligation } from "@/utils/loanEngine";
+import { simulateWithExtra, monthlyObligation, periodsToMonths } from "@/utils/loanEngine";
 
 function calcAvalanche(loans) {
   return [...loans].sort((a, b) => (b.interest_rate || 0) - (a.interest_rate || 0));
@@ -20,10 +20,6 @@ function calcAvalanche(loans) {
 function calcSnowball(loans) {
   return [...loans].sort((a, b) => (a.current_balance || 0) - (b.current_balance || 0));
 }
-
-// Weeks/biweeks → months, so payoff numbers stay comparable across frequencies
-const PERIODS_PER_YEAR = { weekly: 52, biweekly: 26, monthly: 12 };
-const periodsToMonths = (periods, freq) => periods * (12 / (PERIODS_PER_YEAR[freq] || 12));
 
 export default function DebtPayoffSimulator() {
   const { lang } = useLanguage();
@@ -119,7 +115,19 @@ export default function DebtPayoffSimulator() {
               </CardContent>
             </Card>
 
-            {base && boosted && (
+            {(base?.warning || boosted?.warning) && (
+              <Card className="bg-card border-destructive/40 border">
+                <CardContent className="p-4 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-destructive text-sm">{T("paymentTooLowTitle", "This payment can't cover the interest")}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{T("paymentTooLowSimDesc", "Interest is growing faster than the balance is coming down. Raise the extra payment — or the loan's regular payment — to see a payoff path.")}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {base && boosted && !base.warning && !boosted.warning && (
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <Card className="bg-card border-primary/30 border">
