@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
                     }
                   }
                   if (Math.abs(acc - gap) < 0.01 && matched.length > 0) {
-                    updateWarnings.push(`Reconciliation: new balance ${stated} exceeds current ${stored} by ${gap}, matching ${matched.length} logged payment(s) totaling ${gap}. This looks like a pre-payment figure reverting a logged payment — keeping current_balance at ${stored}.`);
+                    updateWarnings.push(`Reconciliation: new balance ${stated} exceeds current ${stored} by ${gap}, matching ${matched.length} logged payment(s) totaling ${gap}. This looks like a pre-payment figure reverting a logged payment — keeping current_balance at ${stored}. If this is meant to correct for duplicate payments, delete the duplicates instead: deleting a loan payment now reverses its balance decrement automatically.`);
                     sanitized.current_balance = stored;
                   } else {
                     updateWarnings.push(`Reconciliation: balance increasing ${stored} → ${stated} (gap ${gap}); ${pays.length} payment(s) on file do not match this gap. Verify this is a legitimate increase (e.g. new charges) and not a stale document figure.`);
@@ -366,6 +366,19 @@ Deno.serve(async (req) => {
         deletedTxAmount = Number(tx?.amount) || 0;
       }
 
+      // Capture the loan payment before deleting so the balance decrement that
+      // was applied at create time can be reversed (create/delete symmetry).
+      let deletedLoanId: string | null = null;
+      let deletedPaymentAmount: number = 0;
+      if (table === 'payments') {
+        const { data: pay } = await supabaseAdmin.from('payments')
+          .select('loan_id, amount, payment_type').eq('id', record_id).eq('user_id', uid).single();
+        if (pay && pay.payment_type === 'loan' && pay.loan_id) {
+          deletedLoanId = pay.loan_id;
+          deletedPaymentAmount = Number(pay.amount) || 0;
+        }
+      }
+
       const { error } = await supabaseAdmin.from(table).delete().eq('id', record_id).eq('user_id', uid);
       if (error) throw error;
 
@@ -382,6 +395,24 @@ Deno.serve(async (req) => {
           }
           await syncBankCashAsset(supabaseAdmin, uid, deletedBankAccountId);
         } catch (bankErr) { console.error('[manageFinancialRecord] Bank balance reversal failed (non-fatal):', bankErr.message); }
+      }
+
+      // Deleting a loan payment reverses the balance decrement applied on create.
+      // This is the ONE legitimate path to undo a payment's effect — GUARDRAIL 3
+      // below keeps blocking stale-document balance reverts, so legitimate
+      // corrections (e.g. removing duplicate payments) never need a manual
+      // current_balance update anymore.
+      if (table === 'payments' && deletedLoanId && deletedPaymentAmount > 0) {
+        try {
+          const { data: loanRow } = await supabaseAdmin.from('loans')
+            .select('current_balance').eq('id', deletedLoanId).eq('user_id', uid).single();
+          if (loanRow) {
+            const newBalance = Math.round(((Number(loanRow.current_balance) || 0) + deletedPaymentAmount) * 100) / 100;
+            await supabaseAdmin.from('loans')
+              .update({ current_balance: newBalance, status: newBalance <= 0 ? 'paid_off' : 'active' })
+              .eq('id', deletedLoanId).eq('user_id', uid);
+          }
+        } catch (loanErr) { console.error('[manageFinancialRecord] Loan balance reversal failed (non-fatal):', loanErr.message); }
       }
 
       // Deleting an income removes its bank-bridge transaction and reverses
