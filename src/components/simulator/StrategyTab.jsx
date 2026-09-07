@@ -7,9 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, TrendingDown, Zap, Snowflake, ListOrdered } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { compareStrategies } from "@/utils/payoffStrategies";
 import { monthlyObligation } from "@/utils/loanEngine";
 import StrategyComparisonChart from "./StrategyComparisonChart";
+
+// Projection window options: 6 months → 30 years (mortgage-length max)
+const HORIZON_OPTIONS = [6, 12, 24, 36, 60, 120, 180, 240, 360];
 
 const payoffDateLabel = (months) => {
   const d = new Date();
@@ -17,7 +21,7 @@ const payoffDateLabel = (months) => {
   return d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
 };
 
-function RunCard({ icon, title, badge, run, baselineInterest, fmt, fmtNoDecimal, T, highlight }) {
+function RunCard({ icon, title, badge, run, baselineInterest, fmt, fmtNoDecimal, T, highlight, horizonText }) {
   return (
     <Card className={`bg-card ${highlight ? "border-primary/40" : "border-border"}`}>
       <CardContent className="p-3">
@@ -29,11 +33,17 @@ function RunCard({ icon, title, badge, run, baselineInterest, fmt, fmtNoDecimal,
           {badge}
         </div>
         <p className="text-lg font-bold text-foreground">
-          {run.monthsToDebtFree != null ? `${Math.round(run.monthsToDebtFree)} ${T("monthsShort", "mo")}` : T("never", "Never")}
+          {run.monthsToDebtFree != null
+            ? `${Math.round(run.monthsToDebtFree)} ${T("monthsShort", "mo")}`
+            : run.horizonMonths != null
+              ? fmtNoDecimal(run.endBalance)
+              : T("never", "Never")}
         </p>
         <p className="text-xs text-muted-foreground">
           {run.monthsToDebtFree != null ? (
             <>{T("totalInterestLabel", "Total interest")}: <span className="text-destructive font-medium">{fmtNoDecimal(run.totalInterest)}</span></>
+          ) : run.horizonMonths != null ? (
+            <>{T("stillOwedAfter", "Still owed after")} {horizonText} {T("ofMinimums", "of minimum payments")} · {T("interestPaidWindow", "Interest paid")}: <span className="text-destructive font-medium">{fmtNoDecimal(run.totalInterest)}</span></>
           ) : (
             T("interestGrowsForever", "Interest grows faster than the payments")
           )}
@@ -53,12 +63,15 @@ export default function StrategyTab({ loans }) {
   const { formatCurrency: fmt, formatCurrencyNoDecimal: fmtNoDecimal } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const tr = t(lang, key); return tr !== key ? tr : fallback; }, [lang]);
   const [extraPayment, setExtraPayment] = useState(0);
+  const [horizonMonths, setHorizonMonths] = useState(60); // default 5-year window
+  const horizonLabel = (m) => (m < 12 ? `${m} ${T("monthsShort", "mo")}` : `${m / 12} ${T("yearsShort", "yr")}`);
 
-  const runs = useMemo(() => compareStrategies(loans, extraPayment), [loans, extraPayment]);
+  const runs = useMemo(() => compareStrategies(loans, extraPayment, horizonMonths), [loans, extraPayment, horizonMonths]);
 
   const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
   const totalMonthly = loans.reduce((s, l) => s + monthlyObligation(l), 0);
 
+  const minimumsPaidOff = runs.minimums.monthsToDebtFree != null;
   const warned = runs.avalanche.loans.filter((l) => l.warnings.length > 0);
   const orderLoans = runs.avalanche.order.map((id) => runs.avalanche.loans.find((l) => l.id === id)).filter(Boolean);
   const neverLoans = runs.avalanche.loans.filter((l) => l.payoffMonths == null);
@@ -84,6 +97,18 @@ export default function StrategyTab({ loans }) {
             <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>{fmt(0)}</span><span>{fmt(1000)}</span></div>
             <p className="text-xs text-muted-foreground mt-2">{T("cascadeDesc", "Every loan pays its real minimum. Your extra budget — plus each payment freed as a loan dies — rolls into the target loan.")}</p>
           </div>
+          <div>
+            <Label>{T("projectionWindow", "Minimums Projection Window")}</Label>
+            <Select value={String(horizonMonths)} onValueChange={(v) => setHorizonMonths(Number(v))}>
+              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {HORIZON_OPTIONS.map((m) => (
+                  <SelectItem key={m} value={String(m)}>{horizonLabel(m)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1.5">{T("projectionWindowDesc", "How far ahead the Minimums Only card looks. If your loans aren't paid off by then, it shows what you'd still owe.")}</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -108,9 +133,9 @@ export default function StrategyTab({ loans }) {
 
       {/* Three-way comparison */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <RunCard icon={<TrendingDown className="w-4 h-4 text-muted-foreground shrink-0" />} title={T("minimumsOnlyLabel", "Minimums Only")} run={runs.minimums} baselineInterest={null} fmt={fmt} fmtNoDecimal={fmtNoDecimal} T={T} />
-        <RunCard icon={<Zap className="w-4 h-4 text-primary shrink-0" />} title={T("avalancheLabel", "Avalanche")} badge={<Badge className="bg-primary/20 text-primary border-0 text-xs">{T("savesMost", "Saves most")}</Badge>} run={runs.avalanche} baselineInterest={runs.minimums.totalInterest} fmt={fmt} fmtNoDecimal={fmtNoDecimal} T={T} highlight />
-        <RunCard icon={<Snowflake className="w-4 h-4 text-chart-2 shrink-0" />} title={T("snowballLabel", "Snowball")} run={runs.snowball} baselineInterest={runs.minimums.totalInterest} fmt={fmt} fmtNoDecimal={fmtNoDecimal} T={T} />
+        <RunCard icon={<TrendingDown className="w-4 h-4 text-muted-foreground shrink-0" />} title={T("minimumsOnlyLabel", "Minimums Only")} run={runs.minimums} baselineInterest={null} fmt={fmt} fmtNoDecimal={fmtNoDecimal} T={T} horizonText={horizonLabel(horizonMonths)} />
+        <RunCard icon={<Zap className="w-4 h-4 text-primary shrink-0" />} title={T("avalancheLabel", "Avalanche")} badge={<Badge className="bg-primary/20 text-primary border-0 text-xs">{T("savesMost", "Saves most")}</Badge>} run={runs.avalanche} baselineInterest={minimumsPaidOff ? runs.minimums.totalInterest : null} fmt={fmt} fmtNoDecimal={fmtNoDecimal} T={T} highlight />
+        <RunCard icon={<Snowflake className="w-4 h-4 text-chart-2 shrink-0" />} title={T("snowballLabel", "Snowball")} run={runs.snowball} baselineInterest={minimumsPaidOff ? runs.minimums.totalInterest : null} fmt={fmt} fmtNoDecimal={fmtNoDecimal} T={T} />
       </div>
 
       {/* Combined debt-over-time chart */}

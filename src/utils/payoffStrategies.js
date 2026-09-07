@@ -42,7 +42,12 @@ function pickFocus(alive, strategy) {
  *   - cascadeFreed: roll freed payments into the next target (false = minimums-only baseline)
  * @returns per-loan payoffs, total interest, payoff order, month timeline, freed rolls, warnings
  */
-export function simulateCascade(loans, { strategy = "avalanche", extraMonthly = 0, cascadeFreed = true } = {}) {
+export function simulateCascade(loans, { strategy = "avalanche", extraMonthly = 0, cascadeFreed = true, horizonMonths = null } = {}) {
+  // Optional projection window (months). When the clock passes it, the run
+  // stops and reports the balance still owed + interest paid within the window
+  // — the debt-administrator framing ("what you'd still owe in X years").
+  const horizon = num(horizonMonths) > 0 ? num(horizonMonths) : null;
+  const cap = horizon != null ? horizon : MONTH_CAP;
   const pool = (loans || []).map((loan) => {
     const freq = loan.payment_frequency || "monthly";
     const ppy = periodsPerYear(freq);
@@ -78,10 +83,20 @@ export function simulateCascade(loans, { strategy = "avalanche", extraMonthly = 
   const freedRolls = [];
   const rawTimeline = [{ t: 0, total: totalBalance() }];
 
-  while (alive().length > 0 && t < MONTH_CAP && events < EVENT_CAP) {
+  while (alive().length > 0 && events < EVENT_CAP) {
     const currentAlive = alive();
     const next = currentAlive.reduce((a, b) => (a.dueIn <= b.dueIn ? a : b));
     if (next.dueIn > t) {
+      if (next.dueIn > cap) {
+        // Horizon reached — accrue interest up to the cutoff, snapshot, stop.
+        const dtFinal = cap - t;
+        for (const p of currentAlive) {
+          p.totalInterest += p.balance * (p.apr / 1200) * dtFinal;
+        }
+        t = cap;
+        rawTimeline.push({ t, total: totalBalance() });
+        break;
+      }
       const dt = next.dueIn - t;
       t = next.dueIn;
       for (const p of currentAlive) {
@@ -153,6 +168,8 @@ export function simulateCascade(loans, { strategy = "avalanche", extraMonthly = 
   return {
     strategy,
     extraMonthly: num(extraMonthly),
+    horizonMonths: horizon,
+    endBalance: r2m(totalBalance()),
     loans: results,
     order: payoffList.sort((a, b) => a.payoffMonths - b.payoffMonths).map((r) => r.id),
     monthsToDebtFree: anyNever ? null : (payoffList.length ? Math.max(...payoffList.map((r) => r.payoffMonths)) : 0),
@@ -168,9 +185,9 @@ export function simulateCascade(loans, { strategy = "avalanche", extraMonthly = 
  * Full three-way comparison for the Strategy tab:
  * minimums-only baseline vs avalanche vs snowball (both cascade freed payments).
  */
-export function compareStrategies(loans, extraMonthly = 0) {
+export function compareStrategies(loans, extraMonthly = 0, minimumsHorizonMonths = null) {
   return {
-    minimums: simulateCascade(loans, { strategy: "avalanche", extraMonthly: 0, cascadeFreed: false }),
+    minimums: simulateCascade(loans, { strategy: "avalanche", extraMonthly: 0, cascadeFreed: false, horizonMonths: minimumsHorizonMonths }),
     avalanche: simulateCascade(loans, { strategy: "avalanche", extraMonthly, cascadeFreed: true }),
     snowball: simulateCascade(loans, { strategy: "snowball", extraMonthly, cascadeFreed: true }),
   };
