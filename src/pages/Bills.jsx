@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { useT } from "@/lib/LanguageContext";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
+import { monthlyBillAmount } from "@/utils/financeMath";
 
 const categoryIcons = {
   utilities: "⚡", subscriptions: "📱", insurance: "🛡️",
@@ -27,7 +28,7 @@ export default function Bills() {
   const T = useT();
   
   // 🧠 Pulling real data from your Supabase Brain
-  const { bills, userProfile, reload, loading, payBill } = useFinancialData();
+  const { bills, payments, userProfile, reload, loading, payBill } = useFinancialData();
   const location = useLocation();
   
   const categories = [
@@ -118,6 +119,13 @@ export default function Bills() {
   const confirmDelete = async () => {
     if (!billToDelete) return;
     try {
+      // Cascade: remove this bill's payment history first (sequentially, with
+      // error checking) so no orphaned payments with a dead bill_id survive —
+      // same flow as the Loan detail page deleting a loan's payments first.
+      const billPayments = payments.filter((p) => p.payment_type === "bill" && p.bill_id === billToDelete.id);
+      for (const p of billPayments) {
+        await deleteRecord('payments', p.id);
+      }
       await deleteRecord('bills', billToDelete.id);
     } catch (err) {
       toast({ title: T("deleteFailed", "Delete failed"), description: err.message, variant: "destructive" });
@@ -141,12 +149,11 @@ export default function Bills() {
     setPaidBillId(null);
   };
 
-  const totalMonthly = useMemo(() => bills.filter(b => b.is_active !== false).reduce((s, b) => {
-    const freq = b.payment_frequency || "monthly";
-    if (freq === "weekly") return s + (b.amount || 0) * 4.33;
-    if (freq === "biweekly") return s + (b.amount || 0) * 2.17;
-    return s + (b.amount || 0);
-  }, 0), [bills]);
+  // Shared frequency math from financeMath — the same number every other page
+  // shows (the local ×4.33 / ×2.17 constants drifted from the 52/12, 26/12 brain).
+  const totalMonthly = useMemo(() =>
+    bills.filter(b => b.is_active !== false).reduce((s, b) => s + monthlyBillAmount(b), 0),
+  [bills]);
 
   // 🛡️ Dumb-proofing: Check if form is valid before allowing save
   const isFormValid = form.name.trim() !== "" && form.amount !== "" && parseFloat(form.amount) >= 0;

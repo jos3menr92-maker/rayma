@@ -126,17 +126,20 @@ Deno.serve(async (req) => {
         if (!Number.isFinite(amt) || amt <= 0) {
           return Response.json({ error: 'Payment amount must be greater than zero. Zero or negative payments are blocked.' }, { status: 400 });
         }
-        if (sanitized.loan_id && sanitized.payment_date) {
+        // Duplicate guard covers BOTH loans and bills — a double "Mark as Paid"
+        // on a bill polluted payment history, trend, and recap totals too.
+        if ((sanitized.loan_id || sanitized.bill_id) && sanitized.payment_date) {
+          const refField = sanitized.loan_id ? 'loan_id' : 'bill_id';
           const { data: existing } = await supabaseAdmin
             .from('payments')
             .select('id, amount, payment_date')
             .eq('user_id', uid)
-            .eq('loan_id', sanitized.loan_id)
+            .eq(refField, sanitized[refField])
             .eq('payment_date', sanitized.payment_date)
             .eq('amount', amt);
           if (existing && existing.length > 0) {
             return Response.json({
-              error: `Duplicate payment blocked: a payment of ${amt} on ${sanitized.payment_date} for this loan already exists (id: ${existing[0].id}).`,
+              error: `Duplicate payment blocked: a payment of ${amt} on ${sanitized.payment_date} for this ${sanitized.loan_id ? 'loan' : 'bill'} already exists (id: ${existing[0].id}).`,
               duplicate: existing[0],
             }, { status: 409 });
           }
@@ -159,17 +162,18 @@ Deno.serve(async (req) => {
 
       // Race-window guard (Bug 1): if a duplicate payment slipped in between our
       // pre-check and the insert, the unique constraint rejects it — surface as 409.
-      if (error && table === 'payments' && sanitized.loan_id && sanitized.payment_date
+      if (error && table === 'payments' && (sanitized.loan_id || sanitized.bill_id) && sanitized.payment_date
           && /duplicate key value violates unique constraint/i.test(error.message)) {
+        const refField = sanitized.loan_id ? 'loan_id' : 'bill_id';
         const { data: existing } = await supabaseAdmin
           .from('payments')
           .select('id, amount, payment_date')
           .eq('user_id', uid)
-          .eq('loan_id', sanitized.loan_id)
+          .eq(refField, sanitized[refField])
           .eq('payment_date', sanitized.payment_date)
           .eq('amount', Number(sanitized.amount));
         return Response.json({
-          error: `Duplicate payment blocked: a payment of ${sanitized.amount} on ${sanitized.payment_date} for this loan already exists (id: ${existing?.[0]?.id}).`,
+          error: `Duplicate payment blocked: a payment of ${sanitized.amount} on ${sanitized.payment_date} for this ${sanitized.loan_id ? 'loan' : 'bill'} already exists (id: ${existing?.[0]?.id}).`,
           duplicate: existing?.[0] || null,
         }, { status: 409 });
       }
@@ -377,6 +381,20 @@ Deno.serve(async (req) => {
           deletedLoanId = pay.loan_id;
           deletedPaymentAmount = Number(pay.amount) || 0;
         }
+      }
+
+      // Deleting a bill or loan cascades to its payment history first — mirrors
+      // the Bills page / Loan detail flows so no orphaned payments with a dead
+      // bill_id / loan_id survive on the agent path either.
+      if (table === 'bills') {
+        const { error: cascadeErr } = await supabaseAdmin.from('payments')
+          .delete().eq('bill_id', record_id).eq('user_id', uid).eq('payment_type', 'bill');
+        if (cascadeErr) throw cascadeErr;
+      }
+      if (table === 'loans') {
+        const { error: cascadeErr } = await supabaseAdmin.from('payments')
+          .delete().eq('loan_id', record_id).eq('user_id', uid).eq('payment_type', 'loan');
+        if (cascadeErr) throw cascadeErr;
       }
 
       const { error } = await supabaseAdmin.from(table).delete().eq('id', record_id).eq('user_id', uid);

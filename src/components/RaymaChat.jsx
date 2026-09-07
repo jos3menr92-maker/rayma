@@ -280,15 +280,24 @@ export default function RaymaChat({
         try {
           const todayISO = new Date().toISOString().split("T")[0];
 
-          // 1. Insert parent transaction
-          const parentTx = await createRecord('transactions', {
+          // 1. Insert parent transaction — routed through the shared ledger flow
+          // (addTransaction) so the bank balance moves, exactly like a plain
+          // "spent $X" log. Same account convention as payBill/payLoan: first
+          // active manually-linked account (Plaid balances are bank-authoritative).
+          const targetAccount = (bankAccounts || []).find(a => a.is_active !== false && a.link_method !== "plaid") || (bankAccounts || [])[0];
+          const parentPayload = {
             date: todayISO,
             description: merchant,
             amount: -totalAmount,
             category: parsedSplits[0].category,
             type: "debit",
             notes: `Split transaction (${parsedSplits.length} categories)`
-          });
+          };
+          if (targetAccount) parentPayload.bank_account_id = targetAccount.id;
+          const parentTx = addTransaction
+            ? await addTransaction(parentPayload)
+            : await createRecord('transactions', parentPayload);
+          if (!parentTx?.id) throw new Error("Parent transaction was not created");
 
           // 2. Insert transaction_splits rows
           for (const sp of parsedSplits) {

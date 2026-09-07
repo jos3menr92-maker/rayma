@@ -249,7 +249,9 @@ export function simulateWithExtra(loan, extraPayment = 0) {
 // ─── amortization-aware payment application ─────────────────
 /**
  * Split a payment into principal vs. interest for the current balance,
- * then return the new balance. Used by payLoan() and the debt simulator.
+ * then return the new balance. Projection/simulation use ONLY — the actual
+ * ledger (payLoan / manageFinancialRecord) decrements the FULL payment so
+ * payment create/delete stays symmetric.
  * @returns { principalPaid, interestPaid, newBalance, mode }
  */
 export function applyPayment(loan, paymentAmount) {

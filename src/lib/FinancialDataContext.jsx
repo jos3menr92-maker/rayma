@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "./supabaseClientFrontend";
 import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
-import { applyPayment } from "@/utils/loanEngine";
 import { syncBankCashAsset } from "@/lib/syncBankCashAsset";
 import { toast } from "@/components/ui/use-toast";
 import { useT } from "@/lib/LanguageContext";
@@ -355,7 +354,11 @@ export function FinancialDataProvider({ children }) {
 
       setPayments(prev => [data, ...prev]);
 
-      const { newBalance } = applyPayment(loan, paymentAmount);
+      // FULL-AMOUNT decrement — identical to manageFinancialRecord (backend
+      // path) and to the delete-reversal: create subtracts the whole payment,
+      // delete adds the whole payment back. The old interest-aware split here
+      // made add-then-delete inflate the balance by the accrued interest.
+      const newBalance = Math.max((Number(loan.current_balance) || 0) - Number(paymentAmount), 0);
       const updates = { 
         current_balance: newBalance, 
         status: newBalance <= 0 ? "paid_off" : "active" 
@@ -427,6 +430,9 @@ export function FinancialDataProvider({ children }) {
         // Bug 2: mirror the updated bank balance onto the "Bank Cash" asset.
         await syncBankCashAsset(targetAccountId);
       }
+      // Return the created record so callers (e.g. the chat split-logger) can
+      // link child rows to the persisted transaction.
+      return data;
     } catch (e) {
       setTransactions(prev => prev.filter(p => p.id !== tempId));
       if (targetAccountId && originalBalance !== null) {
