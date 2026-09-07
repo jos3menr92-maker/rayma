@@ -117,7 +117,10 @@ export function monthSpentByCategory({ transactions = [], transactionSplits = []
 
   const monthSplits = (transactionSplits || []).filter((s) => inMonth(s.date));
   const monthTxs = (transactions || []).filter((tx) => inMonth(tx.date));
-  const txIdsWithSplits = new Set(monthSplits.map((s) => s.transaction_id).filter(Boolean));
+  // Parent ids from ALL splits (not just this month's) — a split dated in a
+  // different month than its parent must suppress the parent there and
+  // count in its own month, never both (chat brain: same rule).
+  const txIdsWithSplits = new Set((transactionSplits || []).map((s) => s.transaction_id).filter(Boolean));
   const excludedParents = new Set(
     monthTxs
       .filter((tx) => {
@@ -146,6 +149,60 @@ export function monthSpentByCategory({ transactions = [], transactionSplits = []
 export function monthTotalSpent(sources, date = new Date(), opts) {
   const totals = monthSpentByCategory(sources, date, opts);
   return Object.values(totals).reduce((s, v) => s + v, 0);
+}
+
+/** Internal flow — NOT spending: income, savings self-transfer, loan payment,
+ * or an app-logged "Paid Bill:/Paid Loan:" placeholder. */
+export function isInternalFlow(tx) {
+  const cat = tx.category || "";
+  return cat === "income" || cat === "loan_payment" || cat === "savings" || /^(Paid Bill:|Paid Loan:)/i.test(String(tx.description || ""));
+}
+
+/**
+ * Canonical everyday spending bucketed by an arbitrary key — THE shared
+ * definition for any month/day-bucketed view (Trend page, current-month
+ * view). Rules are identical to getComputedFinancials' monthSpending (the
+ * chat brain): split-aware (splits override the parent; an internal parent
+ * drops its splits), internal flows excluded, only spending amounts count.
+ * `keyOf(date)` returns the bucket key (e.g. "2026-09" or a day number) or
+ * null to skip the record. Returns { [bucketKey]: total }.
+ */
+export function spendingByBucket({ transactions = [], transactionSplits = [] } = {}, keyOf) {
+  const keyedTxs = [];
+  (transactions || []).forEach((tx) => {
+    const d = parseDay(tx.date);
+    const k = d && keyOf(d);
+    if (k) keyedTxs.push({ tx, k });
+  });
+  const internalIds = new Set(keyedTxs.filter(({ tx }) => isInternalFlow(tx)).map(({ tx }) => tx.id));
+
+  const keyedSplits = [];
+  const splitParentIds = new Set();
+  (transactionSplits || []).forEach((s) => {
+    const d = parseDay(s.date);
+    const k = d && keyOf(d);
+    if (!k) return;
+    keyedSplits.push({ s, k });
+    if (s.transaction_id) splitParentIds.add(s.transaction_id);
+  });
+
+  const totals = {};
+  const add = (k, amt) => { totals[k] = (totals[k] || 0) + Math.abs(Number(amt) || 0); };
+  const INTERNAL_CATS = ["income", "loan_payment", "savings"];
+  keyedSplits.forEach(({ s, k }) => {
+    if (internalIds.has(s.transaction_id)) return;
+    const cat = s.category || "";
+    if (!cat || INTERNAL_CATS.includes(cat)) return;
+    add(k, s.amount);
+  });
+  keyedTxs.forEach(({ tx, k }) => {
+    if (internalIds.has(tx.id) || splitParentIds.has(tx.id)) return;
+    const cat = tx.category || "";
+    if (!cat || INTERNAL_CATS.includes(cat)) return;
+    if ((Number(tx.amount) || 0) >= 0) return;
+    add(k, tx.amount);
+  });
+  return totals;
 }
 
 /* ─── 30-day cash-flow projection (the ONE forecast brain) ─────

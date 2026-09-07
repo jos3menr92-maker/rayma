@@ -33,7 +33,10 @@ function monthSpending(transactions, splits, y, m) {
   const monthSplits = (splits || []).filter((s) => inMonth(s.date));
   const monthTxs = (transactions || []).filter((tx) => inMonth(tx.date));
   const internalIds = new Set(monthTxs.filter(isInternal).map((tx) => tx.id));
-  const splitParentIds = new Set(monthSplits.map((s) => s.transaction_id).filter(Boolean));
+  // Parent ids from ALL splits (not just this month's) — a split dated in a
+  // different month than its parent must suppress the parent there and count
+  // in its own month, never both (financeMath.monthSpentByCategory: same rule).
+  const splitParentIds = new Set((splits || []).map((s) => s.transaction_id).filter(Boolean));
 
   const totals = {};
   const bump = (cat, amt) => {

@@ -3,7 +3,7 @@
  * All series are computed locally (zero AI coins) from already-loaded data.
  */
 import { getMonthName } from "@/utils/formatLocalized";
-import { realIncomeEntries } from "@/utils/financeMath";
+import { realIncomeEntries, spendingByBucket } from "@/utils/financeMath";
 
 export const SERIES = [
   { key: "income", color: "hsl(var(--primary))", labelKey: "income", fallback: "Income" },
@@ -38,40 +38,24 @@ function monthLabel(key, locale) {
   return `${getMonthName(parseInt(m, 10) - 1, locale, "short")} ${y.slice(2)}`;
 }
 
-function buildSplitMap(transactionSplits = []) {
-  const map = {};
-  transactionSplits.forEach((sp) => {
-    if (!sp.transaction_id) return;
-    map[sp.transaction_id] = (map[sp.transaction_id] || 0) + Math.abs(sp.amount || 0);
-  });
-  return map;
-}
-
-// Internal flows are NOT spending: income, savings transfers (money moved
-// to yourself), loan_payment category, and the app-logged bill/loan payment
-// placeholders (already shown in the billsPaid/debtPaid series).
-function isInternalTx(tx) {
-  const cat = tx.category || "";
-  return ["income", "loan_payment", "savings"].includes(cat) || /^(Paid Bill:|Paid Loan:)/i.test(String(tx.description || ""));
-}
-
-function spentFromTx(tx, splitMap) {
-  if (isInternalTx(tx)) return 0;
-  const split = splitMap[tx.id] || 0;
-  return split > 0 ? split : tx.amount < 0 ? Math.abs(tx.amount) : 0;
-}
+// Spending comes from THE shared brain (financeMath.spendingByBucket —
+// identical rules to the chat engine's monthSpending): split-aware, and
+// internal flows (income, savings transfers, loan payments, app payment
+// placeholders AND their splits) are NOT spending — those appear in the
+// billsPaid/debtPaid series instead.
 
 /**
  * Aggregates sources into buckets keyed by keyOf(date); keyOf returns null
  * to skip a record (e.g. outside the current month for the daily view).
- * Spending = bank transactions (splits override the parent amount), EXCLUDING
- * internal flows (savings transfers, loan/bill payment placeholders) — those
- * already appear in the billsPaid/debtPaid series, so counting them in
- * spending would show the same money twice.
+ * Spending = bank transactions via THE shared brain (spendingByBucket —
+ * same rules as the chat engine). Internal flows (savings transfers, loan/
+ * bill payment placeholders and their splits) are excluded — they already
+ * appear in the billsPaid/debtPaid series, so counting them in spending
+ * would show the same money twice.
  * billsPaid/debtPaid come from the payments table.
+ * netFlow = income − spending − billsPaid − debtPaid (true net).
  */
 function aggregateSources({ incomes = [], transactions = [], transactionSplits = [], payments = [] }, keyOf) {
-  const splitMap = buildSplitMap(transactionSplits);
   const buckets = {};
   const get = (key) => {
     if (!buckets[key]) buckets[key] = { income: 0, spending: 0, billsPaid: 0, debtPaid: 0 };
@@ -85,13 +69,10 @@ function aggregateSources({ incomes = [], transactions = [], transactionSplits =
     if (k) get(k).income += inc.amount || 0;
   });
 
-  transactions.forEach((tx) => {
-    const d = parseDay(tx.date);
-    const k = d && keyOf(d);
-    if (!k) return;
-    const spent = spentFromTx(tx, splitMap);
-    if (spent > 0) get(k).spending += spent;
-  });
+  // Spending via the shared brain — bucketed by the same keyOf as everything
+  // else, so the current-month (daily) view buckets per day.
+  const spending = spendingByBucket({ transactions, transactionSplits }, keyOf);
+  Object.entries(spending).forEach(([k, v]) => { get(k).spending += v; });
 
   payments.forEach((p) => {
     const d = parseDay(p.payment_date);
@@ -114,7 +95,8 @@ export function buildMonthlySeries(sources, months = 12, locale = "en") {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const b = buckets[key] || { income: 0, spending: 0, billsPaid: 0, debtPaid: 0 };
-    data.push({ monthKey: key, month: monthLabel(key, locale), ...b, netFlow: b.income - b.spending });
+    // True net: income − everyday spending − bill/loan payments actually made
+    data.push({ monthKey: key, month: monthLabel(key, locale), ...b, netFlow: b.income - b.spending - b.billsPaid - b.debtPaid });
   }
   return data;
 }
@@ -141,7 +123,7 @@ export function buildCurrentMonthSeries(sources, locale = "en") {
       month: String(day),
       fullLabel: `${monthName} ${day}`,
       income, spending, billsPaid, debtPaid,
-      netFlow: income - spending,
+      netFlow: income - spending - billsPaid - debtPaid,
     });
   }
   return data;
