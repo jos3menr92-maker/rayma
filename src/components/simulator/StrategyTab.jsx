@@ -32,9 +32,13 @@ function RunCard({ icon, title, badge, run, baselineInterest, fmt, fmtNoDecimal,
           {run.monthsToDebtFree != null ? `${Math.round(run.monthsToDebtFree)} ${T("monthsShort", "mo")}` : T("never", "Never")}
         </p>
         <p className="text-xs text-muted-foreground">
-          {T("totalInterestLabel", "Total interest")}: <span className="text-destructive font-medium">{fmtNoDecimal(run.totalInterest)}</span>
+          {run.monthsToDebtFree != null ? (
+            <>{T("totalInterestLabel", "Total interest")}: <span className="text-destructive font-medium">{fmtNoDecimal(run.totalInterest)}</span></>
+          ) : (
+            T("interestGrowsForever", "Interest grows faster than the payments")
+          )}
         </p>
-        {baselineInterest != null && baselineInterest > run.totalInterest && (
+        {run.monthsToDebtFree != null && baselineInterest != null && baselineInterest > run.totalInterest && (
           <p className="text-xs text-primary font-medium mt-0.5">
             {T("savesLabel", "Saves")} {fmt(Math.round((baselineInterest - run.totalInterest) * 100) / 100)}
           </p>
