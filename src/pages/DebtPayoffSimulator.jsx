@@ -6,20 +6,12 @@ import { t } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingDown, DollarSign, Zap, AlertTriangle } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 import { simulateWithExtra, monthlyObligation, periodsToMonths } from "@/utils/loanEngine";
-
-function calcAvalanche(loans) {
-  return [...loans].sort((a, b) => (b.interest_rate || 0) - (a.interest_rate || 0));
-}
-
-function calcSnowball(loans) {
-  return [...loans].sort((a, b) => (a.current_balance || 0) - (b.current_balance || 0));
-}
+import StrategyTab from "@/components/simulator/StrategyTab";
 
 export default function DebtPayoffSimulator() {
   const { lang } = useLanguage();
@@ -29,7 +21,6 @@ export default function DebtPayoffSimulator() {
   const [loans, setLoans] = useState([]);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [extraPayment, setExtraPayment] = useState(0);
-  const [strategy, setStrategy] = useState("avalanche");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,16 +44,24 @@ export default function DebtPayoffSimulator() {
     : 0;
   const interestSaved = base && boosted ? Math.max(0, (base.totalInterest || 0) - (boosted.totalInterest || 0)) : 0;
 
-  const orderedLoans = strategy === "avalanche" ? calcAvalanche(loans) : calcSnowball(loans);
-
-  const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
-  const totalMonthly = loans.reduce((s, l) => s + monthlyObligation(l), 0);
-
-  const chartData = boosted?.schedule.map((s, i) => ({
-    month: Math.round(periodsToMonths(s.period, loanFreq)),
-    [seriesWithExtra]: s.balance,
-    [seriesBaseline]: base?.schedule[i]?.balance ?? s.balance,
-  })) || [];
+  // Chart series keyed by calendar MONTH (never by array index) — the two sims
+  // sample every 12 periods but end at different times, so index pairing
+  // misaligned the baseline's final point. Carry-forward keeps each line
+  // honest until its own end.
+  const chartData = (() => {
+    if (!boosted?.schedule?.length || !base?.schedule?.length) return [];
+    const toMonth = (p) => Math.round(periodsToMonths(p, loanFreq));
+    const baseByMonth = new Map(base.schedule.map((s) => [toMonth(s.period), s.balance]));
+    const boostByMonth = new Map(boosted.schedule.map((s) => [toMonth(s.period), s.balance]));
+    const months = [...new Set([...baseByMonth.keys(), ...boostByMonth.keys()])].sort((a, b) => a - b);
+    let lastBase = null;
+    let lastBoost = null;
+    return months.map((m) => {
+      if (baseByMonth.has(m)) lastBase = baseByMonth.get(m);
+      if (boostByMonth.has(m)) lastBoost = boostByMonth.get(m);
+      return { month: m, [seriesWithExtra]: lastBoost, [seriesBaseline]: lastBase };
+    });
+  })();
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
@@ -188,50 +187,7 @@ export default function DebtPayoffSimulator() {
 
           {/* Strategy Tab */}
           <TabsContent value="strategy" className="space-y-4 mt-4">
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-secondary rounded-lg p-3 text-center"><p className="text-xs text-muted-foreground">{T("totalDebt", "Total Debt")}</p><p className="font-bold text-foreground">{fmt(totalDebt)}</p></div>
-                  <div className="bg-secondary rounded-lg p-3 text-center"><p className="text-xs text-muted-foreground">{T("monthlyPayments", "Monthly Payments")}</p><p className="font-bold text-foreground">{fmt(totalMonthly)}</p></div>
-                </div>
-                <div>
-                  <Label>{T("strategy", "Strategy")}</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    <button onClick={() => setStrategy("avalanche")} className={`p-3 rounded-lg border text-left text-sm transition-colors ${strategy === "avalanche" ? "border-primary bg-primary/10" : "border-border bg-secondary"}`}>
-                      <p className="font-semibold text-foreground">{T("avalanche", "Avalanche")}</p>
-                      <p className="text-xs text-muted-foreground">{T("avalancheDesc", "Pay highest interest first — saves most money")}</p>
-                    </button>
-                    <button onClick={() => setStrategy("snowball")} className={`p-3 rounded-lg border text-left text-sm transition-colors ${strategy === "snowball" ? "border-primary bg-primary/10" : "border-border bg-secondary"}`}>
-                      <p className="font-semibold text-foreground">{T("snowball", "Snowball")}</p>
-                      <p className="text-xs text-muted-foreground">{T("snowballDesc", "Pay smallest balance first — builds momentum")}</p>
-                    </button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{T("recommendedOrder", "Recommended Order")}</h3>
-              {orderedLoans.map((l, i) => {
-                const sim = simulateWithExtra(l, 0);
-                return (
-                  <Card key={l.id} className={`bg-card border-border ${i === 0 ? "border-primary/40" : ""}`}>
-                    <CardContent className="p-3 flex items-center gap-3">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>{i + 1}</div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground text-sm">{l.name}</p>
-                        <p className="text-xs text-muted-foreground">{fmt(l.current_balance)} · {l.interest_rate || 0}% APR · {sim.months ? Math.round(periodsToMonths(sim.months, l.payment_frequency || "monthly")) : "—"} {T("moToPayoff", "mo to payoff")}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">{T("interest", "Interest")}</p>
-                        <p className="text-sm font-semibold text-destructive">{fmt(sim.totalInterest)}</p>
-                      </div>
-                      {i === 0 && <Badge className="bg-primary/20 text-primary border-0 text-xs">{T("focusHere", "Focus Here")}</Badge>}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            <StrategyTab loans={loans} />
           </TabsContent>
         </Tabs>
       )}
