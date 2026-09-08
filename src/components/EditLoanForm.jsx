@@ -14,6 +14,9 @@ import LoanTypeAttributesFields from "@/components/LoanTypeAttributesFields";
 
 const DOW = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// Device-local date (YYYY-MM-DD) — toISOString() would shift a day off in non-UTC timezones
+const todayLocal = () => new Date().toLocaleDateString("en-CA");
+
 // Mirrors AddLoan's CATEGORIES so both pages show identical, translated labels
 const CATEGORIES = [
   { value: "mortgage", emoji: "🏠", key: "catMortgage" },
@@ -44,7 +47,7 @@ export default function EditLoanForm({ loan, onSave }) {
     payment_frequency: loan.payment_frequency || "monthly",
     due_day: loan.due_day || "",
     due_day_of_week: loan.due_day_of_week || "Friday",
-    start_date: loan.start_date || "",
+    start_date: loan.start_date || todayLocal(), // auto-fill the device date when none is set
     category: loan.category || "personal",
     term_months: loan.term_months || "",
     loan_type_attributes: loan.loan_type_attributes || {},
@@ -198,9 +201,9 @@ export default function EditLoanForm({ loan, onSave }) {
         </div>
       </div>
 
-      {/* Term + Start Date — only for amortizing loans (same as AddLoan) */}
-      {mode === "amortizing" && (
-        <div className="grid grid-cols-2 gap-4">
+      {/* Term — amortizing loans only; Start Date — every category, auto-filled with the device date */}
+      <div className="grid grid-cols-2 gap-4">
+        {mode === "amortizing" && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold text-foreground">{T("termMonths", "Term (months)")}</Label>
@@ -214,17 +217,17 @@ export default function EditLoanForm({ loan, onSave }) {
               className="rounded-2xl bg-card border-border placeholder:text-primary/40"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-foreground">{T("startDate", "Start Date")}</Label>
-            <Input
-              type="date"
-              value={form.start_date}
-              onChange={(e) => handleChange("start_date", e.target.value)}
-              className="rounded-2xl bg-card border-border"
-            />
-          </div>
+        )}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-semibold text-foreground">{T("startDate", "Start Date")}</Label>
+          <Input
+            type="date"
+            value={form.start_date}
+            onChange={(e) => handleChange("start_date", e.target.value)}
+            className="rounded-2xl bg-card border-border"
+          />
         </div>
-      )}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
