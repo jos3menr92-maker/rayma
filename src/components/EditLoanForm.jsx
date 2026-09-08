@@ -14,9 +14,6 @@ import LoanTypeAttributesFields from "@/components/LoanTypeAttributesFields";
 
 const DOW = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-// Device-local date (YYYY-MM-DD) — toISOString() would shift a day off in non-UTC timezones
-const todayLocal = () => new Date().toLocaleDateString("en-CA");
-
 // Mirrors AddLoan's CATEGORIES so both pages show identical, translated labels
 const CATEGORIES = [
   { value: "mortgage", emoji: "🏠", key: "catMortgage" },
@@ -47,7 +44,7 @@ export default function EditLoanForm({ loan, onSave }) {
     payment_frequency: loan.payment_frequency || "monthly",
     due_day: loan.due_day || "",
     due_day_of_week: loan.due_day_of_week || "Friday",
-    start_date: loan.start_date || todayLocal(), // auto-fill the device date when none is set
+    start_date: loan.start_date || "", // stays empty → saved as null (no fabricated dates)
     category: loan.category || "personal",
     term_months: loan.term_months || "",
     loan_type_attributes: loan.loan_type_attributes || {},

@@ -141,7 +141,10 @@ export default function AddLoan() {
         term_months: mode === "amortizing" ? (parseInt(form.term_months) || null) : null,
         due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
         due_day_of_week: form.payment_frequency !== "monthly" ? form.due_day_of_week : null,
-        start_date: form.start_date || null,
+        // Start date only applies to installment-style loans (the field is
+        // amortizing-only) — revolving/simple loans never see it, so never
+        // silently save a fabricated "today" date for them.
+        start_date: mode === "amortizing" ? (form.start_date || null) : null,
         loan_type_attributes: form.loan_type_attributes || {},
         notes: form.notes || null,
         status: "active",
