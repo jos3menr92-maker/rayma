@@ -93,6 +93,7 @@ export default function EditLoanForm({ loan, onSave }) {
       monthly_payment: parseFloat(form.monthly_payment) || 0,
       term_months: mode === "amortizing" ? (parseInt(form.term_months) || null) : null,
       due_day: form.payment_frequency === "monthly" ? (parseInt(form.due_day) || null) : null,
+      start_date: form.start_date || null, // "" breaks the timestamptz column — send null
       due_day_of_week: form.payment_frequency !== "monthly" ? form.due_day_of_week : null,
     });
     setSaving(false);
