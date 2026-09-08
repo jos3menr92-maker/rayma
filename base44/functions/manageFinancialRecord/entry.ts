@@ -25,6 +25,17 @@ const ALLOWED_TABLES = {
   profiles: ['preferred_name', 'avatar_id', 'avatar_emoji', 'avatar_photo_url', 'preferred_currency', 'preferred_language', 'pay_frequency', 'pay_day', 'compact_mode', 'smart_alerts', 'auto_insights', 'subscription_type', 'ai_tokens_daily_limit'],
 };
 
+// Postgres rejects "" for date/timestamp columns ("invalid input syntax for
+// type timestamp with time zone: \"\""). Forms keep dates as empty strings
+// while editing, so any empty value for one of these fields is stored as NULL.
+const DATE_FIELDS = new Set([
+  'due_date', 'start_date', 'payment_date', 'week_start', 'target_date',
+  'last_synced', 'last_paid_date', 'date', 'transaction_date', 'scan_date',
+  'snapshot_date', 'document_date',
+]);
+const coerceDateField = (field: string, value: any) =>
+  DATE_FIELDS.has(field) && value === '' ? null : value;
+
 // Mirrors a bank account's balance onto the user's "Bank Cash" asset row so the
 // asset dashboard stays in sync whenever transactions or balances change (Bug 2).
 async function syncBankCashAsset(supabaseAdmin: any, uid: string, bankAccountId: string) {
@@ -83,7 +94,7 @@ Deno.serve(async (req) => {
       const sanitized = { user_id: uid };
       const defaults = TABLE_DEFAULTS[table] || {};
       for (const field of allowedFields) {
-        if (data[field] !== undefined) sanitized[field] = data[field];
+        if (data[field] !== undefined) sanitized[field] = coerceDateField(field, data[field]);
         else if (defaults[field] !== undefined) sanitized[field] = defaults[field];
       }
       // GUARDRAIL 1 (create): source-verification for loan APR + assumed due_day
@@ -239,7 +250,7 @@ Deno.serve(async (req) => {
       const allowedFields = ALLOWED_TABLES[table];
       const sanitized = {};
       for (const field of allowedFields) {
-        if (data[field] !== undefined) sanitized[field] = data[field];
+        if (data[field] !== undefined) sanitized[field] = coerceDateField(field, data[field]);
       }
       // GUARDRAIL 1 (update): APR source flag
       // GUARDRAIL 3: payment-balance reconciliation

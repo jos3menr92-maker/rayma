@@ -132,6 +132,23 @@ function buildErrorMessage(table, operation, error) {
 }
 
 /**
+ * Postgres rejects empty strings for date/timestamp columns with
+ * "invalid input syntax for type timestamp with time zone: \"\"".
+ * Forms keep date fields as "" while editing, so any empty date-like value is
+ * stored as NULL instead — ONE guard covering every form's save (loans,
+ * bills, payments, goals, transactions, documents…), not per-form patches.
+ */
+const DATE_KEY = /(_date|_at|week_start)$|^date$/;
+function sanitizeEmptyDates(data) {
+  if (!data || typeof data !== "object") return data;
+  const out = { ...data };
+  for (const key of Object.keys(out)) {
+    if (out[key] === "" && DATE_KEY.test(key)) out[key] = null;
+  }
+  return out;
+}
+
+/**
  * Get the current user ID, refreshing session if necessary.
  */
 async function getValidUserId() {
@@ -165,7 +182,7 @@ export async function createRecord(table, data) {
     return backendCreate(table, data);
   }
 
-  const payload = { ...data, user_id: userId };
+  const payload = { ...sanitizeEmptyDates(data), user_id: userId };
   const { data: record, error } = await supabase
     .from(table)
     .insert(payload)
@@ -176,7 +193,7 @@ export async function createRecord(table, data) {
     const refreshedUser = await tryRefreshSession();
     if (!refreshedUser?.id) return backendCreate(table, data);
 
-    const retryPayload = { ...data, user_id: refreshedUser.id };
+    const retryPayload = { ...sanitizeEmptyDates(data), user_id: refreshedUser.id };
     const { data: retryRecord, error: retryError } = await supabase
       .from(table)
       .insert(retryPayload)
@@ -205,7 +222,7 @@ export async function updateRecord(table, recordId, data) {
 
   const { data: record, error } = await supabase
     .from(table)
-    .update(data)
+    .update(sanitizeEmptyDates(data))
     .eq("id", recordId)
     .select()
     .maybeSingle();
@@ -216,7 +233,7 @@ export async function updateRecord(table, recordId, data) {
 
     const { data: retryRecord, error: retryError } = await supabase
       .from(table)
-      .update(data)
+      .update(sanitizeEmptyDates(data))
       .eq("id", recordId)
       .select()
       .maybeSingle();
