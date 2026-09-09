@@ -90,11 +90,9 @@ export default function Layout() {
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-14">
           <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 border border-primary/10 shadow-sm"
-              style={{ backgroundColor: "#0dcfba" }}>
+            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
               {!imageError ? (
-                <img src="/icon-192.png" className="w-full h-full object-cover" alt={T("raymaAiLogo", "Rayma AI logo")} onError={() => setImageError(true)} />
+                <img src="/icon-192.png" className="w-full h-full object-cover shadow-sm" alt={T("raymaAiLogo", "Rayma AI logo")} onError={() => setImageError(true)} />
               ) : (
                 <span className="text-xs font-bold text-white">R</span>
               )}
