@@ -81,10 +81,8 @@ export default function Landing() {
       {/* NAV */}
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <TrendingDown className="w-4 h-4 text-primary-foreground" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img src="/icon-192.png" alt="Rayma AI" className="w-8 h-8 object-contain shadow-sm" draggable={false} />
             <span className="text-base font-bold font-heading text-foreground">Rayma AI</span>
           </div>
           {/* Desktop nav */}
@@ -315,10 +313,8 @@ export default function Landing() {
       {/* FOOTER */}
       <footer className="border-t border-border py-8">
         <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
-              <TrendingDown className="w-3.5 h-3.5 text-primary-foreground" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img src="/icon-192.png" alt="Rayma AI" className="w-6 h-6 object-contain" draggable={false} />
             <span className="font-semibold text-foreground">Rayma AI</span>
             <span>· {T("debtBillsTracker", "Debt & Bills Tracker")}</span>
           </div>
