@@ -247,9 +247,7 @@ export default function Onboarding() {
           {/* WELCOME */}
           {step === "welcome" && (
             <motion.div key="welcome" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
-              <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <span className="text-4xl">💸</span>
-              </div>
+              <img src="/icon-192.png" alt={T("raymaAiLogo", "Rayma AI logo")} className="w-20 h-20 object-contain mx-auto mb-6 drop-shadow-md" draggable={false} />
               <h1 className="text-3xl font-bold font-heading text-foreground mb-3">{T("welcomeRayma", "Welcome to Rayma AI")}</h1>
               <p className="text-muted-foreground text-sm leading-relaxed mb-8">
                 {T("onboardingDesc", "Your personal finance tracker for loans, bills, and budgets. Let's get you set up in under a minute.")}
