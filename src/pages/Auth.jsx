@@ -205,6 +205,7 @@ const handleProviderSignIn = async (provider) => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
+          <img src="/icon-192.png" alt="Rayma AI" className="w-16 h-16 object-contain mx-auto mb-4 drop-shadow-md" draggable={false} />
           <h1 className="text-3xl font-bold font-heading text-foreground mb-2">
             {isLogin ? (T ? T("welcomeBack", "Welcome Back") : "Welcome Back") : (T ? T("createAccount", "Create Account") : "Create Account")}
           </h1>

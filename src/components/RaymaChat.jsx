@@ -664,9 +664,12 @@ export default function RaymaChat({
           className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[400px] left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[560px] z-[60]"
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-            <div>
-              <p className="font-semibold text-foreground text-sm">Rayma AI</p>
-              <p className="text-xs text-muted-foreground">{T("aiFinancialAdvisor", "AI Financial Advisor")}</p>
+            <div className="flex items-center gap-2.5">
+              <img src="/icon-192.png" alt="Rayma AI" className="w-8 h-8 object-contain shrink-0" draggable={false} />
+              <div>
+                <p className="font-semibold text-foreground text-sm">Rayma AI</p>
+                <p className="text-xs text-muted-foreground">{T("aiFinancialAdvisor", "AI Financial Advisor")}</p>
+              </div>
             </div>
             <div className="flex items-center gap-1">
               <button onClick={() => setZoom((z) => Math.max(0, z - 1))} disabled={zoom === 0} aria-label={T("zoomOut", "Smaller text")} title={T("zoomOut", "Smaller text")} className="min-w-[34px] min-h-[34px] flex items-center justify-center hover:bg-muted rounded-lg text-sm font-bold text-muted-foreground disabled:opacity-40 transition-colors">

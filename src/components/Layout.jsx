@@ -2,7 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, CreditCard, Receipt, TrendingUp, Menu, MoreHorizontal, Sparkles } from "lucide-react";
+import { LayoutDashboard, CreditCard, Receipt, TrendingUp, Menu, MoreHorizontal } from "lucide-react";
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import MoreMenu from "./MoreMenu";
@@ -143,7 +143,7 @@ export default function Layout() {
           className="fixed right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 shadow-[0_4px_20px_rgba(56,189,248,0.35)] flex items-center justify-center cursor-grab active:cursor-grabbing"
           title={T("raymaChatButton", "Rayma AI — tap to chat, drag to move")}
           aria-label={T("raymaChatButton", "Rayma AI — tap to chat, drag to move")}>
-          <Sparkles className="w-6 h-6 text-cyan-400 dark:text-cyan-600" />
+          <img src="/icon-192.png" alt="Rayma AI" className="w-10 h-10 object-contain" draggable={false} />
         </motion.button>
       )}
 

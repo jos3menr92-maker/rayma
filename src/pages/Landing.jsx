@@ -131,6 +131,7 @@ export default function Landing() {
 
       {/* HERO */}
       <section className="max-w-5xl mx-auto px-4 pt-16 pb-20 text-center">
+        <img src="/icon-192.png" alt="Rayma AI" className="w-20 h-20 object-contain mx-auto mb-6 drop-shadow-md" draggable={false} />
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
           <Star className="w-3 h-3 fill-primary" /> {T("freeForeverNoBankConnection", "Free forever · No bank connection required")}
         </div>
