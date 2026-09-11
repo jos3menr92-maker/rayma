@@ -7,13 +7,16 @@ import React from "react";
  *   onDirection(direction) — called with 'up' | 'down' | 'left' | 'right'
  *   onDirectionRelease(direction) — called when button released (for games needing keyup)
  *   onAction() — called when the Action button is tapped
+ *   onActionRelease() — called when the Action button is released
  *   actionLabel — optional label text inside the action button
  *   showUpDown — whether up/down buttons render (false = left/right only)
  *
- * Buttons use POINTER EVENTS (not touch events) so they work on every
- * device — phone, tablet, and desktop preview alike. Pointer capture keeps
- * the release event on the button even when a finger slides off it, which
- * fixes the classic "stuck moving" mobile bug.
+ * HIT-TARGET DESIGN: each control's visible glyph is small, but the actual
+ * tappable element is a large invisible pad (64px dpad / 96px action) that
+ * wraps it — near-miss taps still register, which is the #1 complaint in
+ * landscape mode. Buttons use POINTER EVENTS (not touch events) so they work
+ * on every device, and pointer capture keeps the release event on the button
+ * even when a finger slides off it (fixes the "stuck moving" bug).
  */
 export default function TouchControls({
   onDirection,
@@ -23,10 +26,12 @@ export default function TouchControls({
   actionLabel = "FIRE",
   showUpDown = false,
 }) {
-  // The ::before pseudo-element silently extends the tappable area ~8px past
-  // the visual edge, so near-miss taps still register instead of "failing".
-  const dirBtn =
-    "relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white active:bg-primary/60 active:scale-95 transition-all select-none touch-none before:content-[''] before:absolute before:-inset-2";
+  // Invisible pad = the real touch target; the visible glyph lives inside it.
+  const pad =
+    "w-16 h-16 flex items-center justify-center active:scale-95 transition-transform select-none touch-none";
+  // Visible button face — small, floating inside the bigger hit pad.
+  const face =
+    "w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white transition-colors";
 
   const handleDirStart = (e, dir) => {
     e.preventDefault();
@@ -39,56 +44,64 @@ export default function TouchControls({
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[55] p-4 pb-8 flex items-end justify-between pointer-events-none">
-      {/* D-Pad */}
-      <div className={`grid ${showUpDown ? "grid-cols-3 grid-rows-3" : "grid-cols-3"} gap-2 pointer-events-auto`}>
+    <div className="absolute bottom-0 left-0 right-0 z-[55] p-3 pb-6 flex items-end justify-between pointer-events-none">
+      {/* D-Pad — wide gaps keep the big hit pads from overlapping each other */}
+      <div className={`grid ${showUpDown ? "grid-cols-3 grid-rows-3" : "grid-cols-3"} gap-1 pointer-events-auto`}>
         {showUpDown && (
           <button
-            className={`${dirBtn} col-start-2 row-start-1`}
+            className={`${pad} group col-start-2 row-start-1`}
             onPointerDown={(e) => handleDirStart(e, "up")}
             onPointerUp={(e) => handleDirEnd(e, "up")}
             onPointerCancel={(e) => handleDirEnd(e, "up")}
             aria-label="Up"
           >
-            <ChevronUp className="w-7 h-7" />
+            <span className={`${face} group-active:bg-primary/60 group-active:border-primary/60`}>
+              <ChevronUp className="w-5 h-5" />
+            </span>
           </button>
         )}
         <button
-          className={`${dirBtn} ${showUpDown ? "col-start-1 row-start-2" : ""}`}
+          className={`${pad} group ${showUpDown ? "col-start-1 row-start-2" : ""}`}
           onPointerDown={(e) => handleDirStart(e, "left")}
           onPointerUp={(e) => handleDirEnd(e, "left")}
           onPointerCancel={(e) => handleDirEnd(e, "left")}
           aria-label="Left"
         >
-          <ChevronLeft className="w-7 h-7" />
+          <span className={`${face} group-active:bg-primary/60 group-active:border-primary/60`}>
+            <ChevronLeft className="w-5 h-5" />
+          </span>
         </button>
-        {showUpDown && <div className={showUpDown ? "col-start-2 row-start-2" : ""} />}
+        {showUpDown && <div className="col-start-2 row-start-2" />}
         <button
-          className={`${dirBtn} ${showUpDown ? "col-start-3 row-start-2" : ""}`}
+          className={`${pad} group ${showUpDown ? "col-start-3 row-start-2" : ""}`}
           onPointerDown={(e) => handleDirStart(e, "right")}
           onPointerUp={(e) => handleDirEnd(e, "right")}
           onPointerCancel={(e) => handleDirEnd(e, "right")}
           aria-label="Right"
         >
-          <ChevronRight className="w-7 h-7" />
+          <span className={`${face} group-active:bg-primary/60 group-active:border-primary/60`}>
+            <ChevronRight className="w-5 h-5" />
+          </span>
         </button>
         {showUpDown && (
           <button
-            className={`${dirBtn} col-start-2 row-start-3`}
+            className={`${pad} group col-start-2 row-start-3`}
             onPointerDown={(e) => handleDirStart(e, "down")}
             onPointerUp={(e) => handleDirEnd(e, "down")}
             onPointerCancel={(e) => handleDirEnd(e, "down")}
             aria-label="Down"
           >
-            <ChevronDown className="w-7 h-7" />
+            <span className={`${face} group-active:bg-primary/60 group-active:border-primary/60`}>
+              <ChevronDown className="w-5 h-5" />
+            </span>
           </button>
         )}
       </div>
 
-      {/* Action Button */}
+      {/* Action Button — small visible face, 96px invisible hit pad */}
       {onAction && (
         <button
-          className="relative pointer-events-auto w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-full bg-primary/80 backdrop-blur-sm border-2 border-primary text-primary-foreground font-black text-xs tracking-widest active:scale-90 transition-all select-none touch-none shadow-lg shadow-primary/40 before:content-[''] before:absolute before:-inset-2 before:rounded-full"
+          className="group pointer-events-auto w-24 h-24 flex items-center justify-center active:scale-95 transition-transform select-none touch-none"
           onPointerDown={(e) => {
             e.preventDefault();
             try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) { /* older WebViews */ }
@@ -98,7 +111,9 @@ export default function TouchControls({
           onPointerCancel={() => onActionRelease?.()}
           aria-label={actionLabel}
         >
-          {actionLabel}
+          <span className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/80 backdrop-blur-sm border-2 border-primary text-primary-foreground font-black text-[10px] tracking-widest shadow-lg shadow-primary/40 transition-colors group-active:bg-primary group-active:scale-90">
+            {actionLabel}
+          </span>
         </button>
       )}
     </div>
