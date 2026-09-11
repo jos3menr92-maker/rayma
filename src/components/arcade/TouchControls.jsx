@@ -12,7 +12,7 @@ import React from "react";
  *   showUpDown — whether up/down buttons render (false = left/right only)
  *
  * HIT-TARGET DESIGN: each control's visible glyph is small, but the actual
- * tappable element is a large invisible pad (64px dpad / 96px action) that
+ * tappable element is a large invisible pad (72px dpad / 96px action) that
  * wraps it — near-miss taps still register, which is the #1 complaint in
  * landscape mode. Buttons use POINTER EVENTS (not touch events) so they work
  * on every device, and pointer capture keeps the release event on the button
@@ -27,8 +27,10 @@ export default function TouchControls({
   showUpDown = false,
 }) {
   // Invisible pad = the real touch target; the visible glyph lives inside it.
+  // 72px pads (up from 64) — near-miss taps register more reliably without
+  // risking overlap between grid cells or overflow on narrow screens.
   const pad =
-    "w-16 h-16 flex items-center justify-center active:scale-95 transition-transform select-none touch-none";
+    "w-[72px] h-[72px] flex items-center justify-center active:scale-95 transition-transform select-none touch-none";
   // Visible button face — small, floating inside the bigger hit pad.
   const face =
     "w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white transition-colors";
@@ -44,7 +46,7 @@ export default function TouchControls({
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[55] p-3 pb-6 flex items-end justify-between pointer-events-none">
+    <div className="absolute bottom-0 left-0 right-0 z-[55] p-4 pb-10 flex items-end justify-between pointer-events-none">
       {/* D-Pad — wide gaps keep the big hit pads from overlapping each other */}
       <div className={`grid ${showUpDown ? "grid-cols-3 grid-rows-3" : "grid-cols-3"} gap-1 pointer-events-auto`}>
         {showUpDown && (
