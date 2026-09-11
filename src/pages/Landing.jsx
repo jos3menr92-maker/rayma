@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import CommunityTestimonials from "@/components/landing/CommunityTestimonials";
 
 const features = [
   { icon: TrendingDown, title: "Loan & Debt Tracker", desc: "Track every loan, see your balance drop, and know exactly when you'll be debt-free." },
@@ -177,25 +178,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section id="testimonials" className="py-16">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold font-heading text-foreground mb-3">{T("whatUsersSaying", "What users are saying")}</h2>
-            <p className="text-muted-foreground">{T("joinPeople", "Join people around the world tracking their path to financial clarity.")}</p>
-            <p className="text-[11px] text-muted-foreground mt-1 italic">{T("testimonialNote", "Testimonials are illustrative of typical user experiences.")}</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {testimonials.map((tm) => (
-              <div key={tm.nameKey} className="bg-card border border-border rounded-2xl p-5">
-                <Stars n={tm.stars} />
-                <p className="text-sm text-muted-foreground leading-relaxed mt-3 mb-4">"{T(tm.textKey, tm.text)}"</p>
-                <p className="text-sm font-semibold text-foreground">— {T(tm.nameKey, tm.name)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* TESTIMONIALS — real member reviews when admin-approved, illustrative otherwise */}
+      <CommunityTestimonials fallbackTestimonials={testimonials} />
 
       {/* PRICING */}
       <section id="pricing" className="bg-muted/40 py-16">

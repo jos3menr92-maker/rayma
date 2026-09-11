@@ -29,6 +29,30 @@
       "type": "string",
       "maxLength": 1000,
       "description": "Optional additional details"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Moderation status \u2014 only approved reviews are eligible for public display"
+    },
+    "public_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "User consented to their review being featured publicly (name shown only, never email)"
+    },
+    "feature_on_landing": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin toggle \u2014 show this review on the public landing page (requires status=approved and public_consent=true)"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Name shown publicly if featured (first name + last initial)"
     }
   },
   "required": [

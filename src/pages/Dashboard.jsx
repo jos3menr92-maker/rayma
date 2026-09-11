@@ -18,6 +18,7 @@ import { monthlyObligation } from "@/utils/loanEngine";
 import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
 import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
 import ExpenseBreakdownCard from "../components/dashboard/ExpenseBreakdownCard";
+import FeedbackRatingWidget from "../components/dashboard/FeedbackRatingWidget";
 
 const HUMAN_AVATARS = [
   { id: "face1", url: "https://i.pravatar.cc/150?img=11" },
@@ -201,6 +202,8 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
       )}
 
       <ExpenseBreakdownCard loans={activeLoans} bills={bills} />
+
+      <FeedbackRatingWidget />
       
       <div id="financial-health-score">
         <FinancialHealthScore />

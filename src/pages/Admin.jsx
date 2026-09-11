@@ -8,6 +8,7 @@ import { Users, Zap, DollarSign, ShieldCheck, Gift, TrendingUp, Activity, Refres
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import BugReportViewer from "@/components/admin/BugReportViewer";
+import FeedbackModeration from "@/components/admin/FeedbackModeration";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ export default function Admin() {
     const [allUsers, allPromoCodes, allFeedback, loansRes, billsRes, transactionsRes] = await Promise.all([
       base44.entities.User.list(),
       base44.entities.PromoCode.list("-created_date", 50),
-      base44.entities.Feedback.list("-created_date", 10),
+      base44.entities.Feedback.list("-created_date", 50),
       supabase.from("loans").select("id"),
       supabase.from("bills").select("id"),
       supabase.from("transactions").select("id").order("created_at", { ascending: false }).limit(500),
@@ -89,7 +90,7 @@ export default function Admin() {
 
     setUsers(allUsers.slice(0, 20));
     setPromoCodes(allPromoCodes_data);
-    setRecentFeedback(allFeedback.slice(0, 5));
+    setRecentFeedback(allFeedback.slice(0, 10));
     setLoading(false);
   }
 
@@ -379,21 +380,9 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Recent Feedback */}
+        {/* Feedback Moderation */}
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">{T("recentFeedback", "Recent Feedback")}</h2>
-        <div className="bg-card border border-border rounded-2xl overflow-hidden mb-6">
-          {recentFeedback.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-4">{T("noFeedbackYet", "No feedback yet.")}</p>
-          ) : recentFeedback.map((fb, i) => (
-            <div key={fb.id} className={`px-4 py-3 ${i < recentFeedback.length - 1 ? "border-b border-border" : ""}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-foreground capitalize">{fb.category || "general"}</span>
-                <span className="text-xs text-amber-500">{"★".repeat(fb.rating || 0)}{"☆".repeat(5 - (fb.rating || 0))}</span>
-              </div>
-              {fb.message && <p className="text-xs text-muted-foreground leading-relaxed">{fb.message}</p>}
-            </div>
-          ))}
-        </div>
+        <FeedbackModeration feedback={recentFeedback} onChanged={loadData} />
 
         {/* Users Table */}
         <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">{T("recentUsers", "Recent Users (top 20)")}</h2>
