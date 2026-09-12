@@ -55,6 +55,15 @@
       "type": "boolean",
       "default": true
     },
+    "deficit_alert_key": {
+      "type": "string",
+      "description": "Date (YYYY-MM-DD) of the projected deficit trough the user was last alerted about \u2014 dedupes repeat alerts for the same deficit"
+    },
+    "deficit_alert_sent_at": {
+      "type": "string",
+      "format": "date",
+      "description": "When the last deficit alert was sent \u2014 repeat guard for the same trough"
+    },
     "onboarding_complete": {
       "type": "boolean",
       "default": false,
