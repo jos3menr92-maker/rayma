@@ -192,7 +192,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`rounded-2xl border px-4 py-3 mb-4 flex items-center justify-between ${cashLeft >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}>
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("cashLeft", "Cash Left This Month")}</p>
-            <p className={`text-xl font-bold font-heading ${cashLeft >= 0 ? "text-primary" : "text-destructive"}`}>{formatCurrency(Math.abs(cashLeft))}</p>
+            <p className={`text-xl font-bold font-heading ${cashLeft >= 0 ? "text-primary" : "text-destructive"}`}>{cashLeft < 0 ? `−${formatCurrency(Math.abs(cashLeft))}` : formatCurrency(cashLeft)}</p>
           </div>
           <div className="text-right text-xs text-muted-foreground">
             <p>{formatCurrency(monthlyIncome)} {T("income", "income")}</p>

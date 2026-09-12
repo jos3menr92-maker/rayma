@@ -7,9 +7,9 @@ import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { monthlyObligation } from "@/utils/loanEngine";
-import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, projectedIncomeForMonth } from "@/utils/financeMath";
 
-const CACHE_KEY = "rayma_insights_cache";
+const CACHE_KEY = "rayma_insights_cache_v2";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 function loadCache(userKey) {
@@ -59,12 +59,27 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
     // Same income definition as the Dashboard (this month's real income entries)
     const now = new Date();
     const monthlyIncome = incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
-    
+    // "If this month continues this way": logged income + recurring-template
+    // paychecks still scheduled this month. null = no active recurring template.
+    const projectedIncome = projectedIncomeForMonth(incomes, now);
+
     let localAlerts = [];
     const totalObligations = monthlyBills + monthlyLoans;
+    const loggedPct = monthlyIncome > 0 ? (totalObligations / monthlyIncome) * 100 : null;
+    const projectedPct = projectedIncome > 0 ? (totalObligations / projectedIncome) * 100 : null;
 
-    if (monthlyIncome > 0 && (totalObligations / monthlyIncome) * 100 > 43) {
-      localAlerts.push({ type: 'warning', title: T("cashFlowBottleneck", "Cash Flow Bottleneck"), body: T("cashFlowBottleneckBody", "Your obligations take up >43% of your income. Adding debt right now isn't recommended.")});
+    // Fire on the honest number: the projected month-end pace when a
+    // recurring template exists (early-month logged income understates the
+    // denominator), otherwise the logged snapshot.
+    const triggerPct = projectedPct ?? loggedPct;
+    if (triggerPct !== null && triggerPct > 43) {
+      const body = projectedPct !== null
+        ? T("cashFlowBottleneckPace", "If this month continues at your recurring-income pace, obligations will take {pct}% of your income. Right now, with only part of the month logged, you're at {now}%.")
+            .replace("{pct}", Math.round(projectedPct))
+            .replace("{now}", Math.round(loggedPct ?? 0))
+        : T("cashFlowBottleneckBody", "Your obligations take up {pct}% of your income. Adding debt right now isn't recommended.")
+            .replace("{pct}", Math.round(triggerPct));
+      localAlerts.push({ type: 'warning', title: T("cashFlowBottleneck", "Cash Flow Bottleneck"), body });
     }
     if (userProfile?.pay_day && bills.length > 0) {
       localAlerts.push({ type: 'opportunity', title: T("paydayCollisionGuard", "Payday Collision Guard"), body: T("paydayCollisionBody", "I'm tracking your bills against your {pay_day} payday to prevent overdrafts.").replace("{pay_day}", userProfile.pay_day)});
@@ -84,9 +99,10 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
     // personalized, number-specific insights instead of generic advice.
     const dataContext = JSON.stringify({
       monthlyIncome: Math.round(monthlyIncome),
+      projectedMonthlyIncome: projectedIncome != null ? Math.round(projectedIncome) : null,
       monthlyBills: Math.round(monthlyBills),
       monthlyLoans: Math.round(monthlyLoans),
-      dti: monthlyIncome > 0 ? Math.round((totalObligations / monthlyIncome) * 100) : null,
+      dti: triggerPct != null ? Math.round(triggerPct) : null,
       loans: loans.filter(l => l.status !== "paid_off").map(l => ({
         name: l.name, balance: l.current_balance, apr: l.interest_rate,
         monthly: monthlyObligation(l), category: l.category

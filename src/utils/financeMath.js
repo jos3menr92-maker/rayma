@@ -68,6 +68,44 @@ export function incomeTotalForMonth(incomes, year, month) {
 }
 
 /**
+ * Projected income for the month containing `now` — the "if this month
+ * continues this way" figure: income already logged this month PLUS the
+ * recurring-template paychecks still scheduled before month end.
+ *   - Same newest-active-template rule as projectCashFlow / the auto-log
+ *     cron (older templates are never streamed — double-count guard #1).
+ *   - Only occurrences strictly AFTER today are projected; earlier ones are
+ *     expected to be auto-logged and already counted by
+ *     incomeTotalForMonth (double-count guard #2).
+ *   - Returns null when there is no active recurring template (purely manual
+ *     income) — callers should then fall back to logged income only and stay
+ *     conservative instead of fabricating a projection.
+ */
+export function projectedIncomeForMonth(incomes = [], now = new Date()) {
+  const templates = (incomes || [])
+    .filter((i) => i.is_recurring && i.recurring_active !== false && !i.recurring_source_id)
+    .sort((a, b) => String(b.week_start || "").localeCompare(String(a.week_start || "")));
+  const tpl = templates[0];
+  const amount = Number(tpl?.amount) || 0;
+  const anchor = tpl ? parseDay(tpl.week_start) : null;
+  if (!tpl || !anchor || amount <= 0) return null;
+
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthEnd = new Date(year, month + 1, 0); // last day of this month
+  const from = startOfDay(now);
+  from.setDate(from.getDate() + 1); // only paychecks still to come
+
+  const freq = tpl.recurring_frequency || tpl.frequency || "weekly";
+  let upcomingCount;
+  if (freq === "monthly") {
+    upcomingCount = monthlyOccurrences(anchor, from, monthEnd).length;
+  } else {
+    upcomingCount = anchoredOccurrences(anchor, freq === "biweekly" ? 14 : 7, from, monthEnd).length;
+  }
+  return incomeTotalForMonth(incomes, year, month) + upcomingCount * amount;
+}
+
+/**
  * Net worth — the ONE definition (matches takeNetWorthSnapshot):
  * assets + bank balances − active loan balances.
  */
