@@ -1,0 +1,61 @@
+{
+  "name": "DebtProgressShare",
+  "type": "object",
+  "properties": {
+    "share_slug": {
+      "type": "string",
+      "description": "Random public token used in the /share/:slug URL \u2014 never the user's id or email"
+    },
+    "percent_reduced": {
+      "type": "number",
+      "description": "Percent of total original debt paid off (0-100)"
+    },
+    "months_remaining": {
+      "type": "number",
+      "description": "Projected months until debt-free under the chosen strategy; null if it can't be computed"
+    },
+    "strategy": {
+      "type": "string",
+      "enum": [
+        "avalanche",
+        "snowball"
+      ],
+      "default": "avalanche",
+      "description": "Payoff strategy the owner says they are following"
+    },
+    "show_amounts": {
+      "type": "boolean",
+      "default": false,
+      "description": "Owner opted in to showing debt amounts publicly \u2014 false means only percentages are public"
+    },
+    "original_total": {
+      "type": "number",
+      "description": "Total original debt (only shown publicly when show_amounts is true)"
+    },
+    "current_total": {
+      "type": "number",
+      "description": "Total remaining debt (only shown publicly when show_amounts is true)"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD",
+      "description": "ISO currency code for formatting amounts"
+    }
+  },
+  "required": [
+    "share_slug",
+    "percent_reduced"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -4,7 +4,8 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import LoanCard from "../components/LoanCard";
-import { Search, Filter, Plus, ArrowUpDown } from "lucide-react";
+import { Search, Filter, Plus, ArrowUpDown, Share2 } from "lucide-react";
+import ShareProgressDialog from "../components/loans/ShareProgressDialog";
 import { motion } from "framer-motion";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
@@ -21,6 +22,7 @@ export default function LoansList() {
   const { toast } = useToast();
   const [editingLoan, setEditingLoan] = useState(null);
   const [loanToDelete, setLoanToDelete] = useState(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const { lang } = useLanguage();
   const T = useMemo(
     () => (key, fallback) => {
@@ -118,6 +120,14 @@ export default function LoansList() {
         </button>
       </motion.div>
 
+      {/* Share my progress */}
+      <button
+        onClick={() => setShareOpen(true)}
+        className="w-full flex items-center justify-center gap-2 mb-4 px-4 py-2.5 rounded-2xl bg-card border border-border text-sm font-semibold text-foreground hover:border-primary/40 transition-all active:scale-[0.98]"
+      >
+        <Share2 className="w-4 h-4 text-primary" /> {T("shareMyProgress", "Share My Progress")}
+      </button>
+
       {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -191,6 +201,8 @@ export default function LoansList() {
           )}
         </div>
       )}
+
+      <ShareProgressDialog open={shareOpen} onOpenChange={setShareOpen} loans={loans} />
 
       <Dialog open={!!editingLoan} onOpenChange={(open) => { if (!open) setEditingLoan(null); }}>
         <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">

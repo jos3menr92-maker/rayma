@@ -56,6 +56,7 @@ const Calendar = lazy(() => import('./pages/Calendar'));
 const MerchantAnalytics = lazy(() => import('./pages/MerchantAnalytics'));
 const Support = lazy(() => import('./pages/Support'));
 const BusinessInfo = lazy(() => import('./pages/BusinessInfo'));
+const ShareProgress = lazy(() => import('./pages/ShareProgress'));
 
 const PageLoader = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -155,6 +156,7 @@ export default function App() {
               <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PageTransition><PrivacyPolicy /></PageTransition></Suspense>} />
               <Route path="/terms" element={<Suspense fallback={<PageLoader />}><PageTransition><TermsOfService /></PageTransition></Suspense>} />
               <Route path="/business-info" element={<Suspense fallback={<PageLoader />}><PageTransition><BusinessInfo /></PageTransition></Suspense>} />
+              <Route path="/share/:slug" element={<Suspense fallback={<PageLoader />}><PageTransition><ShareProgress /></PageTransition></Suspense>} />
               <Route path="/*" element={<AuthenticatedApp />} />
             </Routes>
           </Router>
