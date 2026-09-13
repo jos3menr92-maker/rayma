@@ -4,7 +4,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import LoanCard from "../components/LoanCard";
-import { Search, Filter, Plus, ArrowUpDown, Share2 } from "lucide-react";
+import { Search, Filter, Plus, ArrowUpDown, Share2, Sparkles } from "lucide-react";
 import ShareProgressDialog from "../components/loans/ShareProgressDialog";
 import { motion } from "framer-motion";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -191,6 +191,15 @@ export default function LoansList() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
               >
                 <Plus className="w-4 h-4" /> {T("addYourFirstLoan", "Add Your First Loan")}
+              </button>
+              <p className="text-[11px] text-muted-foreground mt-4 mb-2">
+                {T("aiLogDesc", "Tell it what you owe — it does the typing for you")}
+              </p>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("rayma:open", { detail: { prefill: T("aiPrefillLoans", "I want to log my loans. Ask me about each one and help me add them.") } }))}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-card border border-primary/30 text-primary text-sm font-semibold hover:border-primary/60 transition-all active:scale-95"
+              >
+                <Sparkles className="w-4 h-4" /> {T("aiLogLoans", "Let Rayma AI log your loans")}
               </button>
             </>
           ) : (

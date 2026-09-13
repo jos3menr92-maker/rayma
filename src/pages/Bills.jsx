@@ -221,6 +221,12 @@ export default function Bills() {
           <div className="text-center py-12">
             <Receipt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">{T("noBills", "No bills yet. Add your first monthly bill.")}</p>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("rayma:open", { detail: { prefill: T("aiPrefillBills", "I want to log my bills. Ask me about each one and help me add them.") } }))}
+              className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-xl bg-card border border-primary/30 text-primary text-sm font-semibold hover:border-primary/60 transition-all active:scale-95"
+            >
+              <Sparkles className="w-4 h-4" /> {T("aiLogBills", "Let Rayma AI log your bills")}
+            </button>
           </div>
         )}
       </motion.div>
