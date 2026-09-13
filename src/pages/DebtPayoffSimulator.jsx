@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { base44 } from "@/api/base44Client";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -38,6 +39,16 @@ export default function DebtPayoffSimulator() {
   const loanFreq = loan?.payment_frequency || "monthly";
   const base = loan ? simulateWithExtra(loan, 0) : null;
   const boosted = loan ? simulateWithExtra(loan, extraPayment) : null;
+
+  // Marketing KPI — 'debt_simulator_run': fires once when the first
+  // simulation result is computed on the page (once per visit with loans).
+  const trackedInitialRun = useRef(false);
+  useEffect(() => {
+    if (base && boosted && !trackedInitialRun.current) {
+      trackedInitialRun.current = true;
+      base44.analytics.track({ eventName: "debt_simulator_run" });
+    }
+  }, [base, boosted]);
 
   const monthsSaved = base && boosted && base.months && boosted.months
     ? Math.max(0, Math.round(periodsToMonths(base.months - boosted.months, loanFreq)))
@@ -92,7 +103,7 @@ export default function DebtPayoffSimulator() {
               <CardContent className="p-4 space-y-4">
                 <div>
                   <Label>{T("selectLoan", "Select Loan")}</Label>
-                  <Select value={selectedLoan} onValueChange={setSelectedLoan}>
+                  <Select value={selectedLoan} onValueChange={(v) => { setSelectedLoan(v); base44.analytics.track({ eventName: "debt_simulator_run" }); }}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {loans.map(l => <SelectItem key={l.id} value={l.id}>{l.name} — {fmtFull(l.current_balance)}</SelectItem>)}
@@ -108,7 +119,7 @@ export default function DebtPayoffSimulator() {
                 )}
                 <div>
                   <Label>{T("extraMonthlyPayment", "Extra Monthly Payment")}: <span className="text-primary font-bold">{fmt(extraPayment)}</span></Label>
-                  <Slider className="mt-2" min={0} max={1000} step={25} value={[extraPayment]} onValueChange={([v]) => setExtraPayment(v)} />
+                  <Slider className="mt-2" min={0} max={1000} step={25} value={[extraPayment]} onValueChange={([v]) => setExtraPayment(v)} onValueCommit={() => base44.analytics.track({ eventName: "debt_simulator_run" })} />
                   <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>{fmt(0)}</span><span>{fmt(1000)}</span></div>
                 </div>
               </CardContent>
