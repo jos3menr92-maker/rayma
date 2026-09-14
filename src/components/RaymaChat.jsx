@@ -656,12 +656,8 @@ export default function RaymaChat({
             top: `${viewportBox.top}px`,
             height: `${viewportBox.height}px`,
             bottom: "auto",
-            maxHeight: "none",
-          } : {
-            bottom: "6rem",
-            maxHeight: "calc(100vh - 10rem)",
-          }}
-          className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[400px] left-4 sm:left-auto bg-card border border-border rounded-2xl shadow-2xl flex flex-col h-[560px] z-[60]"
+          } : undefined}
+          className="fixed left-3 right-3 top-3 bottom-3 sm:left-[12%] sm:right-[12%] sm:top-6 sm:bottom-6 bg-card border border-border rounded-2xl shadow-2xl flex flex-col z-[60]"
         >
           <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
             <div>
