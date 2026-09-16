@@ -3,7 +3,9 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
-import { monthlyBillAmount, incomeTotalForMonth, realIncomeEntries, netWorthFrom } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, realIncomeEntries, netWorthFrom, monthSpentByCategory } from "@/utils/financeMath";
+import { HEALTH_SPEND_OPTS } from "@/utils/healthScore";
+import HealthScoreBreakdown from "@/components/recap/HealthScoreBreakdown";
 import { monthlyObligation } from "@/utils/loanEngine";
 import { getMonthName } from "@/utils/formatLocalized";
 import { motion } from "framer-motion";
@@ -13,7 +15,7 @@ import { TrendingUp, TrendingDown, CheckCircle2, DollarSign, Calendar, PiggyBank
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--destructive))", "#34d399", "#f97316", "#a78bfa"];
 
 export default function MonthlyRecap() {
-  const { incomes, payments, bills, loans, assets, bankAccounts, netWorthSnapshots, loading } = useFinancialData();
+  const { incomes, payments, bills, loans, assets, bankAccounts, netWorthSnapshots, transactions, transactionSplits, loading } = useFinancialData();
   const { lang, locale } = useLanguage();
   const { formatCurrency: fmt, currency } = useCurrency();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
@@ -97,8 +99,14 @@ export default function MonthlyRecap() {
     return acc;
   }, {})).map(([name, value]) => ({ name, value })), [activeBills]);
 
-  // Savings rate — share of income kept (negative when overspending)
-  const savingsRate = totalIncome > 0 ? cashFlow / totalIncome : null;
+  // Savings rate — THE official definition (matches the health score and the
+  // chat brain): share of income kept after everyday spending, where everyday
+  // spending excludes internal flows (savings transfers, app-logged bill/loan
+  // payments). The fixed-obligation lens lives in Net Cash Flow above.
+  const everydaySpent = useMemo(() =>
+    Object.values(monthSpentByCategory({ transactions, transactionSplits }, viewDate, HEALTH_SPEND_OPTS)).reduce((s, v) => s + v, 0),
+  [transactions, transactionSplits, viewDate]);
+  const savingsRate = totalIncome > 0 ? (totalIncome - everydaySpent) / totalIncome : null;
 
   // Net worth at the end of the selected month, from the daily snapshot history.
   // Snapshots are the ONE source of historical net worth (written by the cron job).
@@ -141,6 +149,8 @@ export default function MonthlyRecap() {
             </button>
           ))}
         </div>
+
+        {viewOffset === 0 && <HealthScoreBreakdown />}
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-card border border-border rounded-2xl p-4">

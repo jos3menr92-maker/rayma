@@ -15,7 +15,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 import { useT } from "@/lib/LanguageContext";
 import { monthlyObligation } from "@/utils/loanEngine";
-import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, projectedIncomeForMonth } from "@/utils/financeMath";
 import BudgetPacingWidget from "../components/dashboard/BudgetPacingWidget";
 import ExpenseBreakdownCard from "../components/dashboard/ExpenseBreakdownCard";
 import FeedbackRatingWidget from "../components/dashboard/FeedbackRatingWidget";
@@ -74,11 +74,16 @@ export default function Dashboard() {
     return { activeLoans, totalRemaining, monthlyLoans, monthlyBills, monthlyTotal };
   }, [loans, bills]);
 
-  const monthlyIncome = useMemo(() => {
+  // Income for cash-flow pacing: the projected full month (recurring template)
+  // when one exists, else the logged month-to-date snapshot — same rule as the
+  // Bottleneck alert and the health score, so every dashboard figure agrees.
+  const { monthlyIncome, paceIncome, isProjectedPace } = useMemo(() => {
     const now = new Date();
-    return incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
+    const actual = incomeTotalForMonth(incomes, now.getFullYear(), now.getMonth());
+    const projected = projectedIncomeForMonth(incomes, now);
+    return { monthlyIncome: actual, paceIncome: projected ?? actual, isProjectedPace: projected != null && projected !== actual };
   }, [incomes]);
-  const cashLeft = monthlyIncome - (monthlyTotal || 0);
+  const cashLeft = paceIncome - (monthlyTotal || 0);
 
 const presetAvatar = HUMAN_AVATARS.find(a => a.id === userProfile?.avatar_id);
 const imageToShow = 
@@ -188,17 +193,17 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
 
       <BudgetPacingWidget />
 
-      {monthlyIncome > 0 && (
+      {paceIncome > 0 && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`rounded-2xl border px-4 py-3 mb-4 flex items-center justify-between ${cashLeft >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}>
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("cashLeft", "Cash Left This Month")}</p>
-            <p className={`text-xl font-bold font-heading ${cashLeft >= 0 ? "text-primary" : "text-destructive"}`}>{cashLeft < 0 ? `−${formatCurrency(Math.abs(cashLeft))}` : formatCurrency(cashLeft)}</p>
-          </div>
-          <div className="text-right text-xs text-muted-foreground">
-            <p>{formatCurrency(monthlyIncome)} {T("income", "income")}</p>
-            <p>− {formatCurrency(monthlyTotal)} {T("obligations", "obligations")}</p>
-          </div>
-        </motion.div>
+           <div>
+             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{T("cashLeft", "Cash Left This Month")}</p>
+             <p className={`text-xl font-bold font-heading ${cashLeft >= 0 ? "text-primary" : "text-destructive"}`}>{cashLeft < 0 ? `−${formatCurrency(Math.abs(cashLeft))}` : formatCurrency(cashLeft)}</p>
+           </div>
+           <div className="text-right text-xs text-muted-foreground">
+             <p>{formatCurrency(paceIncome)} {T("income", "income")}{isProjectedPace ? ` · ${T("projectedShort", "projected")}` : ""}</p>
+             <p>− {formatCurrency(monthlyTotal)} {T("obligations", "obligations")}</p>
+           </div>
+         </motion.div>
       )}
 
       <ExpenseBreakdownCard loans={activeLoans} bills={bills} />

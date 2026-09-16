@@ -1,10 +1,10 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
-import { monthlyObligation } from "@/utils/loanEngine";
-import { monthlyBillAmount, incomeTotalForMonth, monthSpentByCategory } from "@/utils/financeMath";
-import { ShieldCheck } from "lucide-react";
+import { computeHealthScore } from "@/utils/healthScore";
+import { ShieldCheck, ChevronRight } from "lucide-react";
 
 function ScorePillar({ label, score, max, color }) {
   const pct = Math.round((score / max) * 100);
@@ -24,7 +24,7 @@ function ScorePillar({ label, score, max, color }) {
 export default function FinancialHealthScore() {
   const { lang } = useLanguage();
   // Shared data brain — same live context as every widget (no private queries)
-  const { loans: ctxLoans, bills: ctxBills, savingsGoals: ctxGoals, incomes: ctxIncomes, budgetCategories: budgets, transactions, transactionSplits } = useFinancialData();
+  const { loans, bills, savingsGoals, incomes, budgetCategories, transactions, transactionSplits } = useFinancialData();
   const T = useMemo(() => (key, fallback) => { const translated = t(lang, key); return translated !== key ? translated : fallback; }, [lang]);
 
   function getColor(score) {
@@ -34,69 +34,12 @@ export default function FinancialHealthScore() {
     return { ring: "stroke-destructive", text: "text-destructive", label: T("needsWork", "Needs Work"), bg: "bg-destructive/10" };
   }
 
-  const data = useMemo(() => {
-      const now = new Date();
-      const loans = ctxLoans.filter(l => l.status !== "paid_off");
-      const bills = ctxBills.filter(b => b.is_active !== false);
-      const goals = ctxGoals.filter(g => g.status !== "completed");
-
-      // Income = real income entries this month (same definition as Dashboard/Recap)
-      const income = incomeTotalForMonth(ctxIncomes, now.getFullYear(), now.getMonth());
-      // True spending = shared spending brain minus internal flows: savings
-      // transfers (money moved to yourself) and app-logged bill/loan payments —
-      // planned obligations already scored by the Debt-to-Income & Bill
-      // Coverage pillars, so counting them here would double-penalize.
-      const SPEND_OPTS = { excludeCategories: ["savings", "loan_payment"], excludeDescPrefixes: ["Paid Bill:", "Paid Loan:"] };
-      const spentByCat = monthSpentByCategory({ transactions, transactionSplits }, now, SPEND_OPTS);
-      const expenses = Object.values(spentByCat).reduce((s, v) => s + v, 0);
-      const totalDebt = loans.reduce((s, l) => s + (l.current_balance || 0), 0);
-      const monthlyDebt = loans.reduce((s, l) => s + monthlyObligation(l), 0);
-      const monthlyBills = bills.reduce((s, b) => s + monthlyBillAmount(b), 0);
-      const totalObligation = monthlyDebt + monthlyBills;
-
-      let debtScore = 30;
-      if (income > 0) {
-        const dti = totalObligation / income;
-        if (dti > 0.5) debtScore = 0;
-        else if (dti > 0.35) debtScore = 10;
-        else if (dti > 0.25) debtScore = 20;
-        else debtScore = 30;
-      } else {
-        debtScore = totalDebt === 0 ? 30 : 5;
-      }
-
-      // Budget Adherence = per-category: how well each budgeted category
-      // respects its own limit. Unbudgeted spending no longer drags the score,
-      // and a budget with $0 spent counts as fully on track.
-      let budgetScore = 25;
-      const limited = budgets.filter((b) => (b.monthly_limit || 0) > 0);
-      if (limited.length > 0) {
-        const adherence = limited.reduce((s, b) => s + Math.min((spentByCat[b.category_key] || 0) / b.monthly_limit, 1), 0) / limited.length;
-        budgetScore = Math.round(adherence * 25);
-      }
-
-      let savingsScore = 0;
-      const savingsRate = income > 0 ? (income - expenses) / income : 0;
-      if (savingsRate >= 0.2) savingsScore = 25;
-      else if (savingsRate >= 0.1) savingsScore = 18;
-      else if (savingsRate >= 0.05) savingsScore = 10;
-      else if (savingsRate > 0) savingsScore = 5;
-      if (goals.length > 0) savingsScore = Math.min(savingsScore + 5, 25);
-
-      let coverageScore = 20;
-      if (income > 0 && totalObligation > income) coverageScore = 0;
-      else if (income > 0 && totalObligation > income * 0.8) coverageScore = 8;
-      else if (income > 0) coverageScore = 20;
-
-      const total = debtScore + budgetScore + savingsScore + coverageScore;
-
-      return {
-        total,
-        debtScore, budgetScore, savingsScore, coverageScore,
-        income, expenses, totalDebt, totalObligation,
-        savingsRate,
-      };
-  }, [ctxLoans, ctxBills, ctxGoals, ctxIncomes, budgets, transactions, transactionSplits]);
+  // One brain: src/utils/healthScore.js — shared with the Monthly Recap
+  // breakdown so the "why" page can never drift from this card.
+  const data = useMemo(
+    () => computeHealthScore({ loans, bills, incomes, savingsGoals, budgets: budgetCategories, transactions, transactionSplits }),
+    [loans, bills, incomes, savingsGoals, budgetCategories, transactions, transactionSplits]
+  );
 
   const { ring, text, label, bg } = getColor(data.total);
 
@@ -105,7 +48,10 @@ export default function FinancialHealthScore() {
   const offset = circ - (data.total / 100) * circ;
 
   return (
-    <div className={`rounded-2xl border border-border p-4 mb-5 ${bg}`}>
+    <Link
+      to="/monthly-recap"
+      className={`block rounded-2xl border border-border p-4 mb-5 ${bg} active:scale-[0.98] transition-transform cursor-pointer`}
+    >
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
           <svg width="80" height="80" viewBox="0 0 112 112">
@@ -140,6 +86,11 @@ export default function FinancialHealthScore() {
           </div>
         </div>
       </div>
-    </div>
+
+      <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-center gap-1">
+        <span className="text-[10px] text-muted-foreground">{T("healthScoreTapHint", "Tap to see the breakdown")}</span>
+        <ChevronRight className="w-3 h-3 text-muted-foreground" />
+      </div>
+    </Link>
   );
 }
