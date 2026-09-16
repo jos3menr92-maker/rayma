@@ -795,6 +795,7 @@ export default function RaymaChat({
                   messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx, arr) => {
                     // A Deep Review report = the assistant reply that follows the verified-data request
                     const isDeepReview = msg.role === "assistant" && idx > 0 && String(arr[idx - 1]?.content || "").includes("DEEP FINANCIAL REVIEW protocol");
+                    const isPurchasingPower = msg.role === "assistant" && idx > 0 && String(arr[idx - 1]?.content || "").toLowerCase().includes("purchasing power");
                     return (
                     <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] px-3 py-2 rounded-lg ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
@@ -826,6 +827,14 @@ export default function RaymaChat({
                                 className="self-start bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors hover:bg-primary/20"
                               >
                                 {T("purchasingPowerQuestion", "🚗🏠 Would you like to know your purchasing power? (3 coins)")}
+                              </button>
+                            )}
+                            {isPurchasingPower && idx === arr.length - 1 && !loading && (
+                              <button
+                                onClick={() => handleSend(T("downPaymentPlanPrompt", "Yes — help me create a savings plan for a down payment!"))}
+                                className="self-start bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors hover:bg-primary/20"
+                              >
+                                {T("downPaymentPlanQuestion", "💰 Would you like to create a savings plan for a down payment? (3 coins)")}
                               </button>
                             )}
                           </div>
