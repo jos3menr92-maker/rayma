@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import { createRecord } from "@/lib/supabaseHelpers";
 import CodeBlock from "@/components/CodeBlock";
 import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
+import { buildDeepReviewFacts, DEEP_REVIEW_COST } from "@/utils/deepReviewFacts";
 import { monthlyObligation } from "@/utils/loanEngine";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -57,6 +58,7 @@ function sanitizeForDiagnostic(obj) {
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
   assets = [], bankAccounts = [], savingsGoals = [], taxes = [], transactions = [], userProfile = null,
+  budgetCategories = [], transactionSplits = [], deepReviewRequest = 0,
   currentPage = "", forceOpen, onClose, autoOpen, prefillPrompt = "", onPrefillConsumed,
   showGreeting = false, onGreetingConsumed, addTransaction
 }) {
@@ -199,6 +201,46 @@ export default function RaymaChat({
     }
   }
   
+  // 🔍 DEEP FINANCIAL REVIEW — premium consultation (flat 6 coins for everyone).
+  // The verified math (health score + payoff cascade) is computed locally with
+  // the app's official engines and handed to the agent as ground truth, so the
+  // report can never drift from the Dashboard or hallucinate payoff numbers.
+  const deepReviewSeenRef = useRef(0);
+  useEffect(() => {
+    if (!deepReviewRequest || deepReviewRequest === deepReviewSeenRef.current) return;
+    if (!conversation || initializing) return; // conversation effect re-fires this once ready
+    deepReviewSeenRef.current = deepReviewRequest;
+    runDeepReview();
+  }, [deepReviewRequest, conversation, initializing]);
+
+  async function runDeepReview() {
+    if (!conversation) return;
+    const coins = userProfile?.ai_tokens ?? 0;
+    if (coins < DEEP_REVIEW_COST) {
+      setMessages(prev => [...prev, { role: "assistant", content: T("deepReviewInsufficient", `🪙 **Not enough coins for a Deep Financial Review** — it costs ${DEEP_REVIEW_COST} coins and you have ${coins}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`) }]);
+      return;
+    }
+    setHistoryView(null);
+    setShowHistory(false);
+    const facts = buildDeepReviewFacts({ loans, bills, incomes, savingsGoals, budgetCategories, transactions, transactionSplits, userProfile });
+    const requestLabel = T("deepReviewRequest", "🔍 Deep Financial Review — run the DEEP FINANCIAL REVIEW protocol using this VERIFIED DATA BLOCK computed by the app's official engine (treat as ground truth, do not recompute):");
+    setLoading(true);
+    pendingAICostRef.current = DEEP_REVIEW_COST;
+    const safetyTimeout = setTimeout(() => setLoading(false), 60000);
+    try {
+      await base44.agents.addMessage(conversation, { role: "user", content: `${requestLabel}\n\n${facts}` });
+      clearTimeout(safetyTimeout);
+      const res = await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: 'deep_financial_review' });
+      if (res?.data?.success) refreshUserProfile?.();
+    } catch (err) {
+      clearTimeout(safetyTimeout);
+      pendingAICostRef.current = 0;
+      setLoading(false);
+      console.error('Deep review send failed:', err.message);
+      setMessages(prev => [...prev, { role: "assistant", content: T("aiSendError", "I couldn't reach the AI right now. No coins were charged — please try again in a moment.") }]);
+    }
+  }
+
   async function handleSend(overrideText) {
     setOnboardingGreeting("");
     setHistoryView(null);
@@ -555,6 +597,13 @@ export default function RaymaChat({
       return;
     }
 
+    // --- 7B. DEEP FINANCIAL REVIEW (PREMIUM — 6 COINS, VERIFIED MATH) ---
+    if (/(deep\s+(financial\s+)?review)|(full\s+financial\s+review)|(comprehensive\s+(financial\s+)?review)/.test(text)) {
+      setInput("");
+      runDeepReview();
+      return;
+    }
+
 // --- 8. MAIN AI FALLBACK LOGIC (WITH BATTERY DRAIN) ---
     if (!sourceText || loading || !conversation) return;
 
@@ -637,6 +686,10 @@ export default function RaymaChat({
   function handleChip(chip) {
     setHistoryView(null);
     setShowHistory(false);
+    if (chip.id === "deepReview") {
+      runDeepReview();
+      return;
+    }
     if (chip.id === "scan") {
       scanFileRef.current?.click();
       return;

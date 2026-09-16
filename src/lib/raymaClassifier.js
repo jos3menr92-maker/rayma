@@ -30,6 +30,7 @@ export const CHIPS = [
   { id: "debtPayoff", labelKey: "chipDebtPayoff", fallback: "Debt payoff strategy", tier: "paid", text: "debt payoff strategy" },
   { id: "savingEnough", labelKey: "chipSavingEnough", fallback: "Am I saving enough?", tier: "paid", text: "am i saving enough" },
   { id: "budgetPlan", labelKey: "chipBudgetPlan", fallback: "Build a budget plan", tier: "paid", text: "build a budget plan" },
+  { id: "deepReview", labelKey: "chipDeepReview", fallback: "Deep Review (6 coins)", tier: "paid", text: "deep financial review" },
   { id: "scan", labelKey: "chipScanReceipt", fallback: "Scan a receipt", tier: "paid", text: "scan a receipt" },
 ];
 

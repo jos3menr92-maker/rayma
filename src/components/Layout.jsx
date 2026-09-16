@@ -31,6 +31,7 @@ export default function Layout() {
   const [raymaAutoOpen, setRaymaAutoOpen] = useState(false);
   const [raymaPrefillPrompt, setRaymaPrefillPrompt] = useState("");
   const [raymaGreeting, setRaymaGreeting] = useState(false);
+  const [deepReviewSeq, setDeepReviewSeq] = useState(0);
 
   useBackHandler([
     { isOpen: drawerOpen, onClose: () => setDrawerOpen(false) },
@@ -56,6 +57,8 @@ export default function Layout() {
     bankAccounts = [], // Ready for net worth and recent spending
     savingsGoals = [], // Ready for the Savings Vault
     transactions = [], // Ready for recent-spending lookup
+    budgetCategories = [], // Deep Financial Review verified facts
+    transactionSplits = [], // Deep Financial Review verified facts
     userProfile,
     addTransaction
   } = useFinancialData();
@@ -79,6 +82,17 @@ export default function Layout() {
     };
     window.addEventListener("rayma:open", handler);
     return () => window.removeEventListener("rayma:open", handler);
+  }, []);
+
+  // Deep Financial Review — started from the Financial Health card button.
+  // Opens the chat and bumps a sequence so RaymaChat runs the review exactly once.
+  useEffect(() => {
+    const handler = () => {
+      setRaymaOpen(true);
+      setDeepReviewSeq((s) => s + 1);
+    };
+    window.addEventListener("rayma:deep-review", handler);
+    return () => window.removeEventListener("rayma:deep-review", handler);
   }, []);
 
 
@@ -194,6 +208,9 @@ export default function Layout() {
         bankAccounts={bankAccounts} // <-- NEW: Bank Accounts for Net Worth
         savingsGoals={savingsGoals} // <-- NEW: Savings Vault
         transactions={transactions} // <-- NEW: Recent spending lookup
+        budgetCategories={budgetCategories}
+        transactionSplits={transactionSplits}
+        deepReviewRequest={deepReviewSeq}
         userProfile={userProfile}
         currentPage={location.pathname} // <-- NEW: Page Awareness / Context
         addTransaction={addTransaction}
