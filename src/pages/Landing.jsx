@@ -185,7 +185,8 @@ export default function Landing() {
       <section id="pricing" className="bg-muted/40 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold font-heading text-foreground mb-3">{T("simplePricing", "Simple, honest pricing")}</h2>
-          <p className="text-muted-foreground mb-10">{T("pricingDesc", "No hidden fees. Core features are free forever — pay only for extra AI consultations if you need them.")}</p>
+          <p className="text-muted-foreground mb-4">{T("pricingDesc", "No hidden fees. Core features are free forever — pay only for extra AI consultations if you need them.")}</p>
+          <p className="text-sm text-primary font-medium mb-10">{T("pricingArcadeNote", "Debt stress weighing on you? Take a break in the built-in Arcade — playing earns free AI coins.")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
             {/* Free */}
             <div className="bg-card border border-border rounded-2xl p-5">
@@ -215,7 +216,7 @@ export default function Landing() {
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">{T("lithium", "Lithium")}</p>
               <p className="text-3xl font-bold font-heading text-foreground mb-1">$4.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
               <p className="text-xs text-muted-foreground mb-4">{T("lithiumDesc", "$4.99/mo · 100 coins (33 q)")}</p>
-              {[T("feature50DailyEnergy", "100 coins / month (33 q)"), T("featureMonthly", "Billed monthly"), T("featureNoCommitment", "Cancel anytime"), T("featureBestValue", "Best per-question value")].map(f => (
+              {[T("feature50DailyEnergy", "100 coins / month (33 q)"), T("featureAllFeatures", "Sponsor games unlocked"), T("featureMonthly", "Billed monthly"), T("featureNoCommitment", "Cancel anytime"), T("featureBestValue", "Best per-question value")].map(f => (
                 <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground mb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />{f}
                 </div>

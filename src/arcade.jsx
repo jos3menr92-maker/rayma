@@ -1,5 +1,5 @@
 import React, { useState, useRef, Suspense, lazy, useEffect } from 'react';
-import { Crown, ChevronLeft } from 'lucide-react';
+import { Crown, ChevronLeft, Gamepad2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFinancialData } from '@/lib/FinancialDataContext';
 import { getAllHighScores } from '@/api/arcadeGamesApi';
@@ -122,15 +122,11 @@ const Arcade = () => {
     });
   };
 
-  // ⚠️ TEMPORARY TEST MODE — bypasses the sponsor-game lock so all games can be
-  // tested. Set to false (or delete) to restore the PremiumGameLock gating.
-  const TEMP_UNLOCK_SPONSOR_GAMES = true;
-
-  const hasGameAccess = TEMP_UNLOCK_SPONSOR_GAMES
-    || userProfile?.subscription_tier === 'power_generator'
-    || userProfile?.subscription_tier === 'power_unlimited'
-    || userProfile?.subscription_type === 'power_generator'
-    || userProfile?.subscription_type === 'power_unlimited'
+  // Sponsor games unlock with ANY paid subscription (Lithium, Generator,
+  // Unlimited) or an active game-access grant (promo code / sponsor pass).
+  const PAID_TIERS = ['power_lithium', 'power_generator', 'power_unlimited'];
+  const tier = userProfile?.subscription_tier || userProfile?.subscription_type;
+  const hasGameAccess = PAID_TIERS.includes(tier)
     || (userProfile?.game_access_expires_at && new Date(userProfile.game_access_expires_at) > new Date());
 
   const renderActiveGame = () => {
@@ -177,6 +173,14 @@ const Arcade = () => {
           <div className="text-3xl font-mono font-bold text-foreground">{userProfile?.preferred_name || 'Guest'}</div>
         </div>
       </header>
+
+      {/* Break-time banner — the arcade's purpose: debt relief + free AI coins */}
+      <div className="max-w-7xl mx-auto mb-6 bg-primary/10 border border-primary/30 rounded-2xl p-4 flex items-center gap-3">
+        <Gamepad2 className="w-5 h-5 text-primary shrink-0" />
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {T('arcadeBannerText', 'Debt stressing you out? Take a break in the Arcade — reach level milestones in any game to earn free AI coins (up to 6 per day) to consult Rayma AI.')}
+        </p>
+      </div>
 
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
         <nav className="lg:col-span-1 space-y-4">

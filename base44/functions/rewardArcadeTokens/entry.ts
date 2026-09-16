@@ -9,7 +9,7 @@ import { syncAiTokensToProfiles } from '../../shared/coinLedger.ts';
  *   - Hard cap: 6 coins per user per UTC day (farming guard)
  *   - gameId must be a real arcade game; level must be a sane integer
  */
-const VALID_GAME_IDS = ['space_invaders', 'retro_snake', 'sky_striker', 'neon_drift', 'crystal_crusher', 'meteor_storm'];
+const VALID_GAME_IDS = ['space_invaders', 'retro_snake', 'sky_striker', 'lunar_lander', 'crystal_crusher', 'meteor_storm'];
 const COINS_PER_MILESTONE = 3;
 const MILESTONE_EVERY = 5;
 const DAILY_ARCADE_COIN_CAP = 6;

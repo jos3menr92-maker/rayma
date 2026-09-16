@@ -22,7 +22,7 @@ export default function PremiumGameLock({ gameTitle }) {
         </div>
         <p className="text-lg sm:text-xl font-black text-white uppercase tracking-widest">{T('buyMembershipToAccess', 'Buy Membership to Access')}</p>
         <p className="text-xs text-slate-400 leading-relaxed max-w-xs">
-          {T('sponsorGameDesc', 'The arcade is free for everyone. These 3 bonus games are our thanks to Generator sponsors.')}
+          {T('sponsorGameDesc', 'The arcade is free for everyone. These 3 bonus games unlock with any paid plan — Lithium, Generator or Unlimited.')}
         </p>
       </div>
 
