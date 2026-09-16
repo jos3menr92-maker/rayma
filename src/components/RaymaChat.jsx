@@ -227,17 +227,37 @@ export default function RaymaChat({
     const requestLabel = T("deepReviewRequest", "🔍 Deep Financial Review — run the DEEP FINANCIAL REVIEW protocol using this VERIFIED DATA BLOCK computed by the app's official engine (treat as ground truth, do not recompute):");
     setLoading(true);
     pendingAICostRef.current = DEEP_REVIEW_COST;
+    // 🪙 PAY FIRST — the server is the coin authority. Deduct BEFORE the report
+    // reaches the AI; if the send fails, refund so nobody pays for nothing.
+    let paid = false;
+    try {
+      const res = await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: 'deep_financial_review' });
+      if (!res?.data?.success) {
+        setLoading(false);
+        pendingAICostRef.current = 0;
+        refreshUserProfile?.();
+        setMessages(prev => [...prev, { role: "assistant", content: T("deepReviewInsufficient", `🪙 **Not enough coins for a Deep Financial Review** — it costs ${DEEP_REVIEW_COST} coins and you have ${res?.data?.remaining ?? 0}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`) }]);
+        return;
+      }
+      paid = true;
+      refreshUserProfile?.();
+    } catch (err) {
+      setLoading(false);
+      pendingAICostRef.current = 0;
+      console.error('Deep review payment failed:', err.message);
+      setMessages(prev => [...prev, { role: "assistant", content: T("aiSendError", "I couldn't reach the AI right now. No coins were charged — please try again in a moment.") }]);
+      return;
+    }
     const safetyTimeout = setTimeout(() => setLoading(false), 60000);
     try {
       await base44.agents.addMessage(conversation, { role: "user", content: `${requestLabel}\n\n${facts}` });
       clearTimeout(safetyTimeout);
-      const res = await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: 'deep_financial_review' });
-      if (res?.data?.success) refreshUserProfile?.();
     } catch (err) {
       clearTimeout(safetyTimeout);
       pendingAICostRef.current = 0;
       setLoading(false);
       console.error('Deep review send failed:', err.message);
+      try { await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: 'deep_financial_review_refund', refund: true }); refreshUserProfile?.(); } catch (_) { /* refund best-effort */ }
       setMessages(prev => [...prev, { role: "assistant", content: T("aiSendError", "I couldn't reach the AI right now. No coins were charged — please try again in a moment.") }]);
     }
   }
@@ -624,28 +644,47 @@ export default function RaymaChat({
       return;
     }
 
-    // 🪙 Queue the question first; only deduct 3 coins if it actually reaches the AI.
+    // 🪙 PAY FIRST — the server is the single coin authority. 3 coins are
+    // deducted BEFORE the question reaches the AI (unlimited users ride free).
+    // A server-side "insufficient" stops the question entirely, and a failed
+    // AI send refunds — so a zero balance can never get a free answer.
     const messageContent = sourceText; 
     setInput("");
     setLoading(true);
     pendingAICostRef.current = isUnlimited ? 0 : 3;
+    let paid = false;
+    if (!isUnlimited) {
+      try {
+        const res = await base44.functions.invoke('spendCoins', { amount: 3, reason: 'chat_question' });
+        if (!res?.data?.success) {
+          // Server says the balance can't cover it — show the truth and stop.
+          setLoading(false);
+          pendingAICostRef.current = 0;
+          refreshUserProfile?.();
+          setMessages(prev => [...prev, { role: "user", content: sourceText }, { role: "assistant", content: T("outOfEnergy", "🪙 **Out of coins!** \n\nI need coins to run this analysis. Play a game in the **Arcade** to earn free coins, or visit the **Store** for a quick top-up!") }]);
+          return;
+        }
+        paid = true;
+        refreshUserProfile?.();
+      } catch (e) {
+        setLoading(false);
+        pendingAICostRef.current = 0;
+        setMessages(prev => [...prev, { role: "assistant", content: T("aiSendError", "I couldn't reach the AI right now. No coins were charged — please try again in a moment.") }]);
+        return;
+      }
+    }
     const safetyTimeout = setTimeout(() => setLoading(false), 30000);
     try {
       await base44.agents.addMessage(conversation, { role: "user", content: messageContent });
       clearTimeout(safetyTimeout);
-      // Success — deduct 3 coins for this AI consultation (unlimited users ride free).
-      // Deduction happens server-side in spendCoins so it can't be skipped or forged.
-      if (!isUnlimited) {
-        try {
-          const res = await base44.functions.invoke('spendCoins', { amount: 3, reason: 'chat_question' });
-          if (res?.data?.success) refreshUserProfile?.();
-        } catch (e) { console.warn('Token deduction failed:', e.message); }
-      }
     } catch (err) {
       clearTimeout(safetyTimeout);
       pendingAICostRef.current = 0;
       setLoading(false);
       console.error('AI message send failed:', err.message);
+      if (paid) {
+        try { await base44.functions.invoke('spendCoins', { amount: 3, reason: 'chat_question_refund', refund: true }); refreshUserProfile?.(); } catch (_) { /* refund best-effort */ }
+      }
       setMessages(prev => [...prev, { role: "assistant", content: T("aiSendError", "I couldn't reach the AI right now. No coins were charged — please try again in a moment.") }]);
     }
   }
