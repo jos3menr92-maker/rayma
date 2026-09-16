@@ -1,0 +1,44 @@
+{
+  "name": "Weekly Plan Reminder",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "weekly_plan_reminder",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_plan_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "planReminders"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send plan reminder emails",
+            "description": "Weekly check-in for every user"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Emails every user a weekly check-in each Monday morning: their plan status (savings goal pace, budgets) when a plan exists, or a reminder to log their info when their numbers have gone stale.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * 1",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
