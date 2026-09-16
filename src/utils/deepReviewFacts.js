@@ -23,7 +23,7 @@ const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
  * Pure read-only computation — no network, no side effects.
  */
 export function buildDeepReviewFacts(
-  { loans = [], bills = [], incomes = [], savingsGoals = [], budgetCategories = [], transactions = [], transactionSplits = [], userProfile = null } = {},
+  { loans = [], bills = [], incomes = [], savingsGoals = [], budgetCategories = [], transactions = [], transactionSplits = [], userProfile = null, intake = null } = {},
   now = new Date()
 ) {
   const score = computeHealthScore(
@@ -97,5 +97,15 @@ export function buildDeepReviewFacts(
     } : "no active loans",
     spending_this_month: { total_everyday: r2(score.expenses), top_categories: topCats },
   };
+  // User-declared intake answers (household, once-in-a-while costs, income
+  // steadiness) — non-math context the agent can't derive from logged data.
+  if (intake) {
+    facts.user_declared_context = {
+      household: intake.household || null,
+      occasional_costs: Array.isArray(intake.occasional) ? intake.occasional : [],
+      income_stability: intake.income || null,
+      last_updated: intake.updated || null,
+    };
+  }
   return JSON.stringify(facts);
 }

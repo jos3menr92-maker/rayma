@@ -1,8 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useT } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { computeHealthScore } from "@/utils/healthScore";
+import { DEEP_REVIEW_COST } from "@/utils/deepReviewFacts";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { AlertTriangle, TrendingUp, Sparkles, MessageCircle } from "lucide-react";
 
 /**
@@ -15,8 +18,11 @@ import { AlertTriangle, TrendingUp, Sparkles, MessageCircle } from "lucide-react
  */
 export default function PlanStatusBanner() {
   const T = useT();
+  const navigate = useNavigate();
   const { formatCurrency: fmt } = useCurrency();
-  const { loans, bills, incomes, savingsGoals, budgetCategories, transactions, transactionSplits, loading } = useFinancialData();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { loans, bills, incomes, savingsGoals, budgetCategories, transactions, transactionSplits, userProfile, loading } = useFinancialData();
+  const coins = userProfile?.ai_tokens ?? 0;
 
   const status = useMemo(() => {
     if (loading) return null;
@@ -46,7 +52,7 @@ export default function PlanStatusBanner() {
     // 1. Attention — obligations above the line lenders watch
     if (s.paceIncome > 0 && dtiPct > 43) {
       return {
-        tone: "attention", icon: AlertTriangle,
+        tone: "attention", icon: AlertTriangle, premium: true,
         title: T("planNeedsAttention", "Your financial plan needs attention"),
         body: T("planAttentionBody", "This is where you are: obligations take {pct}% of your income — above the ~43% line lenders watch. Ask me and we'll fix it.").replace("{pct}", dtiPct),
         prompt: T("planAttentionPrompt", "My plan needs attention — what should I fix first?"),
@@ -55,7 +61,7 @@ export default function PlanStatusBanner() {
     // 2. Attention — savings goal behind the pace the user set
     if (goalInfo && !goalInfo.onTrack && goalInfo.gap > 0) {
       return {
-        tone: "attention", icon: AlertTriangle,
+        tone: "attention", icon: AlertTriangle, premium: true,
         title: T("planNeedsAttention", "Your financial plan needs attention"),
         body: T("planGoalBehindBody", "This is where you are: {name} is at {pct}% ({saved}) and {gap} behind the pace you set. A small catch-up this month gets you back on track.")
           .replace("{name}", goalInfo.name)
@@ -70,7 +76,7 @@ export default function PlanStatusBanner() {
       const savingsPct = s.savingsRate > 0 ? Math.round(s.savingsRate * 100) : null;
       const goalPart = goalInfo ? ` · ${fmt(goalInfo.saved)} ${T("towardGoal", "toward")} ${goalInfo.name}` : "";
       return {
-        tone: "great", icon: TrendingUp,
+        tone: "great", icon: TrendingUp, premium: true,
         title: T("planDoingGreat", "You're doing great!"),
         body: T("planGreatBody", "This is where you are: {cash} left after obligations{savings}{goal} — keep it up!")
           .replace("{cash}", fmt(cashFlow))
@@ -82,7 +88,7 @@ export default function PlanStatusBanner() {
     // 4. Nudge — not enough real numbers yet to have a plan
     if (dtiPct == null && ((loans || []).length > 0 || (bills || []).length > 0)) {
       return {
-        tone: "nudge", icon: Sparkles,
+        tone: "nudge", icon: Sparkles, premium: false,
         title: T("planNotBuiltYet", "Your plan needs real numbers"),
         body: T("planNudgeBody", "This is where you are: no income logged this month, so your cash flow and plan can't be computed yet. Log income and I'll take it from there."),
         prompt: T("planNudgePrompt", "Help me get started — what should I log first?"),
@@ -110,13 +116,35 @@ export default function PlanStatusBanner() {
         </div>
       </div>
       {status.prompt && (
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent("rayma:open", { detail: { prefill: status.prompt } }))}
-          className="mt-2.5 ml-8 flex items-center gap-1.5 bg-card border border-border rounded-lg px-3 py-1.5 text-[11px] font-semibold text-foreground active:scale-95 transition-transform"
-        >
-          <MessageCircle className="w-3.5 h-3.5 text-primary" />
-          {T("askRaymaPlan", "Ask Rayma about this")}
-        </button>
+        <>
+          <button
+            onClick={() => (status.premium ? setConfirmOpen(true) : window.dispatchEvent(new CustomEvent("rayma:open", { detail: { prefill: status.prompt } })))}
+            className="mt-2.5 ml-8 flex items-center gap-1.5 bg-card border border-border rounded-lg px-3 py-1.5 text-[11px] font-semibold text-foreground active:scale-95 transition-transform"
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-primary" />
+            {status.premium ? T("planReviewButton", "Ask Rayma about this · 6 coins") : T("askRaymaPlan", "Ask Rayma about this")}
+          </button>
+          {status.premium && (
+            <ConfirmDialog
+              open={confirmOpen}
+              onOpenChange={setConfirmOpen}
+              title={T("planReviewTitle", "Full Plan Re-Review")}
+              description={coins < DEEP_REVIEW_COST
+                ? T("planReviewInsufficientDialog", "A full re-review costs 6 coins and you have {coins}. Top up in the Store or earn free coins in the Arcade.").replace("{coins}", String(coins))
+                : T("planReviewDesc", "Rayma AI re-scans your latest numbers, remembers your last plan, shows what changed, and builds your new Plan of Attack. Costs 6 coins — you have {coins}.").replace("{coins}", String(coins))}
+              confirmLabel={coins < DEEP_REVIEW_COST ? T("planReviewGetCoins", "Get coins in the Store") : T("planReviewConfirm", "Run re-review (6 coins)")}
+              cancelLabel={T("planReviewNotNow", "Not now")}
+              onConfirm={() => {
+                setConfirmOpen(false);
+                if (coins < DEEP_REVIEW_COST) {
+                  navigate("/store");
+                } else {
+                  window.dispatchEvent(new CustomEvent("rayma:plan-review", { detail: { tone: status.tone } }));
+                }
+              }}
+            />
+          )}
+        </>
       )}
     </div>
   );

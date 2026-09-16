@@ -32,6 +32,8 @@ export default function Layout() {
   const [raymaPrefillPrompt, setRaymaPrefillPrompt] = useState("");
   const [raymaGreeting, setRaymaGreeting] = useState(false);
   const [deepReviewSeq, setDeepReviewSeq] = useState(0);
+  const [planReviewSeq, setPlanReviewSeq] = useState(0);
+  const [planReviewTone, setPlanReviewTone] = useState("attention");
 
   useBackHandler([
     { isOpen: drawerOpen, onClose: () => setDrawerOpen(false) },
@@ -93,6 +95,18 @@ export default function Layout() {
     };
     window.addEventListener("rayma:deep-review", handler);
     return () => window.removeEventListener("rayma:deep-review", handler);
+  }, []);
+
+  // Plan Re-Review — started from the Dashboard plan-status banner (6 coins).
+  // Opens the chat and bumps a sequence so RaymaChat runs the re-review exactly once.
+  useEffect(() => {
+    const handler = (e) => {
+      setRaymaOpen(true);
+      setPlanReviewTone(e?.detail?.tone || "attention");
+      setPlanReviewSeq((s) => s + 1);
+    };
+    window.addEventListener("rayma:plan-review", handler);
+    return () => window.removeEventListener("rayma:plan-review", handler);
   }, []);
 
 
@@ -211,6 +225,8 @@ export default function Layout() {
         budgetCategories={budgetCategories}
         transactionSplits={transactionSplits}
         deepReviewRequest={deepReviewSeq}
+        planReviewRequest={planReviewSeq}
+        planReviewTone={planReviewTone}
         userProfile={userProfile}
         currentPage={location.pathname} // <-- NEW: Page Awareness / Context
         addTransaction={addTransaction}

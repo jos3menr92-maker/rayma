@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Trash2, Loader2, ScanLine, History } from "lucide-react";
 import { freeAnswer } from "@/lib/raymaClassifier";
 import QuickReplyChips from "@/components/rayma/QuickReplyChips";
+import IntakeQuestionnaire from "@/components/rayma/IntakeQuestionnaire";
 import CostTag from "@/components/rayma/CostTag";
 import { getEnergyState } from "@/components/MembershipBattery";
 import ChatHistory, { saveHistory } from "@/components/rayma/ChatHistory";
@@ -59,7 +60,7 @@ function sanitizeForDiagnostic(obj) {
 export default function RaymaChat({ 
   loans = [], bills = [], incomes = [], payments = [], 
   assets = [], bankAccounts = [], savingsGoals = [], taxes = [], transactions = [], userProfile = null,
-  budgetCategories = [], transactionSplits = [], deepReviewRequest = 0,
+  budgetCategories = [], transactionSplits = [], deepReviewRequest = 0, planReviewRequest = 0, planReviewTone = "",
   currentPage = "", forceOpen, onClose, autoOpen, prefillPrompt = "", onPrefillConsumed,
   showGreeting = false, onGreetingConsumed, addTransaction
 }) {
@@ -202,41 +203,94 @@ export default function RaymaChat({
     }
   }
   
-  // 🔍 DEEP FINANCIAL REVIEW — premium consultation (flat 6 coins for everyone).
+  // 🔍 PREMIUM REVIEWS (Deep Financial Review + Plan Re-Review — flat 6 coins).
   // The verified math (health score + payoff cascade) is computed locally with
   // the app's official engines and handed to the agent as ground truth, so the
   // report can never drift from the Dashboard or hallucinate payoff numbers.
+  // Both flows share a 3-question intake (reused from memory with a quick
+  // "still accurate?" check) before the pay-first dispatch.
   const deepReviewSeenRef = useRef(0);
+  const planReviewSeenRef = useRef(0);
+  const [intake, setIntake] = useState(null); // { mode: 'deep' | 'plan', saved }
+
   useEffect(() => {
     if (!deepReviewRequest || deepReviewRequest === deepReviewSeenRef.current) return;
     if (!conversation || initializing) return; // conversation effect re-fires this once ready
     deepReviewSeenRef.current = deepReviewRequest;
-    runDeepReview();
+    runPremiumReview("deep");
   }, [deepReviewRequest, conversation, initializing]);
 
-  async function runDeepReview() {
+  useEffect(() => {
+    if (!planReviewRequest || planReviewRequest === planReviewSeenRef.current) return;
+    if (!conversation || initializing) return; // conversation effect re-fires this once ready
+    planReviewSeenRef.current = planReviewRequest;
+    runPremiumReview("plan");
+  }, [planReviewRequest, conversation, initializing]);
+
+  async function runPremiumReview(mode) {
     if (!conversation) return;
     const coins = userProfile?.ai_tokens ?? 0;
     if (coins < DEEP_REVIEW_COST) {
-      setMessages(prev => [...prev, { role: "assistant", content: T("deepReviewInsufficient", `🪙 **Not enough coins for a Deep Financial Review** — it costs ${DEEP_REVIEW_COST} coins and you have ${coins}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`) }]);
+      setMessages(prev => [...prev, { role: "assistant", content: mode === "plan"
+        ? T("planReviewInsufficient", `🪙 **Not enough coins for a full plan re-review** — it costs ${DEEP_REVIEW_COST} coins and you have ${coins}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`)
+        : T("deepReviewInsufficient", `🪙 **Not enough coins for a Deep Financial Review** — it costs ${DEEP_REVIEW_COST} coins and you have ${coins}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`) }]);
       return;
     }
     setHistoryView(null);
     setShowHistory(false);
-    const facts = buildDeepReviewFacts({ loans, bills, incomes, savingsGoals, budgetCategories, transactions, transactionSplits, userProfile });
-    const requestLabel = T("deepReviewRequest", "🔍 Deep Financial Review — run the DEEP FINANCIAL REVIEW protocol using this VERIFIED DATA BLOCK computed by the app's official engine (treat as ground truth, do not recompute):");
+    // Intake step — reuse remembered answers with a quick "still accurate?" check
+    let saved = null;
+    try {
+      const memories = await base44.entities.UserMemory.list();
+      const rec = (memories || []).find((m) => String(m.content || "").startsWith("RAYMA_INTAKE:"));
+      if (rec) {
+        try { saved = { ...JSON.parse(String(rec.content).slice("RAYMA_INTAKE:".length)), _id: rec.id }; }
+        catch (_) { saved = null; }
+      }
+    } catch (err) {
+      console.error("Intake memory lookup failed:", err.message);
+    }
+    setIntake({ mode, saved });
+  }
+
+  async function finishIntake(answers) {
+    const mode = intake?.mode || "deep";
+    setIntake(null);
+    if (answers) {
+      const todayISO = new Date().toISOString().split("T")[0];
+      const content = "RAYMA_INTAKE: " + JSON.stringify({ household: answers.household || null, occasional: answers.occasional || [], income: answers.income || null, updated: todayISO });
+      try {
+        if (answers._id) {
+          await base44.entities.UserMemory.update(answers._id, { content, last_referenced: todayISO });
+        } else {
+          await base44.entities.UserMemory.create({ memory_type: "fact", content, context: "Premium review intake questionnaire", importance: "medium", last_referenced: todayISO });
+        }
+      } catch (err) {
+        console.error("Intake memory save failed:", err.message); // non-fatal — the review can still run
+      }
+    }
+    await dispatchPremiumReview(mode, answers);
+  }
+
+  async function dispatchPremiumReview(mode, intakeAnswers) {
+    const facts = buildDeepReviewFacts({ loans, bills, incomes, savingsGoals, budgetCategories, transactions, transactionSplits, userProfile, intake: intakeAnswers });
+    const requestLabel = mode === "plan"
+      ? T("planReviewRequestLabel", "🔍 Plan Re-Review — my Dashboard plan status asked for a fresh full review. Run the PLAN RE-REVIEW protocol using this VERIFIED DATA BLOCK computed by the app's official engine (treat as ground truth, do not recompute). Banner tone: {tone}.").replace("{tone}", planReviewTone || "attention")
+      : T("deepReviewRequest", "🔍 Deep Financial Review — run the DEEP FINANCIAL REVIEW protocol using this VERIFIED DATA BLOCK computed by the app's official engine (treat as ground truth, do not recompute):");
     setLoading(true);
     pendingAICostRef.current = DEEP_REVIEW_COST;
     // 🪙 PAY FIRST — the server is the coin authority. Deduct BEFORE the report
     // reaches the AI; if the send fails, refund so nobody pays for nothing.
     let paid = false;
     try {
-      const res = await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: 'deep_financial_review' });
+      const res = await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: mode === "plan" ? "plan_re_review" : "deep_financial_review" });
       if (!res?.data?.success) {
         setLoading(false);
         pendingAICostRef.current = 0;
         refreshUserProfile?.();
-        setMessages(prev => [...prev, { role: "assistant", content: T("deepReviewInsufficient", `🪙 **Not enough coins for a Deep Financial Review** — it costs ${DEEP_REVIEW_COST} coins and you have ${res?.data?.remaining ?? 0}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`) }]);
+        setMessages(prev => [...prev, { role: "assistant", content: mode === "plan"
+          ? T("planReviewInsufficient", `🪙 **Not enough coins for a full plan re-review** — it costs ${DEEP_REVIEW_COST} coins and you have ${res?.data?.remaining ?? 0}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`)
+          : T("deepReviewInsufficient", `🪙 **Not enough coins for a Deep Financial Review** — it costs ${DEEP_REVIEW_COST} coins and you have ${res?.data?.remaining ?? 0}. Grab a coin pack in the **Store** or earn free coins in the **Arcade**!`) }]);
         return;
       }
       paid = true;
@@ -257,7 +311,7 @@ export default function RaymaChat({
       pendingAICostRef.current = 0;
       setLoading(false);
       console.error('Deep review send failed:', err.message);
-      try { await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: 'deep_financial_review_refund', refund: true }); refreshUserProfile?.(); } catch (_) { /* refund best-effort */ }
+      try { await base44.functions.invoke('spendCoins', { amount: DEEP_REVIEW_COST, reason: mode === "plan" ? "plan_re_review_refund" : "deep_financial_review_refund", refund: true }); refreshUserProfile?.(); } catch (_) { /* refund best-effort */ }
       setMessages(prev => [...prev, { role: "assistant", content: T("aiSendError", "I couldn't reach the AI right now. No coins were charged — please try again in a moment.") }]);
     }
   }
@@ -621,7 +675,7 @@ export default function RaymaChat({
     // --- 7B. DEEP FINANCIAL REVIEW (PREMIUM — 6 COINS, VERIFIED MATH) ---
     if (/(deep\s+(financial\s+)?review)|(full\s+financial\s+review)|(comprehensive\s+(financial\s+)?review)/.test(text)) {
       setInput("");
-      runDeepReview();
+      runPremiumReview("deep");
       return;
     }
 
@@ -727,7 +781,7 @@ export default function RaymaChat({
     setHistoryView(null);
     setShowHistory(false);
     if (chip.id === "deepReview") {
-      runDeepReview();
+      runPremiumReview("deep");
       return;
     }
     if (chip.id === "scan") {
@@ -804,6 +858,12 @@ export default function RaymaChat({
               ))}
               <div ref={messagesEndRef} />
             </div>
+          ) : intake ? (
+            <IntakeQuestionnaire
+              saved={intake.saved}
+              onComplete={(answers) => finishIntake(answers)}
+              onCancel={() => setIntake(null)}
+            />
           ) : (
             <>
               <QuickReplyChips onChip={handleChip} />
