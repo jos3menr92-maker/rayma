@@ -22,25 +22,26 @@ Deno.serve(async (req) => {
       // Agent call — snapshot just this user
       const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ search: user.email });
       if (error) throw error;
-      const supaUser = users.find(u => u.email === user.email);
+      const supaUser = users.find(u => String(u.email || '').toLowerCase() === String(user.email || '').toLowerCase());
       if (!supaUser) return Response.json({ error: 'Supabase user not found' }, { status: 404 });
       targetUsers = [supaUser];
     } else {
-      // Scheduled batch (no user session) — paginate all users
-      let page = 0;
-      const PAGE_SIZE = 50;
-      let hasMore = true;
-      while (hasMore) {
-        const b44Users = await base44.asServiceRole.entities.User.list("created_date", PAGE_SIZE, page * PAGE_SIZE);
-        if (!b44Users || b44Users.length === 0) break;
-        if (b44Users.length < PAGE_SIZE) hasMore = false;
-        page++;
-        for (const b44User of b44Users) {
-          const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ search: b44User.email });
-          if (error) continue;
-          const supaUser = users.find(u => u.email === b44User.email);
-          if (supaUser) targetUsers.push(supaUser);
-        }
+      // Scheduled batch (no user session) — snapshot every Supabase account
+      // directly. The financial data is keyed by Supabase user_id, so the
+      // Supabase auth user list IS the complete set of accounts. The old
+      // Base44→Supabase per-user email re-matching silently skipped accounts
+      // whenever the admin user lookup was throttled or a record drifted,
+      // freezing snapshot histories (e.g. stopping on 09-04).
+      let page = 1;
+      const perPage = 100;
+      let total = Infinity;
+      while (targetUsers.length < total) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+        if (error) throw error;
+        targetUsers.push(...data.users);
+        total = data.total || targetUsers.length;
+        if (data.users.length === 0) break;
+        page += 1;
       }
     }
 

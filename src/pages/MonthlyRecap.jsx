@@ -3,7 +3,7 @@ import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { t } from "@/lib/i18n";
-import { monthlyBillAmount, incomeTotalForMonth, realIncomeEntries, netWorthFrom, monthSpentByCategory } from "@/utils/financeMath";
+import { monthlyBillAmount, incomeTotalForMonth, projectedIncomeForMonth, realIncomeEntries, netWorthFrom, monthSpentByCategory } from "@/utils/financeMath";
 import { HEALTH_SPEND_OPTS } from "@/utils/healthScore";
 import HealthScoreBreakdown from "@/components/recap/HealthScoreBreakdown";
 import { monthlyObligation } from "@/utils/loanEngine";
@@ -58,7 +58,16 @@ export default function MonthlyRecap() {
   const monthlyExpenses = useMemo(() =>
     activeBills.reduce((s, b) => s + monthlyBillAmount(b), 0) + activeLoans.reduce((s, l) => s + monthlyObligation(l), 0),
   [activeBills, activeLoans]);
-  const cashFlow = useMemo(() => totalIncome - monthlyExpenses, [totalIncome, monthlyExpenses]);
+  // 🛡️ Split-brain fix #1 — mid-month cash flow must use the projected full-month
+  // income pace (recurring template), the same rule as the Dashboard's "Cash Left"
+  // card, so an early-month view doesn't cry "deficit" before the month's
+  // paychecks land. Past months use actual logged income (the month is complete).
+  const paceIncome = useMemo(
+    () => viewOffset === 0 ? (projectedIncomeForMonth(incomes, new Date()) ?? totalIncome) : totalIncome,
+    [incomes, totalIncome, viewOffset]
+  );
+  const isProjectedPace = viewOffset === 0 && paceIncome !== totalIncome;
+  const cashFlow = useMemo(() => paceIncome - monthlyExpenses, [paceIncome, monthlyExpenses]);
 
   // Previous-month figures for the delta chips (real income + actual payments)
   const prevIncome = useMemo(() => {
@@ -106,7 +115,15 @@ export default function MonthlyRecap() {
   const everydaySpent = useMemo(() =>
     Object.values(monthSpentByCategory({ transactions, transactionSplits }, viewDate, HEALTH_SPEND_OPTS)).reduce((s, v) => s + v, 0),
   [transactions, transactionSplits, viewDate]);
-  const savingsRate = totalIncome > 0 ? (totalIncome - everydaySpent) / totalIncome : null;
+  // 🛡️ Split-brain fix #3 — no-spending-data guard: with zero transactions logged
+  // in the month, the formula would read a misleading 100% "saved" while fixed
+  // obligations still consume the income. Show "—" until real spending data exists.
+  const monthTxCount = useMemo(() => (transactions || []).filter(t => {
+    if (!t.date) return false;
+    const d = new Date(String(t.date).slice(0, 10) + "T00:00:00");
+    return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+  }).length, [transactions, viewMonth, viewYear]);
+  const savingsRate = totalIncome > 0 && monthTxCount > 0 ? (totalIncome - everydaySpent) / totalIncome : null;
 
   // Net worth at the end of the selected month, from the daily snapshot history.
   // Snapshots are the ONE source of historical net worth (written by the cron job).
@@ -117,10 +134,16 @@ export default function MonthlyRecap() {
   const snapAtOrBefore = (dayStr) => sortedSnaps.find(s => s?.snapshot_date && String(s.snapshot_date).slice(0, 10) <= dayStr);
   const endSnap = snapAtOrBefore(isoDay(new Date(viewYear, viewMonth + 1, 0)));
   const prevSnap = snapAtOrBefore(isoDay(new Date(viewYear, viewMonth, 0)));
-  const netWorthValue = endSnap ? (endSnap.net_worth || 0)
-    : (viewOffset === 0 ? netWorthFrom({ assets, bankAccounts, loans }).netWorth : null);
-  const netWorthDeltaValue = (endSnap && prevSnap && endSnap.id !== prevSnap.id)
-    ? (endSnap.net_worth || 0) - (prevSnap.net_worth || 0) : null;
+  // 🛡️ Split-brain fix #2 — for the CURRENT month, live math always wins over the
+  // stored snapshot: a snapshot can be hours stale (taken before a payoff or
+  // balance edit) and must never contradict the Assets page. Snapshots remain
+  // the source of historical truth for past months.
+  const liveNetWorth = netWorthFrom({ assets, bankAccounts, loans }).netWorth;
+  const netWorthValue = viewOffset === 0 ? liveNetWorth : (endSnap ? (endSnap.net_worth || 0) : null);
+  const netWorthDeltaValue = viewOffset === 0
+    ? (prevSnap ? liveNetWorth - (prevSnap.net_worth || 0) : null)
+    : (endSnap && prevSnap && endSnap.id !== prevSnap.id)
+      ? (endSnap.net_worth || 0) - (prevSnap.net_worth || 0) : null;
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -181,7 +204,9 @@ export default function MonthlyRecap() {
                 <p className="text-xl font-bold font-heading text-destructive">{fmt(cashFlow)}</p>
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-0.5">{T("incomeMinusExpenses", "income − expenses")}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {isProjectedPace ? `${T("projectedShort", "projected")} ${T("incomeMinusExpenses", "income − expenses")}` : T("incomeMinusExpenses", "income − expenses")}
+            </p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-4">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{T("paymentsMade", "Payments Made")}</p>
@@ -218,7 +243,7 @@ export default function MonthlyRecap() {
             <p className="text-xs text-muted-foreground mt-0.5">
               {netWorthDeltaValue != null
                 ? `${netWorthDeltaValue >= 0 ? "↑" : "↓"} ${fmt(Math.abs(netWorthDeltaValue))} ${T("vsLastMonthShort", "vs last month")}`
-                : viewOffset === 0 && !endSnap
+                : viewOffset === 0
                   ? T("currentEstimateShort", "current estimate")
                   : endSnap ? T("endOfMonthShort", "end of month") : T("noSnapshotData", "no data for this month")}
             </p>
