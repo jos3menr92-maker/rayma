@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { supabase } from "./supabaseClientFrontend";
-import { createRecord, updateRecord } from "@/lib/supabaseHelpers";
+import { createRecord, updateRecord, getVerifiedSessionUser } from "@/lib/supabaseHelpers";
 import { syncBankCashAsset } from "@/lib/syncBankCashAsset";
 import { toast } from "@/components/ui/use-toast";
 import { useT } from "@/lib/LanguageContext";
@@ -87,7 +87,12 @@ export function FinancialDataProvider({ children }) {
       const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
       if (me) meRef.current = me;
 
-      const currentSupaUser = session?.user || null;
+      // 🛡️ Identity guard: only trust the browser session when it belongs to
+      // the Base44 login. A leftover session from a different email (second
+      // device, shared browser, account switch) is discarded here so the other
+      // account's data can never load — the backend fallback below resolves
+      // the correct identity from the Base44 login instead.
+      const currentSupaUser = await getVerifiedSessionUser(me?.email, session?.user);
 
       if (mountedRef.current) {
         setSupaUser(currentSupaUser);
@@ -278,7 +283,10 @@ export function FinancialDataProvider({ children }) {
       const tokenHeal = await ensureInitialCoins(meRaw);
       const me = tokenHeal ? { ...meRaw, ...tokenHeal } : meRaw;
       if (me) meRef.current = me;
-      const uid = session?.user?.id;
+      // 🛡️ Same identity guard as loadAll — profile data must come from the
+      // session that matches the Base44 login, never a stale foreign session.
+      const verifiedUser = await getVerifiedSessionUser(me?.email, session?.user);
+      const uid = verifiedUser?.id;
       let supaProfile = {};
       if (uid) {
         const { data } = await supabase.from("profiles").select("*").eq("id", uid).single();
@@ -293,7 +301,7 @@ export function FinancialDataProvider({ children }) {
         if (me?.[f] !== undefined && me?.[f] !== null) merged[f] = me[f];
       }
       setUserProfile(merged);
-      setSupaUser(session?.user || null);
+      setSupaUser(verifiedUser);
       return merged;
     } catch (e) {
       console.error("Failed to refresh user profile:", e);

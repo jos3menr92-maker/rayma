@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
 
       // Proactively recover the Supabase session so all reads/writes use the
       // free frontend path. Costs 1 credit once per session, not per save.
-      ensureSupabaseSession().catch((e) =>
+      ensureSupabaseSession(me.email).catch((e) =>
         console.warn('[AuthContext] Proactive session sync failed:', e?.message)
       );
     } catch (error) {

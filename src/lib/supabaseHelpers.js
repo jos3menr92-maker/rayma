@@ -40,6 +40,33 @@ async function backendDelete(table, recordId) {
   }
 }
 
+/**
+ * 🛡️ Identity guard: the browser's Supabase session must belong to the
+ * Base44 login. The two sessions are independent, so a leftover session from
+ * a different email (another device, a shared browser, or switching accounts
+ * without the in-app logout) must never show or receive the other account's
+ * data. Returns the session user only when its email matches the Base44
+ * login email; a confirmed mismatch is signed out immediately. When the
+ * login email can't be determined, the session is left untouched.
+ */
+export async function getVerifiedSessionUser(loginEmail, sessionUser) {
+  if (!sessionUser?.id) return null;
+  if (!loginEmail) return sessionUser;
+  const sessionEmail = String(sessionUser.email || "").toLowerCase();
+  if (sessionEmail === String(loginEmail).toLowerCase()) return sessionUser;
+
+  console.warn(
+    `[supabaseHelpers] Identity guard: browser session belongs to ${sessionUser.email}, ` +
+    `but you're logged in as ${loginEmail} — discarding the stale session.`
+  );
+  try {
+    await supabase.auth.signOut();
+  } catch (e) {
+    console.warn("[supabaseHelpers] Failed to sign out the stale session:", e?.message);
+  }
+  return null;
+}
+
 let _sessionRecoveryInFlight = null;
 
 /**
@@ -49,9 +76,23 @@ let _sessionRecoveryInFlight = null;
  * Supabase session. After success, all subsequent reads/writes are free —
  * no per-save credits. Deduplicates concurrent recovery attempts.
  */
-export async function ensureSupabaseSession() {
+export async function ensureSupabaseSession(loginEmail) {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user?.id) return true;
+  if (session?.user?.id) {
+    // 🛡️ Verify the existing session belongs to the Base44 login before
+    // trusting it. On a confirmed mismatch the guard signs the stale session
+    // out, and recovery below signs back in as the real login.
+    let email = loginEmail;
+    if (!email) {
+      try {
+        const me = await base44.auth.me();
+        email = me?.email || null;
+      } catch {
+        email = null;
+      }
+    }
+    if (email && (await getVerifiedSessionUser(email, session.user))) return true;
+  }
 
   if (_sessionRecoveryInFlight) return _sessionRecoveryInFlight;
 
