@@ -7,8 +7,8 @@
  * Bill Coverage (20).
  *
  * Income lenses (matches the app-wide actuals-vs-projection doctrine):
- *   - ACTUALS: income & everyday spending logged so far this month — the
- *     Savings Rate window (both sides partial → internally consistent).
+ *   - OBLIGATIONS-AWARE ACTUALS: Savings Rate = share of the income pace that
+ *     survives bills/loans AND everyday spending logged so far this month.
  *   - PACE: projected full-month income (logged paychecks + recurring-template
  *     paychecks still scheduled this month). DTI and Bill Coverage compare
  *     FULL-month obligations against this pace — month-to-date income early in
@@ -65,10 +65,14 @@ export function computeHealthScore(
     budgetScore = Math.round(adherence * 25);
   }
 
-  // Savings Rate: actuals window — kept share of logged income after
-  // everyday spending (official definition, matches getComputedFinancials).
+  // Savings Rate: honest advisor lens — the share of income that survives
+  // obligations AND everyday spending. The old definition ignored bills/loans,
+  // so a heavily indebted user with little everyday spending read a false
+  // "100% kept" while their paychecks were consumed by obligations (the
+  // same money the DTI & Bill Coverage pillars judge — no double-penalizing
+  // since everyday spending already excludes those categories).
   let savingsScore = 0;
-  const savingsRate = income > 0 ? (income - expenses) / income : 0;
+  const savingsRate = paceIncome > 0 ? (paceIncome - totalObligation - expenses) / paceIncome : 0;
   if (savingsRate >= 0.2) savingsScore = 25;
   else if (savingsRate >= 0.1) savingsScore = 18;
   else if (savingsRate >= 0.05) savingsScore = 10;
@@ -86,6 +90,6 @@ export function computeHealthScore(
     income, paceIncome,
     isProjectedPace: projected != null && projected !== income,
     expenses, totalDebt, totalObligation, monthlyDebt, monthlyBills,
-    savingsRate, budgetCount: limited.length, budgetSpent, budgetLimits,
+    savingsRate, budgetMeasured: limited.length > 0, budgetCount: limited.length, budgetSpent, budgetLimits,
   };
 }

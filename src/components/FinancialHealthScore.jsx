@@ -80,7 +80,7 @@ export default function FinancialHealthScore() {
           <p className={`text-xs font-semibold mb-3 ${text}`}>{label}</p>
           <div className="space-y-2">
             <ScorePillar label={T("debtToIncome", "Debt-to-Income")} score={data.debtScore} max={30} color={data.debtScore >= 20 ? "bg-primary" : data.debtScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
-            <ScorePillar label={T("budgetAdherence", "Budget Adherence")} score={data.budgetScore} max={25} color={data.budgetScore >= 18 ? "bg-primary" : data.budgetScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
+            <ScorePillar label={data.budgetMeasured ? T("budgetAdherence", "Budget Adherence") : T("budgetNotSet", "Budget — not set")} score={data.budgetScore} max={25} color={data.budgetMeasured ? (data.budgetScore >= 18 ? "bg-primary" : data.budgetScore >= 10 ? "bg-amber-400" : "bg-destructive") : "bg-muted-foreground/40"} />
             <ScorePillar label={T("savingsRate", "Savings Rate")} score={data.savingsScore} max={25} color={data.savingsScore >= 18 ? "bg-primary" : data.savingsScore >= 10 ? "bg-amber-400" : "bg-destructive"} />
             <ScorePillar label={T("billCoverage", "Bill Coverage")} score={data.coverageScore} max={20} color={data.coverageScore >= 15 ? "bg-primary" : data.coverageScore >= 8 ? "bg-amber-400" : "bg-destructive"} />
           </div>
