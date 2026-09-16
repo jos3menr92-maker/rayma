@@ -36,14 +36,25 @@ export default async function(req: Request): Promise<Response> {
 
       for (const b44User of b44Users) {
         try {
-          // Respect the Automated Insights toggle (default ON unless explicitly false)
-          if (b44User.auto_insights === false) continue;
+          // Respect the Smart Notifications toggles (default ON unless explicitly
+          // false): if the user turned off automated notifications, send nothing.
+          if (b44User.auto_insights === false || b44User.smart_alerts === false) continue;
 
           const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ search: b44User.email });
           if (error || !users || users.length === 0) continue;
           const supaUser = users.find((u: any) => u.email === b44User.email);
           if (!supaUser) continue;
           const uid = supaUser.id;
+
+          // The Profile page saves the Smart Notifications toggles to the Supabase
+          // profiles table first (the Base44 sync is best-effort and can fail
+          // silently), so read the authoritative value there and treat a
+          // turned-off toggle as a hard opt-out — send nothing.
+          const { data: profileRow } = await supabaseAdmin.from('profiles')
+            .select('smart_alerts, auto_insights')
+            .eq('id', uid).single();
+          if (profileRow?.smart_alerts === false || profileRow?.auto_insights === false) continue;
+
           const currency = b44User.preferred_currency || "USD";
           const name = b44User.preferred_name || supaUser.email?.split("@")[0] || "there";
 
