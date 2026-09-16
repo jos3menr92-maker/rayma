@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
-import { notifyUser, fmtMoney } from '../../shared/notifications.ts';
+import { notifyUser, fmtMoney, getProfileNotificationToggles } from '../../shared/notifications.ts';
 import { projectCashFlow } from '../../shared/cashFlowProjection.ts';
 
 /**
@@ -72,9 +72,12 @@ export default async function (req: Request): Promise<Response> {
 
     for (const { b44User, supaUser } of targets) {
       try {
-        // Respect the Smart Alerts toggle (default ON unless explicitly false)
+        // Respect the Smart Alerts toggle (default ON unless explicitly false).
+        // The profiles row is authoritative — the Base44 sync can fail silently.
         if (b44User.smart_alerts === false) continue;
         const uid = supaUser.id;
+        const toggles = await getProfileNotificationToggles(supabaseAdmin, uid);
+        if (toggles.smartAlerts === false) continue;
         const currency = b44User.preferred_currency || 'USD';
 
         const [loansRes, billsRes, incomesRes, paymentsRes, txRes, splitsRes, goalsRes, banksRes] = await Promise.all([

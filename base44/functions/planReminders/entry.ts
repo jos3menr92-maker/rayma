@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
-import { sendEmailFallback, fmtMoney } from '../../shared/notifications.ts';
+import { sendEmailFallback, fmtMoney, getProfileNotificationToggles } from '../../shared/notifications.ts';
 import { realIncomeEntries } from '../../shared/incomeMath.ts';
 
 /**
@@ -48,12 +48,10 @@ export default async function(req: Request): Promise<Response> {
 
           // The Profile page saves the Smart Notifications toggles to the Supabase
           // profiles table first (the Base44 sync is best-effort and can fail
-          // silently), so read the authoritative value there and treat a
-          // turned-off toggle as a hard opt-out — send nothing.
-          const { data: profileRow } = await supabaseAdmin.from('profiles')
-            .select('smart_alerts, auto_insights')
-            .eq('id', uid).single();
-          if (profileRow?.smart_alerts === false || profileRow?.auto_insights === false) continue;
+          // silently), so read the authoritative value there — if the user
+          // turned either toggle off, send nothing.
+          const toggles = await getProfileNotificationToggles(supabaseAdmin, uid);
+          if (toggles.smartAlerts === false || toggles.autoInsights === false) continue;
 
           const currency = b44User.preferred_currency || "USD";
           const name = b44User.preferred_name || supaUser.email?.split("@")[0] || "there";

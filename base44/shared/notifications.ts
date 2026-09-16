@@ -97,3 +97,26 @@ export async function notifyUser(
   }
   return { sent: false, reason: "no_contact" };
 }
+
+/**
+ * Read the user's Smart Notification toggles from the Supabase profiles table
+ * — the authoritative source (the Profile page saves there; the Base44 entity
+ * sync is best-effort and can fail silently). Values are undefined when the
+ * row or columns are unavailable, so callers keep their Base44-entity
+ * fallback and behavior never changes for users with no profile row.
+ */
+export async function getProfileNotificationToggles(
+  supabaseAdmin: any,
+  uid: string,
+): Promise<{ smartAlerts?: boolean; autoInsights?: boolean }> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("profiles")
+      .select("smart_alerts, auto_insights")
+      .eq("id", uid)
+      .single();
+    return { smartAlerts: data?.smart_alerts, autoInsights: data?.auto_insights };
+  } catch (_) {
+    return { smartAlerts: undefined, autoInsights: undefined };
+  }
+}

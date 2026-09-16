@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getSupabaseAdmin } from '../../shared/supabaseClient.ts';
-import { notifyUser, fmtMoney } from '../../shared/notifications.ts';
+import { notifyUser, fmtMoney, getProfileNotificationToggles } from '../../shared/notifications.ts';
 import { realIncomeEntries } from '../../shared/incomeMath.ts';
 
 export default async function(req: Request): Promise<Response> {
@@ -31,6 +31,11 @@ export default async function(req: Request): Promise<Response> {
           const supaUser = users.find((u: any) => u.email === b44User.email);
           if (!supaUser) continue;
           const uid = supaUser.id;
+          // Respect the Automated Cash Flow Insights toggle (default ON unless
+          // explicitly false). The profiles row is authoritative — the Base44
+          // sync can fail silently.
+          const toggles = await getProfileNotificationToggles(supabaseAdmin, uid);
+          if (toggles.autoInsights === false) continue;
           const currency = b44User.preferred_currency || "USD";
           const name = b44User.preferred_name || supaUser.email?.split("@")[0] || "there";
 
