@@ -820,6 +820,14 @@ export default function RaymaChat({
                             {isDeepReview && (
                               <CopyButton text={msg.content} label={T("copyReport", "Copy report")} className="self-start mt-1" />
                             )}
+                            {isDeepReview && idx === arr.length - 1 && !loading && (
+                              <button
+                                onClick={() => handleSend(T("purchasingPowerPrompt", "What's my purchasing power? Can I afford a car or a house right now?"))}
+                                className="self-start bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors hover:bg-primary/20"
+                              >
+                                {T("purchasingPowerQuestion", "🚗🏠 Would you like to know your purchasing power? (3 coins)")}
+                              </button>
+                            )}
                           </div>
                         ) : (
                           msg.content
