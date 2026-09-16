@@ -796,6 +796,7 @@ export default function RaymaChat({
                     // A Deep Review report = the assistant reply that follows the verified-data request
                     const isDeepReview = msg.role === "assistant" && idx > 0 && String(arr[idx - 1]?.content || "").includes("DEEP FINANCIAL REVIEW protocol");
                     const isPurchasingPower = msg.role === "assistant" && idx > 0 && String(arr[idx - 1]?.content || "").toLowerCase().includes("purchasing power");
+                    const isDownPaymentPlan = msg.role === "assistant" && idx > 0 && String(arr[idx - 1]?.content || "").toLowerCase().includes("savings plan for a down payment");
                     return (
                     <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] px-3 py-2 rounded-lg ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
@@ -835,6 +836,14 @@ export default function RaymaChat({
                                 className="self-start bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors hover:bg-primary/20"
                               >
                                 {T("downPaymentPlanQuestion", "💰 Would you like to create a savings plan for a down payment? (3 coins)")}
+                              </button>
+                            )}
+                            {isDownPaymentPlan && idx === arr.length - 1 && !loading && (
+                              <button
+                                onClick={() => handleSend(T("buildBudgetPrompt", "Yes — help me build a monthly budget!"))}
+                                className="self-start bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors hover:bg-primary/20"
+                              >
+                                {T("buildBudgetQuestion", "📊 Would you like me to build your budget? (3 coins)")}
                               </button>
                             )}
                           </div>
