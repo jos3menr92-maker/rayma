@@ -141,6 +141,18 @@ export default async function(req) {
       dupNames(loans, 'Loan');
       dupNames(bills, 'Bill');
 
+      // Orphaned payments — reference a loan/bill that no longer exists
+      // (e.g. payments logged against a since-deleted test loan)
+      const loanIds = new Set(loans.map(l => l.id));
+      const billIds = new Set(bills.map(b => b.id));
+      const orphanPayments = payments.filter(p =>
+        (p.payment_type === 'loan' && p.loan_id && !loanIds.has(p.loan_id)) ||
+        (p.payment_type === 'bill' && p.bill_id && !billIds.has(p.bill_id))
+      );
+      if (orphanPayments.length > 0) {
+        findings.push({ type: 'ORPHANED_PAYMENTS', detail: `${orphanPayments.length} payments reference a deleted loan/bill` });
+      }
+
       // Live vs snapshot net worth
       const activeLoans = loans.filter(l => (l.status || 'active') !== 'paid_off');
       const liveAssets = assets.reduce((s, a) => s + (a.amount || 0), 0) + banks.reduce((s, b) => s + ((b.is_active === false) ? 0 : (b.balance || 0)), 0);
@@ -204,6 +216,8 @@ export default async function(req) {
           date: s.snapshot_date,
           net_worth: s.net_worth != null ? s.net_worth : ((s.total_assets || 0) - (s.total_liabilities || 0)),
         })),
+        snapshotsAll: snaps.map(s => ({ id: s.id, date: s.snapshot_date, assets: s.total_assets, liabilities: s.total_liabilities, net_worth: s.net_worth })),
+        orphanedPayments: orphanPayments.map(p => ({ id: p.id, date: p.payment_date, amount: p.amount, type: p.payment_type, loan_id: p.loan_id, bill_id: p.bill_id, note: p.note })),
         findings,
       };
       if (!detail) {
