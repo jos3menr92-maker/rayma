@@ -6,6 +6,7 @@ import { t } from "@/lib/i18n";
 import { monthlyBillAmount, incomeTotalForMonth, projectedIncomeForMonth, realIncomeEntries, netWorthFrom, monthSpentByCategory } from "@/utils/financeMath";
 import { HEALTH_SPEND_OPTS } from "@/utils/healthScore";
 import HealthScoreBreakdown from "@/components/recap/HealthScoreBreakdown";
+import DeepReviewButton from "@/components/DeepReviewButton";
 import { monthlyObligation } from "@/utils/loanEngine";
 import { getMonthName } from "@/utils/formatLocalized";
 import { motion } from "framer-motion";
@@ -173,7 +174,14 @@ export default function MonthlyRecap() {
           ))}
         </div>
 
-        {viewOffset === 0 && <HealthScoreBreakdown />}
+        {viewOffset === 0 && (
+          <>
+            <HealthScoreBreakdown />
+            <div className="mb-6">
+              <DeepReviewButton />
+            </div>
+          </>
+        )}
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-card border border-border rounded-2xl p-4">

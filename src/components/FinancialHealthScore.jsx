@@ -5,7 +5,6 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { t } from "@/lib/i18n";
 import { computeHealthScore } from "@/utils/healthScore";
 import { ShieldCheck, ChevronRight } from "lucide-react";
-import DeepReviewButton from "./DeepReviewButton";
 
 function ScorePillar({ label, score, max, color }) {
   const pct = Math.round((score / max) * 100);
@@ -86,10 +85,6 @@ export default function FinancialHealthScore() {
             <ScorePillar label={T("billCoverage", "Bill Coverage")} score={data.coverageScore} max={20} color={data.coverageScore >= 15 ? "bg-primary" : data.coverageScore >= 8 ? "bg-amber-400" : "bg-destructive"} />
           </div>
         </div>
-      </div>
-
-      <div className="mt-3">
-        <DeepReviewButton />
       </div>
 
       <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-center gap-1">
