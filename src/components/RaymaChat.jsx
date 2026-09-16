@@ -29,6 +29,7 @@ import { createRecord } from "@/lib/supabaseHelpers";
 import CodeBlock from "@/components/CodeBlock";
 import { monthlyBillAmount, incomeTotalForMonth } from "@/utils/financeMath";
 import { buildDeepReviewFacts, DEEP_REVIEW_COST } from "@/utils/deepReviewFacts";
+import CopyButton from "@/components/CopyButton";
 import { monthlyObligation } from "@/utils/loanEngine";
 import { useFinancialData } from "@/lib/FinancialDataContext";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -791,7 +792,10 @@ export default function RaymaChat({
                     </div>
                   </div>
                 ) : (
-                  messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx) => (
+                  messages.filter(m => m.role === "user" || m.role === "assistant").map((msg, idx, arr) => {
+                    // A Deep Review report = the assistant reply that follows the verified-data request
+                    const isDeepReview = msg.role === "assistant" && idx > 0 && String(arr[idx - 1]?.content || "").includes("DEEP FINANCIAL REVIEW protocol");
+                    return (
                     <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[85%] px-3 py-2 rounded-lg ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                         {msg.role === "assistant" ? (
@@ -813,13 +817,17 @@ export default function RaymaChat({
                               </button>
                             )}
                             {msg.cost > 0 && <CostTag cost={msg.cost} />}
+                            {isDeepReview && (
+                              <CopyButton text={msg.content} label={T("copyReport", "Copy report")} className="self-start mt-1" />
+                            )}
                           </div>
                         ) : (
                           msg.content
                         )}
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
                 {loading && (
                   <div className="flex justify-start">
