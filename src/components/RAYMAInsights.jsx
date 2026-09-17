@@ -153,15 +153,15 @@ export default function RAYMAInsights({ loans = [], bills = [], incomes = [], us
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className={`relative p-5 rounded-3xl border transition-all duration-500 ${typeStyles[current?.type] || typeStyles.tip} backdrop-blur-sm shadow-sm`}
+            className={`relative p-5 lg:p-4 rounded-3xl border transition-all duration-500 ${typeStyles[current?.type] || typeStyles.tip} backdrop-blur-sm shadow-sm`}
           >
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-2xl bg-background/80 shadow-sm">
-                <Sparkles className="w-6 h-6 currentColor" />
+            <div className="flex items-start gap-4 lg:gap-3">
+              <div className="p-3 lg:p-2 rounded-2xl bg-background/80 shadow-sm">
+                <Sparkles className="w-6 h-6 lg:w-5 lg:h-5 currentColor" />
               </div>
               <div className="flex-1 pr-8">
-                <h3 className="font-bold text-foreground mb-1">{current?.title}</h3>
-                <p className="text-sm text-foreground/80 leading-relaxed">{current?.body}</p>
+                <h3 className="font-bold text-foreground mb-1 lg:text-[15px]">{current?.title}</h3>
+                <p className="text-sm lg:text-[13px] text-foreground/80 leading-relaxed lg:leading-snug">{current?.body}</p>
               </div>
             </div>
 

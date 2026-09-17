@@ -100,17 +100,17 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-3xl p-4 mb-6 shadow-sm">
+    <div className="bg-card border border-border rounded-3xl p-4 lg:p-3 mb-6 lg:mb-4 shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold font-heading text-foreground flex items-center gap-2">
+      <div className="flex items-center justify-between mb-4 lg:mb-3">
+        <h2 className="text-lg lg:text-base font-bold font-heading text-foreground flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-primary" />
           {T("calendarTitle", "Calendar")}
         </h2>
       </div>
 
       {/* Month nav */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 lg:mb-2">
         <button onClick={() => setCurrent(new Date(year, month - 1, 1))} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
           <ChevronLeft className="w-4 h-4 text-muted-foreground" />
         </button>
@@ -128,7 +128,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-1 mb-4">
+      <div className="grid grid-cols-7 gap-1 lg:gap-0.5 lg:mb-3 mb-4">
         {cells.map((day, i) => {
           if (!day) return <div key={`e-${i}`} />;
           const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
@@ -140,7 +140,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
             <button
               key={day}
               onClick={() => setSelectedDay(isSelected ? null : day)}
-              className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-[12px] font-bold transition-all
+              className={`relative aspect-square lg:aspect-auto lg:h-7 flex flex-col items-center justify-center rounded-xl lg:rounded-lg text-[12px] lg:text-[11px] font-bold transition-all
                 ${isSelected ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105 z-10" : isToday ? "border-2 border-primary text-primary" : "bg-muted/30 hover:bg-muted text-foreground"}
               `}
             >
@@ -156,7 +156,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
       </div>
 
       {/* Legend */}
-      <div className="flex justify-center gap-4 mb-4 text-[10px] font-semibold text-muted-foreground">
+      <div className="flex justify-center gap-4 mb-4 lg:mb-3 text-[10px] font-semibold text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-destructive" /> {T("dueLabel", "Due")}</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> {T("paydayLegend", "Payday")}</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-transparent border border-primary" /> {T("todayLegend", "Today")}</span>
@@ -208,7 +208,7 @@ export default function MiniCalendar({ bills, loans, userProfile }) {
       {/* 🚀 THE NEW MASSIVE "OPEN FULL CALENDAR" BUTTON */}
       <Link 
         to="/calendar" 
-        className="mt-2 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-primary/10 text-primary font-bold hover:bg-primary/20 active:scale-[0.98] transition-all"
+        className="mt-2 lg:mt-0 w-full flex items-center justify-center gap-2 py-3.5 lg:py-2.5 rounded-2xl bg-primary/10 text-primary font-bold hover:bg-primary/20 active:scale-[0.98] transition-all"
       >
         {T("openFullCalendar", "Open Full Calendar")} <ChevronRight className="w-5 h-5" />
       </Link>
