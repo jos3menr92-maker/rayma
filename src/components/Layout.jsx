@@ -6,6 +6,7 @@ import { LayoutDashboard, CreditCard, Receipt, TrendingUp, Menu, MoreHorizontal,
 import SideDrawer from "./SideDrawer";
 import RaymaChat from "./RaymaChat";
 import MoreMenu from "./MoreMenu";
+import DesktopSidebar from "./DesktopSidebar";
 import GlobalBatteryBar from "./GlobalBatteryBar";
 import PushNotificationPrompt from "./PushNotificationPrompt";
 import AppTour from "./AppTour";
@@ -111,12 +112,13 @@ export default function Layout() {
 
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col lg:pl-60">
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <MoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
+      <DesktopSidebar activeTab={activeTab} handleTabClick={handleTabClick} onMore={() => setMoreOpen(true)} onRayma={() => setRaymaOpen(true)} />
       
       <div className="sticky top-0 z-30 bg-card/80 backdrop-blur border-b border-border" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-14">
+        <div className="flex items-center justify-between max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 h-14">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
               {!imageError ? (
@@ -178,7 +180,7 @@ export default function Layout() {
       <PushNotificationPrompt />
       <AppTour onboardingComplete={userProfile?.onboarding_complete === true} />
       
-      <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav id="bottom-nav" className="fixed bottom-0 left-0 right-0 lg:hidden bg-card border-t border-border backdrop-blur-xl bg-opacity-90 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 h-16">
           <button onClick={() => handleTabClick("home")} className={`flex flex-col items-center gap-0.5 w-12 ${activeTab === "home" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             <LayoutDashboard className="w-5 h-5" />

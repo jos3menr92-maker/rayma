@@ -153,7 +153,7 @@ export default function MonthlyRecap() {
   );
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-8">
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-8">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center gap-2 mb-1">
           <Calendar className="w-5 h-5 text-primary" />

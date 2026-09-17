@@ -106,7 +106,7 @@ export default function LoansList() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24" {...pullHandlers}>
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-24" {...pullHandlers}>
       <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold font-heading text-primary">

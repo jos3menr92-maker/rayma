@@ -157,7 +157,7 @@ export default function BankAccounts() {
   const visibleTxs = selectedAccount ? transactions.filter(t => t.bank_account_id === selectedAccount) : transactions;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-6 space-y-6">
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-6 space-y-6">
 
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ChevronLeft className="w-4 h-4" /> {T("back", "Back")}

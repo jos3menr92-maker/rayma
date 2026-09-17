@@ -111,7 +111,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-4 pb-24" {...pullHandlers}>
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-4 pb-24" {...pullHandlers}>
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -150,7 +150,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBills", "Monthly Bills")}</h2>
           <button onClick={() => navigate("/bills")} className="text-xs text-primary font-semibold flex items-center">{T("viewAll", "View All")} <ChevronRight className="w-3 h-3 ml-0.5" /></button>
         </div>
-        <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar">
+        <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar md:grid md:grid-cols-2 md:overflow-visible xl:grid-cols-4">
           {bills.filter((b) => b.is_active !== false).length > 0 ? bills.filter((b) => b.is_active !== false).map(bill => (
             <div key={bill.id} onClick={() => navigate("/bills")} className="min-w-[130px] w-[130px] bg-card border border-border rounded-2xl p-3 snap-start shrink-0 shadow-sm cursor-pointer active:scale-95 transition-transform">
                <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-base mb-2">{iconMap[bill.category] || "📋"}</div>
@@ -159,7 +159,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
                <p className="text-[9px] text-muted-foreground uppercase mt-1">{bill.due_day ? T("dueOnDay", "Due {n}th").replace("{n}", bill.due_day) : T("monthlyLabel", "Monthly")}</p>
             </div>
           )) : (
-            <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/bills")}>
+            <div className="w-full md:col-span-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/bills")}>
               <p className="text-xs text-muted-foreground">{T("noBillsLogged", "No bills logged yet.")}</p>
             </div>
           )}
@@ -171,7 +171,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("activeLoans", "Active Loans")}</h2>
           <button onClick={() => navigate("/loans")} className="text-xs text-primary font-semibold flex items-center">{T("viewAll", "View All")} <ChevronRight className="w-3 h-3 ml-0.5" /></button>
         </div>
-        <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar">
+        <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar md:grid md:grid-cols-2 md:overflow-visible xl:grid-cols-3">
           {activeLoans.length > 0 ? activeLoans.map(loan => (
             <div key={loan.id} onClick={() => navigate("/loans")} className="min-w-[145px] w-[145px] bg-card border border-border rounded-2xl p-3 snap-start shrink-0 shadow-sm cursor-pointer active:scale-95 transition-transform">
                <div className="flex justify-between items-start mb-2">
@@ -183,7 +183,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
                <p className="text-[9px] text-muted-foreground uppercase mt-1">{T("remaining", "Remaining")}</p>
             </div>
           )) : (
-            <div className="w-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/loans")}>
+            <div className="w-full md:col-span-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/loans")}>
               <p className="text-xs text-muted-foreground">{T("noActiveLoans", "No active loans.")}</p>
             </div>
           )}
@@ -216,7 +216,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         <FinancialHealthScore />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
         <button onClick={() => navigate("/monthly-recap")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><CalendarDays className="w-4 h-4 text-primary" /></div>
           <div><p className="text-xs font-semibold text-foreground">{T("monthlyRecap", "Monthly Recap")}</p><p className="text-[10px] text-muted-foreground">{T("summary", "Income & spending summary")}</p></div>

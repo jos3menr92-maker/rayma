@@ -222,7 +222,7 @@ export default function Finance() {
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24" {...pullHandlers}>
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-24" {...pullHandlers}>
       <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         

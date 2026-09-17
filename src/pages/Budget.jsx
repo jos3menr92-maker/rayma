@@ -230,7 +230,7 @@ export default function Budget() {
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-24">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <h1 className="text-2xl font-bold font-heading text-foreground mb-1">{T("savingsVault", "Savings Vault")}</h1>
         <p className="text-sm text-muted-foreground mb-6">{T("trackGoalsSubtitle", "Track your goals and level up your net worth")}</p>

@@ -192,7 +192,7 @@ export default function TaxSummary() {
   const willOweTax = taxableIncome > 0;
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6">
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 py-6">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
           <ChevronLeft className="w-4 h-4" /> {T("back", "Back")}

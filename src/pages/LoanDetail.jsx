@@ -164,7 +164,7 @@ export default function LoanDetail() {
   const totalPayments = payments.reduce((s, p) => s + (p.amount || 0), 0);
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors">

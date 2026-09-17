@@ -212,7 +212,7 @@ export default function SecurityAudit() {
 
   if (user !== null && user.role !== "admin") {
     return (
-      <div className="max-w-lg mx-auto px-4 pt-6 pb-10">
+      <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-10">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-border bg-card p-8 text-center">
           <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
             <Lock className="w-7 h-7 text-muted-foreground" />
@@ -225,7 +225,7 @@ export default function SecurityAudit() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-10">
+    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-6 pb-10">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
 
         {/* Header */}
