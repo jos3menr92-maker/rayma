@@ -10,7 +10,7 @@
  * or hallucinate payoff numbers.
  */
 import { computeHealthScore, HEALTH_SPEND_OPTS } from "@/utils/healthScore";
-import { compareStrategies } from "@/utils/payoffStrategies";
+import { compareStrategies, simulateCascade } from "@/utils/payoffStrategies";
 import { monthSpentByCategory } from "@/utils/financeMath";
 import { monthlyObligation } from "@/utils/loanEngine";
 
@@ -33,12 +33,26 @@ export function buildDeepReviewFacts(
   const activeLoans = loans.filter((l) => l.status !== "paid_off");
   const namesById = Object.fromEntries(activeLoans.map((l) => [l.id, l.name]));
 
-  const loanFacts = activeLoans.map((l) => ({
-    name: l.name,
-    balance: r2(l.current_balance),
-    apr_pct: Number.isFinite(Number(l.interest_rate)) ? Number(l.interest_rate) : null,
-    min_monthly: r2(monthlyObligation(l)),
-  }));
+  const todayISO = now.toISOString().slice(0, 10);
+  const loanFacts = activeLoans.map((l) => {
+    const bal = Number(l.current_balance) || 0;
+    const apr = Number(l.interest_rate);
+    const monthlyInterest = bal > 0 && Number.isFinite(apr) && apr > 0 ? bal * (apr / 1200) : 0;
+    const minMonthly = monthlyObligation(l);
+    return {
+      name: l.name,
+      balance: r2(bal),
+      apr_pct: Number.isFinite(apr) ? apr : null,
+      min_monthly: r2(minMonthly),
+      // Debt that GROWS at minimums — the below_interest trap. The agent
+      // must call these out as urgent instead of a footnote warning string.
+      monthly_interest: r2(monthlyInterest),
+      balance_growing_per_month: monthlyInterest > minMonthly && minMonthly > 0 ? r2(monthlyInterest - minMonthly) : null,
+      term_months: l.term_months ?? null, // fixed-term loans mature on their own
+      start_date_in_future: !!(bal > 0 && l.start_date && String(l.start_date).slice(0, 10) > todayISO), // data error flag
+    };
+  });
+  const growingLoans = loanFacts.filter((f) => f.balance_growing_per_month != null);
 
   // Balance-weighted average APR (loans without a real APR are excluded from both sides)
   let aprNum = 0, aprDen = 0;
@@ -51,6 +65,16 @@ export function buildDeepReviewFacts(
   // Payoff cascade — the exact engine behind the Debt Payoff Simulator.
   // minimums horizon = 60 months so the "minimums never win" story is visible.
   const cascade = activeLoans.length > 0 ? compareStrategies(activeLoans, 0, 60) : null;
+
+  // Full cash-flow scenario (labeled ESTIMATE): the cascade above rolls only
+  // minimums, which badly understates a high-income user's real timeline.
+  // This one throws the projected post-obligation cash flow (minus a rough
+  // 30%-of-income living allowance) at the avalanche order.
+  const livingEstimate = 0.3 * (score.paceIncome || 0);
+  const aggressiveExtra = Math.max(0, (score.paceIncome || 0) - score.totalObligation - livingEstimate);
+  const aggressive = activeLoans.length > 0 && aggressiveExtra > 0
+    ? simulateCascade(activeLoans, { strategy: "avalanche", extraMonthly: aggressiveExtra, cascadeFreed: true })
+    : null;
   const strat = (s) => ({
     debt_free_months: s.monthsToDebtFree,
     total_interest: r2(s.totalInterest),
@@ -88,11 +112,18 @@ export function buildDeepReviewFacts(
       total_balance: r2(score.totalDebt),
       weighted_avg_apr_pct: aprDen > 0 ? r2(aprNum / aprDen) : null,
       loans: loanFacts,
+      growing_at_minimums: growingLoans.map((f) => f.name),
     },
     payoff: cascade ? {
       minimums_only_5yr: { still_owed: r2(cascade.minimums.endBalance), interest_paid: r2(cascade.minimums.totalInterest) },
       avalanche: strat(cascade.avalanche),
       snowball: strat(cascade.snowball),
+      cash_flow_estimate: aggressive ? {
+        note: "ESTIMATE — assumes ~30% of projected income covers living expenses not logged as bills",
+        extra_monthly: r2(aggressiveExtra),
+        debt_free_months: aggressive.monthsToDebtFree,
+        total_interest: r2(aggressive.totalInterest),
+      } : null,
       warnings: cascade.avalanche.warnings,
     } : "no active loans",
     spending_this_month: { total_everyday: r2(score.expenses), top_categories: topCats },
