@@ -111,7 +111,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
   }
 
   return (
-    <div className="max-w-lg md:max-w-3xl xl:max-w-5xl mx-auto px-4 pt-4 pb-24" {...pullHandlers}>
+    <div className="max-w-lg md:max-w-3xl xl:max-w-6xl mx-auto px-4 pt-4 pb-24" {...pullHandlers}>
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -145,7 +145,11 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
       <RAYMAExpiryBanner user={userProfile} />
       <PlanStatusBanner />
 
-      <div className="mb-5" id="monthly-bills-section">
+      {/* 🖥️ Desktop: the same widgets reflow into a 3-column financial web
+          dashboard (lg+). 📱 Phone: identical single-column feed — DOM order is
+          unchanged, the grid is 1 column below lg. */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-4 lg:items-start">
+      <div className="mb-5 lg:mb-0" id="monthly-bills-section">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("monthlyBills", "Monthly Bills")}</h2>
           <button onClick={() => navigate("/bills")} className="text-xs text-primary font-semibold flex items-center">{T("viewAll", "View All")} <ChevronRight className="w-3 h-3 ml-0.5" /></button>
@@ -166,7 +170,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         </div>
       </div>
 
-      <div className="mb-5" id="active-loans-section">
+      <div className="mb-5 lg:mb-0" id="active-loans-section">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold font-heading text-foreground">{T("activeLoans", "Active Loans")}</h2>
           <button onClick={() => navigate("/loans")} className="text-xs text-primary font-semibold flex items-center">{T("viewAll", "View All")} <ChevronRight className="w-3 h-3 ml-0.5" /></button>
@@ -208,15 +212,15 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
          </motion.div>
       )}
 
-      <ExpenseBreakdownCard loans={activeLoans} bills={bills} />
+      <div className="lg:col-span-2"><ExpenseBreakdownCard loans={activeLoans} bills={bills} /></div>
 
       <FeedbackRatingWidget />
       
-      <div id="financial-health-score">
+      <div id="financial-health-score" className="lg:col-span-3">
         <FinancialHealthScore />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 lg:col-span-3 lg:mb-0">
         <button onClick={() => navigate("/monthly-recap")} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 hover:border-primary/30 transition-colors text-left">
           <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><CalendarDays className="w-4 h-4 text-primary" /></div>
           <div><p className="text-xs font-semibold text-foreground">{T("monthlyRecap", "Monthly Recap")}</p><p className="text-[10px] text-muted-foreground">{T("summary", "Income & spending summary")}</p></div>
@@ -235,7 +239,10 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
         </button>
       </div>
 
-      <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
+      <div className="lg:col-span-3">
+        <MiniCalendar bills={bills} loans={activeLoans} userProfile={userProfile} />
+      </div>
+      </div>
 
     </div>
   );
