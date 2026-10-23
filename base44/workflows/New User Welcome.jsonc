@@ -1,0 +1,37 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "new_user_welcome",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_welcome": {
+          "call": "send_email",
+          "with": {
+            "template_name": "Welcome",
+            "to": "${ .trigger.email }",
+            "description": "Greets a new signup with the 3-step getting-started plan",
+            "variables": {
+              "first_name": "${ ((.trigger.full_name // \"there\") | split(\" \"))[0] }"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "name": "New User Welcome",
+  "description": "Sends a welcome email with first steps when a new user signs up",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "app_user_auth",
+      "events": [
+        "signup"
+      ]
+    }
+  }
+}
