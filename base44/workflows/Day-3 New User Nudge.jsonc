@@ -1,0 +1,47 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "day3_new_user_nudge",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "wait_three_days": {
+          "wait": "P3D",
+          "then": "send_nudge",
+          "x-base44": {
+            "title": "Wait 3 days",
+            "description": "Durable pause after signup"
+          }
+        }
+      },
+      {
+        "send_nudge": {
+          "call": "send_email",
+          "with": {
+            "template_name": "DayThreeNudge",
+            "to": "${ .trigger.email }",
+            "description": "Nudges a new user 3 days after signup to add their first debt",
+            "variables": {
+              "first_name": "${ ((.trigger.full_name // \"there\") | split(\" \"))[0] }"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "name": "Day-3 New User Nudge",
+  "description": "Three days after signup, sends a nudge email encouraging users to finish setup and add their first debt",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "app_user_auth",
+      "events": [
+        "signup"
+      ]
+    }
+  }
+}
