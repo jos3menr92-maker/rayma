@@ -116,15 +116,15 @@ export default function CashFlowForecast({ loans, bills, incomes }) {
 
       <div className="grid grid-cols-3 gap-2 mt-2">
         <div className="bg-muted/50 rounded-xl p-2 text-center">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">{T("today", "Today")}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{T("today", "Today")}</p>
           <p className="text-xs font-bold text-foreground">{fmt(startBalance)}</p>
         </div>
         <div className="bg-muted/50 rounded-xl p-2 text-center">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">{T("lowestPoint", "Lowest")}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{T("lowestPoint", "Lowest")}</p>
           <p className={`text-xs font-bold ${lowestBalance < 0 ? "text-destructive" : "text-foreground"}`}>{fmt(lowestBalance)}</p>
         </div>
         <div className="bg-muted/50 rounded-xl p-2 text-center">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground font-medium">{T("dailySpend", "Daily spend")}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{T("dailySpend", "Daily spend")}</p>
           <p className="text-xs font-bold text-foreground">{fmt(dailySpend)}</p>
         </div>
       </div>

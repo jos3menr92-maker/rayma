@@ -160,7 +160,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
                <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-base mb-2">{iconMap[bill.category] || "📋"}</div>
                <p className="text-xs font-semibold text-foreground truncate">{bill.name}</p>
                <p className="text-base font-bold font-heading">{formatCurrency(bill.amount)}</p>
-               <p className="text-[9px] text-muted-foreground uppercase mt-1">{bill.due_day ? T("dueOnDay", "Due {n}th").replace("{n}", bill.due_day) : T("monthlyLabel", "Monthly")}</p>
+               <p className="text-[10px] text-muted-foreground uppercase mt-1">{bill.due_day ? T("dueOnDay", "Due {n}th").replace("{n}", bill.due_day) : T("monthlyLabel", "Monthly")}</p>
             </div>
           )) : (
             <div className="w-full md:col-span-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/bills")}>
@@ -184,7 +184,7 @@ const initial = userDisplayName ? userDisplayName.trim()[0].toUpperCase() : "U";
                </div>
                <p className="text-xs font-semibold text-foreground truncate">{loan.name}</p>
                <p className="text-base font-bold font-heading">{formatCurrency(loan.current_balance)}</p>
-               <p className="text-[9px] text-muted-foreground uppercase mt-1">{T("remaining", "Remaining")}</p>
+               <p className="text-[10px] text-muted-foreground uppercase mt-1">{T("remaining", "Remaining")}</p>
             </div>
           )) : (
             <div className="w-full md:col-span-full bg-card border border-dashed rounded-2xl p-4 text-center cursor-pointer" onClick={() => navigate("/loans")}>

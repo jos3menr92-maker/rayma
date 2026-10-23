@@ -104,7 +104,7 @@ export default function DocumentVault() {
             >
               {f.emoji} {f.label}
               {f.isStatus && pendingCount > 0 && (
-                <span className="ml-0.5 bg-amber-400 text-background text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="ml-0.5 bg-amber-400 text-background text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {pendingCount}
                 </span>
               )}

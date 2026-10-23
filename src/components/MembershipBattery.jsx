@@ -46,7 +46,7 @@ export const TIER = {
 };
 
 const SIZE = {
-  sm: { body: "w-20 h-6", text: "text-[9px]", icon: "w-2.5 h-2.5", nub: "w-[3px] h-3.5", gap: "gap-1", round: "rounded-[5px]" },
+  sm: { body: "w-20 h-6", text: "text-[10px]", icon: "w-2.5 h-2.5", nub: "w-[3px] h-3.5", gap: "gap-1", round: "rounded-[5px]" },
   md: { body: "w-24 h-7", text: "text-[10px]", icon: "w-3 h-3", nub: "w-[3px] h-4", gap: "gap-1", round: "rounded-[6px]" },
   lg: { body: "w-32 h-9", text: "text-xs", icon: "w-3.5 h-3.5", nub: "w-[3px] h-5", gap: "gap-1.5", round: "rounded-[7px]" },
 };

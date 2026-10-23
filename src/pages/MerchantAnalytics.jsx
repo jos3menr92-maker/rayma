@@ -94,17 +94,17 @@ export default function MerchantAnalytics() {
         <div className="grid grid-cols-3 gap-2 mb-5">
           <div className="bg-card border border-border rounded-2xl p-3 text-center">
             <Store className="w-4 h-4 text-primary mx-auto mb-1" />
-            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{T("merchants", "Merchants")}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{T("merchants", "Merchants")}</p>
             <p className="text-base font-bold text-foreground">{merchantData.length}</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-3 text-center">
             <TrendingDown className="w-4 h-4 text-destructive mx-auto mb-1" />
-            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{T("totalSpent", "Total Spent")}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{T("totalSpent", "Total Spent")}</p>
             <p className="text-base font-bold text-foreground">{fmt(totalSpending)}</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-3 text-center">
             <Receipt className="w-4 h-4 text-accent mx-auto mb-1" />
-            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{T("avgPerMerchant", "Avg/Merchant")}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{T("avgPerMerchant", "Avg/Merchant")}</p>
             <p className="text-base font-bold text-foreground">{fmt(avgPerMerchant)}</p>
           </div>
         </div>

@@ -54,7 +54,7 @@ export default function CalendarMonthView({ cells, dayMap, payDays, selectedDay,
                   <div
                     key={idx}
                     onClick={(e) => { e.stopPropagation(); onItemClick(item); }}
-                    className={`text-[8px] leading-tight px-1 py-0.5 rounded truncate cursor-pointer ${
+                    className={`text-[10px] leading-tight px-1 py-0.5 rounded truncate cursor-pointer ${
                       isSelected ? "bg-white/20 text-primary-foreground"
                       : item._type === "income" ? "bg-primary/15 text-primary"
                       : item._type === "loan" ? "bg-orange-500/15 text-orange-600 dark:text-orange-400"
@@ -65,10 +65,10 @@ export default function CalendarMonthView({ cells, dayMap, payDays, selectedDay,
                   </div>
                 ))}
                 {items.length > 3 && (
-                  <span className={`text-[8px] font-semibold px-1 ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>+{items.length - 3} {T("moreLabel", "more")}</span>
+                  <span className={`text-[10px] font-semibold px-1 ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>+{items.length - 3} {T("moreLabel", "more")}</span>
                 )}
                 {isPay && (
-                  <div className={`text-[8px] leading-tight px-1 py-0.5 rounded ${isSelected ? "bg-white/20 text-primary-foreground" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"}`}>💰 {T("paydayLegend", "Payday")}</div>
+                  <div className={`text-[10px] leading-tight px-1 py-0.5 rounded ${isSelected ? "bg-white/20 text-primary-foreground" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"}`}>💰 {T("paydayLegend", "Payday")}</div>
                 )}
               </div>
             </div>

@@ -54,7 +54,7 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
             </div>
             <div className="flex items-center gap-1.5">
               {loan.status === "paid_off" && (
-                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
                   {T("paidCheck", "✓ Paid")}
                 </span>
               )}
@@ -63,7 +63,7 @@ export default function LoanCard({ loan, index = 0, onEdit, onDelete }) {
 
           <div className="flex items-end justify-between mb-1.5">
             <div>
-              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-medium">{T("remaining", "Remaining")}</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">{T("remaining", "Remaining")}</p>
               <p className="text-lg font-bold font-heading text-foreground leading-tight">{formatCurrency(loan.current_balance)}</p>
             </div>
             <span className="text-xs font-semibold text-primary mb-0.5">{progress.toFixed(0)}%</span>

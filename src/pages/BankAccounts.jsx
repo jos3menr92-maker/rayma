@@ -227,7 +227,7 @@ export default function BankAccounts() {
                   <div className="flex items-center gap-2">
                     <div className="text-right">
                       <p className={`font-bold text-sm ${acc.account_type === "credit" ? "text-destructive" : "text-foreground"}`}>{fmt(acc.balance)}</p>
-                      <Badge variant="outline" className="text-[9px] px-1.5 py-0">{cfg.label}</Badge>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{cfg.label}</Badge>
                     </div>
                     <div className="flex flex-col gap-1 ml-1" onClick={e => e.stopPropagation()}>
                       <button onClick={() => openEdit(acc)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">

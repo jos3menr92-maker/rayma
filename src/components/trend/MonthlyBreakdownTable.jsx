@@ -9,7 +9,7 @@ export default function MonthlyBreakdownTable({ data, active, T, fmt, title }) {
         <h2 className="text-sm font-semibold font-heading text-foreground">{title || T("monthlyBreakdown", "Monthly Breakdown")}</h2>
         <div className="flex flex-wrap gap-2">
           {visible.map((s) => (
-            <span key={s.key} className="flex items-center gap-1 text-[9px] text-muted-foreground">
+            <span key={s.key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
               {T(s.labelKey, s.fallback)}
             </span>

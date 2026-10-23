@@ -270,16 +270,16 @@ export default function Finance() {
           <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1 text-green-500">
               <TrendingUp className="w-3.5 h-3.5" />
-              <p className="text-[9px] uppercase tracking-wider font-bold">{T("income", "Income")}</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold">{T("income", "Income")}</p>
             </div>
             <p className="text-sm font-bold text-foreground">{fmt(monthlyIncome)}</p>
-            <p className="text-[8px] text-muted-foreground mt-0.5">{T("thisMonth", "This month")}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{T("thisMonth", "This month")}</p>
           </div>
           
           <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1 text-orange-500">
               <TrendingDown className="w-3.5 h-3.5" />
-              <p className="text-[9px] uppercase tracking-wider font-bold">{T("expenses", "Expenses")}</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold">{T("expenses", "Expenses")}</p>
             </div>
             <p className="text-sm font-bold text-foreground">{fmt(monthlyExpenses)}</p>
           </div>
@@ -287,7 +287,7 @@ export default function Finance() {
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3 shadow-sm">
             <div className="flex items-center gap-1.5 mb-1 text-primary">
               <DollarSign className="w-3.5 h-3.5" />
-              <p className="text-[9px] uppercase tracking-wider font-bold">{T("cashFlow", "Cash Flow")}</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold">{T("cashFlow", "Cash Flow")}</p>
             </div>
             <p className="text-sm font-bold text-foreground">{fmt(monthlyCashFlow)}</p>
           </div>
@@ -331,12 +331,12 @@ export default function Finance() {
                        <div className="flex items-center gap-1.5">
                          <p className="font-semibold text-sm text-foreground">{inc.note || T("incomeLogged", "Income Logged")}</p>
                          {inc.is_recurring && inc.recurring_active && (
-                           <Badge variant="secondary" className="text-[9px] py-0 px-1.5 gap-0.5 shrink-0">
+                           <Badge variant="secondary" className="text-[10px] py-0 px-1.5 gap-0.5 shrink-0">
                              <Repeat className="w-2.5 h-2.5" /> {inc.recurring_frequency || "weekly"}
                            </Badge>
                          )}
                          {inc.recurring_source_id && (
-                           <Badge variant="outline" className="text-[9px] py-0 px-1.5 shrink-0">{T("auto", "Auto")} · #{autoNumbers[inc.id] || "?"}</Badge>
+                           <Badge variant="outline" className="text-[10px] py-0 px-1.5 shrink-0">{T("auto", "Auto")} · #{autoNumbers[inc.id] || "?"}</Badge>
                          )}
                        </div>
                        <p className="text-xs text-muted-foreground">

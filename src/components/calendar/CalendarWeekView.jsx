@@ -35,7 +35,7 @@ export default function CalendarWeekView({ current, getEventsForDate, getPaydayF
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center ${isToday ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                  <span className="text-[8px] font-bold uppercase leading-none">{dayName}</span>
+                  <span className="text-[10px] font-bold uppercase leading-none">{dayName}</span>
                   <span className="text-base font-bold leading-tight">{date.getDate()}</span>
                 </div>
                 <div>
